@@ -45,6 +45,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { io, Socket } from 'socket.io-client';
 
 interface Collaborator {
   id: string;
@@ -128,9 +129,18 @@ export function ReplitMultiplayers({
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [followingUserId, setFollowingUserId] = useState<string | null>(null);
   
-  const wsRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+
+  const addActivityEvent = useCallback((event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
+    const newEvent: ActivityEvent = {
+      ...event,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      timestamp: new Date()
+    };
+    setActivityFeed(prev => [newEvent, ...prev].slice(0, 50));
+  }, []);
 
   const { data, isLoading, isError, refetch } = useQuery<CollaboratorsResponse>({
     queryKey: ['/api/collaboration', projectId, 'users'],
@@ -150,54 +160,111 @@ export function ReplitMultiplayers({
   });
 
   const connectWebSocket = useCallback(() => {
-    if (!projectId || wsRef.current?.readyState === WebSocket.OPEN) return;
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
+    if (!projectId || !user || socketRef.current?.connected) return;
 
     try {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+      const socket = io(window.location.origin, {
+        path: '/ws/collaboration',
+        query: {
+          projectId: String(projectId),
+          odUserId: String(user.id),
+          username: user.username || 'Anonymous',
+          avatar: user.avatarUrl || undefined,
+        },
+        transports: ['websocket', 'polling'],
+        withCredentials: true,
+        forceNew: true,
+        timeout: 30000,
+      });
 
-      ws.onopen = () => {
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
 
-        ws.send(JSON.stringify({
-          type: 'auth',
-          projectId: parseInt(projectId, 10),
-          fileId,
-          userId: user?.id,
-          username: user?.username,
-          timestamp: Date.now()
-        }));
-
-        ws.send(JSON.stringify({
-          type: 'join_project',
-          projectId: parseInt(projectId, 10),
-          timestamp: Date.now()
-        }));
-
         addActivityEvent({
           type: 'join',
-          userId: user?.id?.toString() || 'current-user',
-          username: user?.username || 'You',
+          userId: String(user.id),
+          username: user.username || 'You',
           message: 'You joined the session'
         });
-      };
+      });
 
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          handleWebSocketMessage(message);
-        } catch (error) {
-          console.error('Failed to parse collaboration message:', error);
-        }
-      };
+      socket.on('collaborator:joined', (message: any) => {
+        handleWebSocketMessage({
+          type: 'collaborators_update',
+          data: message.collaborators.map((c: any) => ({
+            id: c.id,
+            userId: c.odUserId,
+            username: c.username,
+            avatarUrl: c.avatar,
+            isOnline: true,
+            role: 'editor',
+            currentFile: c.currentFile,
+            cursor: c.cursor,
+            color: c.color,
+            lastSeen: c.lastSeen,
+          })),
+        });
+      });
 
-      ws.onclose = () => {
+      socket.on('collaborator:left', (message: any) => {
+        handleWebSocketMessage({
+          type: 'collaborators_update',
+          data: message.collaborators.map((c: any) => ({
+            id: c.id,
+            userId: c.odUserId,
+            username: c.username,
+            avatarUrl: c.avatar,
+            isOnline: true,
+            role: 'editor',
+            currentFile: c.currentFile,
+            cursor: c.cursor,
+            color: c.color,
+            lastSeen: c.lastSeen,
+          })),
+        });
+      });
+
+      socket.on('cursor:updated', (data: any) => {
+        handleWebSocketMessage({
+          type: 'cursor_update',
+          data: {
+            userId: data.odUserId,
+            position: {
+              line: data.cursor?.lineNumber || 0,
+              column: data.cursor?.column || 0,
+            },
+          },
+        });
+      });
+
+      socket.on('activity:updated', (data: any) => {
+        if (!data.currentFile) return;
+        handleWebSocketMessage({
+          type: 'file_open',
+          data: {
+            userId: data.odUserId,
+            username: data.username || 'Someone',
+            fileName: data.currentFile,
+          },
+        });
+      });
+
+      socket.on('status:updated', (data: any) => {
+        handleWebSocketMessage({
+          type: 'status_change',
+          data: {
+            userId: data.odUserId,
+            status: data.status === 'active' ? 'online' : data.status,
+          },
+        });
+      });
+
+      socket.on('disconnect', () => {
         setIsConnected(false);
-        wsRef.current = null;
+        socketRef.current = null;
 
         if (reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
@@ -207,16 +274,16 @@ export function ReplitMultiplayers({
             connectWebSocket();
           }, delay);
         }
-      };
+      });
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+      socket.on('connect_error', (error) => {
+        console.error('Socket.IO collaboration error:', error);
         setIsConnected(false);
-      };
+      });
     } catch (error) {
       console.error('Failed to connect to collaboration server:', error);
     }
-  }, [projectId, fileId, user]);
+  }, [projectId, user, addActivityEvent, handleWebSocketMessage]);
 
   const handleWebSocketMessage = useCallback((message: any) => {
     switch (message.type) {
@@ -347,15 +414,6 @@ export function ReplitMultiplayers({
     }
   }, [liveCollaborators, followingUserId, toast]);
 
-  const addActivityEvent = useCallback((event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
-    const newEvent: ActivityEvent = {
-      ...event,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date()
-    };
-    setActivityFeed(prev => [newEvent, ...prev].slice(0, 50));
-  }, []);
-
   useEffect(() => {
     if (projectId) {
       connectWebSocket();
@@ -365,9 +423,9 @@ export function ReplitMultiplayers({
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, [projectId, connectWebSocket]);

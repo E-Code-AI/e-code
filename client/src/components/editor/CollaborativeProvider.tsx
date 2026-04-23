@@ -2,16 +2,17 @@ import { useEffect, useRef, useState, createContext, useContext, useCallback } f
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
 import { EditorView } from '@codemirror/view';
+import { WebsocketProvider } from 'y-websocket';
 import { 
   createCollaborationExtension,
   disconnectCollaboration,
-  getCollaborators,
   onCollaboratorsChange,
   userColors,
   type Collaborator,
 } from '@/lib/cm6/collaboration-adapter';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Participant {
   user: {
@@ -75,7 +76,7 @@ export function CollaborativeProvider({
   const [userColor, setUserColor] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const providerRef = useRef<WebsocketProvider | null>(null);
   const ydocRef = useRef<Y.Doc | null>(null);
   const awarenessRef = useRef<Awareness | null>(null);
   const collaborationExtensionsRef = useRef<ReturnType<typeof createCollaborationExtension> | null>(null);
@@ -84,6 +85,7 @@ export function CollaborativeProvider({
   const cleanupAwarenessRef = useRef<(() => void) | null>(null);
 
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const convertCollaboratorToParticipant = useCallback((collaborator: Collaborator): Participant => {
     return {
@@ -100,13 +102,10 @@ export function CollaborativeProvider({
   }, []);
 
   const initializeYjs = useCallback(() => {
-    if (!editor || ydocRef.current) return;
+    if (!editor || collaborationExtensionsRef.current || !ydocRef.current || !awarenessRef.current) return;
 
-    const ydoc = new Y.Doc();
-    ydocRef.current = ydoc;
-
-    const awareness = new Awareness(ydoc);
-    awarenessRef.current = awareness;
+    const ydoc = ydocRef.current;
+    const awareness = awarenessRef.current;
 
     const userId = localStorage.getItem('userId') || `user-${Date.now()}`;
     const userName = localStorage.getItem('userName') || 'Anonymous';
@@ -114,7 +113,7 @@ export function CollaborativeProvider({
 
     const extensions = createCollaborationExtension({
       doc: ydoc,
-      provider: wsRef.current,
+      provider: providerRef.current,
       userId,
       userName,
       userColor: color,
@@ -129,207 +128,65 @@ export function CollaborativeProvider({
       setParticipants(newParticipants);
     });
 
-    ydoc.on('update', (update: Uint8Array) => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'document-update',
-          data: Array.from(update),
-        }));
-      }
-    });
-
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'request-state',
-      }));
-    }
   }, [editor, userColor, convertCollaboratorToParticipant]);
-
-  const handleWebSocketMessage = useCallback((message: any) => {
-    switch (message.type) {
-      case 'auth-success':
-        if (wsRef.current) {
-          wsRef.current.send(JSON.stringify({
-            type: 'join-session',
-            data: { projectId, fileId },
-          }));
-        }
-        break;
-
-      case 'auth-failed':
-        toast({
-          title: 'Authentication failed',
-          description: 'Please log in to use collaborative editing',
-          variant: 'destructive',
-        });
-        break;
-
-      case 'session-joined':
-        setSessionId(message.data.sessionId);
-        setUserColor(message.data.color);
-        
-        if (message.data.participants) {
-          const initialParticipants = message.data.participants.map((p: any) => ({
-            user: {
-              id: p.user?.id || p.id,
-              username: p.user?.username || p.username || 'Anonymous',
-              color: p.user?.color || p.color,
-            },
-            cursor: p.cursor,
-            selection: p.selection,
-          }));
-          setParticipants(initialParticipants);
-        }
-        
-        initializeYjs();
-        
-        toast({
-          title: 'Collaboration started',
-          description: `You joined the editing session`,
-        });
-        break;
-
-      case 'participant-joined':
-        setParticipants(prev => [
-          ...prev,
-          {
-            user: {
-              id: message.data.id || message.data.userId,
-              username: message.data.username || 'Anonymous',
-              color: message.data.color,
-            },
-            cursor: undefined,
-            selection: undefined,
-          },
-        ]);
-        
-        toast({
-          title: 'User joined',
-          description: `${message.data.username || 'A user'} joined the session`,
-        });
-        break;
-
-      case 'participant-leave':
-        setParticipants(prev => 
-          prev.filter(p => p.user.id !== message.data.userId)
-        );
-        
-        toast({
-          title: 'User left',
-          description: `${message.data.username || 'A user'} left the session`,
-        });
-        break;
-
-      case 'document-update':
-        if (ydocRef.current) {
-          const update = new Uint8Array(message.data);
-          Y.applyUpdate(ydocRef.current, update);
-        }
-        break;
-
-      case 'cursor-update':
-        setParticipants(prev => prev.map(p => 
-          p.user.id === message.data.userId
-            ? { ...p, cursor: message.data.cursor }
-            : p
-        ));
-        break;
-
-      case 'selection-update':
-        setParticipants(prev => prev.map(p => 
-          p.user.id === message.data.userId
-            ? { ...p, selection: message.data.selection }
-            : p
-        ));
-        break;
-
-      case 'state-update':
-        if (ydocRef.current && message.data.document) {
-          const update = new Uint8Array(message.data.document);
-          Y.applyUpdate(ydocRef.current, update);
-        }
-        if (message.data.participants) {
-          const updatedParticipants = message.data.participants.map((p: any) => ({
-            user: {
-              id: p.user?.id || p.id,
-              username: p.user?.username || p.username || 'Anonymous',
-              color: p.user?.color || p.color,
-            },
-            cursor: p.cursor,
-            selection: p.selection,
-          }));
-          setParticipants(updatedParticipants);
-        }
-        break;
-    }
-  }, [projectId, fileId, toast, initializeYjs]);
 
   useEffect(() => {
     if (!enabled || !editor) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/collaboration`;
+    const collaborationDoc = new Y.Doc();
+    const currentUserId = String(user?.id || localStorage.getItem('userId') || `user-${Date.now()}`);
+    const currentUserName = user?.username || localStorage.getItem('userName') || 'Anonymous';
+    const color = userColor || userColors[Math.floor(Math.random() * userColors.length)];
 
-    const connect = () => {
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
+    const provider = new WebsocketProvider(
+      `${protocol}//${window.location.host}/ws/yjs`,
+      `project-${projectId}-file-${fileId}`,
+      collaborationDoc,
+      {
+        params: {
+          projectId,
+          userId: currentUserId,
+        },
+        maxBackoffTime: 5000,
+      }
+    );
 
-      ws.onopen = () => {
-        setIsConnected(true);
-        reconnectAttemptsRef.current = 0;
+    providerRef.current = provider;
+    ydocRef.current = collaborationDoc;
+    awarenessRef.current = provider.awareness;
+    setSessionId(`project-${projectId}-file-${fileId}`);
+    setUserColor(color);
+    initializeYjs();
 
-        const token = localStorage.getItem('authToken') || '';
-        
-        ws.send(JSON.stringify({
-          type: 'auth',
-          data: { token },
-        }));
-      };
+    const handleStatus = (event: { status: string }) => {
+      const connected = event.status === 'connected';
+      setIsConnected(connected);
 
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          handleWebSocketMessage(message);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        setIsConnected(false);
-        wsRef.current = null;
-
-        if (reconnectAttemptsRef.current < 5) {
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-          reconnectAttemptsRef.current++;
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connect();
-          }, delay);
-        } else {
-          toast({
-            title: 'Connection lost',
-            description: 'Unable to reconnect to collaboration server',
-            variant: 'destructive',
-          });
-        }
-      };
+      if (!connected && reconnectAttemptsRef.current >= 5) {
+        toast({
+          title: 'Connection lost',
+          description: 'Unable to reconnect to collaboration server',
+          variant: 'destructive',
+        });
+      }
     };
 
-    connect();
+    provider.on('status', handleStatus);
+    provider.awareness.setLocalStateField('user', {
+      userId: currentUserId,
+      name: currentUserName,
+      color,
+      colorLight: `${color}33`,
+    });
 
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      provider.off('status', handleStatus);
+      provider.destroy();
+      providerRef.current = null;
       if (cleanupAwarenessRef.current) {
         cleanupAwarenessRef.current();
       }
@@ -341,7 +198,7 @@ export function CollaborativeProvider({
       awarenessRef.current = null;
       collaborationExtensionsRef.current = null;
     };
-  }, [enabled, editor, toast, handleWebSocketMessage]);
+  }, [enabled, editor, toast, initializeYjs, projectId, fileId, user, userColor]);
 
   const generateShareLink = async (): Promise<string> => {
     try {

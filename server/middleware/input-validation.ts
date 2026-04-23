@@ -153,13 +153,37 @@ function sanitizeObject(obj: any): any {
     for (const key in obj) {
       // Use Object.prototype.hasOwnProperty.call for safety
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
-        sanitized[key] = sanitizeObject(obj[key]);
+        sanitized[key] = shouldPreserveRawString(key, obj[key])
+          ? obj[key]
+          : sanitizeObject(obj[key]);
       }
     }
     return sanitized;
   }
   
   return obj;
+}
+
+function shouldPreserveRawString(key: string, value: unknown): boolean {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  return [
+    'content',
+    'code',
+    'source',
+    'resolvedContent',
+    'html',
+    'css',
+    'js',
+    'jsx',
+    'ts',
+    'tsx',
+    'sql',
+    'markdown',
+    'message',
+  ].includes(key);
 }
 
 /**

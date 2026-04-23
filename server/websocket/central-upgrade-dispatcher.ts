@@ -22,6 +22,7 @@ import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import type { Server } from 'http';
 import { parse as parseCookie } from 'cookie';
+import * as signature from 'cookie-signature';
 import { markSocketAsHandled, isSocketHandled } from './upgrade-guard';
 import { createCentralizedLogger } from '../logging/centralized-logger';
 import { sessionStore } from '../storage';
@@ -110,12 +111,16 @@ class CentralUpgradeDispatcher {
       const cookies = request.headers.cookie;
       if (cookies) {
         const parsedCookies = parseCookie(cookies);
-        const sessionId = parsedCookies['ecode.sid'] || parsedCookies['connect.sid'];
-        if (sessionId) {
-          // Extract session ID from signed cookie (remove 's:' prefix and signature)
-          const sid = sessionId.startsWith('s:') 
-            ? sessionId.slice(2).split('.')[0] 
-            : sessionId;
+        const rawSessionId = parsedCookies['ecode.sid'] || parsedCookies['connect.sid'];
+        if (rawSessionId) {
+          const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+          const sid = rawSessionId.startsWith('s:')
+            ? signature.unsign(rawSessionId.slice(2), sessionSecret)
+            : rawSessionId;
+
+          if (!sid) {
+            return false;
+          }
           
           const hasValidSession = await new Promise<boolean>((resolve) => {
             sessionStore.get(sid, (err, session) => {
@@ -233,6 +238,8 @@ class CentralUpgradeDispatcher {
     const selfAuthPaths = [
       '/api/runtime/logs/ws',  // RuntimeLogsService handles its own session auth
       '/api/server/logs/ws',   // ServerLogsService handles its own session auth
+      '/ws/collaboration',     // Unified collaboration service validates project access itself
+      '/ws/yjs',               // Yjs collaboration handler validates project access itself
     ];
     const publicPaths = [
       '/health', '/api/health',
@@ -242,7 +249,11 @@ class CentralUpgradeDispatcher {
     
     // Only validate auth for non-public paths with registered handlers
     // NOTE: Socket is already marked as handled above, so auth failures must explicitly destroy
-    if (!publicPaths.includes(effectivePath)) {
+    const isPublicPath = publicPaths.some((publicPath) =>
+      effectivePath === publicPath || effectivePath.startsWith(`${publicPath}/`)
+    );
+
+    if (!isPublicPath) {
       const isAuthenticated = await this.validateWebSocketConnection(request);
       if (!isAuthenticated) {
         logger.warn('[Central Dispatcher] Unauthorized WebSocket connection attempt', {
