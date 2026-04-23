@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useCallback, useMemo } from 'react';
 import { 
   Play, 
@@ -20,7 +19,6 @@ import {
   Save,
   ArrowLeft
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -190,6 +188,8 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
     isPausingSession,
     isResumingSession,
     isStoppingSession,
+    refetchSession,
+    refetchProgress,
   } = useMaxAutonomy(activeSessionId, projectId);
 
   const handleStartSession = useCallback(() => {
@@ -282,10 +282,13 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <p className="font-medium text-destructive">Error</p>
                 <p className="text-muted-foreground text-[11px]">{error.message}</p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  refetchSession();
+                  refetchProgress();
+                }}
                 data-testid="button-retry"
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
