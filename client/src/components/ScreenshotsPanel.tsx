@@ -1,10 +1,9 @@
-// @ts-nocheck
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Camera, Download, Trash2 } from 'lucide-react';
+import { Camera, Download, Trash2, ImageOff } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
@@ -12,58 +11,86 @@ interface ScreenshotsPanelProps {
   projectId: number;
 }
 
+interface Screenshot {
+  id: number;
+  projectId: number;
+  title?: string;
+  name?: string;
+  description?: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  deviceType?: string;
+  createdAt?: string;
+}
+
+function formatDate(value?: string): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  try {
+    return format(date, 'PP');
+  } catch {
+    return '';
+  }
+}
+
 export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [screenshotTitle, setScreenshotTitle] = useState('');
   const [screenshotDescription, setScreenshotDescription] = useState('');
+  const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
 
-  // Fetch screenshots
-  const { data: screenshots, isLoading } = useQuery({
+  const { data: screenshots, isLoading } = useQuery<Screenshot[]>({
     queryKey: ['/api/screenshots', projectId],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/screenshots/${projectId}`);
-      if (!res.ok) throw new Error('Failed to fetch screenshots');
-      return res.json();
-    }
+    queryFn: () => apiRequest<Screenshot[]>('GET', `/api/screenshots/${projectId}`),
   });
 
-  // Capture screenshot mutation
   const captureScreenshotMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/screenshots/${projectId}/capture`, {
-        title: screenshotTitle || `Screenshot ${new Date().toISOString()}`,
-        description: screenshotDescription
-      });
-      if (!res.ok) throw new Error('Failed to capture screenshot');
-      return res.json();
-    },
+    mutationFn: () =>
+      apiRequest<Screenshot>('POST', `/api/screenshots/${projectId}/capture`, {
+        title: screenshotTitle || undefined,
+        description: screenshotDescription || undefined,
+        deviceType,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/screenshots', projectId] });
       toast({
         title: 'Screenshot captured',
-        description: 'Project preview has been saved'
+        description: 'Project preview has been saved',
       });
       setScreenshotTitle('');
       setScreenshotDescription('');
-    }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Capture failed',
+        description: error?.message || 'Could not capture screenshot',
+        variant: 'destructive',
+      });
+    },
   });
 
-  // Delete screenshot mutation
   const deleteScreenshotMutation = useMutation({
-    mutationFn: async (screenshotId: number) => {
-      const res = await apiRequest('DELETE', `/api/screenshots/${screenshotId}`);
-      if (!res.ok) throw new Error('Failed to delete screenshot');
-      return res.json();
-    },
+    mutationFn: (screenshotId: number) =>
+      apiRequest<{ success: boolean }>('DELETE', `/api/screenshots/${screenshotId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/screenshots', projectId] });
       toast({
         title: 'Screenshot deleted',
-        description: 'The screenshot has been removed'
+        description: 'The screenshot has been removed',
       });
-    }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Delete failed',
+        description: error?.message || 'Could not delete screenshot',
+        variant: 'destructive',
+      });
+    },
   });
+
+  const items = screenshots ?? [];
 
   return (
     <div className="p-4">
@@ -88,57 +115,83 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
           className="w-full p-2 mb-2 border rounded h-20"
           aria-label="Screenshot description"
         />
+        <label htmlFor="screenshot-device" className="sr-only">Device type</label>
+        <select
+          id="screenshot-device"
+          value={deviceType}
+          onChange={(e) => setDeviceType(e.target.value as 'desktop' | 'tablet' | 'mobile')}
+          className="w-full p-2 mb-2 border rounded"
+          aria-label="Device type"
+        >
+          <option value="desktop">Desktop (1920×1080)</option>
+          <option value="tablet">Tablet (1024×768)</option>
+          <option value="mobile">Mobile (390×844)</option>
+        </select>
         <Button
-          onClick={() => captureScreenshotMutation.mutate()}
+          onClick={() => captureScreenshotMutation.mutate(undefined)}
           disabled={captureScreenshotMutation.isPending}
           className="w-full"
         >
           <Camera className="h-4 w-4 mr-2" />
-          Capture Screenshot
+          {captureScreenshotMutation.isPending ? 'Capturing…' : 'Capture Screenshot'}
         </Button>
       </div>
 
       <div>
         <h3 className="text-[15px] font-semibold mb-2">Screenshots Gallery</h3>
         {isLoading ? (
-          <p>Loading screenshots...</p>
+          <p className="text-sm text-muted-foreground">Loading screenshots…</p>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
+            <ImageOff className="h-8 w-8 mb-2 opacity-60" />
+            <p className="text-sm font-medium">No screenshots yet</p>
+            <p className="text-xs mt-1">Capture a snapshot of your preview to see it here.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-2">
-            {screenshots?.map((screenshot: any) => (
-              <Card key={screenshot.id} className="overflow-hidden">
-                <img
-                  src={screenshot.imageUrl}
-                  alt={screenshot.title}
-                  className="w-full h-32 object-cover"
-                />
-                <div className="p-2">
-                  <h4 className="font-medium text-[13px] truncate">{screenshot.title}</h4>
-                  {screenshot.description && (
-                    <p className="text-[11px] text-muted-foreground truncate">{screenshot.description}</p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    {format(new Date(screenshot.createdAt), 'PP')}
-                  </p>
-                  <div className="flex gap-1 mt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(screenshot.imageUrl, '_blank')}
-                    >
-                      <Download className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => deleteScreenshotMutation.mutate(screenshot.id)}
-                      disabled={deleteScreenshotMutation.isPending}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+            {items.map((screenshot) => {
+              const label = screenshot.title || screenshot.name || `Screenshot ${screenshot.id}`;
+              const dateLabel = formatDate(screenshot.createdAt);
+              return (
+                <Card key={screenshot.id} className="overflow-hidden">
+                  <img
+                    src={screenshot.thumbnailUrl || screenshot.imageUrl}
+                    alt={label}
+                    className="w-full h-32 object-cover bg-muted"
+                  />
+                  <div className="p-2">
+                    <h4 className="font-medium text-[13px] truncate">{label}</h4>
+                    {screenshot.description && (
+                      <p className="text-[11px] text-muted-foreground truncate">{screenshot.description}</p>
+                    )}
+                    {dateLabel && (
+                      <p className="text-[11px] text-muted-foreground mt-1">{dateLabel}</p>
+                    )}
+                    <div className="flex gap-1 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(`/api/screenshots/${screenshot.id}/download`, '_blank', 'noopener')
+                        }
+                        aria-label="Download screenshot"
+                      >
+                        <Download className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => deleteScreenshotMutation.mutate(screenshot.id)}
+                        disabled={deleteScreenshotMutation.isPending}
+                        aria-label="Delete screenshot"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
