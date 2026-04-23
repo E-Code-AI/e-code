@@ -261,18 +261,20 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
     setMessages(prev => [...prev, assistantMessage]);
 
     try {
+      let accumulated = '';
       await streamCodeAction(
         action,
         codeToAnalyze,
         language,
         {
           onChunk: (chunk) => {
+            accumulated += chunk;
             setCodeActionContent(prev => prev + chunk);
           },
           onComplete: (provider) => {
-            setMessages(prev => prev.map(msg => 
-              msg.id === assistantMessage.id 
-                ? { ...msg, content: codeActionContent + ` [${provider}]` }
+            setMessages(prev => prev.map(msg =>
+              msg.id === assistantMessage.id
+                ? { ...msg, content: accumulated + ` [${provider}]` }
                 : msg
             ));
             setIsCodeActionStreaming(false);
@@ -293,9 +295,9 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
         selectedModel
       );
 
-      setMessages(prev => prev.map(msg => 
-        msg.id === assistantMessage.id 
-          ? { ...msg, content: codeActionContent }
+      setMessages(prev => prev.map(msg =>
+        msg.id === assistantMessage.id && !msg.content
+          ? { ...msg, content: accumulated }
           : msg
       ));
     } catch (error: any) {
