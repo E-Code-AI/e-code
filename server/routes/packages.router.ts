@@ -1496,13 +1496,14 @@ projectPackagesRouter.delete('/:projectId/packages/:packageName', ensureAuthenti
 projectPackagesRouter.post('/:projectId/packages/update', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     const { projectId } = req.params;
-    const { packages: pkgNames } = req.body;
+    const { packages: pkgNames, package: singlePackage, version } = req.body;
     
     if (!isValidProjectId(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
     
-    const names: string[] = Array.isArray(pkgNames) ? pkgNames : [pkgNames].filter(Boolean);
+    const rawPackages = pkgNames ?? singlePackage;
+    const names: string[] = Array.isArray(rawPackages) ? rawPackages : [rawPackages].filter(Boolean);
     if (names.length === 0) {
       return res.status(400).json({ error: 'Package name(s) required' });
     }
@@ -1519,9 +1520,14 @@ projectPackagesRouter.post('/:projectId/packages/update', ensureAuthenticated, e
     }
     
     const { manager } = await detectProjectManager(workingDir);
-    const { cmd, args } = getUpdateCommand(manager, names);
+    let command = getUpdateCommand(manager, names);
+    if (version && names.length === 1 && manager === 'npm') {
+      command = { cmd: 'npm', args: ['install', `${names[0]}@${version}`] };
+    } else if (version && names.length === 1 && manager === 'pip') {
+      command = { cmd: 'pip', args: ['install', '--upgrade', `${names[0]}==${version}`] };
+    }
     
-    const { stdout } = await spawnPackageManager(cmd, args, workingDir);
+    const { stdout } = await spawnPackageManager(command.cmd, command.args, workingDir);
     
     res.json({
       success: true,

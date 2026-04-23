@@ -65,7 +65,7 @@ async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<
     }
 
     return await new Promise<number | null>((resolve) => {
-      sessionStore.get(sessionId!, (err, session: any) => {
+      sessionStore.get(sessionId!, (err: any, session: any) => {
         if (err || !session?.passport?.user) {
           resolve(null);
           return;

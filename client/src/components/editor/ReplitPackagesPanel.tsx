@@ -327,11 +327,10 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   const updateMutation = useMutation({
     mutationFn: async ({ packageName, version }: { packageName: string; version: string }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/packages/${projectId}/update`, {
+      return apiRequest('POST', `/api/packages/${projectId}/update`, {
         package: packageName,
         version
       });
-      return response.json();
     },
     onSuccess: (data, variables) => {
       toast({ title: 'Package updated', description: `Successfully updated ${variables.packageName} to ${variables.version}` });

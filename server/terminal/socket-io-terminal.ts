@@ -128,6 +128,7 @@ export class SocketIOTerminalService {
 
   private async handleConnection(socket: Socket) {
     const projectId = (socket.handshake.query.projectId as string) || 'default';
+    const requestedSessionId = (socket.handshake.query.sessionId as string) || 'default';
 
     logger.info(`[SocketIO Terminal] New connection for project ${projectId}`);
 
@@ -200,7 +201,7 @@ export class SocketIOTerminalService {
     socket.emit('connected', { message: 'Connected to terminal' });
 
     // Session key scoped by project AND user to ensure isolation
-    const sessionKey = `${projectId}:${userId}`;
+    const sessionKey = `${projectId}:${userId}:${requestedSessionId}`;
     let session = this.sessions.get(sessionKey);
     
     if (!session) {

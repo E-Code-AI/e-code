@@ -172,10 +172,32 @@ router.get('/:projectId/branches', ensureAuthenticated, async (req: Request, res
     const branches = stdout.split('\n').filter(Boolean).map((name: string) => ({
       name,
       current: name === current,
-      remote: null,
+      isRemote: name.startsWith('origin/'),
+      lastCommit: {
+        hash: '',
+        message: '',
+        author: '',
+        date: '',
+      },
+      ahead: 0,
+      behind: 0,
+      trackingBranch: undefined,
     }));
     if (branches.length === 0) {
-      branches.push({ name: current || 'main', current: true, remote: null });
+      branches.push({
+        name: current || 'main',
+        current: true,
+        isRemote: false,
+        lastCommit: {
+          hash: '',
+          message: '',
+          author: '',
+          date: '',
+        },
+        ahead: 0,
+        behind: 0,
+        trackingBranch: undefined,
+      });
     }
     res.json({ branches });
   } catch (error: any) {
