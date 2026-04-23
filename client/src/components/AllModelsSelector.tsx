@@ -567,7 +567,7 @@ export function AllModelsSelector() {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              <span className="text-[13px]">Anthropic: Claude Opus 4, Claude Sonnet 4, Claude 3.7 Sonnet, Claude 3.5 Sonnet/Haiku</span>
+              <span className="text-[13px]">Anthropic: Claude Opus 4.7, Claude Sonnet 4.6, Claude Haiku 4.5</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
