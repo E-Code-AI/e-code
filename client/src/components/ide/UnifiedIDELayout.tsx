@@ -149,6 +149,7 @@ const FeedbackInboxPanel = instrumentedLazy(() => import('@/components/FeedbackI
 const GitHubPanel = instrumentedLazy(() => import('@/components/GitHubPanel').then(m => m.default ? m : { default: m.GitHubPanel || m }), 'GitHubPanel');
 const IntegrationsPanel = instrumentedLazy(() => import('@/components/IntegrationsPanel').then(m => m.default ? m : { default: m.IntegrationsPanel || m }), 'IntegrationsPanel');
 const MCPPanel = instrumentedLazy(() => import('@/components/MCPPanel').then(m => m.default ? m : { default: m.MCPPanel || m }), 'MCPPanel');
+const MCPServersPanel = instrumentedLazy(() => import('@/components/MCPServersPanel').then(m => m.default ? m : { default: m.MCPServersPanel || m }), 'MCPServersPanel');
 const MergeConflictPanel = instrumentedLazy(() => import('@/components/MergeConflictPanel').then(m => m.default ? m : { default: m.MergeConflictPanel || m }), 'MergeConflictPanel');
 const MonitoringPanel = instrumentedLazy(() => import('@/components/MonitoringPanel').then(m => m.default ? m : { default: m.MonitoringPanel || m }), 'MonitoringPanel');
 const NetworkingPanel = instrumentedLazy(() => import('@/components/NetworkingPanel').then(m => m.default ? m : { default: m.NetworkingPanel || m }), 'NetworkingPanel');
@@ -400,6 +401,10 @@ function UnifiedIDELayout({
       case 'database':
         // Open database as inline tab instead of overlay
         handleAddTool('database');
+        break;
+      case 'mcp-suite':
+        // Open MCP suite (GitHub / PostgreSQL / Memory) as inline tab
+        handleAddTool('mcp-suite');
         break;
       case 'preview':
         handleAddTool('preview');
@@ -927,6 +932,12 @@ function UnifiedIDELayout({
             <WorkflowsPanel projectId={projectId} />
           </Suspense>
         );
+      case 'mcp-suite':
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading MCP Suite..." /></div>}>
+            <MCPServersPanel projectId={projectId ? Number(projectId) : undefined} />
+          </Suspense>
+        );
       case 'debug':
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debug..." /></div>}>
@@ -1429,6 +1440,7 @@ function UnifiedIDELayout({
     if (currentTab.id === 'github') return <Suspense fallback={<ECodeLoading size="md" />}><GitHubPanel projectId={projectId} projectName={projectName} /></Suspense>;
     if (currentTab.id === 'integrations') return <Suspense fallback={<ECodeLoading size="md" />}><IntegrationsPanel projectId={projectId} onClose={() => handleTabClose('integrations')} /></Suspense>;
     if (currentTab.id === 'mcp') return <Suspense fallback={<ECodeLoading size="md" />}><MCPPanel projectId={projectId} onClose={() => handleTabClose('mcp')} /></Suspense>;
+    if (currentTab.id === 'mcp-suite') return <Suspense fallback={<ECodeLoading size="md" />}><MCPServersPanel projectId={projectId ? Number(projectId) : undefined} /></Suspense>;
     if (currentTab.id === 'merge-conflicts') return <Suspense fallback={<ECodeLoading size="md" />}><MergeConflictPanel projectId={projectId} conflicts={mergeConflicts || []} resolutions={mergeResolutions || []} onClose={() => handleTabClose('merge-conflicts')} onMergeComplete={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onAbort={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onResolutionChange={(updated: any) => setMergeResolutions?.(updated)} /></Suspense>;
     if (currentTab.id === 'monitoring') return <Suspense fallback={<ECodeLoading size="md" />}><MonitoringPanel projectId={projectId} onClose={() => handleTabClose('monitoring')} /></Suspense>;
     if (currentTab.id === 'networking') return <Suspense fallback={<ECodeLoading size="md" />}><NetworkingPanel projectId={projectId} onClose={() => handleTabClose('networking')} /></Suspense>;

@@ -172,6 +172,7 @@ export const availableTools: AvailableTool[] = [
   { id: 'multiplayers', label: 'Multiplayer', icon: '👥' },
   { id: 'deploy', label: 'Deploy', icon: '🚀' },
   { id: 'preview', label: 'Preview', icon: '👁️' },
+  { id: 'mcp-suite', label: 'MCP Suite', icon: '🧠' },
 ];
 
 export function useIDEWorkspace(projectId: string) {
