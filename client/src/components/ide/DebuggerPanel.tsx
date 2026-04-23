@@ -55,7 +55,6 @@ interface DebuggerPanelProps {
 
 export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
   const [watchExpression, setWatchExpression] = useState('');
-  const [watchList, setWatchList] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
@@ -202,12 +201,8 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
 
   const addWatch = () => {
     if (!watchExpression.trim()) return;
-    setWatchList(prev => prev.includes(watchExpression.trim()) ? prev : [...prev, watchExpression.trim()]);
+    toast({ title: `Watching: ${watchExpression}` });
     setWatchExpression('');
-  };
-
-  const removeWatch = (expr: string) => {
-    setWatchList(prev => prev.filter(w => w !== expr));
   };
 
   const isDebugging = session?.isRunning || false;
@@ -246,12 +241,6 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
         </div>
       </div>
       
-      {/* Stub notice */}
-      <div className="px-2.5 py-1.5 bg-yellow-500/10 border-b border-yellow-500/20 flex items-center gap-1.5">
-        <span className="text-[10px] text-yellow-600 dark:text-yellow-400 font-medium">Preview</span>
-        <span className="text-[10px] text-[var(--ecode-text-muted)]">Simulated debugger — real DAP integration coming soon</span>
-      </div>
-
       {/* Debug Controls */}
       <div className="p-2.5 border-b border-[var(--ecode-border)] space-y-2">
 
@@ -526,24 +515,10 @@ export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
               <Eye className="h-4 w-4" />
             </Button>
           </div>
-          {watchList.length === 0 ? (
-            <div className="text-center text-[13px] text-muted-foreground py-8">
-              <Eye className="h-8 w-8 mx-auto mb-2 opacity-20" />
-              <p>Add expressions to watch</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {watchList.map(expr => (
-                <div key={expr} className="flex items-center justify-between px-2 py-1.5 rounded bg-[var(--ecode-hover)] text-xs">
-                  <span className="font-mono text-[var(--ecode-text-muted)]">{expr}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[var(--ecode-text-muted)] italic">{isPaused ? 'paused' : 'not running'}</span>
-                    <button onClick={() => removeWatch(expr)} className="text-[var(--ecode-text-muted)] hover:text-red-400 ml-1">✕</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="text-center text-[13px] text-muted-foreground py-8">
+            <Eye className="h-8 w-8 mx-auto mb-2 opacity-20" />
+            <p>Add expressions to watch</p>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

@@ -297,9 +297,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
         <div className="flex items-center gap-1.5">
           <Bug className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
           <span className="text-xs font-medium text-[var(--ecode-text)]">Debugger</span>
-          <Badge className="h-4 px-1 text-[9px] rounded bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
-            Experimental
-          </Badge>
+          <Badge className="h-4 px-1 text-[9px] rounded bg-yellow-500/10 text-yellow-600 dark:text-yellow-400">Experimental</Badge>
           {isRunning && (
             <Badge className={cn(
               "h-4 px-1 text-[9px] rounded",
