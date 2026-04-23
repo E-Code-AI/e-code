@@ -1007,14 +1007,6 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.error(`[WORKING SERVER] Failed to register logs routes: ${error}`);
     }
 
-    // ✅ DEBUGGER: In-memory debug session routes for DebuggerPanel
-    try {
-      const debuggerRouter = (await import('./routes/debugger.router')).default;
-      app.use('/api', debuggerRouter);
-      logger.info('[Debugger] Routes registered at /api/debug/*');
-    } catch (error) {
-      logger.error(`[WORKING SERVER] Failed to register debugger routes: ${error}`);
-    }
   } catch (error) {
     logger.error(`[WORKING SERVER] Failed to register routes: ${error}`);
     // Server continues running even if routes fail to load

@@ -17,7 +17,7 @@ function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): 
 
 const logger = createLogger('stripe-service');
 
-const stripe = getStripe();
+const stripe = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
 
 export interface SubscriptionPlan {
   id: string;

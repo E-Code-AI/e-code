@@ -12,14 +12,14 @@ import { createLogger } from '../utils/logger';
 
 const logger = createLogger('chatgpt-service');
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   baseURL: 'https://api.openai.com/v1',
-});
+}) : null;
 
-const anthropic = new Anthropic({
+const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
-});
+}) : null;
 
 // ===== Model Registry =====
 
