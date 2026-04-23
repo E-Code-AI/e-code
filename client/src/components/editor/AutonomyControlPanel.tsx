@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useCallback, useMemo } from 'react';
 import { 
   Play, 
@@ -20,7 +19,6 @@ import {
   Save,
   ArrowLeft
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -190,6 +188,8 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
     isPausingSession,
     isResumingSession,
     isStoppingSession,
+    refetchSession,
+    refetchProgress,
   } = useMaxAutonomy(activeSessionId, projectId);
 
   const handleStartSession = useCallback(() => {
@@ -211,7 +211,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
 
   const handleStopSession = useCallback(() => {
     if (!activeSessionId) return;
-    stopSession({ sessionId: activeSessionId, projectId }, {
+    stopSession(undefined, {
       onSuccess: () => {
         setActiveSessionId(null);
       },
@@ -282,10 +282,13 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                 <p className="font-medium text-destructive">Error</p>
                 <p className="text-muted-foreground text-[11px]">{error.message}</p>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  refetchSession();
+                  refetchProgress();
+                }}
                 data-testid="button-retry"
               >
                 <RotateCcw className="h-3 w-3 mr-1" />
@@ -535,7 +538,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => activeSessionId && pauseSession({ sessionId: activeSessionId, projectId })}
+                    onClick={() => activeSessionId && pauseSession()}
                     disabled={!activeSessionId || isBusy}
                     data-testid="button-pause"
                   >
@@ -550,7 +553,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
                   <Button 
                     variant="outline" 
                     className="flex-1"
-                    onClick={() => activeSessionId && resumeSession({ sessionId: activeSessionId, projectId })}
+                    onClick={() => activeSessionId && resumeSession()}
                     disabled={!activeSessionId || isBusy}
                     data-testid="button-resume"
                   >

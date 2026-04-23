@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * RuntimePanel component
  * Provides UI for interacting with project runtimes, viewing logs, etc.
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Loader2, Play, Square, Terminal, RefreshCw, ExternalLink } from 'lucide-react';
+import { Loader2, Play, Square, Terminal, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
@@ -87,7 +86,8 @@ export function RuntimePanel({ projectId }: RuntimePanelProps) {
     
     try {
       const result = await executeCommand.mutateAsync(command);
-      setCommandOutput(result.output);
+      const entry = `$ ${command}\n${result.output}`;
+      setCommandOutput((prev) => (prev ? `${prev}\n${entry}` : entry));
       setCommand('');
     } catch (error) {
       toast({

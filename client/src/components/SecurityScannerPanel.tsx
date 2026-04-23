@@ -80,9 +80,9 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   const [showRescanBanner, setShowRescanBanner] = useState(false);
 
   const scansQuery = useQuery<Scan[]>({
-    queryKey: ["/api/projects", projectId, "security/scans"],
+    queryKey: ["/api/workspace/projects", projectId, "security-scans"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/security/scans`, { credentials: "include" });
+      const res = await fetch(`/api/workspace/projects/${projectId}/security-scans`, { credentials: "include" });
       if (!res.ok) return [];
       return res.json();
     },
@@ -94,41 +94,40 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
     }
   }, [scansQuery.data, selectedScanId]);
 
-  const activeFindingsQuery = useQuery<Finding[]>({
-    queryKey: ["/api/projects", projectId, "security/scans", selectedScanId, "findings", "active"],
+  // Server has GET /api/workspace/security-scans/:scanId/vulnerabilities which returns ALL
+  // vulnerabilities for the scan. There is no server-side hidden filter on this endpoint,
+  // so we fetch once and split active/hidden on the client using the `isHidden` field.
+  const scanVulnerabilitiesQuery = useQuery<Finding[]>({
+    queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"],
     queryFn: async () => {
       if (!selectedScanId) return [];
-      const res = await fetch(`/api/projects/${projectId}/security/scans/${selectedScanId}/findings?hidden=false`, { credentials: "include" });
+      const res = await fetch(`/api/workspace/security-scans/${selectedScanId}/vulnerabilities`, { credentials: "include" });
       if (!res.ok) return [];
       return res.json();
     },
     enabled: !!selectedScanId,
   });
 
-  const hiddenFindingsQuery = useQuery<Finding[]>({
-    queryKey: ["/api/projects", projectId, "security/scans", selectedScanId, "findings", "hidden"],
-    queryFn: async () => {
-      if (!selectedScanId) return [];
-      const res = await fetch(`/api/projects/${projectId}/security/scans/${selectedScanId}/findings?hidden=true`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!selectedScanId && activeTab === "hidden",
-  });
+  const activeFindingsQuery = {
+    data: scanVulnerabilitiesQuery.data?.filter((f: any) => !f.isHidden && !f.hidden),
+  };
+  const hiddenFindingsQuery = {
+    data: scanVulnerabilitiesQuery.data?.filter((f: any) => f.isHidden || f.hidden),
+  };
 
   const scanMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/security/scan`);
+      const res = await apiRequest("POST", `/api/workspace/projects/${projectId}/security-scans`);
       return res.json();
     },
     onSuccess: (data) => {
       setSelectedScanId(data.id);
       setShowHistory(false);
       setShowRescanBanner(false);
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspace/projects", projectId, "security-scans"] });
       setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans", data.id, "findings"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", data.id, "vulnerabilities"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/workspace/projects", projectId, "security-scans"] });
       }, 500);
     },
     onError: (err: any) => {
@@ -138,22 +137,22 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
 
   const hideMutation = useMutation({
     mutationFn: async (findingId: string) => {
-      const res = await apiRequest("PATCH", `/api/security/findings/${findingId}/hide`);
+      const res = await apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: true });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans", selectedScanId, "findings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"] });
       toast({ title: "Finding hidden", description: "Moved to hidden tab." });
     },
   });
 
   const unhideMutation = useMutation({
     mutationFn: async (findingId: string) => {
-      const res = await apiRequest("PATCH", `/api/security/findings/${findingId}/unhide`);
+      const res = await apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: false });
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans", selectedScanId, "findings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"] });
       toast({ title: "Finding restored", description: "Moved to active tab." });
     },
   });
@@ -161,11 +160,13 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   const fixWithAgentMutation = useMutation({
     mutationFn: async (finding: Finding) => {
       const sessionId = crypto.randomUUID();
-      await apiRequest("PATCH", `/api/security/findings/${finding.id}/agent-session`, { agentSessionId: sessionId });
+      // TODO(security-panel): no server route exists yet for linking a vulnerability to an
+      // agent session — need PATCH /api/workspace/vulnerabilities/:id/agent-session (or similar).
+      // For now, skip the server call and just open the AI panel so the UX still works.
       return { finding, sessionId };
     },
     onSuccess: ({ finding, sessionId }) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "security/scans", selectedScanId, "findings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"] });
       const message = `Fix security vulnerability:\n\n**${finding.title}** (${finding.severity})\n\nFile: ${finding.file}${finding.line ? `:${finding.line}` : ""}\n\n${finding.description}\n\n${finding.code ? `Code:\n\`\`\`\n${finding.code}\n\`\`\`\n` : ""}${finding.suggestion ? `Suggestion: ${finding.suggestion}` : ""}`;
       const event = new CustomEvent("open-ai-panel", { detail: { message, sessionId } });
       window.dispatchEvent(event);
@@ -175,11 +176,13 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   });
 
   const autoUpdateMutation = useMutation({
-    mutationFn: async ({ packageName, targetVersion }: { packageName: string; targetVersion: string }) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/security/auto-update`, { packageName, targetVersion });
-      return res.json();
+    // TODO(security-panel): no server route exists for automated dependency bumps —
+    // need POST /api/workspace/projects/:projectId/security-auto-update (or similar)
+    // that takes { packageName, targetVersion }. Until it lands, this mutation throws.
+    mutationFn: async (_input: { packageName: string; targetVersion: string }) => {
+      throw new Error("Auto-update endpoint not yet implemented on server");
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setShowRescanBanner(true);
       toast({ title: "Dependency updated", description: data.message });
     },

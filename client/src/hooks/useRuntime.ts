@@ -43,6 +43,7 @@ export function useRuntime(projectId: number) {
    */
   const { data: runtimeStatus, isLoading, error } = useQuery<RuntimeState>({
     queryKey,
+    queryFn: () => apiRequest<RuntimeState>('GET', `/api/runtime/${projectId}`),
     refetchInterval: (query) => {
       const data = query.state.data;
       // Poll more frequently when starting, less often when running/stopped
@@ -57,6 +58,7 @@ export function useRuntime(projectId: number) {
    */
   const { data: runtimeLogs } = useQuery<RuntimeLogs>({
     queryKey: logsQueryKey,
+    queryFn: () => apiRequest<RuntimeLogs>('GET', `/api/runtime/${projectId}/logs`),
     enabled: Boolean(runtimeStatus?.isRunning),
     refetchInterval: runtimeStatus?.isRunning ? 2000 : false,
   });
@@ -64,7 +66,7 @@ export function useRuntime(projectId: number) {
   /**
    * Start runtime
    */
-  const startRuntime = useMutation<RuntimeStartResult, Error>({
+  const startRuntime = useMutation<RuntimeStartResult, Error, void>({
     mutationFn: async () => {
       // apiRequest already returns parsed JSON
       return await apiRequest('POST', `/api/runtime/${projectId}/start`);
@@ -77,7 +79,7 @@ export function useRuntime(projectId: number) {
   /**
    * Stop runtime
    */
-  const stopRuntime = useMutation<RuntimeStopResult, Error>({
+  const stopRuntime = useMutation<RuntimeStopResult, Error, void>({
     mutationFn: async () => {
       // apiRequest already returns parsed JSON
       return await apiRequest('POST', `/api/runtime/${projectId}/stop`);
