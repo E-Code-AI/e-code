@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,6 +69,14 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
     queryKey: [`/api/projects/${projectId}/deployment/latest`],
     refetchInterval: isDeploying ? 2000 : false,
   });
+
+  // Stop polling once deployment reaches a terminal state
+  useEffect(() => {
+    const status = latestDeployment?.status;
+    if (isDeploying && (status === 'deployed' || status === 'failed' || status === 'stopped')) {
+      setIsDeploying(false);
+    }
+  }, [latestDeployment?.status, isDeploying]);
 
   const deployMutation = useMutation({
     mutationFn: async () => {
