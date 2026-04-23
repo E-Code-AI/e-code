@@ -274,6 +274,7 @@ export class ChatGPTService {
 
   // ===== OpenAI streaming =====
   private async *streamOpenAI(session: ChatSession): AsyncGenerator<string> {
+    if (!openai) throw new Error('OpenAI API key not configured');
     const msgs = session.messages.map(m => ({ role: m.role, content: m.content }));
     const params: any = { model: session.model, messages: msgs, stream: true };
 
@@ -293,6 +294,7 @@ export class ChatGPTService {
 
   // ===== Anthropic streaming =====
   private async *streamAnthropic(session: ChatSession): AsyncGenerator<string> {
+    if (!anthropic) throw new Error('Anthropic API key not configured');
     const systemContent = session.messages.find(m => m.role === 'system')?.content || buildSystemPrompt();
     const msgs = session.messages
       .filter(m => m.role !== 'system')

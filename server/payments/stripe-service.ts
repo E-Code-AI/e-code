@@ -19,6 +19,11 @@ const logger = createLogger('stripe-service');
 
 const stripe = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
 
+function requireStripe(): ReturnType<typeof getStripe> {
+  if (!stripe) throw new Error('Stripe is not configured: STRIPE_SECRET_KEY is not set');
+  return stripe;
+}
+
 export interface SubscriptionPlan {
   id: string;
   name: string;
@@ -201,7 +206,7 @@ export class StripePaymentService {
   }
 
   async createCustomer(userId: number, email: string, name?: string): Promise<string> {
-    const customer = await stripe.customers.create({
+    const customer = await requireStripe().customers.create({
       email,
       name,
       metadata: {
@@ -239,13 +244,13 @@ export class StripePaymentService {
 
     // Attach payment method if provided
     if (paymentMethodId) {
-      await stripe.paymentMethods.attach(paymentMethodId, {
+      await requireStripe().paymentMethods.attach(paymentMethodId, {
         customer: customerId,
       }, {
         idempotencyKey: generateIdempotencyKey('pm_attach', userId, paymentMethodId),
       });
 
-      await stripe.customers.update(customerId, {
+      await requireStripe().customers.update(customerId, {
         invoice_settings: {
           default_payment_method: paymentMethodId,
         },
@@ -274,7 +279,7 @@ export class StripePaymentService {
     let subscription: Stripe.Subscription;
     const subscriptionIdempotencyKey = generateIdempotencyKey('sub', userId, planId);
     try {
-      subscription = await stripe.subscriptions.create({
+      subscription = await requireStripe().subscriptions.create({
         customer: customerId,
         items: [
           { price: plan.id }, // Base subscription
@@ -300,7 +305,7 @@ export class StripePaymentService {
           `[Stripe] ⚠️  Could not add usage-based items to subscription (interval mismatch). ` +
           `Creating with base plan only. Configure usage prices with same interval in Stripe Dashboard.`
         );
-        subscription = await stripe.subscriptions.create({
+        subscription = await requireStripe().subscriptions.create({
           customer: customerId,
           items: [{ price: plan.id }],
           payment_behavior: 'default_incomplete',
@@ -352,7 +357,7 @@ export class StripePaymentService {
     const plan = this.plans.get(planId);
     if (!plan || plan.tier === 'free') throw new Error('Invalid paid plan');
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await requireStripe().checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       line_items: [{ price: plan.id, quantity: 1 }],
@@ -380,7 +385,7 @@ export class StripePaymentService {
       throw new Error('No active subscription found');
     }
 
-    const subscription = await stripe.subscriptions.update(
+    const subscription = await requireStripe().subscriptions.update(
       user.stripeSubscriptionId,
       { cancel_at_period_end: true },
       {
@@ -404,7 +409,7 @@ export class StripePaymentService {
       throw new Error('Invalid plan');
     }
 
-    const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+    const subscription = await requireStripe().subscriptions.retrieve(user.stripeSubscriptionId, {
       expand: ['items']
     });
 
@@ -414,7 +419,7 @@ export class StripePaymentService {
     }
 
     // Update subscription
-    const updatedSubscription = await stripe.subscriptions.update(
+    const updatedSubscription = await requireStripe().subscriptions.update(
       user.stripeSubscriptionId,
       {
         items: [{
@@ -469,7 +474,7 @@ export class StripePaymentService {
       );
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await requireStripe().paymentIntents.create({
       amount: amountInCents,
       currency,
       customer: customerId,
@@ -486,7 +491,7 @@ export class StripePaymentService {
   }
 
   async createSetupIntent(customerId: string): Promise<Stripe.SetupIntent> {
-    const setupIntent = await stripe.setupIntents.create({
+    const setupIntent = await requireStripe().setupIntents.create({
       customer: customerId,
       payment_method_types: ['card'],
       usage: 'off_session',
@@ -534,7 +539,7 @@ export class StripePaymentService {
         return false;
       }
 
-      const meterEvent = await stripe.billing.meterEvents.create({
+      const meterEvent = await requireStripe().billing.meterEvents.create({
         event_name: metric,
         payload: {
           stripe_customer_id: user.stripeCustomerId,
@@ -579,7 +584,7 @@ export class StripePaymentService {
     let event: Stripe.Event;
     
     try {
-      event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+      event = requireStripe().webhooks.constructEvent(payload, signature, webhookSecret);
     } catch (err) {
       const error = err as Error;
       throw new Error(`Webhook signature verification failed: ${error.message}`);
@@ -731,7 +736,7 @@ export class StripePaymentService {
     const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
     if (!customerId) return;
 
-    const customer = await stripe.customers.retrieve(customerId);
+    const customer = await requireStripe().customers.retrieve(customerId);
     if (customer.deleted) return;
     
     const userId = (customer as Stripe.Customer).metadata?.userId;
@@ -742,7 +747,7 @@ export class StripePaymentService {
       : invoice.subscription?.id;
 
     if (subscriptionId) {
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const subscription = await requireStripe().subscriptions.retrieve(subscriptionId);
       const { tier, priceId } = this.resolveTierFromSubscription(subscription);
 
       const updateData: Record<string, any> = {
@@ -774,7 +779,7 @@ export class StripePaymentService {
       : paymentIntent.customer?.id;
     if (!customerId) return;
 
-    const customer = await stripe.customers.retrieve(customerId);
+    const customer = await requireStripe().customers.retrieve(customerId);
     if (customer.deleted) return;
 
     const userId = (customer as Stripe.Customer).metadata?.userId;
@@ -813,7 +818,7 @@ export class StripePaymentService {
     const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id;
     if (!customerId) return;
 
-    const customer = await stripe.customers.retrieve(customerId);
+    const customer = await requireStripe().customers.retrieve(customerId);
     if (customer.deleted) return;
     
     const userId = (customer as Stripe.Customer).metadata?.userId;
@@ -853,7 +858,7 @@ export class StripePaymentService {
     if (!customerId) return;
 
     try {
-      const customer = await stripe.customers.retrieve(customerId);
+      const customer = await requireStripe().customers.retrieve(customerId);
       if (customer.deleted) return;
       
       const userId = (customer as Stripe.Customer).metadata?.userId;
@@ -878,11 +883,11 @@ export class StripePaymentService {
     if (!chargeId) return;
 
     try {
-      const charge = await stripe.charges.retrieve(chargeId);
+      const charge = await requireStripe().charges.retrieve(chargeId);
       const customerId = typeof charge.customer === 'string' ? charge.customer : charge.customer?.id;
       if (!customerId) return;
 
-      const customer = await stripe.customers.retrieve(customerId);
+      const customer = await requireStripe().customers.retrieve(customerId);
       if (customer.deleted) return;
       
       const userId = (customer as Stripe.Customer).metadata?.userId;
@@ -997,7 +1002,7 @@ export class StripePaymentService {
   }
 
   async getBillingHistory(customerId: string): Promise<any[]> {
-    const invoices = await stripe.invoices.list({
+    const invoices = await requireStripe().invoices.list({
       customer: customerId,
       limit: 12, // Last 12 invoices
     });

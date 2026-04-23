@@ -392,7 +392,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['embeddings', 'function_calling']
       },
       {
-        id: 'claude-sonnet-4-20250514',
+        id: 'claude-sonnet-4-6',
         name: 'Claude Sonnet 4',
         provider: 'anthropic',
         ragSupport: true,
@@ -401,7 +401,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
         features: ['long_context', 'function_calling']
       },
       {
-        id: 'claude-opus-4-20250514',
+        id: 'claude-opus-4-7',
         name: 'Claude Opus 4',
         provider: 'anthropic',
         ragSupport: true,
