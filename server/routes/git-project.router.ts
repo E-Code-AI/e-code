@@ -103,7 +103,8 @@ async function syncProjectFiles(projectId: string, projectDir: string): Promise<
 
 async function ensureGitInitialized(projectDir: string): Promise<void> {
   try {
-    await execa('git', ['rev-parse', '--git-dir'], { cwd: projectDir });
+    await fs.access(path.join(projectDir, '.git'));
+    return;
   } catch {
     await execa('git', ['init'], { cwd: projectDir });
     await execa('git', ['config', 'user.name', 'E-Code User'], { cwd: projectDir });
