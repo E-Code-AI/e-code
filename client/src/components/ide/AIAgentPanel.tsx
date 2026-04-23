@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -26,22 +26,52 @@ interface AIAgentPanelProps {
   onFileCreate?: (path: string, content: string) => void;
 }
 
+const INITIAL_MESSAGE: Message = {
+  id: 'initial-1',
+  role: 'assistant',
+  content: 'Hello! I\'m your AI coding assistant. I can help you write code, debug issues, and answer questions about your project. How can I help you today?',
+  timestamp: new Date()
+};
+
+const STORAGE_KEY = (projectId: string) => `ecode_agent_msgs_${projectId}`;
+const MAX_STORED = 50;
+
+function loadMessages(projectId: string): Message[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY(projectId));
+    if (!raw) return [INITIAL_MESSAGE];
+    const parsed = JSON.parse(raw) as Array<Message & { timestamp: string }>;
+    return parsed.map(m => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch {
+    return [INITIAL_MESSAGE];
+  }
+}
+
+function saveMessages(projectId: string, msgs: Message[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY(projectId), JSON.stringify(msgs.slice(-MAX_STORED)));
+  } catch {}
+}
+
 export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'initial-1',
-      role: 'assistant',
-      content: 'Hello! I\'m your AI coding assistant. I can help you write code, debug issues, and answer questions about your project. How can I help you today?',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() => loadMessages(projectId));
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  
+
+  // Persist messages whenever they change
+  useEffect(() => {
+    if (projectId) saveMessages(projectId, messages);
+  }, [projectId, messages]);
+
+  // Reset messages if projectId changes
+  useEffect(() => {
+    setMessages(loadMessages(projectId));
+  }, [projectId]);
+
   // Auto-resize textarea based on content (max 200px)
   const resizeTextarea = useCallback(() => {
     const textarea = textareaRef.current;
@@ -51,18 +81,11 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
       textarea.style.height = `${newHeight}px`;
     }
   }, []);
-  
+
   // Resize on input change
   useEffect(() => {
     resizeTextarea();
   }, [input, resizeTextarea]);
-  
-  // Load conversation history if exists
-  const { data: conversation } = useQuery({
-    queryKey: [`/api/agent/conversation?projectId=${projectId}`],
-    enabled: !!projectId,
-    retry: false
-  });
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -156,9 +179,21 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
           <Bot className="h-3.5 w-3.5" />
           AI Assistant
         </h3>
-        {isStreaming && (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--ecode-text-muted)]" />
-        )}
+        <div className="flex items-center gap-1.5">
+          {isStreaming && (
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--ecode-text-muted)]" />
+          )}
+          <button
+            onClick={() => {
+              setMessages([INITIAL_MESSAGE]);
+              if (projectId) saveMessages(projectId, [INITIAL_MESSAGE]);
+            }}
+            className="text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] text-[10px] px-1.5 py-0.5 rounded hover:bg-[var(--ecode-hover)] transition-colors"
+            title="Clear chat"
+          >
+            Clear
+          </button>
+        </div>
       </div>
       
       {/* Messages */}
