@@ -47,9 +47,16 @@ export class RealObjectStorageService {
 
   constructor() {
     this.bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] || 
-                      process.env.REPLIT_OBJECT_STORAGE_BUCKET || '';
+                      process.env.REPLIT_OBJECT_STORAGE_BUCKET ||
+                      process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+    const isReplitEnv = !!(
+      process.env.REPL_ID ||
+      process.env.REPL_SLUG ||
+      process.env.REPLIT_DEPLOYMENT ||
+      process.env.REPLIT
+    );
     this.useReplitStorage = !!this.bucketName && 
-                            !!process.env.REPL_ID && 
+                            isReplitEnv && 
                             process.env.NODE_ENV === 'production';
     this.storagePath = process.env.STORAGE_PATH || path.join(process.cwd(), 'storage');
     this.initialize();

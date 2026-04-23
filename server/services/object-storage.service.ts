@@ -37,10 +37,16 @@ export class ObjectStorageService {
   constructor() {
     // Bucket name: prefer Replit's auto-provisioned dir, fall back to explicit env var
     this.bucketName = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] ||
-                      process.env.REPLIT_OBJECT_STORAGE_BUCKET || '';
+                      process.env.REPLIT_OBJECT_STORAGE_BUCKET ||
+                      process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
 
-    const isReplitEnv = !!(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
-    const hasExplicitBucket = !!process.env.REPLIT_OBJECT_STORAGE_BUCKET;
+    const isReplitEnv = !!(
+      process.env.REPL_ID ||
+      process.env.REPL_SLUG ||
+      process.env.REPLIT_DEPLOYMENT ||
+      process.env.REPLIT
+    );
+    const hasExplicitBucket = !!(process.env.REPLIT_OBJECT_STORAGE_BUCKET || process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID);
 
     // Activate Replit GCS when:
     //   a) A bucket is configured AND we're on Replit AND in production, OR

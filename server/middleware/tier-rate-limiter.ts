@@ -29,7 +29,8 @@ const logger = createLogger('tier-rate-limiter');
 let redisClient: Redis | null = null;
 
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-if (redisUrl) {
+const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED === 'true';
+if (redisUrl && redisRateLimitEnabled) {
   try {
     redisClient = new Redis(redisUrl.replace('rediss://', 'redis://'), {
       maxRetriesPerRequest: 2,
@@ -54,6 +55,8 @@ if (redisUrl) {
     logger.warn('Redis tier rate limiter initialization failed - using memory fallback', { error: error?.message });
     redisClient = null;
   }
+} else if (redisUrl && !redisRateLimitEnabled) {
+  logger.info('Redis tier rate limiter disabled; using memory storage');
 } else {
   logger.info('No Redis URL configured - tier rate limiter using memory storage');
 }

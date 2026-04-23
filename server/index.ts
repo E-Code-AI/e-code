@@ -337,6 +337,16 @@ app.use((req, res, next) => {
     if (path.startsWith('/health')) {
       return next();
     }
+    if (
+      path === '/api/health' ||
+      path.startsWith('/api/health/') ||
+      path === '/api/readiness' ||
+      path === '/api/liveness' ||
+      path === '/api/monitoring/health' ||
+      path === '/api/cors-health'
+    ) {
+      return next();
+    }
     if (path.startsWith('/api/')) {
       return res.status(503).json({ status: 'starting', message: 'Server is initializing, please retry shortly' });
     }
@@ -410,8 +420,7 @@ app.get('/health', async (_req, res) => {
     if (overallStatus !== 'down') overallStatus = 'degraded';
   }
 
-  const notReady = serverState.phase !== 'ready';
-  const statusCode = overallStatus === 'down' || notReady ? 503 : 200;
+  const statusCode = overallStatus === 'down' ? 503 : 200;
   res.status(statusCode).json({
     status: overallStatus,
     phase: serverState.phase,
@@ -424,8 +433,25 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+app.get('/api/health', (_req, res) => {
+  const uptime = Date.now() - serverState.startTime;
+  res.status(200).json({
+    status: serverState.phase === 'ready' ? 'healthy' : 'starting',
+    service: 'E-Code Platform API',
+    phase: serverState.phase,
+    uptime: `${Math.round(uptime / 1000)}s`,
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: process.env.APP_VERSION || '1.0.0'
+  });
+});
+
 // Kubernetes-style liveness probe - always returns 200 if process is alive
 app.get('/health/liveness', (_req, res) => {
+  res.status(200).json({ status: 'alive' });
+});
+
+app.get('/api/health/liveness', (_req, res) => {
   res.status(200).json({ status: 'alive' });
 });
 
@@ -1347,11 +1373,11 @@ httpServer.listen(port, "0.0.0.0", () => {
   const startupMs = Date.now() - serverState.startTime;
 
   // Production startup banner — one clear, accurate snapshot of what's active
-  const isReplitVM = !!(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+  const isReplitVM = !!(process.env.REPL_ID || process.env.REPL_SLUG || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT);
 
   // Compute object storage state using the same logic as ObjectStorageService
-  const _hasBucket = !!(process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET);
-  const _hasExplicitBucket = !!process.env.REPLIT_OBJECT_STORAGE_BUCKET;
+  const _hasBucket = !!(process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET || process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID);
+  const _hasExplicitBucket = !!(process.env.REPLIT_OBJECT_STORAGE_BUCKET || process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID);
   const _usingReplitGCS = _hasBucket && isReplitVM &&
                           (process.env.NODE_ENV === 'production' || _hasExplicitBucket);
 
