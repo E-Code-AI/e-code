@@ -40,8 +40,12 @@ process.env.WATCHPACK_POLLING = 'true';
 // This file replaces the problematic server/index.ts
 import express from "express";
 import { createServer } from "http";
+import path from "path";
+import { fileURLToPath } from "url";
 import { configureCors } from "./middleware/cors-config";
 import { securityMiddleware } from "./middleware/security";
+import { MainRouter } from "./routes";
+import { getStorage } from "./storage";
 import { legacyRateLimiters, dynamicRateLimiter, logRateLimitViolations } from './middleware/rate-limiter';
 import { tierRateLimiters } from './middleware/tier-rate-limiter';
 import { monitoringMiddleware } from './services/monitoring.service';
@@ -59,6 +63,7 @@ import { createLogger } from './utils/logger';
 const logger = createLogger('server');
 const serverLogger = createCentralizedLogger('server');
 const app = express();
+const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
 
 // Secure CORS configuration - must be before other middleware
 configureCors(app);
@@ -332,7 +337,7 @@ const serverState = {
 
 
 app.use((req, res, next) => {
-  if (serverState.phase !== 'ready' && process.env.NODE_ENV === 'production') {
+  if ((serverState.phase === 'starting' || serverState.phase === 'listening') && process.env.NODE_ENV === 'production') {
     const path = req.path;
     if (path.startsWith('/health')) {
       return next();
@@ -576,12 +581,12 @@ httpServer.listen(port, "0.0.0.0", () => {
   // Solution: move mainRouter.registerRoutes() here — before any service setups
   // and well before errorTracking.setupExpressErrorHandler(app).
   try {
-    const { MainRouter: EarlyMainRouter } = await import("./routes");
-    const { getStorage: earlyGetStorage } = await import("./storage");
-    const earlyStorage = earlyGetStorage();
-    const earlyMainRouter = new EarlyMainRouter(earlyStorage);
+    const earlyStorage = getStorage();
+    const earlyMainRouter = new MainRouter(earlyStorage);
     earlyMainRouter.registerRoutes(app);
+    serverState.phase = 'loading';
     logger.info('[Routes] ✅ All API routes registered');
+    logger.info('[Startup] API is available; background services are still initializing');
   } catch (error) {
     logger.error(`[Routes] FATAL: Failed to register API routes: ${error}`);
     throw error; // Crash fast — no API routes means the app is broken
@@ -1105,9 +1110,11 @@ httpServer.listen(port, "0.0.0.0", () => {
   // In production, esbuild replaces process.env.NODE_ENV with "production".
   if (process.env.NODE_ENV === 'production') {
     const fs = await import('fs');
-    // In the production esbuild bundle, __dirname = the directory of dist/index.js = dist/
-    // so the Vite frontend build at dist/public/ is one level down.
-    const distPublic = path.resolve(__dirname, 'public');
+    // In the esbuild bundle, runtimeDir resolves to dist/.
+    // In source ESM under tsx, runtimeDir resolves to server/, so the frontend lives in ../dist/public.
+    const distPublic = runtimeDir.endsWith(`${path.sep}dist`)
+      ? path.resolve(runtimeDir, 'public')
+      : path.resolve(runtimeDir, '..', 'dist', 'public');
     const distIndex = path.join(distPublic, 'index.html');
 
     if (fs.existsSync(distPublic)) {

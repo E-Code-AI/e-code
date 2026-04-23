@@ -10,11 +10,6 @@ import { ProjectsRouter } from "./projects.router";
 import { FilesRouter } from "./files.router";
 import { UsersRouter } from "./users.router";
 import { HealthRouter } from "./health.router";
-import { ChatGPTRouter } from "./chatgpt.router";
-import { LoadTestingRouter } from "./load-testing.router";
-import agentRouter from "./agent.router";
-import createAgentPreferencesRouter from "./agent-preferences.router";
-import testAgentRouter from "./test-agent";
 import collaborationRouter from "./collaboration";
 import deploymentRouter from "./deployment";
 import fileUploadRouter from "./file-upload";
@@ -44,14 +39,7 @@ import { GitRouter } from "./git.router";
 import gitProjectRouter from "./git-project.router";
 import debugRouter from "./debug.router";
 import databaseRouter from "./database.router";
-import agentAutonomousRouter from "./agent-autonomous.router";
-import agentTestingRouter from "./agent-testing.router";
-import agentWorkflowRouter from "./agent-workflow.router";
-import createAgentPlanRouter from "./agent-plan.router";
-import createAgentBuildRouter from "./agent-build.router";
-import aiModelsRouter from "./ai-models.router";
 import featureFlagsRouter from "./feature-flags.router";
-import workspaceBootstrapRouter from "./workspace-bootstrap.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
 import adminSystemMetricsRouter from "./admin-system-metrics.router";
 import adminBillingRouter from "./admin-billing.router";
@@ -64,25 +52,17 @@ import projectSearchRouter from "./project-search.router";
 import logsViewerRouter from "./logs-viewer.router";
 import envVarsRouter from "./env-vars.router";
 import projectDataRouter from "./project-data.router";
-import codeGenerationRouter from "./code-generation.router";
 import codeReviewRouter from "./code-review.router";
 import syncRouter from "./sync";
-import backgroundTestsRouter from "./background-tests.router";
 import maxAutonomyRouter from "./max-autonomy.router";
 import { bountiesRouter } from "./bounties.router";
 import agentGridRouter from "./agent-grid.router";
-import createAgentToolsRouter from "./agent-tools.router";
 import sshKeysRouter from "./ssh-keys.router";
 import projectMonitoringRouter from "./project-monitoring.router";
 import { authCompleteRouter } from "./auth-complete";
 import placeholderRouter from "./placeholder.router";
 import analyticsRouter from "./analytics.router";
-import ragRouter from "./rag.router";
-import agentStepCacheRouter from "./agent-step-cache.router";
 import { prometheusRouter } from "../monitoring/prometheus";
-import aiHealthRouter from "./ai-health";
-import generationMetricsRouter from "./generation-metrics.router";
-import memoryBankRouter from "./memory-bank.router";
 // DEPRECATED: Use unified checkpoints router instead
 // import autoCheckpointsRouter from "./auto-checkpoints.router";
 import unifiedCheckpointsRouter from "./unified-checkpoints.router";
@@ -117,14 +97,44 @@ import networkingRouter from './networking.router';
 import videoRouter from './video.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
+const lazyAgentRouter = async (req: any, res: any, next: any) => {
+  try {
+    const module = await import('./agent.router');
+    return module.default(req, res, next);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const lazyRouter = (loader: () => Promise<{ default: any }>) => async (req: any, res: any, next: any) => {
+  try {
+    const module = await loader();
+    return module.default(req, res, next);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const lazyTestAgentRouter = lazyRouter(() => import('./test-agent'));
+const lazyAiModelsRouter = lazyRouter(() => import('./ai-models.router'));
+const lazyWorkspaceBootstrapRouter = lazyRouter(() => import('./workspace-bootstrap.router'));
+const lazyCodeGenerationRouter = lazyRouter(() => import('./code-generation.router'));
+const lazyMemoryBankRouter = lazyRouter(() => import('./memory-bank.router'));
+const lazyAgentAutonomousRouter = lazyRouter(() => import('./agent-autonomous.router'));
+const lazyAgentTestingRouter = lazyRouter(() => import('./agent-testing.router'));
+const lazyAgentWorkflowRouter = lazyRouter(() => import('./agent-workflow.router'));
+const lazyAgentStepCacheRouter = lazyRouter(() => import('./agent-step-cache.router'));
+const lazyBackgroundTestsRouter = lazyRouter(() => import('./background-tests.router'));
+const lazyRagRouter = lazyRouter(() => import('./rag.router'));
+const lazyAiHealthRouter = lazyRouter(() => import('./ai-health'));
+const lazyGenerationMetricsRouter = lazyRouter(() => import('./generation-metrics.router'));
+
 export class MainRouter {
   private authRouter: AuthRouter;
   private projectsRouter: ProjectsRouter;
   private filesRouter: FilesRouter;
   private usersRouter: UsersRouter;
   private healthRouter: HealthRouter;
-  private chatgptRouter: ChatGPTRouter;
-  private loadTestingRouter: LoadTestingRouter;
 
   constructor(private storage: IStorage) {
     this.authRouter = new AuthRouter(storage);
@@ -132,14 +142,90 @@ export class MainRouter {
     this.filesRouter = new FilesRouter(storage);
     this.usersRouter = new UsersRouter(storage);
     this.healthRouter = new HealthRouter(storage);
-    this.chatgptRouter = new ChatGPTRouter(storage);
-    this.loadTestingRouter = new LoadTestingRouter(storage);
   }
 
   /**
    * Register all routers with the Express application
    */
   registerRoutes(app: Application): void {
+    let cachedChatGPTRouter: Router | undefined;
+    const lazyChatGPTRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedChatGPTRouter) {
+          const { ChatGPTRouter } = await import('./chatgpt.router');
+          cachedChatGPTRouter = new ChatGPTRouter(this.storage).getRouter();
+        }
+        return cachedChatGPTRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
+    let cachedLoadTestingRouter: Router | undefined;
+    const lazyLoadTestingRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedLoadTestingRouter) {
+          const { LoadTestingRouter } = await import('./load-testing.router');
+          cachedLoadTestingRouter = new LoadTestingRouter(this.storage).getRouter();
+        }
+        return cachedLoadTestingRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
+    let cachedAgentPreferencesRouter: Router | undefined;
+    const lazyAgentPreferencesRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedAgentPreferencesRouter) {
+          const module = await import('./agent-preferences.router');
+          cachedAgentPreferencesRouter = module.default(this.storage);
+        }
+        return cachedAgentPreferencesRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
+    let cachedAgentToolsRouter: Router | undefined;
+    const lazyAgentToolsRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedAgentToolsRouter) {
+          const module = await import('./agent-tools.router');
+          cachedAgentToolsRouter = module.default();
+        }
+        return cachedAgentToolsRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
+    let cachedAgentPlanRouter: Router | undefined;
+    const lazyAgentPlanRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedAgentPlanRouter) {
+          const module = await import('./agent-plan.router');
+          cachedAgentPlanRouter = module.default(this.storage);
+        }
+        return cachedAgentPlanRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
+    let cachedAgentBuildRouter: Router | undefined;
+    const lazyAgentBuildRouter = async (req: any, res: any, next: any) => {
+      try {
+        if (!cachedAgentBuildRouter) {
+          const module = await import('./agent-build.router');
+          cachedAgentBuildRouter = module.default(this.storage);
+        }
+        return cachedAgentBuildRouter(req, res, next);
+      } catch (error) {
+        return next(error);
+      }
+    };
+
     // Health check routes (no auth required)
     app.use('/api', this.healthRouter.getRouter());
 
@@ -153,7 +239,7 @@ export class MainRouter {
     app.use('/api', logsRouter);
 
     // Load testing routes (admin only - Fortune 500 requirement)
-    app.use('/api', this.loadTestingRouter.getRouter());
+    app.use('/api', lazyLoadTestingRouter);
 
     // CSRF token endpoint
     app.get('/api/csrf-token', csrfTokenEndpoint);
@@ -192,7 +278,7 @@ export class MainRouter {
     app.use('/api/projects', tierRateLimiters.api, this.filesRouter.getRouter());
 
     // ChatGPT admin routes (router uses /api/admin/chatgpt/... paths internally)
-    app.use('/api', tierRateLimiters.api, this.chatgptRouter.getRouter());
+    app.use('/api', tierRateLimiters.api, lazyChatGPTRouter);
 
     // AI Usage Tracking (Pay-As-You-Go) - Track all AI/Agent requests for billing
     // No blocking - users pay for what they use via Stripe metered billing
@@ -200,40 +286,40 @@ export class MainRouter {
     app.use('/api/admin/agent', aiUsageTracker);
 
     // Agent preferences routes (authenticated users) - user-facing preferences
-    app.use('/api/agent', tierRateLimiters.api, createAgentPreferencesRouter(this.storage));
+    app.use('/api/agent', tierRateLimiters.api, lazyAgentPreferencesRouter);
 
     // Agent tools routes (web search, testing, extended thinking) - authenticated users
-    app.use('/api/agent', tierRateLimiters.api, createAgentToolsRouter());
+    app.use('/api/agent', tierRateLimiters.api, lazyAgentToolsRouter);
 
     // Agent routes (admin only)
     // app.use('/api/admin/agent', tierRateLimiters.api, agentRouter);
 
     // Agent plan routes (REAL AI-powered plan generation with streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
-    app.use('/api/agent/plan', tierRateLimiters.streaming, createAgentPlanRouter(this.storage));
+    app.use('/api/agent/plan', tierRateLimiters.streaming, lazyAgentPlanRouter);
 
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
-    app.use('/api/agent/build', tierRateLimiters.streaming, createAgentBuildRouter(this.storage));
+    app.use('/api/agent/build', tierRateLimiters.streaming, lazyAgentBuildRouter);
 
     // Autonomous agent routes (authenticated users) - single mount point
-    app.use('/api/agent', tierRateLimiters.streaming, agentAutonomousRouter);
+    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentAutonomousRouter);
 
     // Agent workflow routes (feature generation, build selection) - authenticated users
-    app.use('/api/agent', tierRateLimiters.api, agentWorkflowRouter);
+    app.use('/api/agent', tierRateLimiters.api, lazyAgentWorkflowRouter);
 
     // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
     // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
-    app.use('/api/agent', tierRateLimiters.streaming, agentRouter);
+    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentRouter);
 
     // Agent step cache routes (caching intermediate agent phases for cost optimization)
-    app.use('/api/agent/step-cache', tierRateLimiters.api, agentStepCacheRouter);
+    app.use('/api/agent/step-cache', tierRateLimiters.api, lazyAgentStepCacheRouter);
 
     // Agent testing routes (browser testing, element selector, recording) - Phase 2 (ADMIN ONLY)
-    app.use('/api/admin/agent', tierRateLimiters.api, agentTestingRouter);
+    app.use('/api/admin/agent', tierRateLimiters.api, lazyAgentTestingRouter);
 
     // Test agent routes (uses /api/test/agent internally)
-    app.use('/api', tierRateLimiters.api, testAgentRouter);
+    app.use('/api', tierRateLimiters.api, lazyTestAgentRouter);
 
     // Runner status (no auth required for health check)
     // Handled by runnerWorkspacesRouter at /api/runner/status
@@ -316,7 +402,7 @@ export class MainRouter {
     });
 
     // Generation Metrics routes (App generation performance monitoring)
-    app.use('/api/metrics/generation', tierRateLimiters.api, generationMetricsRouter);
+    app.use('/api/metrics/generation', tierRateLimiters.api, lazyGenerationMetricsRouter);
 
     // AI Usage Tracking (Pay-As-You-Go) - Track AI routes for billing
     // CRITICAL: Apply BEFORE mounting routers to ensure all AI endpoints are tracked
@@ -335,14 +421,14 @@ export class MainRouter {
     app.use('/api/admin/ai-usage', tierRateLimiters.api, aiUsageRouter);
 
     // AI Models Selection routes (both paths for frontend compatibility)
-    app.use('/api/models', tierRateLimiters.api, aiModelsRouter);
-    app.use('/api/ai/models', tierRateLimiters.api, aiModelsRouter);
+    app.use('/api/models', tierRateLimiters.api, lazyAiModelsRouter);
+    app.use('/api/ai/models', tierRateLimiters.api, lazyAiModelsRouter);
 
     // RAG (Retrieval-Augmented Generation) routes
-    app.use('/api/rag', tierRateLimiters.api, ragRouter);
+    app.use('/api/rag', tierRateLimiters.api, lazyRagRouter);
 
     // Memory Bank routes (Kilocode-inspired persistent project context)
-    app.use('/api/memory-bank', tierRateLimiters.api, memoryBankRouter);
+    app.use('/api/memory-bank', tierRateLimiters.api, lazyMemoryBankRouter);
 
     // Unified Checkpoints routes (Replit-style checkpoint system)
     // DEPRECATED: Old autoCheckpointsRouter - use unifiedCheckpointsRouter instead
@@ -350,10 +436,10 @@ export class MainRouter {
     app.use('/api', tierRateLimiters.api, unifiedCheckpointsRouter);
 
     // AI Health Check routes (Fortune 500 - validates all 21 models with 60s cache)
-    app.use('/api/ai/health', tierRateLimiters.api, aiHealthRouter);
+    app.use('/api/ai/health', tierRateLimiters.api, lazyAiHealthRouter);
 
     // Code Generation routes (SSE streaming for real-time code generation)
-    app.use('/api/code-generation', tierRateLimiters.streaming, codeGenerationRouter);
+    app.use('/api/code-generation', tierRateLimiters.streaming, lazyCodeGenerationRouter);
 
     // Feature Flags routes (uses /api/feature-flags internally)
     app.use('/api', tierRateLimiters.api, featureFlagsRouter);
@@ -393,7 +479,7 @@ export class MainRouter {
     app.use('/api/workspace', tierRateLimiters.api, createWorkspaceRoutes(this.storage));
 
     // Workspace Bootstrap routes (Fortune 500-grade orchestration)
-    app.use('/api/workspace', tierRateLimiters.api, workspaceBootstrapRouter);
+    app.use('/api/workspace', tierRateLimiters.api, lazyWorkspaceBootstrapRouter);
 
     // Mobile app routes
     app.use('/api', tierRateLimiters.api, mobileRouter);
@@ -483,7 +569,7 @@ export class MainRouter {
     app.use('/api/sync', tierRateLimiters.api, syncRouter);
 
     // Background Testing routes (Replit Agent 3 auto-testing)
-    app.use('/api/background-tests', tierRateLimiters.api, backgroundTestsRouter);
+    app.use('/api/background-tests', tierRateLimiters.api, lazyBackgroundTestsRouter);
 
     // Max Autonomy Mode routes (200+ minute autonomous sessions)
     app.use('/api/autonomy', tierRateLimiters.streaming, maxAutonomyRouter);

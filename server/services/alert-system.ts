@@ -11,6 +11,11 @@ import { eq, and, or, gte, lte, desc, sql } from 'drizzle-orm';
 
 const logger = createLogger('alert-system');
 
+function isSchemaMismatch(error: any): boolean {
+  const code = error?.code || error?.cause?.code;
+  return code === '42P01' || code === '42703' || code === '42704';
+}
+
 interface AlertRule {
   id: string;
   name: string;
@@ -85,6 +90,7 @@ export class AlertSystem extends EventEmitter {
   private anomalyDetectors: Map<string, AnomalyDetector> = new Map();
   private metricHistory: Map<string, number[]> = new Map();
   private mutedAlerts: Set<string> = new Set();
+  private persistenceDisabled = false;
   
   constructor() {
     super();
@@ -617,6 +623,9 @@ export class AlertSystem extends EventEmitter {
 
   // Database operations
   private async saveAlertToDatabase(alert: ActiveAlert) {
+    if (this.persistenceDisabled) {
+      return;
+    }
     try {
       await db.insert(alerts).values({
         type: alert.ruleId,
@@ -626,12 +635,23 @@ export class AlertSystem extends EventEmitter {
         triggered_at: alert.triggeredAt,
         metadata: alert.details
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.persistenceDisabled = true;
+        logger.warn('Disabling alert-system persistence due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to save alert to database:', error);
     }
   }
 
   private async updateAlertInDatabase(alert: ActiveAlert) {
+    if (this.persistenceDisabled) {
+      return;
+    }
     try {
       await db.update(alerts)
         .set({
@@ -641,7 +661,15 @@ export class AlertSystem extends EventEmitter {
           resolved_at: alert.resolvedAt
         })
         .where(eq(alerts.type, alert.ruleId));
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.persistenceDisabled = true;
+        logger.warn('Disabling alert-system updates due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to update alert in database:', error);
     }
   }
@@ -652,6 +680,9 @@ export class AlertSystem extends EventEmitter {
   }
 
   private async loadActiveAlerts() {
+    if (this.persistenceDisabled) {
+      return;
+    }
     try {
       const activeAlertsFromDb = await db
         .select()
@@ -676,19 +707,38 @@ export class AlertSystem extends EventEmitter {
       });
 
       logger.info(`Loaded ${this.activeAlerts.size} active alerts`);
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.persistenceDisabled = true;
+        logger.warn('Disabling alert-system active alert loading due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to load active alerts:', error);
     }
   }
 
   private async loadAlertHistory(limit: number) {
+    if (this.persistenceDisabled) {
+      return [];
+    }
     try {
       return await db
         .select()
         .from(alerts)
         .orderBy(desc(alerts.triggered_at))
         .limit(limit);
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.persistenceDisabled = true;
+        logger.warn('Disabling alert-system history loading due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return [];
+      }
       logger.error('Failed to load alert history:', error);
       return [];
     }

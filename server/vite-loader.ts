@@ -13,8 +13,16 @@ import { createLogger } from './utils/logger';
 import expressStatic from 'express';
 import pathModule from 'path';
 import fsModule from 'fs';
+import { fileURLToPath } from 'url';
 
 const logger = createLogger('vite-loader');
+const runtimeDir = pathModule.dirname(fileURLToPath(import.meta.url));
+
+function resolveDistPublicPath() {
+  return runtimeDir.endsWith(`${pathModule.sep}dist`)
+    ? pathModule.resolve(runtimeDir, 'public')
+    : pathModule.resolve(runtimeDir, '..', 'dist', 'public');
+}
 
 /**
  * Attempts to load and setup Vite with proper error handling
@@ -176,10 +184,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     } else {
       logger.info('[Vite Loader] 🏭 Production mode - serving static files from dist/public...');
       try {
-        // Production build outputs to dist/public
-        // __dirname in the production esbuild bundle (dist/index.js) = dist/
-        // so pathModule.resolve(__dirname, 'public') = dist/public
-        const distPath = pathModule.resolve(__dirname, 'public');
+        // Production build outputs to dist/public.
+        // In the bundle runtimeDir = dist/, in tsx source runtimeDir = server/.
+        const distPath = resolveDistPublicPath();
         const indexHtmlPath = pathModule.join(distPath, 'index.html');
         
         if (!fsModule.existsSync(distPath)) {
@@ -268,7 +275,7 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
 export async function setupFallbackServer(app: Application): Promise<void> {
   // Uses top-level synchronous imports (expressStatic, pathModule, fsModule)
   // to avoid async hangs in the production bundle
-  const publicPath = pathModule.resolve(__dirname, 'public');
+  const publicPath = resolveDistPublicPath();
   const builtIndexPath = pathModule.join(publicPath, 'index.html');
   
   if (fsModule.existsSync(publicPath) && fsModule.existsSync(builtIndexPath)) {

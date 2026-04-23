@@ -17,6 +17,11 @@ const execAsync = promisify(exec);
 
 const logger = createLogger('performance-monitoring');
 
+function isSchemaMismatch(error: any): boolean {
+  const code = error?.code || error?.cause?.code;
+  return code === '42P01' || code === '42703' || code === '42704';
+}
+
 interface MetricSnapshot {
   timestamp: number;
   cpu: {
@@ -76,6 +81,8 @@ export class PerformanceMonitoringService extends EventEmitter {
   private dbQueryCount = 0;
   private dbQueryTime = 0;
   private customMetrics: Map<string, number> = new Map();
+  private metricsPersistenceDisabled = false;
+  private alertsPersistenceDisabled = false;
   
   // Network stats baseline
   private lastNetworkStats = {
@@ -307,6 +314,9 @@ export class PerformanceMonitoringService extends EventEmitter {
   }
 
   private async storeInDatabase(snapshot: MetricSnapshot) {
+    if (this.metricsPersistenceDisabled) {
+      return;
+    }
     try {
       const metricTypes = [
         { name: 'cpu_usage', value: snapshot.cpu.usage, category: 'cpu', unit: 'percent' },
@@ -341,7 +351,15 @@ export class PerformanceMonitoringService extends EventEmitter {
       }));
 
       await db.insert(performanceMetrics).values(metricsToInsert);
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.metricsPersistenceDisabled = true;
+        logger.warn('Disabling performance metrics persistence due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to store metrics in database:', error);
     }
   }
@@ -392,6 +410,9 @@ export class PerformanceMonitoringService extends EventEmitter {
     this.emit('alert', { type, severity, message, timestamp: Date.now() });
     
     // Store alert in database
+    if (this.alertsPersistenceDisabled) {
+      return;
+    }
     try {
       await db.insert(alerts).values({
         type,
@@ -400,12 +421,23 @@ export class PerformanceMonitoringService extends EventEmitter {
         status: 'active',
         triggered_at: new Date()
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.alertsPersistenceDisabled = true;
+        logger.warn('Disabling alert persistence due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to store alert:', error);
     }
   }
 
   private async cleanupOldMetrics() {
+    if (this.metricsPersistenceDisabled) {
+      return;
+    }
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - this.metricsRetentionDays);
@@ -415,7 +447,15 @@ export class PerformanceMonitoringService extends EventEmitter {
         .where(lte(performanceMetrics.timestamp, cutoffDate));
         
       logger.info('Cleaned up old metrics');
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.metricsPersistenceDisabled = true;
+        logger.warn('Disabling metrics cleanup due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return;
+      }
       logger.error('Failed to cleanup old metrics:', error);
     }
   }
@@ -453,6 +493,9 @@ export class PerformanceMonitoringService extends EventEmitter {
     }
     
     // Get from database for longer time ranges
+    if (this.metricsPersistenceDisabled) {
+      return memoryMetrics;
+    }
     try {
       const dbMetrics = await db
         .select()
@@ -466,7 +509,15 @@ export class PerformanceMonitoringService extends EventEmitter {
         .orderBy(desc(performanceMetrics.timestamp));
         
       return dbMetrics;
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.metricsPersistenceDisabled = true;
+        logger.warn('Disabling metrics reads due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return memoryMetrics;
+      }
       logger.error('Failed to get metrics from database:', error);
       return memoryMetrics;
     }
@@ -476,6 +527,9 @@ export class PerformanceMonitoringService extends EventEmitter {
     const startTime = new Date();
     startTime.setHours(startTime.getHours() - hours);
     
+    if (this.metricsPersistenceDisabled) {
+      return [];
+    }
     try {
       const data = await db
         .select()
@@ -489,7 +543,15 @@ export class PerformanceMonitoringService extends EventEmitter {
         .orderBy(performanceMetrics.timestamp);
         
       return data;
-    } catch (error) {
+    } catch (error: any) {
+      if (isSchemaMismatch(error)) {
+        this.metricsPersistenceDisabled = true;
+        logger.warn('Disabling historical metrics reads due to schema mismatch', {
+          code: error?.code || error?.cause?.code,
+          message: error?.message || error?.cause?.message,
+        });
+        return [];
+      }
       logger.error('Failed to get historical data:', error);
       return [];
     }

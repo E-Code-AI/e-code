@@ -8,7 +8,7 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick", "python3", "gcc", 
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 node --max-old-space-size=4096 dist/index.js"]
+run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 ./node_modules/.bin/tsx runner/index.ts & RUNNER_BASE_URL=http://localhost:8081 NODE_OPTIONS='--max-old-space-size=4096' ./node_modules/.bin/tsx server/index.ts"]
 build = ["sh", "-c", "echo 'No build needed - dist/ is pre-built and committed'"]
 
 [workflows]

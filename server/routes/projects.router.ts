@@ -7,11 +7,9 @@ import { csrfProtection } from "../middleware/csrf";
 import type { User, Project } from "@shared/schema";
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { getProjectAIAgent } from '../services/project-ai-agent.service';
 import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
-import { memoryBankService } from '../services/memory-bank.service';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
@@ -478,6 +476,7 @@ export class ProjectsRouter {
 
         // Auto-initialize memory bank for new project
         try {
+          const { memoryBankService } = await import('../services/memory-bank.service');
           await memoryBankService.initialize(
             project.id, 
             validatedData.description || validatedData.name
@@ -712,6 +711,7 @@ export class ProjectsRouter {
         }
 
         // Get AI agent instance
+        const { getProjectAIAgent } = await import('../services/project-ai-agent.service');
         const aiAgent = getProjectAIAgent(this.storage);
 
         // Get user ID for security controls

@@ -5,11 +5,8 @@ import { execSync } from 'child_process';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { aiProviderManager } from '../ai/ai-provider-manager';
-import { agentOrchestrator } from '../services/agent-orchestrator.service';
 import { db } from '../db';
 import { sql } from 'drizzle-orm';
-import { runtimeWarmup } from '../execution/runtime-warmup';
 
 export class HealthRouter {
   private router: Router;
@@ -310,6 +307,13 @@ export class HealthRouter {
         ]);
         const dbLatencyMs = Date.now() - startTime;
 
+        // Load heavy AI/agent services only when this detailed endpoint is called.
+        // Importing them during boot can delay core API route registration.
+        const [{ aiProviderManager }, { agentOrchestrator }] = await Promise.all([
+          import('../ai/ai-provider-manager'),
+          import('../services/agent-orchestrator.service'),
+        ]);
+
         // Get circuit breaker statuses from AI Provider Manager
         const circuitBreakers = aiProviderManager.getCircuitBreakerStatuses();
         
@@ -476,7 +480,8 @@ export class HealthRouter {
     });
 
     // Language Runtime Health Check - All 29 languages
-    this.router.get("/health/runtimes", (req: Request, res: Response) => {
+    this.router.get("/health/runtimes", async (req: Request, res: Response) => {
+      const { runtimeWarmup } = await import('../execution/runtime-warmup');
       const status = runtimeWarmup.getStatus();
       res.status(200).json({
         timestamp: new Date().toISOString(),

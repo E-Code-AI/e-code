@@ -8,17 +8,34 @@ const logger = createLogger('background-testing-service');
 // This service will gracefully handle missing Playwright to prevent crashes
 let playwright: any = null;
 let playwrightAvailable = false;
+let playwrightLoadPromise: Promise<any> | null = null;
 
-(async () => {
-  try {
-    playwright = await import('playwright');
-    playwrightAvailable = true;
-    logger.info('✅ Playwright runtime available');
-  } catch (error) {
-    logger.error('❌ Playwright not available. Install with: npm install playwright && npx playwright install chromium');
-    logger.error('Background testing will be disabled until Playwright is installed');
+async function loadPlaywright(timeoutMs = 5000): Promise<any> {
+  if (playwrightAvailable && playwright) return playwright;
+  if (!playwrightLoadPromise) {
+    playwrightLoadPromise = import('playwright')
+      .then((mod) => {
+        playwright = mod;
+        playwrightAvailable = true;
+        logger.info('✅ Playwright runtime available');
+        return mod;
+      })
+      .catch((error) => {
+        playwrightLoadPromise = null;
+        playwrightAvailable = false;
+        playwright = null;
+        logger.error('❌ Playwright not available. Install with: npm install playwright && npx playwright install chromium');
+        logger.error('Background testing will be disabled until Playwright is installed');
+        throw error;
+      });
   }
-})();
+
+  const timeout = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error(`Playwright load timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  return Promise.race([playwrightLoadPromise, timeout]);
+}
 
 interface TestJob {
   projectId: number;
@@ -180,12 +197,16 @@ export class BackgroundTestingService extends EventEmitter {
   
   private async runTests(projectId: number): Promise<TestResults> {
     // 🔥 CRITICAL: Check Playwright availability before running tests
-    if (!playwrightAvailable || !playwright) {
+    const pw = await loadPlaywright().catch((error) => {
+      logger.error(`Cannot run tests: ${error.message}`);
+      return null;
+    });
+    if (!pw) {
       logger.error('Cannot run tests: Playwright not available');
       throw new Error('Playwright not installed. Run: npm install playwright && npx playwright install chromium');
     }
     
-    const browser = await playwright.chromium.launch({
+    const browser = await pw.chromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
