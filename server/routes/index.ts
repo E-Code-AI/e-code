@@ -95,6 +95,7 @@ import statusRouter from './status.router';
 import mcpServersRouter from './mcp-servers.router';
 import networkingRouter from './networking.router';
 import videoRouter from './video.router';
+import screenshotsRouter from './screenshots.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
 const lazyAgentRouter = async (req: any, res: any, next: any) => {
@@ -603,6 +604,9 @@ export class MainRouter {
 
     // Project Auth — authentication configuration per project (/api/project-auth/*)
     app.use('/api/project-auth', tierRateLimiters.api, projectAuthRouter);
+
+    // Screenshots routes — capture, list, download, delete project preview screenshots
+    app.use('/api/screenshots', tierRateLimiters.api, screenshotsRouter);
 
     // Preview proxy routes — proxies HTTP/WebSocket traffic to project preview ports
     setupPreviewRoutes(app);
