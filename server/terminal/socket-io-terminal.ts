@@ -3,6 +3,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import type { Server as HTTPServer } from 'http';
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
+import { spawn as spawnChildProcess } from 'child_process';
 import { winstonLogger as logger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import cookieParser from 'cookie';
@@ -61,6 +62,35 @@ async function getPty() {
     }
   }
   return ptyModule;
+}
+
+function createBasicShellAdapter(shellPath: string, workDir: string, env: Record<string, string>) {
+  const process = spawnChildProcess(shellPath, ['-i'], {
+    cwd: workDir,
+    env,
+    stdio: 'pipe',
+  });
+
+  return {
+    write(data: string) {
+      process.stdin.write(data);
+    },
+    resize(_cols: number, _rows: number) {
+      // No-op fallback when PTY is unavailable.
+    },
+    kill() {
+      process.kill();
+    },
+    onData(handler: (data: string) => void) {
+      process.stdout.on('data', (chunk) => handler(chunk.toString()));
+      process.stderr.on('data', (chunk) => handler(chunk.toString()));
+    },
+    onExit(handler: ({ exitCode, signal }: { exitCode: number; signal: number }) => void) {
+      process.on('exit', (exitCode, signal) => {
+        handler({ exitCode: exitCode ?? 0, signal: typeof signal === 'number' ? signal : 0 });
+      });
+    },
+  };
 }
 
 const PROJECT_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -266,8 +296,6 @@ export class SocketIOTerminalService {
 
   private async createSession(projectId: string, userId: string, sessionKey: string): Promise<PTYSession | null> {
     try {
-      const pty = await getPty();
-
       const workDir = await this.setupProjectDirectory(projectId);
 
       logger.info(`[SocketIO Terminal] Spawning PTY for project ${projectId} in ${workDir}`);
@@ -297,13 +325,20 @@ export class SocketIOTerminalService {
         ? []
         : ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${bashPath} -i`];
 
-      const ptyProcess = pty.spawn(resourceLimitedShell, shellArgs, {
-        name: 'xterm-256color',
-        cols: 80,
-        rows: 24,
-        cwd: workDir,
-        env: sandboxedEnv,
-      });
+      let ptyProcess: any;
+      try {
+        const pty = await getPty();
+        ptyProcess = pty.spawn(resourceLimitedShell, shellArgs, {
+          name: 'xterm-256color',
+          cols: 80,
+          rows: 24,
+          cwd: workDir,
+          env: sandboxedEnv,
+        });
+      } catch (error) {
+        logger.warn(`[SocketIO Terminal] PTY spawn failed for ${sessionKey}, falling back to basic shell process`, error);
+        ptyProcess = createBasicShellAdapter(bashPath, workDir, sandboxedEnv);
+      }
 
       const buffer = new CircularBuffer(10000);
       this.outputBuffers.set(sessionKey, buffer);
@@ -386,6 +421,50 @@ export class SocketIOTerminalService {
 
   getIO(): SocketIOServer | null {
     return this.io;
+  }
+
+  listSessions(projectId: string, userId: string) {
+    return Array.from(this.sessions.values())
+      .filter((session) => session.projectId === projectId && session.userId === userId)
+      .map((session) => ({
+        sessionId: session.sessionKey.split(':').slice(2).join(':'),
+        projectId: session.projectId,
+        createdAt: new Date(session.createdAt),
+        lastActivity: new Date(session.lastActivity),
+        status: session.clients.size > 0 ? 'active' : 'idle',
+        connectedClients: session.clients.size,
+        cols: session.cols,
+        rows: session.rows,
+      }));
+  }
+
+  getSession(projectId: string, userId: string, requestedSessionId: string) {
+    const sessionKey = `${projectId}:${userId}:${requestedSessionId}`;
+    const session = this.sessions.get(sessionKey);
+    if (!session) {
+      return null;
+    }
+
+    return {
+      sessionId: requestedSessionId,
+      projectId: session.projectId,
+      createdAt: new Date(session.createdAt),
+      lastActivity: new Date(session.lastActivity),
+      status: session.clients.size > 0 ? 'active' : 'idle',
+      connectedClients: session.clients.size,
+      cols: session.cols,
+      rows: session.rows,
+    };
+  }
+
+  closeSession(projectId: string, userId: string, requestedSessionId: string) {
+    const sessionKey = `${projectId}:${userId}:${requestedSessionId}`;
+    if (!this.sessions.has(sessionKey)) {
+      return false;
+    }
+
+    this.cleanupSession(sessionKey);
+    return true;
   }
 }
 
