@@ -62,12 +62,15 @@ export const TIER_LIMITS = {
 export type SubscriptionTier = keyof typeof TIER_LIMITS;
 export type LimitType = keyof typeof TIER_LIMITS['free'];
 
-// Initialize Redis client if available
+// Initialize Redis client if explicitly enabled. The platform already uses Redis
+// for sessions, cache, idempotency, and collaboration; on small Redis Cloud
+// plans, adding separate rate-limiter clients can exhaust maxclients at boot.
 let redisClient: Redis | null = null;
 
 // Try to initialize Redis for distributed rate limiting
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-if (redisUrl) {
+const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED === 'true';
+if (redisUrl && redisRateLimitEnabled) {
   try {
     redisClient = new Redis(redisUrl.replace('rediss://', 'redis://'), {
       maxRetriesPerRequest: 2,
@@ -88,6 +91,8 @@ if (redisUrl) {
     logger.warn('Redis rate limiter initialization failed, using memory');
     redisClient = null;
   }
+} else if (redisUrl && !redisRateLimitEnabled) {
+  logger.info('Redis rate limiter disabled; using in-memory rate limits');
 }
 
 // ✅ PRODUCTION FIX (Dec 21, 2025): LRU cache to prevent memory exhaustion

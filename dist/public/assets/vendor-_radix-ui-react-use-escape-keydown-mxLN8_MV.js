@@ -1,1 +1,0 @@
-import{a as r}from"./vendor-react-Biz4eTZ3.js";import{u as n}from"./vendor-_radix-ui-react-use-callback-ref-DpUd3oXM.js";function p(o,e=globalThis?.document){const t=n(o);r.useEffect(()=>{const a=s=>{s.key==="Escape"&&t(s)};return e.addEventListener("keydown",a,{capture:!0}),()=>e.removeEventListener("keydown",a,{capture:!0})},[t,e])}export{p as u};

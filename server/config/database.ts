@@ -8,6 +8,7 @@ import postgres from 'postgres';
 import type { Request, Response, NextFunction } from 'express';
 import * as schema from "@shared/schema";
 import { createLogger } from '../utils/logger';
+import { normalizePostgresJsConnection } from '../utils/postgres-js-url';
 
 const logger = createLogger('database-config');
 
@@ -80,7 +81,9 @@ class DatabaseManager {
     environment: DatabaseEnvironment,
     config: Partial<DatabaseConfig>
   ): DatabaseConnection {
-    const client = postgres(connectionString, {
+    const normalizedConnection = normalizePostgresJsConnection(connectionString);
+    const client = postgres(normalizedConnection.connectionString, {
+      ...normalizedConnection.options,
       max: config.maxConnections || 20,
       idle_timeout: config.idleTimeout || 60,
       max_lifetime: config.maxLifetime || 3600,

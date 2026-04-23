@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import postgres from 'postgres';
 import * as schema from "@shared/schema";
 import { databaseQueryOptimizer } from './services/database-query-optimizer';
+import { normalizePostgresJsConnection } from './utils/postgres-js-url';
 import { 
   databaseManager, 
   databaseContextMiddleware, 
@@ -36,9 +37,11 @@ function getDatabaseUrl(): string {
 }
 
 const DATABASE_URL = getDatabaseUrl();
+const postgresJsConnection = normalizePostgresJsConnection(DATABASE_URL);
 
 // Enhanced postgres client with enterprise-grade connection management
-const baseClient = postgres(DATABASE_URL, {
+const baseClient = postgres(postgresJsConnection.connectionString, {
+  ...postgresJsConnection.options,
   max: parseInt(process.env.DB_POOL_SIZE || '10'), // 7.2-FIX: configurable pool, default 10 for Replit VM
   idle_timeout: 60, // Keep connections alive for 1 minute when idle
   max_lifetime: 60 * 60, // 1 hour connection lifetime to prevent stale connections

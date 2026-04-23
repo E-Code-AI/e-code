@@ -66,6 +66,7 @@ const optionalEnvSchema = z.object({
   STORAGE_BACKEND: z.enum(['replit', 's3', 'local']).optional(),
   STORAGE_PATH: z.string().optional(),
   REPLIT_OBJECT_STORAGE_BUCKET: z.string().optional(),
+  DEFAULT_OBJECT_STORAGE_BUCKET_ID: z.string().optional(),
   S3_BUCKET: z.string().optional(),
   S3_REGION: z.string().optional(),
   S3_ACCESS_KEY_ID: z.string().optional(),
@@ -145,7 +146,11 @@ function validateEnvironment(): EnvConfig {
     }
 
     const storageBackend = process.env.STORAGE_BACKEND?.toLowerCase();
-    const hasReplitStorage = !!(process.env.PRIVATE_OBJECT_DIR || process.env.REPLIT_OBJECT_STORAGE_BUCKET);
+    const hasReplitStorage = !!(
+      process.env.PRIVATE_OBJECT_DIR ||
+      process.env.REPLIT_OBJECT_STORAGE_BUCKET ||
+      process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID
+    );
     const hasS3Storage = !!(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY_ID);
     if (!isReplit && !storageBackend && !hasReplitStorage && !hasS3Storage) {
       throw new Error(

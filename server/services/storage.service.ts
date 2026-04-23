@@ -48,8 +48,15 @@ export interface StorageServiceConfig {
 function resolveConfig(): StorageServiceConfig {
   const isProduction = process.env.NODE_ENV === 'production';
   const replitBucket = process.env.PRIVATE_OBJECT_DIR?.split('/')[1] ||
-                       process.env.REPLIT_OBJECT_STORAGE_BUCKET || '';
-  const hasReplit = !!replitBucket && !!process.env.REPL_ID;
+                       process.env.REPLIT_OBJECT_STORAGE_BUCKET ||
+                       process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+  const isReplit = !!(
+    process.env.REPL_ID ||
+    process.env.REPL_SLUG ||
+    process.env.REPLIT_DEPLOYMENT ||
+    process.env.REPLIT
+  );
+  const hasReplit = !!replitBucket && isReplit;
   const hasS3 = !!process.env.S3_BUCKET && !!process.env.S3_ACCESS_KEY_ID;
 
   let backend: StorageBackend;
