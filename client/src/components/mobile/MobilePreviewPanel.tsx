@@ -166,7 +166,9 @@ export function MobilePreviewPanel({
 
   const republishMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/deployments/projects/${projectId}/deploy`, {});
+      return apiRequest('POST', `/api/projects/${projectId}/republish`, {
+        forceRebuild: false,
+      });
     },
     onSuccess: () => {
       toast({ title: 'Republishing...', description: 'Your app is being republished.' });
