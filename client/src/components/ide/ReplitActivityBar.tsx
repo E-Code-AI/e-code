@@ -23,9 +23,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Search,
+  Brain,
 } from 'lucide-react';
 
-export type ActivityItem = 
+export type ActivityItem =
   | 'files'
   | 'search'
   | 'git'
@@ -36,6 +37,7 @@ export type ActivityItem =
   | 'deploy'
   | 'secrets'
   | 'database'
+  | 'mcp-suite'
   | 'preview'
   | 'workflows'
   | 'extensions'
@@ -70,7 +72,8 @@ const defaultItems: ActivityBarItem[] = [
   { id: 'agent', icon: Bot, label: 'AI Agent', shortcut: '⌘⇧A' },
   { id: 'deploy', icon: Rocket, label: 'Deploy' },
   { id: 'secrets', icon: Key, label: 'Secrets' },
-  { id: 'database', icon: Database, label: 'Database', separator: true },
+  { id: 'database', icon: Database, label: 'Database' },
+  { id: 'mcp-suite', icon: Brain, label: 'MCP Suite', separator: true },
   { id: 'preview', icon: Eye, label: 'Preview', shortcut: '⌘⇧P' },
   { id: 'workflows', icon: Zap, label: 'Workflows' },
 ];

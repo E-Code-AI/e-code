@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,21 +10,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { 
-  Database, 
+import {
+  Database,
   Table as TableIcon,
   Play,
   Download,
   RefreshCw,
   Loader2,
-  AlertTriangle,
   CheckCircle,
-  Code,
+  AlertCircle,
   Eye,
   Columns,
-  Key
+  Key,
 } from 'lucide-react';
-import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 
 interface DatabaseTable {
   name: string;
@@ -49,61 +46,53 @@ interface QueryResult {
   executionTime: number;
 }
 
-export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
+export function PostgreSQLMCPPanel({ projectId: _projectId }: { projectId?: number }) {
   const [activeTab, setActiveTab] = useState('tables');
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [sqlQuery, setSqlQuery] = useState('');
   const [queryHistory, setQueryHistory] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Load from localStorage on mount
   useEffect(() => {
     const savedHistory = localStorage.getItem('sql-query-history');
     if (savedHistory) {
-      setQueryHistory(JSON.parse(savedHistory));
+      try {
+        setQueryHistory(JSON.parse(savedHistory));
+      } catch {
+        // ignore invalid history
+      }
     }
   }, []);
 
-  // Query for database tables
-  const { data: tables, isLoading: tablesLoading, refetch: refetchTables } = useQuery<DatabaseTable[]>({
+  const {
+    data: tables,
+    isLoading: tablesLoading,
+    isError: tablesError,
+    refetch: refetchTables,
+  } = useQuery<DatabaseTable[]>({
     queryKey: ['/api/mcp/postgres/tables'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/mcp/postgres/tables');
-      if (!response.ok) throw new Error('Failed to fetch tables');
-      return response.json();
-    }
+    queryFn: () => apiRequest<DatabaseTable[]>('GET', '/api/mcp/postgres/tables'),
   });
 
-  // Query for selected table schema
   const { data: tableSchema, isLoading: schemaLoading } = useQuery<TableSchema[]>({
     queryKey: ['/api/mcp/postgres/schema', selectedTable],
-    queryFn: async () => {
-      if (!selectedTable) return [];
-      const response = await apiRequest('GET', `/api/mcp/postgres/schema/${selectedTable}`);
-      if (!response.ok) throw new Error('Failed to fetch table schema');
-      return response.json();
-    },
-    enabled: !!selectedTable
+    queryFn: () =>
+      apiRequest<TableSchema[]>(
+        'GET',
+        `/api/mcp/postgres/schema/${encodeURIComponent(selectedTable || '')}`,
+      ),
+    enabled: !!selectedTable,
   });
 
-  // Execute query mutation
   const executeQueryMutation = useMutation<QueryResult, Error, string>({
-    mutationFn: async (query: string) => {
-      const response = await apiRequest('POST', '/api/mcp/postgres/query', { query });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Query execution failed');
-      }
-      return response.json();
-    },
+    mutationFn: (query: string) =>
+      apiRequest<QueryResult>('POST', '/api/mcp/postgres/query', { query }),
     onSuccess: (data, query) => {
       toast({
         title: 'Query Executed',
-        description: `${data.rowCount} rows affected in ${data.executionTime}ms`
+        description: `${data.rowCount} rows affected in ${data.executionTime}ms`,
       });
-      
-      // Add to history
-      const newHistory = [query, ...queryHistory.filter(q => q !== query)].slice(0, 10);
+      const newHistory = [query, ...queryHistory.filter((q) => q !== query)].slice(0, 10);
       setQueryHistory(newHistory);
       localStorage.setItem('sql-query-history', JSON.stringify(newHistory));
     },
@@ -111,34 +100,45 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
       toast({
         title: 'Query Failed',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
-    }
+    },
   });
 
-  // Backup database mutation
-  const backupMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/mcp/postgres/backup');
-      if (!response.ok) throw new Error('Backup failed');
-      return response.json();
-    },
+  const backupMutation = useMutation<{ filename: string }, Error, void>({
+    mutationFn: () => apiRequest<{ filename: string }>('POST', '/api/mcp/postgres/backup'),
     onSuccess: (data) => {
       toast({
         title: 'Backup Created',
-        description: `Database backed up successfully: ${data.filename}`
+        description: `Database backed up successfully: ${data.filename}`,
       });
     },
     onError: (error) => {
       toast({
         title: 'Backup Failed',
         description: error.message,
-        variant: 'destructive'
+        variant: 'destructive',
       });
-    }
+    },
   });
 
   const queryResult = executeQueryMutation.data;
+  const statusBadge = tablesError ? (
+    <Badge variant="outline" className="bg-red-500/10 text-red-500 border-red-500/30">
+      <AlertCircle className="w-3 h-3 mr-1" />
+      Disconnected
+    </Badge>
+  ) : tablesLoading ? (
+    <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+      Connecting
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+      <CheckCircle className="w-3 h-3 mr-1" />
+      Connected
+    </Badge>
+  );
 
   return (
     <Card className="h-full bg-[var(--ecode-bg)] border-[var(--ecode-border)]">
@@ -149,15 +149,13 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
             <CardTitle className="text-[var(--ecode-text)]">PostgreSQL Database</CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Connected
-            </Badge>
+            {statusBadge}
             <Button
               variant="outline"
               size="sm"
               onClick={() => backupMutation.mutate()}
               disabled={backupMutation.isPending}
+              data-testid="mcp-postgres-backup"
             >
               {backupMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -183,11 +181,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
           <TabsContent value="tables" className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[13px] font-medium text-[var(--ecode-text)]">Database Tables</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refetchTables()}
-              >
+              <Button variant="ghost" size="sm" onClick={() => refetchTables()}>
                 <RefreshCw className="w-4 h-4" />
               </Button>
             </div>
@@ -199,22 +193,28 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-[var(--ecode-muted)]" />
                     </div>
-                  ) : tables?.length === 0 ? (
+                  ) : tablesError ? (
+                    <div className="text-center py-8 text-[var(--ecode-muted)]">
+                      <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>Could not load tables</p>
+                    </div>
+                  ) : !tables || tables.length === 0 ? (
                     <div className="text-center py-8 text-[var(--ecode-muted)]">
                       <Database className="w-12 h-12 mx-auto mb-2 opacity-50" />
                       <p>No tables found</p>
                     </div>
                   ) : (
                     <div className="p-2">
-                      {tables?.map((table) => (
+                      {tables.map((table) => (
                         <div
-                          key={table.name}
+                          key={`${table.schema}.${table.name}`}
                           onClick={() => setSelectedTable(table.name)}
                           className={`p-3 rounded-lg mb-2 cursor-pointer transition-colors ${
                             selectedTable === table.name
                               ? 'bg-[var(--ecode-accent)]/10 border border-[var(--ecode-accent)]'
                               : 'hover:bg-[var(--ecode-sidebar-hover)]'
                           }`}
+                          data-testid={`mcp-postgres-table-${table.name}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -269,7 +269,10 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
                                   {col.type}
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant={col.nullable ? 'outline' : 'default'} className="text-[11px]">
+                                  <Badge
+                                    variant={col.nullable ? 'outline' : 'default'}
+                                    className="text-[11px]"
+                                  >
                                     {col.nullable ? 'Yes' : 'No'}
                                   </Badge>
                                 </TableCell>
@@ -301,6 +304,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
               <Button
                 onClick={() => executeQueryMutation.mutate(sqlQuery)}
                 disabled={!sqlQuery.trim() || executeQueryMutation.isPending}
+                data-testid="mcp-postgres-execute"
               >
                 {executeQueryMutation.isPending ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -313,7 +317,7 @@ export function PostgreSQLMCPPanel({ projectId }: { projectId?: number }) {
               <Button
                 variant="outline"
                 onClick={() => {
-                  const viewQuery = selectedTable 
+                  const viewQuery = selectedTable
                     ? `SELECT * FROM ${selectedTable} LIMIT 100;`
                     : 'SELECT * FROM  LIMIT 100;';
                   setSqlQuery(viewQuery);

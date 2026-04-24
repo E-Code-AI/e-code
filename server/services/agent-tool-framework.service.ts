@@ -1332,6 +1332,177 @@ export class AgentToolFrameworkService extends EventEmitter {
       }
     });
 
+    // MCP Suite Tools — expose PostgreSQL, GitHub, and Memory MCP endpoints to the agent
+    this.registerTool({
+      name: 'mcp_postgres_query',
+      displayName: 'MCP: PostgreSQL Query',
+      description: 'Run a SQL query against the PostgreSQL MCP server. Returns columns + rows.',
+      capability: 'database',
+      inputSchema: z.object({
+        sql: z.string().describe('SQL query to execute'),
+        projectId: z.number().optional().describe('Optional project scope (for logging/audit)'),
+      }),
+      execute: async (input) => {
+        const { DatabaseManagementService } = await import('./database-management-service');
+        const svc = new DatabaseManagementService();
+        const queryUpper = input.sql.trim().toUpperCase();
+        const banned = ['DROP DATABASE', 'DROP SCHEMA', 'ALTER SYSTEM'];
+        for (const pattern of banned) {
+          if (queryUpper.includes(pattern)) {
+            return { success: false, error: `Blocked dangerous operation: ${pattern}` };
+          }
+        }
+        const result = await svc.executeQuery(input.sql);
+        if (result.error) {
+          return { success: false, error: result.error, executionTime: result.executionTime };
+        }
+        const columns = result.rows.length ? Object.keys(result.rows[0]) : [];
+        return {
+          success: true,
+          columns,
+          rows: result.rows.slice(0, 200),
+          rowCount: result.rowCount,
+          executionTime: result.executionTime,
+        };
+      },
+    });
+
+    this.registerTool({
+      name: 'mcp_github_search_issues',
+      displayName: 'MCP: GitHub Search Issues',
+      description: 'Search GitHub issues for the authenticated user. Optionally scope to a repo (owner/name).',
+      capability: 'api_integration',
+      inputSchema: z.object({
+        query: z.string().describe('Search terms'),
+        repo: z.string().optional().describe('Optional repo in owner/name form'),
+        state: z.enum(['open', 'closed', 'all']).optional().default('open'),
+      }),
+      execute: async (input, context) => {
+        const { githubOAuth } = await import('./github-oauth');
+        const userIdNum = typeof context.userId === 'string'
+          ? parseInt(context.userId, 10) || 0
+          : context.userId;
+        const token = await githubOAuth.getUserToken(userIdNum);
+        if (!token) {
+          return { success: false, error: 'GitHub not connected for this user' };
+        }
+
+        let url: string;
+        if (input.repo) {
+          const params = new URLSearchParams({ state: input.state ?? 'open', per_page: '30' });
+          url = `https://api.github.com/repos/${input.repo}/issues?${params.toString()}`;
+        } else {
+          const q = `${input.query} is:issue state:${input.state ?? 'open'} involves:@me`.trim();
+          const params = new URLSearchParams({ q, per_page: '30' });
+          url = `https://api.github.com/search/issues?${params.toString()}`;
+        }
+
+        const response = await fetch(url, {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          const msg = await response.text().catch(() => response.statusText);
+          return { success: false, status: response.status, error: msg };
+        }
+        const body = (await response.json()) as any;
+        const items = Array.isArray(body) ? body : body?.items ?? [];
+        const issues = items
+          .filter((i: any) => !i.pull_request)
+          .map((issue: any) => ({
+            number: issue.number,
+            title: issue.title,
+            state: issue.state,
+            url: issue.html_url,
+            author: issue.user?.login ?? null,
+            createdAt: issue.created_at,
+            updatedAt: issue.updated_at,
+            repository: issue.repository_url?.split('/').slice(-2).join('/') ?? input.repo ?? null,
+          }));
+        return { success: true, count: issues.length, issues };
+      },
+    });
+
+    this.registerTool({
+      name: 'mcp_github_list_prs',
+      displayName: 'MCP: GitHub List Pull Requests',
+      description: 'List pull requests for a GitHub repository (owner/name).',
+      capability: 'api_integration',
+      inputSchema: z.object({
+        repo: z.string().describe('Repository in owner/name form'),
+        state: z.enum(['open', 'closed', 'all']).optional().default('open'),
+      }),
+      execute: async (input, context) => {
+        const { githubOAuth } = await import('./github-oauth');
+        const userIdNum = typeof context.userId === 'string'
+          ? parseInt(context.userId, 10) || 0
+          : context.userId;
+        const token = await githubOAuth.getUserToken(userIdNum);
+        if (!token) {
+          return { success: false, error: 'GitHub not connected for this user' };
+        }
+
+        const params = new URLSearchParams({ state: input.state ?? 'open', per_page: '30' });
+        const url = `https://api.github.com/repos/${input.repo}/pulls?${params.toString()}`;
+        const response = await fetch(url, {
+          headers: {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!response.ok) {
+          const msg = await response.text().catch(() => response.statusText);
+          return { success: false, status: response.status, error: msg };
+        }
+        const body = (await response.json()) as any[];
+        const prs = body.map((pr: any) => ({
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          url: pr.html_url,
+          head: pr.head?.ref ?? null,
+          base: pr.base?.ref ?? null,
+          author: pr.user?.login ?? null,
+          createdAt: pr.created_at,
+          updatedAt: pr.updated_at,
+          mergedAt: pr.merged_at ?? null,
+        }));
+        return { success: true, count: prs.length, pullRequests: prs };
+      },
+    });
+
+    this.registerTool({
+      name: 'mcp_memory_search',
+      displayName: 'MCP: Memory Search',
+      description: 'Semantic search over the Memory MCP knowledge graph.',
+      capability: 'ai_analysis',
+      inputSchema: z.object({
+        query: z.string().describe('Search query'),
+        topK: z.number().optional().default(10).describe('Max results to return (1-50)'),
+        type: z.string().optional().describe('Optional node type filter'),
+      }),
+      execute: async (input) => {
+        const { memoryMCP } = await import('../mcp/servers/memory-mcp');
+        const limit = Math.min(Math.max(input.topK ?? 10, 1), 50);
+        const nodes = await memoryMCP.searchNodes(input.query, input.type, limit);
+        const results = await Promise.all(
+          nodes.map(async (node) => {
+            const edges = await memoryMCP.getEdges(node.id, 'both');
+            return {
+              id: node.id,
+              type: node.type,
+              content: node.content,
+              metadata: node.metadata || {},
+              connections: edges.length,
+            };
+          }),
+        );
+        return { success: true, count: results.length, results };
+      },
+    });
+
     // 10b. Write entire .env file content (with auditing + DB persistence)
     this.registerTool({
       name: 'write_env_file',
