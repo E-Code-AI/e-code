@@ -309,6 +309,14 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     setTimeout(connectWebSocket, 500);
   };
 
+  const handleNewSession = () => {
+    handleReset();
+    toast({
+      title: 'New shell session',
+      description: 'Opened a fresh terminal session',
+    });
+  };
+
   const handleCopy = () => {
     if (xtermRef.current) {
       const selection = xtermRef.current.getSelection();
@@ -388,6 +396,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
             variant="ghost"
             size="icon"
             className="h-7 w-7 rounded-md text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
+            onClick={handleNewSession}
             data-testid="button-terminal-new"
           >
             <Plus className="w-3.5 h-3.5" />
