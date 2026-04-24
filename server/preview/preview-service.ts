@@ -14,6 +14,7 @@ import { environmentVariables } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('preview-service');
 
@@ -21,6 +22,21 @@ const fileHashCache = new Map<string, Map<string, string>>();
 
 function contentHash(content: string): string {
   return createHash('sha256').update(content).digest('hex');
+}
+
+function hasRunnableFiles(files: any[]): boolean {
+  return files.some((file) => {
+    if (file.isDirectory || file.isFolder) return false;
+    const filePath = String(file.path || file.name || '');
+    const fileName = String(file.name || filePath.split('/').pop() || '');
+    return (
+      fileName === 'package.json' ||
+      filePath.endsWith('.html') ||
+      filePath.endsWith('.py') ||
+      fileName.endsWith('.html') ||
+      fileName.endsWith('.py')
+    );
+  });
 }
 
 /**
@@ -246,6 +262,43 @@ export class PreviewService {
       await fs.writeFile(filePath, content, 'utf-8');
       projectCache.set(relPath, hash);
     }
+  }
+
+  private async readWorkspaceFiles(projectId: string): Promise<any[]> {
+    const workspacePath = getProjectWorkspacePath(projectId);
+    const discovered: any[] = [];
+
+    const walk = async (dir: string) => {
+      const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+      for (const entry of entries) {
+        if (entry.name === '.git' || entry.name === 'node_modules') continue;
+        const fullPath = path.join(dir, entry.name);
+        const relPath = path.relative(workspacePath, fullPath);
+        if (entry.isDirectory()) {
+          discovered.push({
+            name: entry.name,
+            path: relPath,
+            isDirectory: true,
+            isFolder: true,
+            content: '',
+          });
+          await walk(fullPath);
+          continue;
+        }
+
+        const content = await fs.readFile(fullPath, 'utf8').catch(() => '');
+        discovered.push({
+          name: entry.name,
+          path: relPath,
+          isDirectory: false,
+          isFolder: false,
+          content,
+        });
+      }
+    };
+
+    await walk(workspacePath);
+    return discovered;
   }
 
   private hashProjectId(projectId: string): number {
@@ -553,6 +606,21 @@ export class PreviewService {
       const errInstance = this.makeErrorInstance(projectId, runId, `Failed to read project files: ${err.message}`);
       this.previews.set(projectId, errInstance);
       return errInstance;
+    }
+
+    let workspaceFiles: any[] = [];
+    if (!files || files.length === 0 || !hasRunnableFiles(files)) {
+      workspaceFiles = await this.readWorkspaceFiles(projectId).catch(() => []);
+      if (workspaceFiles.length > 0) {
+        const merged = new Map<string, any>();
+        for (const file of files || []) {
+          merged.set(String(file.path || file.name), file);
+        }
+        for (const file of workspaceFiles) {
+          merged.set(String(file.path || file.name), file);
+        }
+        files = [...merged.values()];
+      }
     }
 
     if (!files || files.length === 0) {

@@ -4,6 +4,9 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { previewEvents } from '../preview/preview-websocket';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../utils/secrets-manager';
+import * as fs from 'fs/promises';
+import path from 'path';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 // Hot-reload script to inject into HTML files
 // This connects to the preview WebSocket and reloads when file changes are detected
@@ -241,6 +244,33 @@ function withBootstrapQuery(url: string, req: any): string {
   return `${url}${separator}bootstrap=${encodeURIComponent(String(bootstrapToken))}`;
 }
 
+async function workspaceHasRunnableFiles(projectId: string): Promise<boolean> {
+  const workspacePath = getProjectWorkspacePath(projectId);
+
+  const walk = async (dir: string): Promise<boolean> => {
+    const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (await walk(fullPath)) return true;
+        continue;
+      }
+
+      if (
+        entry.name === 'package.json' ||
+        entry.name.endsWith('.html') ||
+        entry.name.endsWith('.py')
+      ) {
+        return true;
+      }
+    }
+    return false;
+  };
+
+  return walk(workspacePath);
+}
+
 const resolvePreviewAccess = async (req: any, res: any) => {
   const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
   const projectIdParam = req.params.projectId || req.params.id;
@@ -303,8 +333,6 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
   return next();
 };
 
-import path from 'path';
-
 const router = Router();
 
 // Get preview URL - matches frontend query endpoint
@@ -333,11 +361,12 @@ router.get('/url', async (req, res) => {
     
     // Check if project has runnable files
     const files = await storage.getFilesByProject(projectId);
-    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isDirectory);
-    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isDirectory);
-    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isDirectory);
+    const hasHtmlFile = files.some(f => (f.path || f.name || '').endsWith('.html') && !f.isDirectory);
+    const hasPackageJson = files.some(f => (f.name === 'package.json' || f.path === 'package.json') && !f.isDirectory);
+    const hasPythonFiles = files.some(f => (f.path || f.name || '').endsWith('.py') && !f.isDirectory);
+    const hasWorkspaceRunnableFiles = await workspaceHasRunnableFiles(projectId);
     
-    if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+    if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles && !hasWorkspaceRunnableFiles) {
       // No runnable files, return null URL
       return res.json({ 
         previewUrl: null,
@@ -371,7 +400,7 @@ router.get('/url', async (req, res) => {
     
     if (!preview || preview.status !== 'running') {
       // For HTML-only projects, return static preview URL
-      if (hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+      if ((hasHtmlFile || hasWorkspaceRunnableFiles) && !hasPackageJson && !hasPythonFiles) {
         const previewUrl = withBootstrapQuery(`/api/preview/projects/${projectId}/preview/`, req);
         return res.json({ 
           previewUrl,

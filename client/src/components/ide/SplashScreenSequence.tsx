@@ -109,6 +109,7 @@ interface SplashScreenSequenceProps {
   appName?: string;
   currentTask?: string;
   progress?: number;
+  loopUntilComplete?: boolean;
 }
 
 function DotIndicator({ total, active, onDotClick }: { total: number; active: number; onDotClick: (i: number) => void }) {
@@ -301,6 +302,7 @@ export function SplashScreenSequence({
   appName,
   currentTask,
   progress,
+  loopUntilComplete = false,
 }: SplashScreenSequenceProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
@@ -324,6 +326,9 @@ export function SplashScreenSequence({
       setActiveSlide((prev) => {
         const next = prev + 1;
         if (next >= TOTAL_SLIDES) {
+          if (loopUntilComplete && !isComplete) {
+            return 0;
+          }
           setSequenceFinished(true);
           return prev;
         }
@@ -331,7 +336,7 @@ export function SplashScreenSequence({
       });
     }, 3500);
     return () => clearInterval(interval);
-  }, [isExiting, sequenceFinished]);
+  }, [isExiting, sequenceFinished, loopUntilComplete, isComplete]);
 
   const handleDotClick = (index: number) => {
     if (index === activeSlide) return;

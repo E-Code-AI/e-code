@@ -22,6 +22,7 @@ import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { apiRequest } from '@/lib/queryClient';
 import { createPreviewWebSocket, type ResilientWebSocket } from '@/lib/websocket-resilience';
 import { useToast } from '@/hooks/use-toast';
+import { SplashScreenSequence } from '@/components/ide/SplashScreenSequence';
 
 interface ResponsiveWebPreviewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -59,6 +60,7 @@ export function ResponsiveWebPreview({
   const [isStartingPreview, setIsStartingPreview] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const autoStartAttemptedRef = useRef(false);
+  const postBuildStartAttemptedRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevUrlRef = useRef<string>('');
   const previewWsRef = useRef<ResilientWebSocket | null>(null);
@@ -67,7 +69,7 @@ export function ResponsiveWebPreview({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const { toast } = useToast();
   
-  const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress } = useAutonomousBuildStore();
+  const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress, currentTask } = useAutonomousBuildStore();
 
   // Track online/offline state
   useEffect(() => {
@@ -168,7 +170,33 @@ export function ResponsiveWebPreview({
   // Reset auto-start flag when projectId changes
   useEffect(() => {
     autoStartAttemptedRef.current = false;
+    postBuildStartAttemptedRef.current = false;
   }, [projectId]);
+
+  useEffect(() => {
+    if (buildPhase !== 'complete') {
+      postBuildStartAttemptedRef.current = false;
+      return;
+    }
+
+    const shouldRetryStart =
+      isOnline &&
+      !isStartingPreview &&
+      !previewUrl &&
+      (
+        previewStatus === 'stopped' ||
+        previewStatus === 'no_runnable_files' ||
+        currentState === 'no-content'
+      ) &&
+      !postBuildStartAttemptedRef.current;
+
+    if (!shouldRetryStart) {
+      return;
+    }
+
+    postBuildStartAttemptedRef.current = true;
+    startPreview();
+  }, [buildPhase, isOnline, isStartingPreview, previewUrl, previewStatus, currentState, startPreview]);
 
   // Reset iframe loading state when URL changes (prevents race conditions)
   useEffect(() => {
@@ -292,6 +320,23 @@ export function ResponsiveWebPreview({
 
   const deviceSize = DEVICE_SIZES[deviceType];
   const isResponsive = deviceType === 'responsive';
+  const showSplashSequence =
+    currentState === 'building' ||
+    currentState === 'starting' ||
+    (currentState === 'running' && iframeLoading && (buildPhase === 'complete' || isStartingPreview));
+  const splashTask =
+    currentTask ||
+    (currentState === 'starting'
+      ? 'Starting preview runtime...'
+      : currentState === 'building'
+        ? 'Preparing your application...'
+        : 'Launching your application...');
+  const splashProgress =
+    typeof buildProgress === 'number' && buildProgress > 0
+      ? buildProgress
+      : currentState === 'starting'
+        ? 92
+        : undefined;
 
   return (
     <div className={cn(
@@ -414,44 +459,16 @@ export function ResponsiveWebPreview({
           </div>
         )}
 
-        {/* Starting State */}
-        {currentState === 'starting' && (
-          <div className="text-center" data-testid="preview-starting">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-[var(--ecode-accent)]" />
-            <p className="text-[var(--ecode-text-muted)] mb-2">
-              Starting preview server...
-            </p>
-            <p className="text-[13px] text-[var(--ecode-text-muted)]">
-              This may take a few seconds
-            </p>
-          </div>
-        )}
-
-        {/* Building State - shown during agent code generation */}
-        {currentState === 'building' && (
-          <div className="text-center" data-testid="preview-building">
-            <div className="w-16 h-16 rounded-full bg-[var(--ecode-accent)]/10 flex items-center justify-center mx-auto mb-4">
-              <RefreshCw className="h-8 w-8 animate-spin text-[var(--ecode-accent)]" />
-            </div>
-            <p className="text-[var(--ecode-text-muted)] mb-2 font-medium">
-              Building your app…
-            </p>
-            <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4">
-              {buildPhase === 'planning' && 'Planning project structure…'}
-              {buildPhase === 'scaffolding' && 'Scaffolding project files…'}
-              {buildPhase === 'building' && 'Generating code…'}
-              {buildPhase === 'styling' && 'Applying styles…'}
-              {buildPhase === 'finalizing' && 'Finalizing build…'}
-              {(!buildPhase || !['planning', 'scaffolding', 'building', 'styling', 'finalizing'].includes(buildPhase)) && 'AI agent is generating your project…'}
-            </p>
-            {typeof buildProgress === 'number' && buildProgress > 0 && (
-              <div className="w-48 mx-auto bg-[var(--ecode-border)] rounded-full h-1.5">
-                <div 
-                  className="bg-[var(--ecode-accent)] h-1.5 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(buildProgress, 100)}%` }}
-                />
-              </div>
-            )}
+        {/* Professional splash sequence during build/startup */}
+        {showSplashSequence && (
+          <div className="relative w-full h-full max-w-6xl overflow-hidden rounded-2xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)]" data-testid="preview-splash-sequence">
+            <SplashScreenSequence
+              loopUntilComplete
+              isComplete={currentState === 'running' && !iframeLoading && !iframeError}
+              appName={`Project ${projectId}`}
+              currentTask={splashTask}
+              progress={splashProgress}
+            />
           </div>
         )}
 
@@ -586,9 +603,14 @@ export function ResponsiveWebPreview({
             {/* Loading Overlay for iframe */}
             {iframeLoading && (
               <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
-                <div className="text-center">
-                  <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2 text-[var(--ecode-accent)]" />
-                  <p className="text-[13px] text-[var(--ecode-text-muted)]">Loading preview...</p>
+                <div className="relative h-full w-full overflow-hidden rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                  <SplashScreenSequence
+                    loopUntilComplete
+                    isComplete={!iframeLoading && !iframeError}
+                    appName={`Project ${projectId}`}
+                    currentTask={splashTask}
+                    progress={splashProgress}
+                  />
                 </div>
               </div>
             )}
