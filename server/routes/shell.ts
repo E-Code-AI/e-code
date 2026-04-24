@@ -18,6 +18,20 @@ import { bulkSyncProjectFiles, ensureProjectDirectory, getProjectWorkspacePath }
 const logger = createLogger('shell-router');
 const router = Router();
 
+function getInteractiveShellArgs(shellBinary: string): string[] {
+  const shellName = path.basename(shellBinary).toLowerCase();
+
+  if (shellName.includes('bash')) {
+    return ['--noprofile', '--norc', '-i'];
+  }
+
+  if (shellName.includes('zsh')) {
+    return ['-f', '-i'];
+  }
+
+  return ['-i'];
+}
+
 interface ShellSession {
   id: string;
   userId: number;
@@ -249,7 +263,7 @@ echo ""
 
     const pty = await getPty();
     const shellBinary = process.env.SHELL || 'bash';
-    const shell = pty.spawn(shellBinary, ['-i'], {
+    const shell = pty.spawn(shellBinary, getInteractiveShellArgs(shellBinary), {
       name: 'xterm-256color',
       cwd: shellCwd,
       cols: 120,

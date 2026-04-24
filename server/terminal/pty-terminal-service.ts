@@ -37,6 +37,24 @@ import { redisSessionManager } from './redis-session-manager';
 import jwt from 'jsonwebtoken';
 import { parse as parseCookie } from 'cookie';
 
+function getInteractiveShellArgs(shellPath: string): string[] {
+  if (process.platform === 'win32') {
+    return [];
+  }
+
+  const shellName = path.basename(shellPath).toLowerCase();
+
+  if (shellName.includes('bash')) {
+    return ['--noprofile', '--norc', '-i'];
+  }
+
+  if (shellName.includes('zsh')) {
+    return ['-f', '-i'];
+  }
+
+  return ['-i'];
+}
+
 // CRITICAL SECURITY: Terminal isolation configuration
 // 
 // REQUIRE_DOCKER_TERMINAL: When true, terminal sessions MUST run in Docker
@@ -633,7 +651,7 @@ export class PTYTerminalService {
       };
 
       const pty = await getPty();
-      const ptyProcess = pty.spawn(shell, ['-i'], {
+      const ptyProcess = pty.spawn(shell, getInteractiveShellArgs(shell), {
         name: 'xterm-256color',
         cols: 80,
         rows: 24,

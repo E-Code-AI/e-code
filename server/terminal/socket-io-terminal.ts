@@ -65,7 +65,7 @@ async function getPty() {
 }
 
 function createBasicShellAdapter(shellPath: string, workDir: string, env: Record<string, string>) {
-  const process = spawnChildProcess(shellPath, ['-i'], {
+  const process = spawnChildProcess(shellPath, getInteractiveShellArgs(shellPath), {
     cwd: workDir,
     env,
     stdio: 'pipe',
@@ -91,6 +91,24 @@ function createBasicShellAdapter(shellPath: string, workDir: string, env: Record
       });
     },
   };
+}
+
+function getInteractiveShellArgs(shellPath: string): string[] {
+  if (process.platform === 'win32') {
+    return [];
+  }
+
+  const shellName = path.basename(shellPath).toLowerCase();
+
+  if (shellName.includes('bash')) {
+    return ['--noprofile', '--norc', '-i'];
+  }
+
+  if (shellName.includes('zsh')) {
+    return ['-f', '-i'];
+  }
+
+  return ['-i'];
 }
 
 const PROJECT_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -323,7 +341,7 @@ export class SocketIOTerminalService {
         : bashPath;
       const shellArgs = process.platform === 'win32'
         ? []
-        : ['-c', `ulimit -v 524288 -n 256 -u 64 -t 3600 2>/dev/null; exec ${bashPath} -i`];
+        : getInteractiveShellArgs(bashPath);
 
       let ptyProcess: any;
       try {
