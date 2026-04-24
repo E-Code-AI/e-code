@@ -9,6 +9,7 @@ import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
 import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
 import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
+import { MobileDeployPanel } from '@/components/mobile/MobileDeployPanel';
 import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
 import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
@@ -45,7 +46,7 @@ const TerminalFallback = () => (
   </div>
 );
 
-type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'more';
+type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'deploy' | 'more';
 
 export default function MobileWorkspace() {
   const params = useParams();
@@ -64,20 +65,28 @@ export default function MobileWorkspace() {
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
   const [activeTool, setActiveTool] = useState<string | null>(null);
+  const [lastWorkspaceTab, setLastWorkspaceTab] = useState<'agent' | 'code' | 'terminal' | 'deploy'>('agent');
 
   // Split-view: agent chat visible with floating preview overlay
   const [previewOverlay, setPreviewOverlay] = useState(false);
 
   const handleTabChange = (tabId: MobileTab) => {
     if (tabId === 'files') {
+      setPreviewOverlay(false);
+      setActiveTab('files');
+      setActiveTool(null);
       setIsFilesOpen(true);
     } else if (tabId === 'more') {
+      setPreviewOverlay(false);
       setActiveTab(tabId);
       setActiveTool(null);
       setToolsSheetOpen(true);
     } else {
       // If switching away from preview tab, also close overlay
       if (tabId !== 'preview') setPreviewOverlay(false);
+      if (tabId === 'agent' || tabId === 'code' || tabId === 'terminal' || tabId === 'deploy') {
+        setLastWorkspaceTab(tabId);
+      }
       setActiveTab(tabId);
       setActiveTool(null);
     }
@@ -91,6 +100,7 @@ export default function MobileWorkspace() {
   const handleFileSelect = (file: any) => {
     setSelectedFileId(file.id);
     setIsFilesOpen(false);
+    setLastWorkspaceTab('code');
     setActiveTab('code');
   };
 
@@ -103,7 +113,7 @@ export default function MobileWorkspace() {
   // Close the preview tab → go back to agent
   const handleClosePreview = () => {
     setPreviewOverlay(false);
-    setActiveTab('agent');
+    setActiveTab(lastWorkspaceTab);
   };
 
   const isPreviewTab = activeTab === 'preview';
@@ -158,6 +168,14 @@ export default function MobileWorkspace() {
               className="h-full"
             />
           </Suspense>
+        );
+
+      case 'deploy':
+        return (
+          <MobileDeployPanel
+            projectId={projectId}
+            className="h-full"
+          />
         );
 
       case 'preview':
@@ -260,7 +278,12 @@ export default function MobileWorkspace() {
       {/* File Explorer Modal */}
       <MobileFileExplorer 
         isOpen={isFilesOpen}
-        onClose={() => setIsFilesOpen(false)}
+        onClose={() => {
+          setIsFilesOpen(false);
+          if (activeTab === 'files') {
+            setActiveTab(lastWorkspaceTab);
+          }
+        }}
         projectId={projectId}
         onFileSelect={handleFileSelect}
         currentFileId={selectedFileId}

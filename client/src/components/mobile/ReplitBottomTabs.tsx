@@ -72,7 +72,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 z-50" 
+      className="fixed bottom-0 left-0 right-0 z-[80] pointer-events-none" 
       style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       data-testid="mobile-bottom-navigation"
     >
@@ -167,7 +167,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
       
       {/* Navigation Items */}
       <nav 
-        className="relative flex items-center justify-around px-4 mx-3 mb-2"
+        className="relative flex items-center justify-around px-4 mx-3 mb-2 pointer-events-auto"
         style={{ height: 'var(--mobile-nav-height)' }}
       >
         {tabs.map((tab) => {
