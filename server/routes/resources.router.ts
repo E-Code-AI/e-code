@@ -193,6 +193,16 @@ router.get('/resources', resourcesRateLimiter, ensureAuthenticated, async (req: 
     }
     
     const { projectId } = parseResult.data;
+    const userId = (req.user as any)?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const hasAccess = await storage.isProjectCollaborator(projectId, userId);
+    if (!hasAccess) {
+      return res.status(403).json({ error: 'Access denied to this project' });
+    }
     
     const cpu = getCpuUsage();
     const memory = getMemoryMetrics();

@@ -158,31 +158,11 @@ export class ResourcesService {
    */
   private async authorizeProject(projectId: string, userId: string): Promise<boolean> {
     try {
-      const project = await this.storage.getProject(projectId);
-      if (!project) {
-        console.warn(`[Resources] Project ${projectId} not found`);
-        return false;
+      const hasAccess = await this.storage.isProjectCollaborator(projectId, userId);
+      if (!hasAccess) {
+        console.warn(`[Resources] User ${userId} does not have access to project ${projectId}`);
       }
-
-      // Check if user is project owner
-      if (project.ownerId === userId) {
-        return true;
-      }
-
-      // Check team membership for non-owners
-      try {
-        const teamMember = await this.storage.getTeamMemberByUserAndProject?.(userId, projectId);
-        if (teamMember) {
-          return true;
-        }
-      } catch (error) {
-        // Team feature might not be available yet, log but don't fail
-        console.debug('[Resources] Team membership check skipped:', error);
-      }
-
-      // User is neither owner nor team member
-      console.warn(`[Resources] User ${userId} does not have access to project ${projectId}`);
-      return false;
+      return hasAccess;
     } catch (error) {
       console.error('[Resources] Authorization error:', error);
       return false;
