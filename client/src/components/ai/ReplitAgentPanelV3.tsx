@@ -771,7 +771,7 @@ export function ReplitAgentPanelV3({
         addStoreMessage(tempConvId, fallbackMessage);
       }
     }
-  }, [bootstrapTimedOut, conversationId, projectIdNum, onBootstrapFailure, getMessages, addStoreMessage]);
+  }, [bootstrapTimedOut, conversationId, projectIdNum, onBootstrapFailure, addStoreMessage]);
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
