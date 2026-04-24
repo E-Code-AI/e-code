@@ -360,11 +360,17 @@ router.get('/url', async (req, res) => {
     if (!access) return;
     
     // Check if project has runnable files
-    const files = await storage.getFilesByProject(projectId);
+    const files = await storage.getFilesByProject(projectId).catch((error: any) => {
+      console.error('[preview:url] Failed to read project files', { projectId, error: error?.message || error });
+      return [];
+    });
     const hasHtmlFile = files.some(f => (f.path || f.name || '').endsWith('.html') && !f.isDirectory);
     const hasPackageJson = files.some(f => (f.name === 'package.json' || f.path === 'package.json') && !f.isDirectory);
     const hasPythonFiles = files.some(f => (f.path || f.name || '').endsWith('.py') && !f.isDirectory);
-    const hasWorkspaceRunnableFiles = await workspaceHasRunnableFiles(projectId);
+    const hasWorkspaceRunnableFiles = await workspaceHasRunnableFiles(projectId).catch((error: any) => {
+      console.error('[preview:url] Failed to scan workspace', { projectId, error: error?.message || error });
+      return false;
+    });
     
     if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles && !hasWorkspaceRunnableFiles) {
       // No runnable files, return null URL
@@ -432,9 +438,9 @@ router.get('/url', async (req, res) => {
       frameworkType: preview.frameworkType,
       lastHealthCheck: preview.lastHealthCheck
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting preview URL:', error);
-    res.status(500).json({ error: 'Failed to get preview URL' });
+    res.status(500).json({ error: 'Failed to get preview URL', message: error?.message || 'Unknown preview error' });
   }
 });
 
