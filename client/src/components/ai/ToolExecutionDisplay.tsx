@@ -142,6 +142,26 @@ function CompactToolExecution({
   const target = getTarget();
   const hasDetails = result || error || metadata?.commandOutput || (metadata?.filesChanged && metadata.filesChanged.length > 0);
 
+  const diagnosticsRows = useMemo(() => {
+    const diagnostics =
+      result?.diagnostics ||
+      result?.result?.diagnostics ||
+      result?.issues ||
+      result?.result?.issues ||
+      [];
+
+    if (!Array.isArray(diagnostics)) return [];
+
+    return diagnostics.map((diagnostic: any, index: number) => ({
+      id: diagnostic.id || `${tool}-${index}`,
+      severity: diagnostic.severity || diagnostic.level || 'info',
+      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Unknown file',
+      line: diagnostic.startLine || diagnostic.line || diagnostic.row || 0,
+      message: diagnostic.message || diagnostic.description || diagnostic.summary || 'Diagnostic',
+      source: diagnostic.source || diagnostic.rule || '',
+    }));
+  }, [result, tool]);
+
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <CollapsibleTrigger asChild>
@@ -224,6 +244,43 @@ function CompactToolExecution({
               <p className="text-emerald-600 dark:text-emerald-400">
                 ✓ {result.description}
               </p>
+            )}
+
+            {/* Diagnostics summary */}
+            {diagnosticsRows.length > 0 && (
+              <div>
+                <span className="text-muted-foreground">Diagnostics:</span>
+                <div className="mt-1 overflow-hidden rounded border border-border/60 bg-background">
+                  <table className="w-full text-left text-[10px]">
+                    <thead className="bg-muted/70 text-muted-foreground">
+                      <tr>
+                        <th className="px-2 py-1 font-medium">Severity</th>
+                        <th className="px-2 py-1 font-medium">File</th>
+                        <th className="px-2 py-1 font-medium">Line</th>
+                        <th className="px-2 py-1 font-medium">Message</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {diagnosticsRows.slice(0, 6).map((row) => (
+                        <tr key={row.id} className="border-t border-border/50 align-top">
+                          <td className="px-2 py-1 capitalize">{row.severity}</td>
+                          <td className="px-2 py-1 break-all">{row.file}</td>
+                          <td className="px-2 py-1">{row.line || '-'}</td>
+                          <td className="px-2 py-1">
+                            <div>{row.message}</div>
+                            {row.source && <div className="text-muted-foreground">{row.source}</div>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {diagnosticsRows.length > 6 && (
+                  <div className="mt-1 text-[10px] text-muted-foreground">
+                    {diagnosticsRows.length - 6} more diagnostic{diagnosticsRows.length - 6 === 1 ? '' : 's'}
+                  </div>
+                )}
+              </div>
             )}
 
             {/* File size / lines changed */}
@@ -441,6 +498,27 @@ export function ToolExecutionDisplay({
     return 'border-border';
   };
 
+  const diagnosticsRows = useMemo(() => {
+    const diagnostics =
+      result?.diagnostics ||
+      result?.result?.diagnostics ||
+      result?.issues ||
+      result?.result?.issues ||
+      [];
+
+    if (!Array.isArray(diagnostics)) return [];
+
+    return diagnostics.map((diagnostic: any, index: number) => ({
+      id: diagnostic.id || `${tool}-${index}`,
+      severity: diagnostic.severity || diagnostic.level || 'info',
+      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Unknown file',
+      line: diagnostic.startLine || diagnostic.line || diagnostic.row || 0,
+      column: diagnostic.startColumn || diagnostic.column || 0,
+      message: diagnostic.message || diagnostic.description || diagnostic.summary || 'Diagnostic',
+      source: diagnostic.source || diagnostic.rule || '',
+    }));
+  }, [result, tool]);
+
   return (
     <Card className={cn('border-l-2', getStatusColor())}>
       <CardHeader className="p-3 pb-2">
@@ -488,6 +566,39 @@ export function ToolExecutionDisplay({
 
           {status === 'complete' && result && (
             <div className="mt-2 pt-2 border-t text-[11px]">
+              {diagnosticsRows.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-muted-foreground">Diagnostics</span>
+                  <div className="overflow-hidden rounded border border-border/60 bg-background/80">
+                    <table className="w-full text-left text-[11px]">
+                      <thead className="bg-muted/70 text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-2 font-medium">Severity</th>
+                          <th className="px-3 py-2 font-medium">File</th>
+                          <th className="px-3 py-2 font-medium">Line</th>
+                          <th className="px-3 py-2 font-medium">Message</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {diagnosticsRows.map((row) => (
+                          <tr key={row.id} className="border-t border-border/50 align-top">
+                            <td className="px-3 py-2 capitalize">{row.severity}</td>
+                            <td className="px-3 py-2 break-all">{row.file}</td>
+                            <td className="px-3 py-2">
+                              {row.line || '-'}{row.column ? `:${row.column}` : ''}
+                            </td>
+                            <td className="px-3 py-2">
+                              <div className="text-foreground">{row.message}</div>
+                              {row.source && <div className="text-muted-foreground">{row.source}</div>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
               {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
                 <div>
                   <span className="text-muted-foreground">Files changed:</span>

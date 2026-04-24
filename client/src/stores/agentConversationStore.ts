@@ -214,6 +214,11 @@ export interface Message {
     promptTokens?: number;
     completionTokens?: number;
     cost?: string;
+    billedLabel?: string;
+    usageCategory?: string;
+    promoText?: string;
+    promoMode?: string;
+    promoDiscountPercent?: number;
     latency?: number;
     webSearchUsed?: boolean;
     extendedThinking?: boolean;

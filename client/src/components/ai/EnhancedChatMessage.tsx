@@ -3,6 +3,7 @@ import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { 
   Sparkles, 
@@ -18,8 +19,13 @@ import {
   Terminal,
   FileCode,
   Search,
-  Wrench
+  Wrench,
+  Clock3,
+  MessageSquareText,
+  Receipt,
+  PanelsTopLeft
 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList } from './ToolExecutionDisplay';
 import { MessageMetadataFooter } from './MessageMetadataFooter';
@@ -101,6 +107,38 @@ const messageVariants = {
   }
 };
 
+function formatRelativeTimestamp(timestamp: Date | string | undefined) {
+  if (!timestamp) return '';
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  } catch {
+    return '';
+  }
+}
+
+function formatWorkedDuration(totalMs: number) {
+  const safeMs = Math.max(0, Math.round(totalMs));
+  const totalSeconds = Math.floor(safeMs / 1000);
+  if (totalSeconds === 0) {
+    return 'under a second';
+  }
+  if (totalSeconds < 60) {
+    return `${totalSeconds} second${totalSeconds === 1 ? '' : 's'}`;
+  }
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = totalSeconds % 60;
+  if (totalMinutes < 60) {
+    return remainingSeconds > 0
+      ? `${totalMinutes} minute${totalMinutes === 1 ? '' : 's'} ${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'}`
+      : `${totalMinutes} minute${totalMinutes === 1 ? '' : 's'}`;
+  }
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+  return remainingMinutes > 0
+    ? `${totalHours} hour${totalHours === 1 ? '' : 's'} ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`
+    : `${totalHours} hour${totalHours === 1 ? '' : 's'}`;
+}
+
 export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, EnhancedChatMessageProps>(function EnhancedChatMessage({
   message,
   isCompactMode = false,
@@ -117,7 +155,10 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   isRestoringCheckpoint
 }, ref) {
   const [copied, setCopied] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMessageExpanded, setIsMessageExpanded] = useState(false);
+  const [isWorkSummaryExpanded, setIsWorkSummaryExpanded] = useState(false);
+  const [isUsageExpanded, setIsUsageExpanded] = useState(false);
   const [selectedBuildMode, setSelectedBuildMode] = useState<AutonomousBuildMode | null>(null);
   
   const handleCopy = useCallback(async () => {
@@ -196,6 +237,73 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
     description: t.description,
     status: t.status
   })) as Task[];
+
+  const relativeTimestamp = useMemo(() => formatRelativeTimestamp(message.timestamp), [message.timestamp]);
+
+  const messageStructureSummary = useMemo(() => {
+    const toolExecutions = message.toolExecutions || [];
+    const thinkingSteps = message.thinking || [];
+    const structuredTasks = displayTasks || [];
+    const actions = message.actions || [];
+    const autonomousTimelineEvents = message.autonomousPayload?.timeline?.events || [];
+    const autonomousTaskItems = message.autonomousPayload?.taskList?.items || [];
+    const autonomousThinkingSteps = message.autonomousPayload?.thinkingSteps || [];
+
+    const messageCount =
+      (message.content?.trim() ? 1 : 0) +
+      thinkingSteps.length +
+      structuredTasks.length +
+      actions.length +
+      autonomousTimelineEvents.length +
+      autonomousTaskItems.length +
+      autonomousThinkingSteps.length;
+
+    return {
+      actions: toolExecutions.length,
+      messages: messageCount,
+      tasks: structuredTasks.length,
+      steps: thinkingSteps.length + autonomousThinkingSteps.length,
+    };
+  }, [displayTasks, message.actions, message.autonomousPayload, message.content, message.thinking, message.toolExecutions]);
+
+  const workSummary = useMemo(() => {
+    const toolExecutions = message.toolExecutions || [];
+    const executionMs = toolExecutions.reduce((total, execution) => total + (execution.metadata?.executionTime || 0), 0);
+    const thinkingMs = (message.thinking || []).reduce((total, step) => total + (step.duration || 0), 0);
+    const streamingMs = message.metadata?.streamingDuration || 0;
+    const totalMs = executionMs + thinkingMs + streamingMs;
+    const resolvedMs = totalMs > 0 ? totalMs : ((message.metadata?.latency || 0) > 0 ? (message.metadata?.latency || 0) : 0);
+    const workDone = messageStructureSummary.actions || messageStructureSummary.messages;
+    const usageCategory = message.metadata?.usageCategory || 'General work';
+    const billedLabel = message.metadata?.billedLabel || message.metadata?.cost || 'Included';
+    const promoLine = message.metadata?.promoText
+      || (message.metadata?.promoMode && message.metadata?.promoDiscountPercent
+        ? `Promo: ${message.metadata.promoMode} mode at up to ${message.metadata.promoDiscountPercent}% off`
+        : null);
+
+    return {
+      totalMs: resolvedMs,
+      workedLabel: formatWorkedDuration(resolvedMs),
+      workDone,
+      usageCategory,
+      billedLabel,
+      promoLine,
+    };
+  }, [message.metadata, message.thinking, message.toolExecutions, messageStructureSummary]);
+
+  const shouldCollapseMessageBody = useMemo(() => {
+    if (isUser) return false;
+    if (isAutonomousMessage) return false;
+    const longContent = (message.content?.length || 0) > 700 || (message.content?.split('\n').length || 0) > 12;
+    const densePayload = (message.toolExecutions?.length || 0) >= 4 || (message.thinking?.length || 0) >= 5 || messageStructureSummary.messages >= 8;
+    return longContent || densePayload;
+  }, [isAutonomousMessage, isUser, message.content, message.thinking, message.toolExecutions, messageStructureSummary.messages]);
+
+  const collapsedPreview = useMemo(() => {
+    const trimmed = (message.content || '').replace(/\s+/g, ' ').trim();
+    if (!trimmed) return '';
+    return trimmed.length > 180 ? `${trimmed.slice(0, 180)}...` : trimmed;
+  }, [message.content]);
 
   const toolSummary = useMemo(() => {
     const executions = message.toolExecutions || [];
@@ -314,6 +422,25 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           </div>
         )}
 
+        {!isUser && (
+          <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Wrench className="h-3 w-3" />
+              {messageStructureSummary.actions} action{messageStructureSummary.actions !== 1 ? 's' : ''}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <MessageSquareText className="h-3 w-3" />
+              {messageStructureSummary.messages} message{messageStructureSummary.messages !== 1 ? 's' : ''}
+            </span>
+            {relativeTimestamp && (
+              <span className="inline-flex items-center gap-1 ml-auto">
+                <Clock3 className="h-3 w-3" />
+                {relativeTimestamp}
+              </span>
+            )}
+          </div>
+        )}
+
         <LazyMotionDiv 
           className={cn(
             "relative rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200",
@@ -342,7 +469,25 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           transition={{ duration: 0.2 }}
         >
           {!isUser && message.content && !(isAutonomousMessage && rendersDedicatedAutonomousBody) ? (
-            <RichMessageContent content={message.content} />
+            shouldCollapseMessageBody && !isMessageExpanded ? (
+              <div className="space-y-3">
+                <p className="text-[13px] leading-relaxed text-foreground/90" data-testid={`enhanced-message-preview-${message.id}`}>
+                  {collapsedPreview}
+                </p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-7 rounded-lg px-2.5 text-[11px]"
+                  onClick={() => setIsMessageExpanded(true)}
+                  data-testid={`enhanced-message-expand-${message.id}`}
+                >
+                  <PanelsTopLeft className="mr-1.5 h-3 w-3" />
+                  Show full message
+                </Button>
+              </div>
+            ) : (
+              <RichMessageContent content={message.content} />
+            )
           ) : (
             <p 
               className={cn(
@@ -753,6 +898,78 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
               compact={isCompactMode}
             />
           </LazyMotionDiv>
+        )}
+
+        {!isUser && (
+          <Collapsible open={isWorkSummaryExpanded} onOpenChange={setIsWorkSummaryExpanded}>
+            <div className="rounded-xl border border-border/60 bg-muted/20" data-testid={`message-work-summary-${message.id}`}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
+                  data-testid={`message-work-summary-toggle-${message.id}`}
+                >
+                  <span className="text-[12px] font-medium text-foreground">
+                    Worked for {workSummary.workedLabel}
+                  </span>
+                  {isWorkSummaryExpanded ? (
+                    <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="space-y-3 border-t border-border/50 px-3 py-3 text-[12px]">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">Time worked</span>
+                    <span className="font-medium text-foreground">{workSummary.workedLabel}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">Work done</span>
+                    <span className="font-medium text-foreground">
+                      {workSummary.workDone} item{workSummary.workDone === 1 ? '' : 's'}
+                    </span>
+                  </div>
+
+                  <Collapsible open={isUsageExpanded} onOpenChange={setIsUsageExpanded}>
+                    <div className="rounded-lg border border-border/60 bg-background/70">
+                      <CollapsibleTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left"
+                          data-testid={`message-usage-toggle-${message.id}`}
+                        >
+                          <span className="inline-flex items-center gap-2 text-[12px] font-medium text-foreground">
+                            <Receipt className="h-3.5 w-3.5 text-muted-foreground" />
+                            Agent Usage
+                          </span>
+                          {isUsageExpanded ? (
+                            <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                        </button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="space-y-2 border-t border-border/50 px-3 py-3 text-[12px]">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-muted-foreground">{workSummary.usageCategory}</span>
+                            <span className="font-medium text-foreground">{workSummary.billedLabel}</span>
+                          </div>
+                          {workSummary.promoLine && (
+                            <div className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                              {workSummary.promoLine}
+                            </div>
+                          )}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                </div>
+              </CollapsibleContent>
+            </div>
+          </Collapsible>
         )}
       </div>
     </LazyMotionDiv>
