@@ -70,7 +70,7 @@ import { ModeSelector, type AgentMode } from './ModeSelector';
 import { AIModelSelector } from './AIModelSelector';
 import { CurrentModelChip } from './CurrentModelChip';
 import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
-import { AgentHistoryModal } from '@/components/grids/AgentHistoryModal';
+import { AgentConversationHistoryModal } from './AgentConversationHistoryModal';
 import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
@@ -426,7 +426,6 @@ export function ReplitAgentPanelV3({
   const { 
     setMessages: setStoreMessages, 
     addMessage: addStoreMessage,
-    clearMessages: clearStoreMessages,
     setLastSyncedAt,
     hasConversation,
     migrateMessages
@@ -2271,15 +2270,35 @@ export function ReplitAgentPanelV3({
     }
   };
 
-  const handleClearChat = () => {
-    if (conversationId) {
-      clearStoreMessages(conversationId);
+  const handleNewChat = useCallback(async () => {
+    try {
+      const response = await apiRequest('POST', '/api/agent/conversation', {
+        projectId: projectId.toString(),
+        forceNew: true,
+      }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+
+      setConversationId(response.conversationId);
+      setAgentMode(response.agentMode);
+      setInput('');
+      setStreamingContent('');
+      setActiveThinking([]);
+      setIsPendingResponse(false);
+      setIsWorking(false);
+      setHistoryModalOpen(false);
+      setIsActiveBuildSession(true);
+
+      toast({
+        title: 'New chat started',
+        description: 'Previous conversations remain available in history',
+      });
+    } catch (error) {
+      toast({
+        title: 'New chat failed',
+        description: error instanceof Error ? error.message : 'Failed to start a new conversation',
+        variant: 'destructive',
+      });
     }
-    toast({
-      title: 'Chat cleared',
-      description: 'Conversation history has been reset',
-    });
-  };
+  }, [projectId, toast]);
 
   const handlePauseResume = () => {
     setIsPaused(!isPaused);
@@ -2479,9 +2498,9 @@ export function ReplitAgentPanelV3({
                   {isAudioEnabled ? 'Mute notifications' : 'Enable sounds'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleClearChat} className="text-destructive" data-testid="dropdown-clear-chat">
+                <DropdownMenuItem onClick={handleNewChat} className="text-destructive" data-testid="dropdown-clear-chat">
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  Clear conversation
+                  New chat
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -2515,7 +2534,7 @@ export function ReplitAgentPanelV3({
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
-                  onClick={handleClearChat}
+                  onClick={handleNewChat}
                   data-testid="button-new-chat"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -3160,10 +3179,15 @@ export function ReplitAgentPanelV3({
 
       {/* Agent History Modal - For viewing full session history */}
       {projectIdNum > 0 && (
-        <AgentHistoryModal
+        <AgentConversationHistoryModal
           open={historyModalOpen}
           onOpenChange={setHistoryModalOpen}
           projectId={projectIdNum}
+          currentConversationId={conversationId}
+          onSelectConversation={(nextConversationId) => {
+            setConversationId(nextConversationId);
+            setHistoryModalOpen(false);
+          }}
         />
       )}
       

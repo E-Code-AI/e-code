@@ -285,10 +285,78 @@ router.get('/conversation', async (req, res) => {
   }
 });
 
+// GET /api/agent/projects/:projectId/conversations - List all conversations for a project
+router.get('/projects/:projectId/conversations', async (req, res) => {
+  try {
+    const projectId = parseInt(req.params.projectId, 10);
+    const userId = req.user!.id;
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid projectId - must be a number' });
+    }
+
+    const { aiConversations, agentMessages } = await import('@shared/schema');
+    const { eq, and, desc, count } = await import('drizzle-orm');
+
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+      const project = await scopedQueries.getProjectById(projectId);
+      if (!project) {
+        return { error: 'Project not found or access denied', status: 403 };
+      }
+
+      const conversations = await db
+        .select()
+        .from(aiConversations)
+        .where(and(
+          eq(aiConversations.projectId, projectId),
+          eq(aiConversations.userId, userId)
+        ))
+        .orderBy(desc(aiConversations.updatedAt), desc(aiConversations.createdAt));
+
+      const items = await Promise.all(conversations.map(async (conversation) => {
+        const [countResult] = await db
+          .select({ count: count() })
+          .from(agentMessages)
+          .where(eq(agentMessages.conversationId, conversation.id));
+
+        const messageCount = countResult?.count || 0;
+        const persistedPreview = Array.isArray(conversation.messages)
+          ? [...conversation.messages].reverse().find((message: any) => typeof message?.content === 'string' && message.content.trim().length > 0)
+          : null;
+
+        return {
+          id: conversation.id,
+          projectId: conversation.projectId,
+          agentMode: conversation.agentMode,
+          model: conversation.model,
+          createdAt: conversation.createdAt,
+          updatedAt: conversation.updatedAt,
+          messageCount,
+          preview: persistedPreview?.content || '',
+        };
+      }));
+
+      return { conversations: items };
+    });
+
+    if (!result.success) {
+      return res.status(500).json({ error: result.error?.message || 'Transaction failed' });
+    }
+    if (result.data && 'error' in result.data) {
+      return res.status(result.data.status).json({ error: result.data.error });
+    }
+
+    res.json(result.data);
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error listing project conversations:', error);
+    res.status(500).json({ error: 'Failed to list project conversations' });
+  }
+});
+
 // POST /api/agent/conversation - Create or get conversation for project
 router.post('/conversation', async (req, res) => {
   try {
-    const { projectId: projectIdRaw, initialPrompt } = req.body;
+    const { projectId: projectIdRaw, initialPrompt, forceNew } = req.body;
     const userId = req.user!.id;
 
     const { aiConversations } = await import('@shared/schema');
@@ -319,7 +387,7 @@ router.post('/conversation', async (req, res) => {
         .orderBy(desc(aiConversations.createdAt))
         .limit(1);
 
-      if (existingConversation) {
+      if (existingConversation && !forceNew) {
         return res.json({
           conversationId: existingConversation.id,
           agentMode: existingConversation.agentMode,
@@ -364,7 +432,7 @@ router.post('/conversation', async (req, res) => {
         .orderBy(desc(aiConversations.createdAt))
         .limit(1);
 
-      if (existingConversation) {
+      if (existingConversation && !forceNew) {
         return {
           conversationId: existingConversation.id,
           agentMode: existingConversation.agentMode,
