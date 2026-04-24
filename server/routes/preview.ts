@@ -414,12 +414,35 @@ router.get('/url', async (req, res) => {
           message: 'Static HTML preview available'
         });
       }
-      
-      // For projects needing a server, indicate it's not running
-      return res.json({ 
+
+      // For projects needing a server, auto-start the preview instead of returning
+      // a passive stopped state. This keeps the IDE preview flow aligned with the
+      // Replit-style expectation that opening Preview starts the app lifecycle.
+      if (!preview || preview.status === 'stopped') {
+        try {
+          await previewService.startPreviewFromProject(projectId);
+          return res.json({
+            previewUrl: null,
+            status: 'starting',
+            message: 'Preview server is starting...'
+          });
+        } catch (startError: any) {
+          console.error('[preview:url] Failed to auto-start preview', {
+            projectId,
+            error: startError?.message || startError,
+          });
+
+          return res.status(500).json({
+            error: 'Failed to get preview URL',
+            message: startError?.message || 'Failed to auto-start preview'
+          });
+        }
+      }
+
+      return res.json({
         previewUrl: null,
-        status: 'stopped',
-        message: 'Preview server not running'
+        status: preview?.status || 'stopped',
+        message: preview?.errorMessage || 'Preview server not running'
       });
     }
     
