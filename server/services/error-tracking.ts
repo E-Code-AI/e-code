@@ -1,11 +1,12 @@
 /**
  * Error Tracking Service
- * Sentry-free implementation — set SENTRY_DSN to enable Sentry in the future.
- * All Sentry imports removed so the deployment bundle needs zero Sentry packages.
+ * Local stats are always enabled. Sentry is enabled opportunistically when
+ * SENTRY_DSN is configured and the package is available in the runtime bundle.
  */
 
 import { createLogger } from '../utils/logger';
 import { Request, Response, NextFunction } from 'express';
+import type { Application } from 'express';
 
 const logger = createLogger('error-tracking');
 
@@ -29,6 +30,9 @@ interface ErrorStats {
 
 export class ErrorTrackingService {
   private initialized = false;
+  private sentry: any = null;
+  private sentryInitPromise: Promise<void> | null = null;
+  private pendingExpressApp: Application | null = null;
   private stats: ErrorStats = {
     totalErrors: 0,
     errorsByType: new Map(),
@@ -43,19 +47,54 @@ export class ErrorTrackingService {
 
     const dsn = process.env.SENTRY_DSN;
     if (dsn) {
-      logger.warn('SENTRY_DSN is set but Sentry integration is disabled in this build. Remove SENTRY_DSN or rebuild with Sentry enabled.');
+      this.sentryInitPromise = this.initializeSentry(dsn);
     } else {
-      logger.info('Error tracking initialized (local stats only — set SENTRY_DSN to enable Sentry)');
+      logger.info('Error tracking initialized (local stats only)');
     }
 
     this.setupGlobalHandlers();
+  }
+
+  private async initializeSentry(dsn: string): Promise<void> {
+    try {
+      const Sentry = await import('@sentry/node');
+      this.sentry = Sentry;
+      Sentry.init({
+        dsn,
+        environment: process.env.NODE_ENV || 'development',
+        release: process.env.APP_VERSION,
+        tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
+        sendDefaultPii: false,
+      });
+      logger.info('Sentry error tracking initialized');
+
+      if (this.pendingExpressApp) {
+        this.attachSentryExpressHandler(this.pendingExpressApp);
+      }
+    } catch (error: any) {
+      logger.warn(`Failed to initialize Sentry, continuing with local error tracking only: ${error?.message || error}`);
+    }
+  }
+
+  private attachSentryExpressHandler(app: Application) {
+    if (!this.sentry) {
+      return;
+    }
+
+    try {
+      if (typeof this.sentry.setupExpressErrorHandler === 'function') {
+        this.sentry.setupExpressErrorHandler(app);
+      }
+      logger.info('Sentry Express error handler registered');
+    } catch (error: any) {
+      logger.warn(`Failed to register Sentry Express error handler: ${error?.message || error}`);
+    }
   }
 
   private setupGlobalHandlers() {
     process.on('uncaughtException', (error) => {
       logger.error('Uncaught Exception:', error);
       this.captureException(error, { type: 'uncaughtException' });
-      process.exit(1);
     });
 
     process.on('unhandledRejection', (reason) => {
@@ -86,11 +125,23 @@ export class ErrorTrackingService {
 
   captureException(error: Error | unknown, context?: ErrorContext) {
     this.updateStats(error, context);
+    if (this.sentry) {
+      this.sentry.withScope((scope: any) => {
+        if (context?.userId) scope.setUser({ id: context.userId });
+        if (context) {
+          Object.entries(context).forEach(([key, value]) => scope.setExtra(key, value));
+        }
+        this.sentry.captureException(error);
+      });
+    }
     logger.error('Captured exception:', error, context);
   }
 
   captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: ErrorContext) {
     const logMethod = level === 'error' ? 'error' : level === 'warning' ? 'warn' : 'info';
+    if (this.sentry) {
+      this.sentry.captureMessage(message, level === 'warning' ? 'warning' : level);
+    }
     logger[logMethod](`Captured message: ${message}`, context);
   }
 
@@ -154,7 +205,17 @@ export class ErrorTrackingService {
     };
   }
 
-  setupExpressErrorHandler(_app: import('express').Application) {
+  setupExpressErrorHandler(app: Application) {
+    this.pendingExpressApp = app;
+    if (this.sentry) {
+      this.attachSentryExpressHandler(app);
+      return;
+    }
+
+    if (this.sentryInitPromise) {
+      this.sentryInitPromise.catch(() => {});
+    }
+
     logger.info('Express error handler registered (local stats only)');
   }
 

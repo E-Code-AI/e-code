@@ -69,9 +69,10 @@ const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
 configureCors(app);
 
 // Trust proxy for production deployment (Replit, load balancers, reverse proxies)
-// A6-FIX: Use numeric '1' — trust only the first proxy. 'true' trusts ALL proxies
-// and would allow attackers to spoof X-Forwarded-For headers to bypass rate limiting.
-app.set('trust proxy', 1);
+// A6-FIX: Default to trusting only the first proxy hop. This is configurable for
+// deployments behind multiple explicit proxy layers.
+const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS || '1', 10);
+app.set('trust proxy', Number.isFinite(trustProxyHops) && trustProxyHops > 0 ? trustProxyHops : 1);
 
 // Security middleware (CSP, HSTS, etc.) - apply BEFORE other middleware
 securityMiddleware().forEach(middleware => app.use(middleware));
@@ -496,6 +497,19 @@ app.get('/health/readiness', (_req, res) => {
   });
 });
 
+app.get('/api/health/readiness', (_req, res) => {
+  if (serverState.phase === 'draining') {
+    return res.status(503).json({ ready: false, phase: 'draining' });
+  }
+  const services = getServiceStatus();
+  const allReady = Object.values(services).every(ready => ready);
+  return res.status(allReady ? 200 : 503).json({
+    ready: allReady,
+    phase: serverState.phase,
+    services,
+  });
+});
+
 // Helper to track service loading (registers and marks ready)
 const trackServiceLoad = (serviceName: string) => {
   markServiceReady(serviceName);
@@ -891,6 +905,18 @@ httpServer.listen(port, "0.0.0.0", () => {
     } catch (error) {
       logger.error(`[WORKING SERVER] Failed to setup Preview WebSocket: ${error}`);
       markServiceFailed('preview-ws', String(error));
+    }
+
+    // Setup Debugger WebSocket server for real-time pause/resume/log events
+    registerService('debug-ws');
+    try {
+      const { debugWebSocketService } = await import("./debugger/debug-websocket");
+      debugWebSocketService.initialize(httpServer);
+      markServiceReady('debug-ws');
+      logger.info('[Debug WebSocket] Service initialized at /ws/debugger');
+    } catch (error) {
+      logger.error(`[WORKING SERVER] Failed to setup Debug WebSocket: ${error}`);
+      markServiceFailed('debug-ws', String(error));
     }
 
     // Make session store available globally for WebSocket authentication

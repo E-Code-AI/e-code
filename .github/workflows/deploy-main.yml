@@ -13,6 +13,8 @@ name: Deploy to Production (VM / Replit)
 #   DATABASE_URL        - PostgreSQL connection string
 #   REDIS_PASSWORD      - Redis password
 #   SESSION_SECRET      - Express session secret (≥32 chars)
+#   JWT_SECRET          - JWT signing secret (≥32 chars)
+#   ENCRYPTION_KEY      - Data encryption key (≥32 chars)
 #   ANTHROPIC_API_KEY   - Anthropic Claude API key
 #   OPENAI_API_KEY      - OpenAI API key
 #   GEMINI_API_KEY      - Google Gemini API key  (optional)
@@ -25,6 +27,7 @@ name: Deploy to Production (VM / Replit)
 #
 # Required GitHub Variables (Settings → Secrets and variables → Variables):
 #   APP_URL             - Production URL, e.g. https://e-code.ai
+#   ALLOWED_ORIGINS     - Comma-separated HTTPS origins allowed by CORS
 #   DEPLOY_DIR          - Directory on the VM, e.g. /home/runner/e-code
 
 on:
@@ -74,6 +77,17 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Pre-deployment validation
+        run: npm run deploy:check
+        env:
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          APP_URL: ${{ vars.APP_URL }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+
       - name: Verify build artifacts
         run: |
           test -d dist/public || (echo "❌ Build failed: dist/public not found" && exit 1)
@@ -106,9 +120,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           envs: |
-            DATABASE_URL,REDIS_PASSWORD,SESSION_SECRET,ANTHROPIC_API_KEY,
+            DATABASE_URL,REDIS_PASSWORD,SESSION_SECRET,JWT_SECRET,ENCRYPTION_KEY,APP_URL,ALLOWED_ORIGINS,ANTHROPIC_API_KEY,
             OPENAI_API_KEY,GEMINI_API_KEY,XAI_API_KEY,MOONSHOT_API_KEY,
-            SENDGRID_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,DEPLOY_DIR
+            SENDGRID_API_KEY,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,SENTRY_DSN,VITE_SENTRY_DSN,DEPLOY_DIR
           script: |
             set -e
             DEPLOY_DIR="${DEPLOY_DIR:-/home/runner/e-code}"
@@ -125,6 +139,10 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          APP_URL: ${{ vars.APP_URL }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -133,6 +151,8 @@ jobs:
           SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           DEPLOY_DIR: ${{ vars.DEPLOY_DIR }}
 
   # ─────────────────────────────────────────────────────────────────────────────

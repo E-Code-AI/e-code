@@ -15,12 +15,13 @@ const logger = createCentralizedLogger('env-validation');
 const REQUIRED_IN_PRODUCTION: Array<{ key: string; description: string; validate?: (v: string) => string | null }> = [
   { key: 'DATABASE_URL', description: 'PostgreSQL connection string' },
   { key: 'SESSION_SECRET', description: 'Express session encryption key', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
-  { key: 'JWT_SECRET', description: 'JWT signing secret' },
-  { key: 'ENCRYPTION_KEY', description: 'Data encryption key' },
+  { key: 'JWT_SECRET', description: 'JWT signing secret', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
+  { key: 'ENCRYPTION_KEY', description: 'Data encryption key', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
   { key: 'REDIS_URL', description: 'Redis connection URL (required when REDIS_ENABLED=true)', validate: () => {
     if (process.env.REDIS_ENABLED === 'true' && !process.env.REDIS_URL) return 'REDIS_ENABLED=true but REDIS_URL is missing';
     return null;
   }},
+  { key: 'APP_URL', description: 'Public application URL', validate: (v) => process.env.NODE_ENV === 'production' && !v.startsWith('https://') ? 'Must use https:// in production' : null },
 ];
 
 const RECOMMENDED_IN_PRODUCTION: Array<{ key: string; description: string }> = [
@@ -102,6 +103,46 @@ export function validateProductionEnvironment(): void {
       'ALLOWED_ORIGINS is not set. CORS will rely on auto-detected Replit domains or APP_URL/FRONTEND_URL. ' +
       'Set ALLOWED_ORIGINS explicitly for strict cross-origin control (comma-separated HTTPS origins).'
     );
+  }
+
+  if (isProduction && process.env.ALLOWED_ORIGINS) {
+    const origins = process.env.ALLOWED_ORIGINS
+      .split(',')
+      .map(origin => origin.trim())
+      .filter(Boolean);
+
+    for (const origin of origins) {
+      if (origin.includes('*')) {
+        errors.push(`ALLOWED_ORIGINS contains wildcard origin "${origin}" — explicit origins are required in production`);
+      }
+      if (!origin.startsWith('https://') && !origin.startsWith('http://localhost') && !origin.startsWith('http://127.0.0.1')) {
+        errors.push(`ALLOWED_ORIGINS contains non-HTTPS origin "${origin}"`);
+      }
+    }
+  }
+
+  if (isProduction && process.env.APP_URL && process.env.ALLOWED_ORIGINS) {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim());
+    if (!allowedOrigins.includes(process.env.APP_URL.trim())) {
+      warnings.push('APP_URL is not listed in ALLOWED_ORIGINS — browser requests from the primary app URL may be rejected');
+    }
+  }
+
+  const storageBackend = process.env.STORAGE_BACKEND?.toLowerCase();
+  const hasReplitStorage = !!(
+    process.env.PRIVATE_OBJECT_DIR ||
+    process.env.REPLIT_OBJECT_STORAGE_BUCKET ||
+    process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID
+  );
+  const hasS3Storage = !!(process.env.S3_BUCKET && process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY);
+  if (isProduction && !hasReplitStorage && !hasS3Storage && storageBackend !== 's3' && storageBackend !== 'replit') {
+    errors.push(
+      'Durable object storage is not configured. Set STORAGE_BACKEND=replit or STORAGE_BACKEND=s3 with valid credentials.'
+    );
+  }
+
+  if (isProduction && process.env.ENABLE_BACKUPS === 'true' && !process.env.BACKUP_CRON) {
+    warnings.push('ENABLE_BACKUPS=true but BACKUP_CRON is not set — backups will need an external scheduler');
   }
 
   // Security guards

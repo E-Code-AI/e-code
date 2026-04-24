@@ -36,6 +36,8 @@ via SSH), and validates the deployment with health checks.
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_PASSWORD` | Redis password |
 | `SESSION_SECRET` | Express session secret (≥ 32 chars) |
+| `JWT_SECRET` | JWT signing secret (≥ 32 chars) |
+| `ENCRYPTION_KEY` | Data encryption key (≥ 32 chars) |
 | `ANTHROPIC_API_KEY` | Anthropic Claude API key |
 | `OPENAI_API_KEY` | OpenAI API key |
 | `GEMINI_API_KEY` | Google Gemini API key *(optional)* |
@@ -51,6 +53,7 @@ via SSH), and validates the deployment with health checks.
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `APP_URL` | Production URL | `https://e-code.ai` |
+| `ALLOWED_ORIGINS` | Explicit CORS allowlist for production | `https://e-code.ai` |
 | `DEPLOY_DIR` | Working directory on the VM | `/home/runner/e-code` |
 
 **Setup steps:**
@@ -60,7 +63,8 @@ via SSH), and validates the deployment with health checks.
 3. Ensure the repository is cloned at `DEPLOY_DIR` on the VM and Docker /
    docker-compose are installed.
 4. Set all required secrets and variables in the repository settings.
-5. Push to `main` — the pipeline runs automatically.
+5. Ensure `APP_URL` is `https://...` and `ALLOWED_ORIGINS` includes the same origin.
+6. Push to `main` — the pipeline runs automatically.
 
 ---
 

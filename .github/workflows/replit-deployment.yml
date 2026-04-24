@@ -7,11 +7,13 @@ name: CI + Replit Health Check
 # Required GitHub Secrets (Settings → Secrets → Actions):
 #   OPENAI_API_KEY, ANTHROPIC_API_KEY, GEMINI_API_KEY, XAI_API_KEY
 #   MOONSHOT_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
-#   SENDGRID_API_KEY, REDIS_PASSWORD, SESSION_SECRET, SENTRY_DSN
+#   SENDGRID_API_KEY, REDIS_PASSWORD, SESSION_SECRET, JWT_SECRET
+#   ENCRYPTION_KEY, SENTRY_DSN, VITE_SENTRY_DSN
 #   DATABASE_URL  ← Neon public URL
 #
 # Required GitHub Variables (Settings → Variables → Actions):
 #   APP_URL  = https://replit-clone-henri45.replit.app
+#   ALLOWED_ORIGINS = https://replit-clone-henri45.replit.app
 #   REPL_ID  = f4d2485e-81a7-4595-9868-17903ab251f3
 
 on:
@@ -58,6 +60,17 @@ jobs:
           NODE_OPTIONS: '--max-old-space-size=4096'
           VITE_APP_URL: ${{ env.APP_URL }}
 
+      - name: Pre-deployment validation
+        run: npm run deploy:check
+        env:
+          NODE_ENV: production
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          APP_URL: ${{ env.APP_URL }}
+          ALLOWED_ORIGINS: ${{ vars.ALLOWED_ORIGINS }}
+
       - name: Verify build artifacts
         run: |
           test -f dist/public/index.html || (echo "❌ dist/public/index.html manquant" && exit 1)
@@ -84,13 +97,13 @@ jobs:
           echo "⏳ Waiting 90 s for Replit to restart..."
           sleep 90
 
-      - name: Liveness check (/api/liveness)
+      - name: Liveness check (/health/liveness)
         run: |
           APP="${{ env.APP_URL }}"
           MAX=12; N=0
-          echo "🏥 Polling $APP/api/liveness ..."
+          echo "🏥 Polling $APP/health/liveness ..."
           while [ $N -lt $MAX ]; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP/api/liveness" || echo "000")
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP/health/liveness" || echo "000")
             if [ "$STATUS" = "200" ]; then
               echo "✅ Liveness OK (HTTP $STATUS)"
               break
@@ -101,15 +114,15 @@ jobs:
           done
           [ $N -lt $MAX ] || (echo "❌ Liveness check failed after $MAX attempts" && exit 1)
 
-      - name: Readiness check (/api/readiness)
+      - name: Readiness check (/health/readiness)
         run: |
-          curl -sf "${{ env.APP_URL }}/api/readiness" \
+          curl -sf "${{ env.APP_URL }}/health/readiness" \
             && echo "✅ Readiness OK" \
             || (echo "❌ Readiness check failed" && exit 1)
 
-      - name: API smoke test (/api/monitoring/health)
+      - name: API smoke test (/api/health)
         run: |
-          curl -sf "${{ env.APP_URL }}/api/monitoring/health" \
+          curl -sf "${{ env.APP_URL }}/api/health" \
             && echo "✅ API OK" \
             || (echo "❌ API health check failed" && exit 1)
 

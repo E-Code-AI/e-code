@@ -1,326 +1,255 @@
-# E-Code Platform - Deployment Guide
+# Production Deployment
 
-This guide covers deploying E-Code to different environments.
+This runbook is for deploying `e-code` to a production VM or container host with PostgreSQL, Redis, TLS termination, durable object storage, and GitHub Actions.
 
-## Deployment Options
+## 1. Prerequisites
 
-| Environment | Docker Mode | Configuration File |
-|-------------|-------------|-------------------|
-| Development | DooD (socket) | `docker-compose.yml` |
-| Production (VM) | DinD (TLS) | `docker-compose.prod.yml` |
-| Replit Reserved VM | DooD (socket) | `docker-compose.replit-vm.yml` |
-| Kubernetes | K8s Orchestrator | See K8s section |
+- Node.js `20.x`
+- Docker and Docker Compose plugin
+- PostgreSQL `15+`
+- Redis `7+`
+- A reverse proxy or load balancer terminating TLS
+- Durable object storage:
+  - Replit Object Storage, or
+  - S3-compatible bucket
+- GitHub Actions secrets and variables configured
 
-## Quick Start
+## 2. Required Secrets And Variables
 
-### Option 1: Replit Reserved VM (Recommended)
+Copy `.env.production.example` to your secret manager or deployment platform and set, at minimum:
 
-```bash
-# 1. Set environment variables
-export DATABASE_URL="postgresql://..."
-export REDIS_PASSWORD="your-redis-password"
-export SESSION_SECRET="your-session-secret"
-export ANTHROPIC_API_KEY="your-api-key"
-# ... other API keys
+- `DATABASE_URL`
+- `REDIS_URL`
+- `SESSION_SECRET`
+- `JWT_SECRET`
+- `JWT_REFRESH_SECRET`
+- `ENCRYPTION_KEY`
+- `APP_URL`
+- `ALLOWED_ORIGINS`
+- `RUNNER_JWT_SECRET`
+- AI provider keys you actually use
 
-# 2. Deploy
-docker-compose -f docker-compose.replit-vm.yml up -d
+Recommended:
 
-# 3. View logs
-docker-compose -f docker-compose.replit-vm.yml logs -f app
-```
+- `SENTRY_DSN`
+- `VITE_SENTRY_DSN`
+- `BACKUP_CRON`
+- `STORAGE_BACKEND`
+- `S3_REGION`
+- `S3_BUCKET`
+- `S3_ACCESS_KEY_ID`
+- `S3_SECRET_ACCESS_KEY`
 
-### Option 2: Standard VM with Docker-in-Docker
+Production guards enforced by the app:
 
-```bash
-# 1. Set environment variables
-export POSTGRES_PASSWORD="secure-password"
-export REDIS_PASSWORD="secure-password"
-export ANTHROPIC_API_KEY="your-api-key"
+- `APP_URL` must use `https://`
+- `JWT_SECRET` and `ENCRYPTION_KEY` must be at least 32 characters
+- `ALLOWED_ORIGINS` must be explicit origins, not wildcards
+- durable object storage must be configured
 
-# 2. Deploy with DinD (more isolated)
-docker-compose -f docker-compose.prod.yml up -d
-```
+## 3. Database Migrations
 
-## Docker Socket Configuration
-
-### Docker-outside-of-Docker (DooD)
-
-Used in: `docker-compose.yml`, `docker-compose.replit-vm.yml`
-
-The host Docker socket is mounted into the container:
-
-```yaml
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-```
-
-**Pros:**
-- Simple configuration
-- Shares images with host (faster startup)
-- Lower resource usage
-
-**Cons:**
-- Less isolation
-- Container has access to all host containers
-
-**Permissions:** The container must run as root to access the Docker socket:
-```yaml
-# All docker-compose files are configured with:
-services:
-  app:
-    user: root
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-```
+Before first deploy and on every release:
 
 ```bash
-# Verify socket permissions on host
-ls -la /var/run/docker.sock
-# Should show: srw-rw---- 1 root docker ...
+npm ci
+npm run db:migrate
 ```
 
-### Docker-in-Docker (DinD)
+Do not rely on `db:push` in normal production deploys. The container entrypoint now refuses schema push unless `ALLOW_SCHEMA_PUSH_IN_PRODUCTION=true` is set explicitly for emergency recovery.
 
-Used in: `docker-compose.prod.yml`
-
-A separate Docker daemon runs inside a privileged container:
-
-```yaml
-services:
-  docker:
-    image: docker:24-dind
-    privileged: true
-    environment:
-      - DOCKER_TLS_CERTDIR=/certs
-```
-
-The app connects via TLS:
-
-```yaml
-environment:
-  - DOCKER_HOST=tcp://docker:2376
-  - DOCKER_TLS_VERIFY=1
-  - DOCKER_CERT_PATH=/certs/client
-volumes:
-  - docker-certs-client:/certs/client:ro
-```
-
-**Pros:**
-- Better isolation
-- Secure TLS communication
-- Independent image cache
-
-**Cons:**
-- Higher resource usage
-- Slower initial image pulls
-
-## Environment Variables
-
-### Required
-
-| Variable | Description |
-|----------|-------------|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `SESSION_SECRET` | Express session encryption key |
-| `REDIS_PASSWORD` | Redis authentication password |
-
-### AI Providers
-
-| Variable | Description |
-|----------|-------------|
-| `ANTHROPIC_API_KEY` | Claude API key |
-| `OPENAI_API_KEY` | GPT API key |
-| `GEMINI_API_KEY` | Google Gemini API key |
-| `XAI_API_KEY` | Grok API key |
-| `MOONSHOT_API_KEY` | Kimi API key |
-
-### Payments & Email
-
-| Variable | Description |
-|----------|-------------|
-| `STRIPE_SECRET_KEY` | Stripe API key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
-| `SENDGRID_API_KEY` | SendGrid email API key |
-
-### Docker Configuration
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DOCKER_HOST` | Docker daemon URL | `unix:///var/run/docker.sock` |
-| `DOCKER_NETWORK` | Network for containers | `bridge` |
-| `EXECUTION_MODE` | `docker` or `process` | `docker` in production |
-| `DEPLOYMENT_MODE` | `single-vm` or `kubernetes` | `single-vm` |
-
-### Application
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | `development` or `production` | - |
-| `PORT` | HTTP port | `5000` |
-| `BASE_URL` | Public URL | `https://e-code.ai` |
-
-## Replit Reserved VM Setup
-
-### Prerequisites
-
-1. **Reserved VM** with Docker support
-2. **PostgreSQL** database (Replit Neon or external)
-3. **Domain** configured (e.g., e-code.ai)
-
-### Step-by-Step
+Current migration files live in `migrations/`. Verify the latest SQL files before deploy:
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/e-code/e-code.git
-cd e-code
-
-# 2. Create .env file
-cat > .env << 'EOF'
-DATABASE_URL=postgresql://user:pass@host:5432/db
-SESSION_SECRET=your-secret-key-here
-REDIS_PASSWORD=your-redis-password
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-# Add other API keys as needed
-EOF
-
-# 3. Verify Docker socket access
-docker ps
-
-# 4. Deploy
-docker-compose -f docker-compose.replit-vm.yml up -d
-
-# 5. Check health
-curl http://localhost:5000/health/liveness
+find migrations -maxdepth 1 -name '*.sql' | sort | tail -5
 ```
 
-### Troubleshooting Docker Socket
+## 4. Build Verification
 
-**Error: Cannot connect to Docker daemon**
+Run locally or in CI before shipping:
 
 ```bash
-# Check socket exists
-ls -la /var/run/docker.sock
-
-# Check Docker is running
-systemctl status docker
-
-# Try with sudo
-sudo docker ps
+npm ci
+npm run build
+npm run deploy:check
 ```
 
-**Error: Permission denied**
+Expected build artifacts:
 
-The container needs root access to the Docker socket:
+- `dist/public/index.html`
+- `dist/index.js`
 
-```yaml
-# In docker-compose.replit-vm.yml
-services:
-  app:
-    user: root  # Already configured
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-```
+The frontend build already uses Vite code splitting and vendor chunking via `vite.config.ts`.
 
-## Kubernetes Deployment
+## 5. Container Deployment
 
-For enterprise multi-region deployments:
+For a VM-based production deployment:
+
+1. Provision PostgreSQL, Redis, and object storage.
+2. Put the repository on the target host.
+3. Inject production secrets with your secret manager, `.env`, or CI.
+4. Start the stack:
 
 ```bash
-# Enable Kubernetes mode
-export DEPLOYMENT_MODE=kubernetes
-export KUBERNETES_ENABLED=true
-
-# Apply manifests (example)
-kubectl apply -f k8s/
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-See `server/kubernetes/` for orchestration code.
+The application container will:
 
-## Health Checks
+- validate production env
+- wait for PostgreSQL readiness
+- run `npm run db:migrate`
+- start `dist/index.js`
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/health/liveness` | K8s liveness probe |
-| `/health/readiness` | K8s readiness probe |
-| `/health/startup` | K8s startup probe |
-| `/health/deep` | Full system check |
+## 6. Reverse Proxy And TLS
 
-## SSL/TLS Configuration
+Terminate TLS at Nginx, Caddy, Traefik, Cloudflare, or your cloud load balancer.
 
-For production, use a reverse proxy (nginx, Traefik, Caddy):
+Requirements:
 
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name e-code.ai;
-    
-    ssl_certificate /etc/ssl/e-code.ai.crt;
-    ssl_certificate_key /etc/ssl/e-code.ai.key;
-    
-    location / {
-        proxy_pass http://localhost:5000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
+- forward `X-Forwarded-Proto`, `X-Forwarded-For`, and `Host`
+- set `APP_URL` to the public `https://` URL
+- set `TRUST_PROXY_HOPS` to match the number of trusted proxies in front of the app
 
-## Monitoring
+Recommended Nginx upstream behavior:
 
-- **Prometheus metrics**: `/metrics`
-- **API documentation**: `/api/docs`
-- **Logs**: `./logs/` directory
+- proxy WebSocket upgrades
+- preserve `Host`
+- enable HTTP/2 or HTTP/3 at the edge
+- redirect HTTP to HTTPS
 
-## Backup & Recovery
+## 7. Health Checks And Monitoring
 
-### Database Backup
+Use these endpoints:
+
+- `/health`
+- `/health/liveness`
+- `/health/readiness`
+- `/api/health`
+- `/api/health/readiness`
+- `/api/cors-health`
+
+Suggested monitors:
+
+- liveness every 30s
+- readiness every 30s
+- alert on repeated `5xx`
+- alert on failed deploy health checks
+
+Sentry is optional but supported on both server and client when `SENTRY_DSN` and `VITE_SENTRY_DSN` are configured.
+
+## 8. Security Hardening
+
+Already enforced in app middleware:
+
+- Helmet security headers
+- production HSTS
+- strict CORS allowlist
+- API and WebSocket rate limiting
+- Redis-backed distributed throttling when available
+
+Operational recommendations:
+
+- put Cloudflare, AWS ALB + WAF, or equivalent in front of the app
+- only expose `80/443` publicly
+- keep PostgreSQL and Redis private
+- rotate secrets through a secret manager, not committed files
+
+## 9. Backups And Restore Drills
+
+Application data to protect:
+
+- PostgreSQL
+- object storage bucket contents
+- user uploads and generated artifacts
+
+Database backup commands:
 
 ```bash
-# Backup
-docker exec ecode-postgres pg_dump -U ecode_user ecode > backup.sql
-
-# Restore
-docker exec -i ecode-postgres psql -U ecode_user ecode < backup.sql
+npm run db:backup
+npm run db:restore -- backups/backup_YYYY-MM-DD_HH-MM-SS.sql
 ```
 
-### Redis Backup
+Recommended strategy:
 
-Redis uses AOF persistence by default. Data is in the `redis-data` volume.
+- nightly `pg_dump`
+- upload backups to durable object storage
+- retain daily, weekly, and monthly snapshots
+- test restore into a staging database at least once per month
 
-## Scaling
+If `ENABLE_BACKUPS=true`, set `BACKUP_CRON` and run the backup job from cron, systemd timer, or your orchestrator scheduler.
 
-### Horizontal Scaling
+## 10. CI/CD
 
-For multiple app instances, use a load balancer and shared Redis for sessions:
+Primary production workflow:
 
-```yaml
-services:
-  app:
-    deploy:
-      replicas: 3
-```
+- `.github/workflows/deploy-main.yml`
 
-### Vertical Scaling
+Replit-specific validation workflow:
 
-Adjust container resources:
+- `.github/workflows/replit-deployment.yml`
 
-```yaml
-services:
-  app:
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 4G
-```
+The production pipeline should now:
 
-## Support
+- install dependencies
+- typecheck
+- run CI tests
+- build optimized bundles
+- run `npm run deploy:check`
+- deploy via SSH
+- verify `/health/liveness`, `/health/readiness`, and `/api/health`
 
-- Documentation: https://docs.e-code.ai
-- Issues: https://github.com/e-code/issues
-- Community: https://community.e-code.ai
+Configure these GitHub repository settings:
+
+- Secrets:
+  - `SSH_HOST`
+  - `SSH_USER`
+  - `SSH_PRIVATE_KEY`
+  - `DATABASE_URL`
+  - `SESSION_SECRET`
+  - `JWT_SECRET`
+  - `ENCRYPTION_KEY`
+  - `SENTRY_DSN`
+  - `VITE_SENTRY_DSN`
+- Variables:
+  - `APP_URL`
+  - `ALLOWED_ORIGINS`
+  - `DEPLOY_DIR`
+
+## 11. Rollback
+
+If a deploy fails:
+
+1. stop the new app container
+2. redeploy the previous known-good image or git revision
+3. confirm `/health/readiness` returns `200`
+4. restore the database only if the failed release applied destructive migrations
+
+Avoid automatic rollback of the database unless the migration plan explicitly supports it.
+
+## 12. Post-Deploy Smoke Checks
+
+After every deploy:
+
+1. `curl -f https://your-app/health/liveness`
+2. `curl -f https://your-app/health/readiness`
+3. `curl -f https://your-app/api/health`
+4. log in through the UI
+5. open a project
+6. save a file
+7. start preview
+8. open terminal
+9. verify Redis-backed real-time features work
+
+## 13. Minimal Production Checklist
+
+- env vars loaded from a secret manager
+- PostgreSQL reachable
+- Redis reachable
+- durable object storage configured
+- `npm run build` passes
+- `npm run deploy:check` passes
+- TLS enabled at the edge
+- health monitors configured
+- backup job scheduled
+- CI/CD secrets and vars configured
