@@ -2,7 +2,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { IncomingMessage } from 'http';
-import { previewService } from './preview-service';
 import { EventEmitter } from 'events';
 import { parse as parseCookie } from 'cookie';
 import { storage } from '../storage';
@@ -281,7 +280,8 @@ class PreviewWebSocketService {
           projectId: projectId
         }));
         
-        // Send current preview status — getPreview expects a string key
+        // Resolve previewService lazily to avoid a circular import during module initialization.
+        const { previewService } = await import('./preview-service');
         const preview = previewService.getPreview(String(projectId));
         if (preview) {
           client.ws.send(JSON.stringify({
