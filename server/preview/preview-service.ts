@@ -917,6 +917,60 @@ export class PreviewService {
     return { type: 'static' as const };
   }
 
+  private async ensureNodePreviewRuntimeDeps(
+    preview: PreviewInstance,
+    frameworkInfo: any,
+    previewPath: string,
+    files: any[],
+  ) {
+    const packageJson = frameworkInfo?.packageJson || {};
+    const deps = { ...(packageJson.dependencies || {}), ...(packageJson.devDependencies || {}) };
+    const hasTypeScriptSource = files.some((file) => {
+      const name = String(file?.name || file?.path || '');
+      return !file?.isDirectory && (name.endsWith('.ts') || name.endsWith('.tsx') || name === 'tsconfig.json');
+    });
+    const usesReactScripts = Boolean(deps['react-scripts']);
+
+    if (!usesReactScripts || !hasTypeScriptSource) {
+      return;
+    }
+
+    const requiredPreviewDeps = ['typescript', '@types/react', '@types/react-dom'];
+    const missingDeps = requiredPreviewDeps.filter((pkg) => {
+      if (deps[pkg]) return false;
+      try {
+        const pkgJsonPath = path.join(previewPath, 'node_modules', pkg, 'package.json');
+        require('fs').accessSync(pkgJsonPath);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+
+    if (missingDeps.length === 0) {
+      return;
+    }
+
+    const installLog = `Installing preview-only runtime deps: ${missingDeps.join(', ')}`;
+    preview.logs.push(installLog);
+    previewEvents.emit('preview:log', {
+      projectId: preview.projectId,
+      runId: preview.runId,
+      log: installLog,
+    });
+
+    await this.runCommand(
+      'npm',
+      ['install', '--no-save', '--include=dev', ...missingDeps],
+      previewPath,
+      {
+        NODE_ENV: 'development',
+        npm_config_production: 'false',
+        NPM_CONFIG_PRODUCTION: 'false',
+      },
+    );
+  }
+
   private async startModernFramework(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
@@ -929,6 +983,7 @@ export class PreviewService {
         npm_config_production: 'false',
         NPM_CONFIG_PRODUCTION: 'false',
       });
+      await this.ensureNodePreviewRuntimeDeps(preview, frameworkInfo, previewPath, files);
       preview.logs.push('Dependencies installed.');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting dev server...' });
     } catch (installErr: any) {
@@ -1039,6 +1094,7 @@ export class PreviewService {
         npm_config_production: 'false',
         NPM_CONFIG_PRODUCTION: 'false',
       });
+      await this.ensureNodePreviewRuntimeDeps(preview, frameworkInfo, previewPath, files);
       preview.logs.push('Dependencies installed.');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting server...' });
     } catch (installErr: any) {
