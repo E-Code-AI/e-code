@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 
@@ -272,7 +273,7 @@ export class GitBackend {
       throw new Error('Project not found');
     }
     
-    const projectDir = path.join(process.cwd(), 'projects', String(projectId));
+    const projectDir = await ensureProjectDirectory(projectId);
     const repoPath = this.getRepoPath(projectId);
     
     // Copy files from project to repo (excluding .git)

@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as csv from 'csv-parse';
 import { faker } from '@faker-js/faker';
 import { sql } from 'drizzle-orm';
+import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 export interface DataProvisioningConfig {
   projectId: number;
@@ -227,7 +228,8 @@ export class DataProvisioningService {
    * Create data fixtures for testing
    */
   async createFixtures(projectId: number, fixtureName: string): Promise<void> {
-    const fixturesPath = path.join(process.cwd(), 'projects', projectId.toString(), 'fixtures');
+    const projectPath = await ensureProjectDirectory(projectId);
+    const fixturesPath = path.join(projectPath, 'fixtures');
     await fs.mkdir(fixturesPath, { recursive: true });
 
     const fixtures: Record<string, any> = {
@@ -353,7 +355,7 @@ export class DataProvisioningService {
    */
   private async importCSV(config: DataProvisioningConfig): Promise<any> {
     const { projectId, options } = config;
-    const filePath = path.join(process.cwd(), 'projects', projectId.toString(), options?.filePath);
+    const filePath = path.join(getProjectWorkspacePath(projectId), options?.filePath || '');
     
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const records: any[] = [];
@@ -374,7 +376,7 @@ export class DataProvisioningService {
    */
   private async importJSON(config: DataProvisioningConfig): Promise<any> {
     const { projectId, options } = config;
-    const filePath = path.join(process.cwd(), 'projects', projectId.toString(), options?.filePath);
+    const filePath = path.join(getProjectWorkspacePath(projectId), options?.filePath || '');
     
     const fileContent = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(fileContent);
@@ -385,7 +387,7 @@ export class DataProvisioningService {
    */
   private async importSQL(config: DataProvisioningConfig): Promise<any> {
     const { projectId, options } = config;
-    const filePath = path.join(process.cwd(), 'projects', projectId.toString(), options?.filePath);
+    const filePath = path.join(getProjectWorkspacePath(projectId), options?.filePath || '');
     
     const sqlContent = await fs.readFile(filePath, 'utf-8');
     

@@ -3,6 +3,7 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 
@@ -22,7 +23,7 @@ export class ContainerBuilder {
       throw new Error('Project not found');
     }
 
-    const projectDir = path.join(process.cwd(), 'projects', String(config.projectId));
+    const projectDir = await ensureProjectDirectory(config.projectId);
     const imageName = `${this.registryUrl}/${config.projectName.toLowerCase().replace(/\s+/g, '-')}-${config.deploymentId}:latest`;
 
     // Create Dockerfile based on language

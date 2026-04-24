@@ -29,6 +29,7 @@ import { agentTestingOrchestrator } from '../services/agent-testing-orchestrator
 import { agentElementSelector } from '../services/agent-element-selector.service';
 import { agentRecording } from '../services/agent-recording.service';
 import { z } from 'zod';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const router = Router();
 
@@ -127,7 +128,7 @@ router.post('/test/execute', async (req: Request, res: Response) => {
         sessionId: data.sessionId,
         projectId: data.projectId,
         userId,
-        projectPath: `/projects/${data.projectId}`
+        projectPath: getProjectWorkspacePath(data.projectId)
       },
       data.testScript,
       data.options
@@ -153,7 +154,7 @@ router.post('/test/screenshot', async (req: Request, res: Response) => {
         sessionId: data.sessionId,
         projectId: data.projectId,
         userId,
-        projectPath: `/projects/${data.projectId}`
+        projectPath: getProjectWorkspacePath(data.projectId)
       },
       data.url,
       data.options

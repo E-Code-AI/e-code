@@ -6,6 +6,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { getProjectWorkspacePath } from "../utils/project-fs-sync";
 
 const execAsync = promisify(exec);
 
@@ -152,7 +153,7 @@ export class ResourceMonitor {
 
   // Get project storage usage
   private async getProjectStorageUsage(projectId: number): Promise<number> {
-    const projectPath = path.join(process.cwd(), 'projects', projectId.toString());
+    const projectPath = getProjectWorkspacePath(projectId);
     
     try {
       const { stdout } = await execAsync(`du -sb "${projectPath}" 2>/dev/null || echo "0"`);

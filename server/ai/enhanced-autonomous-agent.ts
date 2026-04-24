@@ -14,6 +14,7 @@ import { agentWebSocketService } from '../services/agent-websocket-service';
 import { getMCPClient } from '../api/mcp';
 import { MCPClient } from '../mcp/client';
 import * as path from 'path';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 
@@ -753,7 +754,7 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     };
     
     // Get project path
-    const projectPath = path.join(process.cwd(), 'projects', context.projectId.toString());
+    const projectPath = await ensureProjectDirectory(context.projectId);
     
     // First, create all files and folders using MCP tools
     for (const action of actions) {
@@ -1007,10 +1008,9 @@ ${plan.components.map((c: string) => `.${c.toLowerCase()} {
     try {
       // Use real terminal service to execute commands
       const { spawn } = await import('child_process');
+      const projectPath = await ensureProjectDirectory(projectId);
       
       return new Promise((resolve) => {
-        // Execute in project directory
-        const projectPath = path.join(process.cwd(), 'projects', projectId.toString());
         const childProcess = spawn(command, {
           shell: true,
           cwd: projectPath,

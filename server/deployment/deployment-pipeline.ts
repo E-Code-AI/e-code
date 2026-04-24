@@ -7,6 +7,7 @@ import { realDeploymentService, RealDeploymentConfig, RealDeploymentResult } fro
 import { storage } from '../storage';
 import { simplePackageInstaller } from '../package-management/simple-package-installer';
 import { notifyDeployComplete } from '../services/notification-events';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const logger = createLogger('deployment-pipeline');
 
@@ -80,7 +81,7 @@ export class DeploymentPipeline {
     
     try {
       // Get project path
-      const projectPath = path.join(process.cwd(), 'projects', config.projectId.toString());
+      const projectPath = await ensureProjectDirectory(config.projectId);
       
       // Phase 1: Build
       pipeline.logs.push('Starting build phase...');

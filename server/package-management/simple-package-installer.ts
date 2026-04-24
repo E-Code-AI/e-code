@@ -2,6 +2,7 @@ import { spawn, execFile } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const execFileAsync = promisify(execFile);
 
@@ -25,24 +26,14 @@ async function getProjectDirectory(projectId: string): Promise<string> {
   if (!validateProjectId(projectId)) {
     throw new Error('Invalid project ID format');
   }
-  
-  const baseDir = path.resolve(process.cwd(), 'projects');
-  const projectDir = path.join(baseDir, projectId);
-  
-  // Ensure the resolved path is within the projects directory (prevent path traversal)
+
+  const projectDir = getProjectWorkspacePath(projectId);
   const resolvedPath = path.resolve(projectDir);
-  if (!resolvedPath.startsWith(baseDir)) {
+  if (resolvedPath !== projectDir) {
     throw new Error('Invalid project path');
   }
-  
-  // Ensure directory exists
-  try {
-    await fs.mkdir(resolvedPath, { recursive: true });
-  } catch (error) {
-    // Directory might already exist
-  }
-  
-  return resolvedPath;
+
+  return ensureProjectDirectory(projectId);
 }
 
 // Helper function to execute commands safely

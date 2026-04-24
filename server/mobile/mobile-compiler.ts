@@ -4,6 +4,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 
@@ -408,7 +409,7 @@ export class MobileCompiler {
   }
 
   private async copyProjectFiles(projectId: number, buildDir: string): Promise<void> {
-    const projectDir = path.join(process.cwd(), 'projects', String(projectId));
+    const projectDir = await ensureProjectDirectory(projectId);
     await this.copyDirectory(projectDir, buildDir);
   }
 

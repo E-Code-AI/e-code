@@ -15,6 +15,7 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createLogger } from '../utils/logger';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('checkpoint-restore-service');
 
@@ -46,7 +47,7 @@ export class CheckpointRestoreService extends EventEmitter {
    * Get project base path for file operations
    */
   private getProjectBasePath(projectId: number): string {
-    return path.join(process.cwd(), 'projects', String(projectId));
+    return getProjectWorkspacePath(projectId);
   }
 
   /**

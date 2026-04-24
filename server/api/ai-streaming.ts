@@ -18,6 +18,7 @@ import { db } from '../db';
 import { agentSessions, aiConversations } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
 import * as path from 'path';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -439,7 +440,7 @@ Focus on planning, design, and collaboration - not implementation.`
           (async () => {
             if (!projectId) return '';
             try {
-              const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+              const projectBasePath = getProjectWorkspacePath(projectId);
               memoryBankService.setProjectBasePath(Number(projectId), projectBasePath);
               const context = await Promise.race([
                 memoryBankService.getContextForAgent(projectId),
@@ -640,7 +641,7 @@ Focus on planning, design, and collaboration - not implementation.`
             const projectIdNum = Number(projectId);
             
             // Compute project base path (relative to cwd where projects are stored)
-            const projectBasePath = path.join(process.cwd(), 'projects', String(projectIdNum));
+            const projectBasePath = getProjectWorkspacePath(projectIdNum);
             
             // Capture actual file state from the project directory
             const snapshot = await workspaceSnapshotService.captureFileState(

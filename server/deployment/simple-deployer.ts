@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 const logger = createLogger('simple-deployer');
@@ -27,7 +28,7 @@ export class SimpleDeployer {
   
   async deploy(config: DeploymentConfig): Promise<DeploymentResult> {
     const deploymentId = `dep-${config.projectId}-${Date.now()}`;
-    const projectDir = path.join(process.cwd(), 'projects', config.projectId);
+    const projectDir = await ensureProjectDirectory(config.projectId);
     
     // Initialize deployment
     const deployment: DeploymentResult = {

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 
@@ -67,7 +68,7 @@ export class BuildpackDeploymentService {
       const project = await storage.getProject(config.projectId);
       if (!project) throw new Error('Project not found');
       
-      const projectPath = path.join(process.cwd(), '.projects', `project-${config.projectId}`);
+      const projectPath = await ensureProjectDirectory(config.projectId);
       await this.copyProjectFiles(projectPath, deploymentPath);
       buildLogs.push(`[${new Date().toISOString()}] Copied project files`);
 

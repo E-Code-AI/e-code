@@ -4,6 +4,7 @@ import * as path from 'path';
 import { containerBuilder, BuildConfig } from './container-builder';
 import { containerOrchestrator, ContainerDeployment } from './container-orchestrator';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 export interface RealDeploymentConfig {
   projectId: number;
@@ -110,7 +111,7 @@ export class RealDeploymentServiceV2 {
       const project = await storage.getProject(config.projectId);
       if (!project) throw new Error('Project not found');
 
-      const projectPath = path.join(process.cwd(), '.projects', `project-${config.projectId}`);
+      const projectPath = await ensureProjectDirectory(config.projectId);
       
       const buildConfig: BuildConfig = {
         projectId: config.projectId,

@@ -13,6 +13,7 @@ import archiver, { Archiver } from 'archiver';
 import { createWriteStream } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 export interface ExportOptions {
   type: 'docker' | 'github' | 'zip' | 'template';
@@ -55,7 +56,7 @@ interface FileEntry {
 }
 
 export class ExportManager {
-  private projectsDir = './projects';
+  private projectsDir = '/tmp/projects';
   private exportsDir = './temp/exports';
 
   constructor() {
@@ -105,7 +106,7 @@ export class ExportManager {
 
   private async exportAsDocker(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
-    const projectPath = path.join(this.projectsDir, projectId.toString());
+    const projectPath = getProjectWorkspacePath(projectId);
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
     const projectInfo = await this.detectProjectTypeFromPath(projectPath);
@@ -140,7 +141,7 @@ export class ExportManager {
 
   private async exportToGitHub(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
-    const projectPath = path.join(this.projectsDir, projectId.toString());
+    const projectPath = getProjectWorkspacePath(projectId);
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
     const projectInfo = await this.detectProjectTypeFromPath(projectPath);
@@ -170,7 +171,7 @@ export class ExportManager {
 
   private async exportAsZip(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
-    const projectPath = path.join(this.projectsDir, projectId.toString());
+    const projectPath = getProjectWorkspacePath(projectId);
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
     const stats = await this.createStreamingZipArchive(projectPath, zipPath, options);
@@ -192,7 +193,7 @@ export class ExportManager {
 
   private async exportAsTemplate(projectId: number, exportId: string, options: ExportOptions): Promise<ExportResult> {
     const startTime = Date.now();
-    const projectPath = path.join(this.projectsDir, projectId.toString());
+    const projectPath = getProjectWorkspacePath(projectId);
     const zipPath = path.join(this.exportsDir, `${exportId}.zip`);
     
     const templateMeta = {

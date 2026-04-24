@@ -10,6 +10,7 @@ import path from 'path';
 import { createLogger } from '../utils/logger';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('memory-bank-router');
 const router = Router();
@@ -33,7 +34,7 @@ async function verifyProjectAccess(projectId: number, userId: number): Promise<{
  * This ensures each project has its Memory Bank in projects/${projectId}/.ecode/memory-bank/
  */
 function ensureProjectBasePath(projectId: number): void {
-  const projectBasePath = path.join(process.cwd(), 'projects', String(projectId));
+  const projectBasePath = getProjectWorkspacePath(projectId);
   memoryBankService.setProjectBasePath(projectId, projectBasePath);
 }
 
