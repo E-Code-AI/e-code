@@ -7,6 +7,7 @@ import { billingService } from './billing-service';
 import { deploymentWebSocketService, DeploymentStatusType, UIStatusType, translateStatusToUI } from './deployment-websocket-service';
 import { sslRenewalService } from './ssl-renewal.service';
 import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { deploymentRollbackService } from './deployment-rollback';
 
 export interface DeploymentConfig {
   id: string;
@@ -169,6 +170,11 @@ export class DeploymentManager {
       url: deployment.url || deployment.customUrl || '',
       customDomain: config.customDomain,
       metadata: {
+        type: config.type,
+        environment: config.environment,
+        sslEnabled: config.sslEnabled,
+        buildCommand: config.buildCommand,
+        startCommand: config.startCommand,
         regions: config.regions,
         scaling: config.scaling,
         scheduling: config.scheduling,
@@ -439,6 +445,36 @@ export class DeploymentManager {
       await this.persistDeploymentState(deploymentId, deployment, { lastError: null });
       this.broadcastStatusChange(deploymentId, 'active', 'deploying', deployment.url || deployment.customUrl);
       this.broadcastDeployLog(deploymentId, liveLog);
+
+      try {
+        const projectPath = getProjectWorkspacePath(config.projectId);
+        await deploymentRollbackService.createSnapshot(
+          deploymentId,
+          deploymentId,
+          projectPath,
+          {
+            buildCommand: config.buildCommand,
+            startCommand: config.startCommand,
+            environmentVars: config.environmentVars || {},
+            dependencies: {},
+            resources: config.resources,
+          },
+          {
+            deployedBy: 'system',
+            reason: 'Automatic deployment snapshot',
+            tags: [config.environment, config.type],
+          }
+        );
+        const snapshotLog = `📸 Deployment snapshot created for version ${deploymentId}`;
+        deployment.deploymentLog.push(snapshotLog);
+        await this.persistDeploymentState(deploymentId, deployment);
+        this.broadcastDeployLog(deploymentId, snapshotLog);
+      } catch (snapshotError: any) {
+        const snapshotWarning = `⚠️ Snapshot creation failed: ${snapshotError?.message || snapshotError}`;
+        deployment.deploymentLog.push(snapshotWarning);
+        await this.persistDeploymentState(deploymentId, deployment);
+        this.broadcastDeployLog(deploymentId, snapshotWarning);
+      }
 
     } catch (error: any) {
       const previousStatus = deployment.status;
@@ -743,6 +779,119 @@ export class DeploymentManager {
     }
 
     deployment.deploymentLog.push('✅ Deployment updated successfully');
+  }
+
+  async stopDeployment(deploymentId: string): Promise<void> {
+    const deployment = this.deployments.get(deploymentId);
+    const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+    const previousStatus = (deployment?.status || dbDeployment?.status || 'stopped') as DeploymentStatusType;
+
+    if (!deployment && !dbDeployment) {
+      throw new Error('Deployment not found');
+    }
+
+    if (deployment) {
+      deployment.status = 'stopped';
+      deployment.deploymentLog.push('🛑 Deployment stopped by user request');
+      if ((deployment as any).healthCheckInterval) {
+        clearInterval((deployment as any).healthCheckInterval);
+        delete (deployment as any).healthCheckInterval;
+      }
+      await this.persistDeploymentState(deploymentId, deployment, { lastError: null });
+    } else if (dbDeployment) {
+      await storage.updateDeployment(dbDeployment.id, {
+        status: 'stopped',
+        metadata: {
+          ...((dbDeployment.metadata as Record<string, unknown>) || {}),
+          lastError: null,
+        },
+      });
+    }
+
+    if (dbDeployment) {
+      await storage.updateDeployment(dbDeployment.id, { status: 'stopped' });
+    }
+
+    this.broadcastStatusChange(deploymentId, 'stopped', previousStatus);
+    this.broadcastDeployLog(deploymentId, '🛑 Deployment stopped by user request');
+  }
+
+  async restartDeployment(deploymentId: string): Promise<void> {
+    const deployment = this.deployments.get(deploymentId);
+    const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+    const previousStatus = (deployment?.status || dbDeployment?.status || 'stopped') as DeploymentStatusType;
+
+    if (!deployment && !dbDeployment) {
+      throw new Error('Deployment not found');
+    }
+
+    if (deployment) {
+      deployment.status = 'deploying';
+      deployment.deploymentLog.push('🔄 Restart requested, recycling deployment runtime...');
+      await this.persistDeploymentState(deploymentId, deployment, { lastError: null });
+    }
+
+    if (dbDeployment) {
+      await storage.updateDeployment(dbDeployment.id, {
+        status: 'deploying',
+        metadata: {
+          ...((dbDeployment.metadata as Record<string, unknown>) || {}),
+          lastError: null,
+        },
+      });
+    }
+
+    this.broadcastStatusChange(deploymentId, 'deploying', previousStatus);
+    this.broadcastDeployLog(deploymentId, '🔄 Restart requested, recycling deployment runtime...');
+
+    setTimeout(async () => {
+      try {
+        const liveDeployment = this.deployments.get(deploymentId);
+        if (liveDeployment) {
+          liveDeployment.status = 'active';
+          liveDeployment.deploymentLog.push('✅ Deployment runtime restarted successfully');
+          liveDeployment.lastDeployedAt = new Date();
+          await this.persistDeploymentState(deploymentId, liveDeployment, { lastError: null });
+        }
+
+        const persistedDeployment = await storage.getDeploymentByExternalId(deploymentId);
+        if (persistedDeployment) {
+          await storage.updateDeployment(persistedDeployment.id, { status: 'active' });
+        }
+
+        this.broadcastStatusChange(deploymentId, 'active', 'deploying');
+        this.broadcastDeployLog(deploymentId, '✅ Deployment runtime restarted successfully');
+      } catch (error) {
+        console.error(`[DeploymentManager] Failed to finish restart for ${deploymentId}:`, error);
+        this.broadcastError(deploymentId, error instanceof Error ? error.message : 'Restart failed');
+      }
+    }, 1500);
+  }
+
+  async clearDeploymentLogs(deploymentId: string): Promise<void> {
+    const deployment = this.deployments.get(deploymentId);
+    const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+
+    if (!deployment && !dbDeployment) {
+      throw new Error('Deployment not found');
+    }
+
+    if (deployment) {
+      deployment.buildLog = [];
+      deployment.deploymentLog = [];
+      await this.persistDeploymentState(deploymentId, deployment, { lastError: null });
+    }
+
+    if (dbDeployment) {
+      await storage.updateDeployment(dbDeployment.id, {
+        buildLogs: '',
+        deploymentLogs: '',
+        metadata: {
+          ...((dbDeployment.metadata as Record<string, unknown>) || {}),
+          lastError: null,
+        },
+      });
+    }
   }
 
   async deleteDeployment(deploymentId: string): Promise<void> {

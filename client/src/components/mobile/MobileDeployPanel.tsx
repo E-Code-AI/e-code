@@ -52,7 +52,11 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
 
   const publishMutation = useMutation<PublishState, Error, void>({
     mutationFn: async () => {
-      return apiRequest<PublishState>('POST', `/api/projects/${projectId}/publish`);
+      return apiRequest<PublishState>('POST', `/api/projects/${projectId}/publish`, {
+        type: 'autoscale',
+        environment: 'production',
+        regions: ['us-east-1'],
+      });
     },
     onMutate: () => {
       queryClient.setQueryData<PublishState>(
@@ -79,7 +83,12 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
 
   const republishMutation = useMutation<PublishState, Error, void>({
     mutationFn: async () => {
-      return apiRequest<PublishState>('POST', `/api/projects/${projectId}/republish`);
+      return apiRequest<PublishState>('POST', `/api/projects/${projectId}/republish`, {
+        forceRebuild: false,
+        type: 'autoscale',
+        environment: 'production',
+        regions: ['us-east-1'],
+      });
     },
     onMutate: () => {
       queryClient.setQueryData<PublishState>(

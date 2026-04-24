@@ -5,6 +5,7 @@ import { deploymentManager } from '../services/deployment-manager.js';
 import { storage } from '../storage';
 import { ensureAuthenticated } from '../middleware/auth';
 import { translateStatusToUI, UIStatusType, DeploymentStatusType } from '../services/deployment-websocket-service';
+import { deploymentRollbackService } from '../services/deployment-rollback';
 
 const router = Router();
 
@@ -56,6 +57,9 @@ const publishConfigSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   customDomain: z.string().optional(),
+  type: z.enum(['static', 'autoscale', 'reserved-vm', 'scheduled', 'serverless']).optional(),
+  environment: z.enum(['development', 'staging', 'production']).optional(),
+  regions: z.array(z.string()).min(1).optional(),
   buildCommand: z.string().optional(),
   runCommand: z.string().optional(),
   environmentVars: z.record(z.string()).optional(),
@@ -65,6 +69,13 @@ const republishConfigSchema = z.object({
   forceRebuild: z.boolean().default(false),
   clearCache: z.boolean().default(false),
   message: z.string().optional(),
+  type: z.enum(['static', 'autoscale', 'reserved-vm', 'scheduled', 'serverless']).optional(),
+  environment: z.enum(['development', 'staging', 'production']).optional(),
+  regions: z.array(z.string()).min(1).optional(),
+  customDomain: z.string().optional(),
+  buildCommand: z.string().optional(),
+  runCommand: z.string().optional(),
+  environmentVars: z.record(z.string()).optional(),
 });
 
 const analyticsQuerySchema = z.object({
@@ -127,6 +138,49 @@ interface DeploymentAnalytics {
     latencyP50: number;
     latencyP99: number;
   }>;
+}
+
+async function getOwnedProject(req: Request, res: Response, projectId: string) {
+  const project = await storage.getProject(projectId);
+  if (!project) {
+    res.status(404).json({
+      success: false,
+      error: 'PROJECT_NOT_FOUND',
+      message: 'Project not found'
+    });
+    return null;
+  }
+
+  const numericUserId = typeof req.user!.id === 'string' ? parseInt(req.user!.id, 10) : req.user!.id;
+  if (project.ownerId !== numericUserId) {
+    res.status(403).json({
+      success: false,
+      error: 'FORBIDDEN',
+      message: 'You do not have permission to access this project'
+    });
+    return null;
+  }
+
+  return project;
+}
+
+async function getOwnedDeployment(req: Request, res: Response, deploymentId: string) {
+  const deployment = await storage.getDeploymentByExternalId(deploymentId);
+  if (!deployment) {
+    res.status(404).json({
+      success: false,
+      error: 'DEPLOYMENT_NOT_FOUND',
+      message: 'Deployment not found'
+    });
+    return null;
+  }
+
+  const project = await getOwnedProject(req, res, String(deployment.projectId));
+  if (!project) {
+    return null;
+  }
+
+  return { deployment, project };
 }
 
 // Deployment configuration schema
@@ -275,14 +329,52 @@ router.get('/deployments/:deploymentId', async (req, res) => {
 });
 
 // List project deployments
-router.get('/projects/:projectId/deployments', async (req, res) => {
+router.get('/projects/:projectId/deployments', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const projectId = req.params.projectId; // Keep as string
-    const deployments = await deploymentManager.listDeployments(projectId);
+    const projectId = req.params.projectId;
+    const project = await getOwnedProject(req, res, projectId);
+    if (!project) {
+      return;
+    }
+
+    const deployments = await storage.getProjectDeployments(projectId);
+    const hydratedDeployments = await Promise.all(
+      deployments
+        .sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        })
+        .map(async (deployment) => {
+          const liveStatus = deployment.deploymentId
+            ? await deploymentManager.getDeployment(deployment.deploymentId)
+            : null;
+          const internalStatus = (liveStatus?.status || deployment.status || 'stopped') as DeploymentStatusType;
+          const lastCodeChange = project.updatedAt || project.createdAt;
+          const deployedAt = deployment.updatedAt || deployment.createdAt || liveStatus?.lastDeployedAt;
+
+          return {
+            id: deployment.id,
+            deploymentId: deployment.deploymentId,
+            projectId: String(deployment.projectId),
+            type: deployment.type,
+            environment: deployment.environment,
+            status: internalStatus,
+            uiStatus: translateStatusToUI(internalStatus, lastCodeChange, deployedAt),
+            url: liveStatus?.url || deployment.url,
+            customDomain: deployment.customDomain,
+            createdAt: deployment.createdAt,
+            updatedAt: deployment.updatedAt,
+            deployedAt,
+            lastCodeChange,
+            metadata: deployment.metadata,
+          };
+        })
+    );
 
     res.json({
       success: true,
-      deployments
+      deployments: hydratedDeployments
     });
   } catch (error) {
     console.error('List deployments error:', error);
@@ -408,10 +500,15 @@ router.delete('/deployments/:deploymentId', async (req, res) => {
 });
 
 // Stop deployment
-router.post('/deployments/:deploymentId/stop', async (req, res) => {
+router.post('/deployments/:deploymentId/stop', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
-    await deploymentManager.updateDeployment(deploymentId, { status: 'stopped' } as any);
+    const ownedDeployment = await getOwnedDeployment(req, res, deploymentId);
+    if (!ownedDeployment) {
+      return;
+    }
+
+    await deploymentManager.stopDeployment(deploymentId);
     res.json({ success: true, message: 'Deployment stopped' });
   } catch (error) {
     console.error('Stop deployment error:', error);
@@ -420,10 +517,15 @@ router.post('/deployments/:deploymentId/stop', async (req, res) => {
 });
 
 // Restart deployment
-router.post('/deployments/:deploymentId/restart', async (req, res) => {
+router.post('/deployments/:deploymentId/restart', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
-    await deploymentManager.updateDeployment(deploymentId, { status: 'deploying' } as any);
+    const ownedDeployment = await getOwnedDeployment(req, res, deploymentId);
+    if (!ownedDeployment) {
+      return;
+    }
+
+    await deploymentManager.restartDeployment(deploymentId);
     res.json({ success: true, message: 'Deployment restarting' });
   } catch (error) {
     console.error('Restart deployment error:', error);
@@ -432,14 +534,122 @@ router.post('/deployments/:deploymentId/restart', async (req, res) => {
 });
 
 // Rollback deployment to a previous version
-router.post('/deployments/:deploymentId/rollback', async (req, res) => {
+router.post('/deployments/:deploymentId/rollback', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { deploymentId } = req.params;
-    await deploymentManager.updateDeployment(deploymentId, { status: 'deploying' } as any);
-    res.json({ success: true, message: 'Deployment rollback initiated' });
+    const ownedDeployment = await getOwnedDeployment(req, res, deploymentId);
+    if (!ownedDeployment) {
+      return;
+    }
+
+    const validatedData = z.object({
+      version: z.string().min(1, 'Version is required'),
+      skipDatabase: z.boolean().optional().default(false),
+      skipFiles: z.boolean().optional().default(false),
+      skipConfig: z.boolean().optional().default(false),
+      dryRun: z.boolean().optional().default(false),
+      reason: z.string().optional(),
+      force: z.boolean().optional().default(false),
+    }).parse(req.body);
+
+    const availableSnapshots = await deploymentRollbackService.listSnapshots(deploymentId);
+    const hasSnapshotVersion = availableSnapshots.some(snapshot => snapshot.version === validatedData.version);
+
+    if (hasSnapshotVersion) {
+      const result = await deploymentRollbackService.performRollback(
+        deploymentId,
+        validatedData.version,
+        {
+          skipDatabase: validatedData.skipDatabase,
+          skipFiles: validatedData.skipFiles,
+          skipConfig: validatedData.skipConfig,
+          dryRun: validatedData.dryRun,
+          reason: validatedData.reason,
+          force: validatedData.force,
+        }
+      );
+
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          error: 'ROLLBACK_FAILED',
+          rollbackId: result.rollbackId,
+          details: result.details,
+          message: result.details.error || 'Rollback operation failed',
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: `Deployment rollback completed to ${result.restoredVersion}`,
+        rollbackId: result.rollbackId,
+        restoredVersion: result.restoredVersion,
+        details: result.details,
+      });
+    }
+
+    const targetDeployment = await storage.getDeploymentByExternalId(validatedData.version);
+    if (!targetDeployment || String(targetDeployment.projectId) !== String(ownedDeployment.deployment.projectId)) {
+      return res.status(404).json({
+        success: false,
+        error: 'ROLLBACK_TARGET_NOT_FOUND',
+        message: 'Rollback target deployment was not found for this project',
+      });
+    }
+
+    const targetMetadata = (targetDeployment.metadata as Record<string, any>) || {};
+    const newDeploymentId = await deploymentManager.createDeployment({
+      id: `rollback-${targetDeployment.projectId}-${Date.now()}`,
+      projectId: String(targetDeployment.projectId),
+      type: (targetDeployment.type as any) || targetMetadata.type || 'autoscale',
+      environment: (targetDeployment.environment as any) || targetMetadata.environment || 'production',
+      sslEnabled: targetMetadata.sslEnabled ?? true,
+      regions: targetMetadata.regions || ['us-east-1'],
+      customDomain: targetDeployment.customDomain || undefined,
+      buildCommand: targetMetadata.buildCommand,
+      startCommand: targetMetadata.startCommand,
+      environmentVars: targetMetadata.environmentVars || {},
+      scaling: targetMetadata.scaling,
+      scheduling: targetMetadata.scheduling,
+      resources: targetMetadata.resources,
+    });
+
+    res.json({
+      success: true,
+      message: `Rollback deployment started from version ${validatedData.version}`,
+      restoredVersion: validatedData.version,
+      deployment: {
+        id: newDeploymentId,
+        sourceDeploymentId: targetDeployment.deploymentId,
+      },
+    });
   } catch (error) {
     console.error('Rollback deployment error:', error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid rollback options',
+        details: error.errors,
+      });
+    }
     res.status(500).json({ success: false, message: error instanceof Error ? error.message : 'Failed to rollback deployment' });
+  }
+});
+
+router.post('/deployments/:deploymentId/logs/clear', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const { deploymentId } = req.params;
+    const ownedDeployment = await getOwnedDeployment(req, res, deploymentId);
+    if (!ownedDeployment) {
+      return;
+    }
+
+    await deploymentManager.clearDeploymentLogs(deploymentId);
+    res.json({ success: true, message: 'Deployment logs cleared' });
+  } catch (error) {
+    console.error('Clear deployment logs error:', error);
+    res.status(500).json({ success: false, message: error instanceof Error ? error.message : 'Failed to clear deployment logs' });
   }
 });
 
@@ -696,23 +906,9 @@ router.post('/projects/:projectId/publish', ensureAuthenticated, async (req: Req
     const userId = req.user!.id;
 
     // Validate project exists and user owns it
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
-    }
-
-    // Check ownership (projects use integer IDs)
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-    if (project.ownerId !== numericUserId) {
-      return res.status(403).json({
-        success: false,
-        error: 'FORBIDDEN',
-        message: 'You do not have permission to publish this project'
-      });
+      return;
     }
 
     // Parse and validate publish configuration
@@ -745,10 +941,10 @@ router.post('/projects/:projectId/publish', ensureAuthenticated, async (req: Req
     const deploymentId = await deploymentManager.createDeployment({
       id: `pub-${projectId}-${Date.now()}`,
       projectId: projectId,
-      type: 'autoscale',
-      environment: 'production',
+      type: publishConfig.type || 'autoscale',
+      environment: publishConfig.environment || 'production',
       sslEnabled: true,
-      regions: ['us-east-1'],
+      regions: publishConfig.regions || ['us-east-1'],
       customDomain: publishConfig.customDomain,
       buildCommand: publishConfig.buildCommand,
       startCommand: publishConfig.runCommand,
@@ -804,23 +1000,9 @@ router.post('/projects/:projectId/republish', ensureAuthenticated, async (req: R
     const userId = req.user!.id;
 
     // Validate project exists and user owns it
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
-    }
-
-    // Check ownership
-    const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) : userId;
-    if (project.ownerId !== numericUserId) {
-      return res.status(403).json({
-        success: false,
-        error: 'FORBIDDEN',
-        message: 'You do not have permission to republish this project'
-      });
+      return;
     }
 
     // Parse republish configuration
@@ -856,13 +1038,14 @@ router.post('/projects/:projectId/republish', ensureAuthenticated, async (req: R
     const newDeploymentId = await deploymentManager.createDeployment({
       id: `repub-${projectId}-${Date.now()}`,
       projectId: projectId,
-      type: (activeProductionDeployment.type as any) || 'autoscale',
-      environment: 'production',
+      type: republishConfig.type || (activeProductionDeployment.type as any) || previousConfig.type || 'autoscale',
+      environment: republishConfig.environment || (activeProductionDeployment.environment as any) || previousConfig.environment || 'production',
       sslEnabled: true,
-      regions: previousConfig.regions || ['us-east-1'],
-      customDomain: activeProductionDeployment.customDomain || undefined,
-      buildCommand: republishConfig.forceRebuild ? undefined : previousConfig.buildCommand,
-      environmentVars: previousConfig.environmentVars || {},
+      regions: republishConfig.regions || previousConfig.regions || ['us-east-1'],
+      customDomain: republishConfig.customDomain ?? (activeProductionDeployment.customDomain || undefined),
+      buildCommand: republishConfig.buildCommand || (republishConfig.forceRebuild ? undefined : previousConfig.buildCommand),
+      startCommand: republishConfig.runCommand || previousConfig.startCommand,
+      environmentVars: republishConfig.environmentVars || previousConfig.environmentVars || {},
       scaling: scalingConfig
     });
 
@@ -911,13 +1094,9 @@ router.get('/projects/:projectId/publish/status', ensureAuthenticated, async (re
     const { projectId } = req.params;
 
     // Validate project exists
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
+      return;
     }
 
     // Get all production deployments for the project
@@ -1018,13 +1197,9 @@ router.get('/projects/:projectId/deployment/latest', ensureAuthenticated, async 
     const { projectId } = req.params;
 
     // Validate project exists
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
+      return;
     }
 
     // Get all deployments for the project
@@ -1094,6 +1269,11 @@ router.get('/deployments/:deploymentId/logs', ensureAuthenticated, async (req: R
   try {
     const { deploymentId } = req.params;
     const { type = 'all', limit = '100', offset = '0' } = req.query;
+
+    const ownedDeployment = await getOwnedDeployment(req, res, deploymentId);
+    if (!ownedDeployment) {
+      return;
+    }
 
     // Try to get deployment from deploymentManager (real-time)
     const liveDeployment = await deploymentManager.getDeployment(deploymentId);
@@ -1200,13 +1380,9 @@ router.get('/projects/:projectId/deployments/analytics', ensureAuthenticated, as
     });
 
     // Validate project exists
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
+      return;
     }
 
     // Get all deployments for the project
@@ -1404,13 +1580,9 @@ router.post('/projects/:projectId/domains', ensureAuthenticated, async (req: Req
     const { customDomain } = req.body;
 
     // Validate project exists and user owns it
-    const project = await storage.getProject(projectId);
+    const project = await getOwnedProject(req, res, projectId);
     if (!project) {
-      return res.status(404).json({
-        success: false,
-        error: 'PROJECT_NOT_FOUND',
-        message: 'Project not found'
-      });
+      return;
     }
 
     // Check ownership

@@ -374,6 +374,9 @@ export function ReplitDeploymentPanel({
   const publishMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', `/api/projects/${projectId}/publish`, {
+        type: deployType,
+        environment,
+        regions: [region],
         customDomain: customDomain || undefined,
       });
     },
@@ -396,6 +399,10 @@ export function ReplitDeploymentPanel({
     mutationFn: async () => {
       return apiRequest('POST', `/api/projects/${projectId}/republish`, {
         forceRebuild: false,
+        type: deployType,
+        environment,
+        regions: [region],
+        customDomain: customDomain || undefined,
       });
     },
     onSuccess: () => {
@@ -492,6 +499,22 @@ export function ReplitDeploymentPanel({
     },
   });
 
+  const deployment = latestDeployment?.deployment;
+  const deploymentId = deployment?.deploymentId || deployment?.id;
+
+  const clearLogsMutation = useMutation({
+    mutationFn: async (targetDeploymentId: string) => {
+      return apiRequest('POST', `/api/deployments/${targetDeploymentId}/logs/clear`);
+    },
+    onSuccess: () => {
+      setLogs([]);
+      toast({ title: 'Logs cleared' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Failed to clear logs', description: error.message, variant: 'destructive' });
+    },
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'deployed':
@@ -557,14 +580,21 @@ export function ReplitDeploymentPanel({
     toast({ title: 'Copied to clipboard' });
   };
 
-  const clearLogs = () => {
-    setLogs([]);
-  };
-
   const filteredLogs = useMemo(() => {
     if (logFilter === 'all') return logs;
     return logs.filter(log => log.level === logFilter);
   }, [logs, logFilter]);
+
+  const getProgressValue = (currentDeployment?: Deployment | null) => {
+    if (!currentDeployment) return 0;
+    const status = currentDeployment.status;
+    if (status === 'pending') return 15;
+    if (status === 'building') return 45;
+    if (status === 'deploying') return 80;
+    if (status === 'active' || status === 'deployed') return 100;
+    if (status === 'failed') return 100;
+    return 0;
+  };
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -619,13 +649,12 @@ export function ReplitDeploymentPanel({
     }));
   }, [analyticsData]);
 
-  const deployment = latestDeployment?.deployment;
-  const deploymentId = deployment?.deploymentId || deployment?.id;
   const displayStatus = deployment ? getDisplayStatus(deployment) : 'idle';
   const isActive = displayStatus === 'live' || displayStatus === 'needs-republish' || 
     deployment?.status === 'deployed' || deployment?.status === 'active';
   const isInProgress = displayStatus === 'publishing' || 
     deployment?.status === 'building' || deployment?.status === 'deploying' || deployment?.status === 'pending';
+  const progressValue = getProgressValue(deployment);
 
   return (
     <Card className={cn('h-full flex flex-col overflow-hidden', className)} data-testid="replit-deployment-panel">
@@ -670,7 +699,7 @@ export function ReplitDeploymentPanel({
                   <p className="text-xs text-muted-foreground">
                     {displayStatus === 'live' ? 'Your application is live and accessible' :
                      displayStatus === 'needs-republish' ? 'Changes detected since last deployment' :
-                     displayStatus === 'publishing' ? 'Deployment in progress...' :
+                     displayStatus === 'publishing' ? 'Deployment in progress…' :
                      displayStatus === 'failed' ? 'Last deployment failed' :
                      'Application is not currently deployed'}
                   </p>
@@ -742,12 +771,16 @@ export function ReplitDeploymentPanel({
             {isInProgress && (
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-xs font-medium">
-                  <span>Deploying...</span>
-                  <span>45%</span>
+                  <span>Deploying…</span>
+                  <span>{progressValue}%</span>
                 </div>
-                <Progress value={45} className="h-2" />
-                <p className="text-[10px] text-muted-foreground animate-pulse text-center">
-                  Provisioning infrastructure and building container image...
+                <Progress value={progressValue} className="h-2" />
+                <p className="text-[10px] text-muted-foreground text-center">
+                  {deployment?.status === 'building'
+                    ? 'Installing dependencies and building the application.'
+                    : deployment?.status === 'deploying'
+                      ? 'Provisioning infrastructure and starting the runtime.'
+                      : 'Preparing the deployment.'}
                 </p>
               </div>
             )}
@@ -1069,7 +1102,8 @@ export function ReplitDeploymentPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={clearLogs}
+                onClick={() => deploymentId && clearLogsMutation.mutate(deploymentId)}
+                disabled={!deploymentId || clearLogsMutation.isPending}
                 data-testid="button-clear-logs"
               >
                 <Trash2 className="h-4 w-4" />
