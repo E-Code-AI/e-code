@@ -329,6 +329,18 @@ export function useIDEWorkspace(projectId: string) {
   // Null safety for project object usage
   const isOwner = project && user ? project.ownerId === user.id : false;
   const projectTitle = project?.name || 'Loading...';
+  const hasRunnableFiles = useMemo(() => {
+    return files.some((file) => {
+      if (file.isDirectory) return false;
+      const filePath = String((file as any).path || file.name || '');
+      return (
+        file.name === 'package.json' ||
+        filePath === 'package.json' ||
+        filePath.endsWith('.html') ||
+        filePath.endsWith('.py')
+      );
+    });
+  }, [files]);
 
   // ========== EFFECTS ==========
 
@@ -408,7 +420,7 @@ export function useIDEWorkspace(projectId: string) {
 
   // Auto-start preview
   useEffect(() => {
-    if (!runtimeAutoStarted && projectId && project && !isLoadingProject) {
+    if (!runtimeAutoStarted && projectId && project && !isLoadingProject && hasRunnableFiles) {
       setRuntimeAutoStarted(true);
       apiRequest<{ success?: boolean; executionId?: string; runId?: string }>('POST', `/api/preview/projects/${projectId}/preview/start`, {})
       .then((data) => {
@@ -417,7 +429,7 @@ export function useIDEWorkspace(projectId: string) {
       }).catch(() => {
       });
     }
-  }, [projectId, project, isLoadingProject, runtimeAutoStarted]);
+  }, [projectId, project, isLoadingProject, runtimeAutoStarted, hasRunnableFiles]);
 
   // ========== CALLBACKS ==========
 
