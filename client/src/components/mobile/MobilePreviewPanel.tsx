@@ -206,6 +206,14 @@ export function MobilePreviewPanel({
   const showBuildSplash =
     (isBuildActive && buildPhase !== 'error' && buildPhase !== 'complete') ||
     (buildPhase === 'complete' && !isPreviewRunning && !isPreviewError);
+  const showPreviewStartupSplash =
+    showBuildSplash ||
+    isPreviewStarting ||
+    (!!projectId &&
+      !isPreviewRunning &&
+      !isPreviewError &&
+      !noRunnableFiles &&
+      (hasAttemptedAutoStart.current || isStatusLoading));
 
   const handleRetry = () => {
     hasAttemptedAutoStart.current = false;
@@ -281,11 +289,11 @@ export function MobilePreviewPanel({
 
         {/* Iframe content */}
         <div className="flex-1 relative bg-background overflow-hidden">
-        {showBuildSplash ? (
+        {showPreviewStartupSplash ? (
           <SplashScreenSequence
             phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
-            progress={buildProgress || (buildPhase === 'complete' ? 95 : 10)}
-            currentTask={currentTask || (buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
+            progress={buildProgress || (isPreviewStarting ? 92 : (buildPhase === 'complete' ? 95 : 10))}
+            currentTask={currentTask || (isPreviewStarting || buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
             loopUntilComplete
           />
         ) : isStatusLoading ? (
@@ -477,11 +485,11 @@ export function MobilePreviewPanel({
 
       {/* ── CONTENT AREA ── */}
       <div className="flex-1 relative bg-background overflow-hidden">
-        {showBuildSplash ? (
+        {showPreviewStartupSplash ? (
           <SplashScreenSequence
             phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
-            progress={buildProgress || (buildPhase === 'complete' ? 95 : 10)}
-            currentTask={currentTask || (buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
+            progress={buildProgress || (isPreviewStarting ? 92 : (buildPhase === 'complete' ? 95 : 10))}
+            currentTask={currentTask || (isPreviewStarting || buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
             loopUntilComplete
           />
         ) : isStatusLoading ? (
