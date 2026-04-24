@@ -22,7 +22,6 @@ import {
   Rocket,
   Key,
   FolderInput,
-  Database as DatabaseIcon,
   PackageOpen,
   Bot,
   CreditCard,
@@ -161,15 +160,6 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     category: 'Data',
     description: 'Browse and manage database',
     keywords: ['sql', 'postgres', 'data'],
-  },
-  'database-browser': {
-    id: 'database-browser',
-    label: 'DB Browser',
-    icon: DatabaseIcon,
-    emoji: '🗄️',
-    category: 'Data',
-    description: 'Visual database explorer',
-    keywords: ['sql', 'tables', 'browse'],
   },
 
   // Security & Configuration

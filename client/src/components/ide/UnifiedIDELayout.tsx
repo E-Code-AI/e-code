@@ -783,7 +783,6 @@ function UnifiedIDELayout({
       'env',
       'env-vars',
       'database',
-      'database-browser',
       'auth',
       'shell',
       'storage',
@@ -1280,7 +1279,7 @@ function UnifiedIDELayout({
     }
 
     // Database panel - inline
-    if (currentTab.id === 'database' || currentTab.id === 'database-browser') {
+    if (currentTab.id === 'database') {
       if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>

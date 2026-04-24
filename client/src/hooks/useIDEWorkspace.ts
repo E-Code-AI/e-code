@@ -69,6 +69,12 @@ export interface AvailableTool {
   icon: string;
 }
 
+const normalizeToolId = (id?: string | null) => {
+  if (!id) return id;
+  if (id === "database-browser") return "database";
+  return id;
+};
+
 const getStorageKey = (projectId: string) => `ide-state-${projectId}`;
 
 const loadPersistedState = (projectId: string) => {
@@ -147,7 +153,6 @@ export const availableTools: AvailableTool[] = [
   { id: 'deployment', label: 'Deploy', icon: '🚀' },
   { id: 'env', label: 'Environment', icon: '🔑' },
   { id: 'import-export', label: 'Import/Export', icon: '📁' },
-  { id: 'database-browser', label: 'DB Browser', icon: '🗄️' },
   { id: 'package-viewer', label: 'Package Viewer', icon: '📦' },
   { id: 'ai-assistant', label: 'AI Assistant', icon: '🤖' },
   { id: 'billing', label: 'Billing', icon: '💳' },
@@ -199,6 +204,14 @@ export function useIDEWorkspace(projectId: string) {
   const persistedState = loadPersistedState(projectId);
   const validatedState = persistedState ? {
     ...persistedState,
+    activeTab: normalizeToolId(persistedState.activeTab) || "preview",
+    tabs: Array.isArray(persistedState.tabs)
+      ? persistedState.tabs.map((tab: Tab) => ({
+          ...tab,
+          label: tab.id === "database-browser" ? "Database" : tab.label,
+          id: normalizeToolId(tab.id) || tab.id,
+        }))
+      : undefined,
     selectedFileId: persistedState.selectedFileId && persistedState.tabs?.some((t: Tab) => t.id === `file:${persistedState.selectedFileId}`)
       ? persistedState.selectedFileId
       : undefined,
