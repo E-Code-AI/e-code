@@ -97,6 +97,23 @@ app.use(cookieParser());
 // This MUST run BEFORE monitoring, prometheus, logging, and sanitization
 app.use((req, res, next) => {
   const path = req.path || req.originalUrl?.split('?')[0] || req.url?.split('?')[0] || '';
+  const isNonApiAppRoute =
+    !path.startsWith('/api') &&
+    !path.startsWith('/health') &&
+    !path.startsWith('/metrics') &&
+    !path.startsWith('/ws/') &&
+    !path.startsWith('/socket.io/') &&
+    !path.startsWith('/collaboration') &&
+    !path.startsWith('/webrtc');
+
+  // Public SPA/document routes should never depend on Redis-backed rate limiting,
+  // metrics collectors, or request-body sanitizers to serve the initial HTML.
+  // If one of those subsystems is degraded in production, the app shell must
+  // still render so the frontend can recover gracefully.
+  if (isNonApiAppRoute) {
+    (req as any)._skipHeavyMiddleware = true;
+    (req as any)._skipRateLimit = true;
+  }
   
   // Fast path for Vite dev assets - skip all heavy middleware
   if (isViteDevPath(path)) {
