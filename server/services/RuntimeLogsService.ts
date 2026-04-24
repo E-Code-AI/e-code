@@ -10,7 +10,8 @@ import { isOriginAllowed } from '../utils/origin-validation';
 import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
-import { sessionManager } from '../auth/session-manager';
+import * as signature from 'cookie-signature';
+import { sessionStore } from '../storage';
 
 const logger = createLogger('runtime-logs');
 const rateLimiter = new WebSocketRateLimiter(20, 60000);
@@ -111,38 +112,24 @@ export class RuntimeLogsService {
         return;
       }
 
-      // Session-based authentication - get userId from session, not query params
-      const cookieHeader = request.headers.cookie || '';
-      const sessionCookie = this.parseSessionCookie(cookieHeader);
-      
-      if (!sessionCookie) {
-        logger.warn('[RuntimeLogs] Upgrade rejected - no session cookie found');
-        this.destroySocketWithError(socket, 401, 'Session required');
-        return;
-      }
-
       // Mark socket as handled BEFORE async operations to prevent race conditions
       markSocketAsHandled(request, socket);
 
-      // Chain all async operations with .then() - do NOT use async/await
-      sessionManager.getSession(sessionCookie)
-        .then((session) => {
-          if (!session || !session.userId) {
-            logger.warn('[RuntimeLogs] Upgrade rejected - invalid or expired session');
-            this.destroySocketWithError(socket, 401, 'Invalid session');
+      // Session-based authentication - get userId from session, not query params
+      this.getAuthenticatedUserId(request.headers.cookie || '')
+        .then((authorized) => {
+          if (!authorized) {
+            logger.warn('[RuntimeLogs] Upgrade rejected - no session cookie found');
+            this.destroySocketWithError(socket, 401, 'Session required');
             return;
           }
 
-          // Get authenticated userId from session (NOT from query params)
-          const authenticatedUserId = session.userId;
-
-          // Store authenticated userId on request for use in connection handler
+          const authenticatedUserId = authorized;
           (request as any).authenticatedUserId = authenticatedUserId;
 
-          // Authenticate using session userId (not client-supplied)
-          return this.authenticateConnection(request, authenticatedUserId, projectId)
-            .then((authorized) => {
-              if (!authorized) {
+          return this.authenticateConnection(request, String(authenticatedUserId), projectId)
+            .then((isAuthorized) => {
+              if (!isAuthorized) {
                 logger.warn(`[RuntimeLogs] Upgrade rejected - unauthorized user ${authenticatedUserId} for project ${projectId}`);
                 this.destroySocketWithError(socket, 401, 'Unauthorized');
                 return;
@@ -194,6 +181,41 @@ export class RuntimeLogsService {
       }
     }
     return null;
+  }
+
+  private async getAuthenticatedUserId(cookieHeader: string): Promise<number | null> {
+    const rawSessionCookie = this.parseSessionCookie(cookieHeader);
+    if (!rawSessionCookie) {
+      return null;
+    }
+
+    const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+    let sessionId: string | null = null;
+
+    if (rawSessionCookie.startsWith('s:')) {
+      const unsigned = signature.unsign(rawSessionCookie.slice(2), sessionSecret);
+      if (unsigned !== false) {
+        sessionId = unsigned;
+      }
+    } else {
+      sessionId = rawSessionCookie;
+    }
+
+    if (!sessionId) {
+      return null;
+    }
+
+    return await new Promise<number | null>((resolve) => {
+      sessionStore.get(sessionId!, (err: any, session: any) => {
+        if (err || !session?.passport?.user) {
+          resolve(null);
+          return;
+        }
+
+        const userId = Number(session.passport.user);
+        resolve(Number.isInteger(userId) ? userId : null);
+      });
+    });
   }
 
   private async authenticateConnection(

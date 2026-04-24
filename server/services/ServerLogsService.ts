@@ -14,8 +14,9 @@ import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatche
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
 import Transport from 'winston-transport';
 import { winstonLogger } from '../utils/logger';
-import { sessionManager } from '../auth/session-manager';
 import type { IStorage } from '../storage';
+import * as signature from 'cookie-signature';
+import { sessionStore } from '../storage';
 
 const rateLimiter = new WebSocketRateLimiter(30, 60000);
 
@@ -171,23 +172,12 @@ export class ServerLogsService {
         return;
       }
 
-      const cookieHeader = request.headers.cookie || '';
-      const sessionCookie = this.parseSessionCookie(cookieHeader);
-      
-      if (!sessionCookie) {
+      const authenticatedUserId = await this.getAuthenticatedUserId(request.headers.cookie || '');
+      if (!authenticatedUserId) {
         console.warn('[ServerLogs] Upgrade rejected - no session cookie found');
         this.destroySocketWithError(socket, 401, 'Session required');
         return;
       }
-
-      const session = await sessionManager.getSession(sessionCookie);
-      if (!session || !session.userId) {
-        console.warn('[ServerLogs] Upgrade rejected - invalid or expired session');
-        this.destroySocketWithError(socket, 401, 'Invalid session');
-        return;
-      }
-
-      const authenticatedUserId = session.userId;
 
       if (this.storage) {
         try {
@@ -228,6 +218,41 @@ export class ServerLogsService {
       }
     }
     return null;
+  }
+
+  private async getAuthenticatedUserId(cookieHeader: string): Promise<number | null> {
+    const rawSessionCookie = this.parseSessionCookie(cookieHeader);
+    if (!rawSessionCookie) {
+      return null;
+    }
+
+    const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+    let sessionId: string | null = null;
+
+    if (rawSessionCookie.startsWith('s:')) {
+      const unsigned = signature.unsign(rawSessionCookie.slice(2), sessionSecret);
+      if (unsigned !== false) {
+        sessionId = unsigned;
+      }
+    } else {
+      sessionId = rawSessionCookie;
+    }
+
+    if (!sessionId) {
+      return null;
+    }
+
+    return await new Promise<number | null>((resolve) => {
+      sessionStore.get(sessionId!, (err: any, session: any) => {
+        if (err || !session?.passport?.user) {
+          resolve(null);
+          return;
+        }
+
+        const userId = Number(session.passport.user);
+        resolve(Number.isInteger(userId) ? userId : null);
+      });
+    });
   }
 
   private destroySocketWithError(socket: Duplex, statusCode: number, message: string): void {
