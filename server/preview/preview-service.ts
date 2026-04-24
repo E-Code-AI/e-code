@@ -12,6 +12,8 @@ import fetch from 'node-fetch';
 import { db } from '../db';
 import { environmentVariables } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const logger = createLogger('preview-service');
 
@@ -299,10 +301,24 @@ export class PreviewService {
   }
 
   private ensurePreviewAuth(req: any, res: any, next: any) {
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
+    const hasSession = !!(req.isAuthenticated && req.isAuthenticated() && req.user);
+    const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+
+    if (hasSession) {
+      return next();
+    }
+
+    if (!bootstrapToken) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    next();
+
+    try {
+      const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as { projectId?: string | number; userId?: number };
+      req.bootstrapAuth = decoded;
+      return next();
+    } catch {
+      return res.status(401).json({ error: 'Invalid or expired bootstrap token' });
+    }
   }
 
   private async ensureProjectAccess(req: any, res: any, next: any) {
@@ -315,9 +331,15 @@ export class PreviewService {
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
-      if (project.ownerId !== req.user?.id) {
+      const bootstrapProjectId = req.bootstrapAuth?.projectId;
+      if (bootstrapProjectId != null && String(bootstrapProjectId) !== String(project.id)) {
+        return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
+      }
+
+      const effectiveUserId = req.user?.id ?? req.bootstrapAuth?.userId;
+      if (project.ownerId !== effectiveUserId) {
         const collaborators = await storage.getProjectCollaborators?.(String(projectId));
-        const isCollaborator = collaborators?.some((c: any) => c.userId === req.user?.id);
+        const isCollaborator = collaborators?.some((c: any) => c.userId === effectiveUserId);
         if (!isCollaborator) {
           return res.status(403).json({ error: 'Access denied' });
         }
