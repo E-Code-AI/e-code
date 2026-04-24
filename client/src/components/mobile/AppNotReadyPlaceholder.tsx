@@ -32,6 +32,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { SplashScreenSequence } from '@/components/ide/SplashScreenSequence';
 
 interface AppNotReadyPlaceholderProps {
   tabName: 'preview' | 'deploy' | 'files' | string;
@@ -57,6 +58,8 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
 
   const { toast } = useToast();
   const buildPhase = useAutonomousBuildStore((s) => s.phase);
+  const buildProgress = useAutonomousBuildStore((s) => s.progress);
+  const currentTask = useAutonomousBuildStore((s) => s.currentTask);
   const isBuildComplete = buildPhase === 'complete';
   const isPreviewTab = tabName.toLowerCase() === 'preview';
   const showRunButton = isPreviewTab && isBuildComplete && !isWarming && projectId;
@@ -84,6 +87,24 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
 
   const message = getAppNotReadyMessage(tabName, progress.status);
   const showProgress = isWarming && progress.progress > 0;
+
+  if (isPreviewTab) {
+    return (
+      <div className={cn("flex-1 min-h-0 overflow-hidden", className)} data-testid="preview-bootstrap-splash">
+        <SplashScreenSequence
+          loopUntilComplete
+          phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
+          progress={buildProgress || progress.progress || (buildPhase === 'complete' ? 95 : 10)}
+          currentTask={
+            currentTask ||
+            (buildPhase === 'complete'
+              ? 'Starting preview...'
+              : progress.message || 'Preparing your application...')
+          }
+        />
+      </div>
+    );
+  }
 
   if (compact) {
     return (

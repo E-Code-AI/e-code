@@ -121,6 +121,7 @@ export function ResponsiveWebPreview({
   });
 
   const previewUrl = previewData?.previewUrl || '';
+  const headerPreviewUrl = previewUrl || `/api/preview/projects/${projectId}/preview`;
   const previewStatus = previewData?.status;
   const {
     data: previewDiagnostics,
@@ -403,7 +404,7 @@ export function ResponsiveWebPreview({
           {/* URL Bar */}
           <div className="flex min-w-0 flex-1 items-center gap-2 max-w-lg">
             <div className="flex-1 truncate rounded bg-[var(--ecode-background)] px-2 py-1 text-[11px]">
-              {previewUrl}
+              {headerPreviewUrl}
             </div>
             <div className={cn(
               "hidden rounded-full px-2 py-0.5 text-[10px] sm:inline-flex",

@@ -262,7 +262,7 @@ export function MobilePreviewPanel({
     }
   };
 
-  const displayPath = currentPath || '/';
+  const displayPreviewUrl = computedPreviewUrl || `/api/preview/projects/${projectId}/preview`;
 
   /* ── OVERLAY / SPLIT-VIEW MODE ── compact header only */
   if (isOverlay) {
@@ -467,7 +467,7 @@ export function MobilePreviewPanel({
           className="flex-1 flex items-center min-w-0 h-8 px-3 rounded-lg bg-muted border border-border text-[13px] text-muted-foreground"
           data-testid="mobile-preview-url-path"
         >
-          <span className="truncate flex-1">{displayPath}</span>
+          <span className="truncate flex-1">{displayPreviewUrl}</span>
           <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/60 flex-shrink-0 ml-1" />
         </div>
 
