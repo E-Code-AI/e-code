@@ -24,6 +24,7 @@ import * as path from 'path';
 import { createLogger } from '../utils/logger';
 import { EventEmitter } from 'events';
 import { storage } from '../storage';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('speculative-scaffold');
 
@@ -636,7 +637,7 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
 export class SpeculativeScaffoldService {
   private projectsRoot: string;
 
-  constructor(projectsRoot: string = path.join(process.cwd(), 'projects')) {
+  constructor(projectsRoot: string = '/tmp/projects') {
     this.projectsRoot = projectsRoot;
   }
 
@@ -672,7 +673,7 @@ export class SpeculativeScaffoldService {
 
     try {
       const { projectId, language, framework, prompt } = options;
-      const projectDir = path.join(this.projectsRoot, projectId);
+      const projectDir = getProjectWorkspacePath(projectId);
       
       logger.info(`[Scaffold] Starting speculative scaffolding for project ${projectId}`, { 
         framework, 
@@ -767,7 +768,7 @@ export class SpeculativeScaffoldService {
    * Check if a project already has scaffold files
    */
   async hasExistingScaffold(projectId: string): Promise<boolean> {
-    const projectDir = path.join(this.projectsRoot, projectId);
+    const projectDir = getProjectWorkspacePath(projectId);
     
     try {
       const packageJson = path.join(projectDir, 'package.json');

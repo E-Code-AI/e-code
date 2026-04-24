@@ -24,6 +24,7 @@ import { createLogger } from '../utils/logger';
 import { redisCache, CacheKeys, CacheTTL } from './redis-cache.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('AgentOrchestrator');
 
@@ -402,8 +403,8 @@ export class AgentOrchestratorService extends EventEmitter {
   ): Promise<AgentSession> {
     const startTime = Date.now();
     const sessionToken = this.generateSessionToken();
-    const workingDirectory = projectId ? 
-      path.join(process.cwd(), 'projects', projectId) : 
+    const workingDirectory = projectId ?
+      getProjectWorkspacePath(projectId) :
       process.cwd();
 
     try {
@@ -2471,7 +2472,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       logger.info(`[Autonomous] Step types: ${workflowSteps.map((s: any) => s.type).join(', ')}`, { sessionId });
       
       // 5. Execute workflow with event wiring
-      const workingDirectory = path.join(process.cwd(), 'projects', projectId);
+      const workingDirectory = getProjectWorkspacePath(projectId);
       
       logger.info(`[Autonomous] Working directory: ${workingDirectory}`, { sessionId });
       

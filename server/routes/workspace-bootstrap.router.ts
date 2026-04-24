@@ -35,6 +35,7 @@ import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { ViewportValidationService } from '../services/viewport-validation.service';
 import { memoryBankService } from '../services/memory-bank.service';
 import { fastBootstrap } from '../services/fast-bootstrap.service';
+import { getProjectWorkspacePath, ensureProjectDirectory } from '../utils/project-fs-sync';
 import * as path from 'path';
 import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
@@ -229,7 +230,8 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     logger.info(`[Bootstrap] Project created: ${project.id}`, { projectId: project.id, slug });
     
     // 2.5 ✅ Set project base path for Memory Bank (required BEFORE initialization)
-    const projectBasePath = path.join(process.cwd(), 'projects', String(project.id));
+    const projectBasePath = getProjectWorkspacePath(project.id);
+    await ensureProjectDirectory(project.id);
     memoryBankService.setProjectBasePath(project.id, projectBasePath);
     
     // 2.5.1 ✅ Get user's preferred model FIRST (needed for Memory Bank generation)
@@ -285,7 +287,8 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     
     // ✅ OPTIMIZATION (Dec 16, 2025): PARALLEL execution of session + scaffold
     // This reduces bootstrap time by ~60% by running independent operations concurrently
-    const scaffoldPath = path.join(process.cwd(), 'projects', String(project.id));
+    const scaffoldPath = getProjectWorkspacePath(project.id);
+    await ensureProjectDirectory(project.id);
     
     // Start all operations in parallel with fault tolerance
     const parallelStartTime = Date.now();
