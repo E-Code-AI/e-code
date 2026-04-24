@@ -261,7 +261,7 @@ export function SplitsEditorLayoutV2({
         ),
         settings: (
           <PanelShell title="Settings">
-            <ReplitSettingsPanel />
+            <ReplitSettingsPanel projectId={effectiveProjectId} />
           </PanelShell>
         ),
         editor: (

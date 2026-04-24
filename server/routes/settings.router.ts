@@ -93,6 +93,13 @@ router.get('/', async (req, res) => {
     }
     
     const projectIdNum = parseInt(projectId, 10);
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectIdNum)
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
     
     const settings = await db.query.projectSettings.findFirst({
       where: eq(projectSettings.projectId, projectIdNum)
@@ -102,6 +109,9 @@ router.get('/', async (req, res) => {
       return res.json({
         projectId: projectIdNum,
         ...defaultSettings,
+        projectName: project.name ?? defaultSettings.projectName,
+        projectDescription: project.description ?? defaultSettings.projectDescription,
+        projectPrivacy: (project.visibility as 'public' | 'private' | 'unlisted') ?? defaultSettings.projectPrivacy,
       });
     }
 
@@ -117,9 +127,9 @@ router.get('/', async (req, res) => {
       autoSave: customColors.autoSave ?? defaultSettings.autoSave,
       formatOnSave: customColors.formatOnSave ?? defaultSettings.formatOnSave,
       editorTheme: customColors.editorTheme ?? defaultSettings.editorTheme,
-      projectName: customColors.projectName ?? defaultSettings.projectName,
-      projectDescription: customColors.projectDescription ?? defaultSettings.projectDescription,
-      projectPrivacy: customColors.projectPrivacy ?? defaultSettings.projectPrivacy,
+      projectName: project.name ?? customColors.projectName ?? defaultSettings.projectName,
+      projectDescription: project.description ?? customColors.projectDescription ?? defaultSettings.projectDescription,
+      projectPrivacy: (project.visibility as 'public' | 'private' | 'unlisted') ?? customColors.projectPrivacy ?? defaultSettings.projectPrivacy,
       themeId: settings.themeId ?? defaultSettings.themeId,
       customColors: customColors.colors ?? defaultSettings.customColors,
       borderRadius: settings.borderRadius ?? defaultSettings.borderRadius,
@@ -146,6 +156,17 @@ router.put('/', async (req, res) => {
     }
 
     const projectIdNum = parseInt(projectId, 10);
+
+    if (data.projectName !== undefined || data.projectDescription !== undefined || data.projectPrivacy !== undefined) {
+      await db.update(projects)
+        .set({
+          ...(data.projectName !== undefined ? { name: data.projectName } : {}),
+          ...(data.projectDescription !== undefined ? { description: data.projectDescription } : {}),
+          ...(data.projectPrivacy !== undefined ? { visibility: data.projectPrivacy } : {}),
+          updatedAt: new Date()
+        })
+        .where(eq(projects.id, projectIdNum));
+    }
     
     const customColorsData = {
       fontSize: data.fontSize,
@@ -182,19 +203,19 @@ router.put('/', async (req, res) => {
 
       const returnData = {
         projectId: projectIdNum,
-        fontSize: customColorsData.fontSize ?? defaultSettings.fontSize,
-        tabSize: customColorsData.tabSize ?? defaultSettings.tabSize,
-        wordWrap: customColorsData.wordWrap ?? defaultSettings.wordWrap,
-        lineNumbers: customColorsData.lineNumbers ?? defaultSettings.lineNumbers,
-        minimap: customColorsData.minimap ?? defaultSettings.minimap,
-        autoSave: customColorsData.autoSave ?? defaultSettings.autoSave,
-        formatOnSave: customColorsData.formatOnSave ?? defaultSettings.formatOnSave,
-        editorTheme: customColorsData.editorTheme ?? defaultSettings.editorTheme,
-        projectName: customColorsData.projectName ?? defaultSettings.projectName,
-        projectDescription: customColorsData.projectDescription ?? defaultSettings.projectDescription,
-        projectPrivacy: customColorsData.projectPrivacy ?? defaultSettings.projectPrivacy,
+        fontSize: customColorsData.fontSize ?? existingCustomColors.fontSize ?? defaultSettings.fontSize,
+        tabSize: customColorsData.tabSize ?? existingCustomColors.tabSize ?? defaultSettings.tabSize,
+        wordWrap: customColorsData.wordWrap ?? existingCustomColors.wordWrap ?? defaultSettings.wordWrap,
+        lineNumbers: customColorsData.lineNumbers ?? existingCustomColors.lineNumbers ?? defaultSettings.lineNumbers,
+        minimap: customColorsData.minimap ?? existingCustomColors.minimap ?? defaultSettings.minimap,
+        autoSave: customColorsData.autoSave ?? existingCustomColors.autoSave ?? defaultSettings.autoSave,
+        formatOnSave: customColorsData.formatOnSave ?? existingCustomColors.formatOnSave ?? defaultSettings.formatOnSave,
+        editorTheme: customColorsData.editorTheme ?? existingCustomColors.editorTheme ?? defaultSettings.editorTheme,
+        projectName: data.projectName ?? existingCustomColors.projectName ?? defaultSettings.projectName,
+        projectDescription: data.projectDescription ?? existingCustomColors.projectDescription ?? defaultSettings.projectDescription,
+        projectPrivacy: data.projectPrivacy ?? existingCustomColors.projectPrivacy ?? defaultSettings.projectPrivacy,
         themeId: updated.themeId ?? defaultSettings.themeId,
-        customColors: customColorsData.colors ?? defaultSettings.customColors,
+        customColors: customColorsData.colors ?? existingCustomColors.colors ?? defaultSettings.customColors,
         borderRadius: updated.borderRadius ?? defaultSettings.borderRadius,
       };
 
