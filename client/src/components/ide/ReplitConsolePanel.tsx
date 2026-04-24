@@ -250,6 +250,7 @@ export function ReplitConsolePanel({
   const previewReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const previewDisposedRef = useRef(false);
   const recentPreviewMessagesRef = useRef<Set<string>>(new Set());
+  const previewStatusLoadedRef = useRef<string | null>(null);
 
   const addPreviewLog = useCallback((entry: { type: 'stdout' | 'stderr' | 'system' | 'exit'; content: string; timestamp: number }) => {
     if (previewDisposedRef.current) return;
@@ -259,6 +260,51 @@ export function ReplitConsolePanel({
     setTimeout(() => recentPreviewMessagesRef.current.delete(dedupeKey), 500);
     handleLog(entry);
   }, [handleLog]);
+
+  const loadPreviewStatus = useCallback(async () => {
+    if (!projectId) return;
+
+    try {
+      const status = await apiRequest<{
+        status?: string;
+        logs?: string[];
+        primaryPort?: number | null;
+      }>('GET', `/api/preview/projects/${projectId}/preview/status`);
+
+      previewStatusLoadedRef.current = String(projectId);
+
+      if (status?.status === 'running') {
+        addPreviewLog({
+          type: 'system',
+          content: status.primaryPort
+            ? `Preview server running on port ${status.primaryPort}`
+            : 'Preview server is running.',
+          timestamp: Date.now(),
+        });
+      } else if (status?.status === 'starting') {
+        addPreviewLog({
+          type: 'system',
+          content: 'Starting preview server...',
+          timestamp: Date.now(),
+        });
+      }
+
+      if (Array.isArray(status?.logs)) {
+        for (const log of status.logs) {
+          const trimmed = log?.trim();
+          if (!trimmed) continue;
+          const isErr = trimmed.includes('ERROR') || trimmed.includes('Error');
+          addPreviewLog({
+            type: isErr ? 'stderr' : 'stdout',
+            content: trimmed,
+            timestamp: Date.now(),
+          });
+        }
+      }
+    } catch {
+      // Best-effort bootstrap only; live WebSocket streaming remains the source of truth.
+    }
+  }, [projectId, addPreviewLog]);
 
   const connectPreviewLogs = useCallback(() => {
     if (!projectId || previewDisposedRef.current) return;
@@ -306,13 +352,16 @@ export function ReplitConsolePanel({
 
   useEffect(() => {
     previewDisposedRef.current = false;
+    if (previewStatusLoadedRef.current !== String(projectId)) {
+      loadPreviewStatus();
+    }
     connectPreviewLogs();
     return () => {
       previewDisposedRef.current = true;
       if (previewReconnectRef.current) clearTimeout(previewReconnectRef.current);
       if (previewWsRef.current) { previewWsRef.current.close(); previewWsRef.current = null; }
     };
-  }, [connectPreviewLogs]);
+  }, [connectPreviewLogs, loadPreviewStatus, projectId]);
 
   useEffect(() => {
     if (isRunning && executionId) {
