@@ -55,6 +55,23 @@ function getInteractiveShellArgs(shellPath: string): string[] {
   return ['-i'];
 }
 
+function buildShellEnv(workDir: string, projectId: string, shell: string): Record<string, string> {
+  return {
+    TERM: 'xterm-256color',
+    COLORTERM: 'truecolor',
+    HOME: workDir,
+    PWD: workDir,
+    TMPDIR: '/tmp',
+    SHELL: shell,
+    USER: `user-${projectId.slice(0, 8)}`,
+    LOGNAME: `user-${projectId.slice(0, 8)}`,
+    PS1: 'user@e-code:\\w$ ',
+    LANG: 'en_US.UTF-8',
+    LC_ALL: 'en_US.UTF-8',
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+  };
+}
+
 // CRITICAL SECURITY: Terminal isolation configuration
 // 
 // REQUIRE_DOCKER_TERMINAL: When true, terminal sessions MUST run in Docker
@@ -635,20 +652,7 @@ export class PTYTerminalService {
       logger.info(`Creating local PTY session for project ${projectId} in ${workDir}`);
       logger.warn('[SECURITY] Local PTY is only for development. Use Docker in production.');
 
-      const sandboxedEnv: Record<string, string> = {
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor',
-        HOME: workDir,
-        PWD: workDir,
-        TMPDIR: '/tmp',
-        SHELL: shell,
-        USER: `user-${projectId.slice(0, 8)}`,
-        LOGNAME: `user-${projectId.slice(0, 8)}`,
-        PS1: 'user@e-code:\\w$ ',
-        LANG: 'en_US.UTF-8',
-        LC_ALL: 'en_US.UTF-8',
-        PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
-      };
+      const sandboxedEnv = buildShellEnv(workDir, projectId, shell);
 
       const pty = await getPty();
       const ptyProcess = pty.spawn(shell, getInteractiveShellArgs(shell), {
@@ -779,6 +783,10 @@ export class PTYTerminalService {
   private getShell(): string {
     if (process.platform === 'win32') {
       return 'powershell.exe';
+    }
+
+    if (IS_REPLIT_VM && fs.existsSync('/bin/sh')) {
+      return '/bin/sh';
     }
     
     const bashPath = '/nix/store/d6mad4dkf6akii90k26dinhrg8a3xia8-replit-runtime-path/bin/bash';

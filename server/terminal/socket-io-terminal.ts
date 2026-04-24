@@ -111,6 +111,52 @@ function getInteractiveShellArgs(shellPath: string): string[] {
   return ['-i'];
 }
 
+function resolveShellBinary(): string {
+  if (process.platform === 'win32') {
+    return 'powershell.exe';
+  }
+
+  const isReplitVm = Boolean(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+  if (isReplitVm && fs.existsSync('/bin/sh')) {
+    return '/bin/sh';
+  }
+
+  const candidates = [
+    '/nix/store/d6mad4dkf6akii90k26dinhrg8a3xia8-replit-runtime-path/bin/bash',
+    '/bin/bash',
+    '/bin/sh',
+    process.env.SHELL,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (!candidate.startsWith('/')) {
+      return candidate;
+    }
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return '/bin/sh';
+}
+
+function buildShellEnv(workDir: string, userId: string, shellBinary: string): Record<string, string> {
+  return {
+    TERM: 'xterm-256color',
+    COLORTERM: 'truecolor',
+    HOME: workDir,
+    PWD: workDir,
+    TMPDIR: '/tmp',
+    SHELL: shellBinary,
+    USER: `user-${userId.slice(0, 8)}`,
+    LOGNAME: `user-${userId.slice(0, 8)}`,
+    PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
+    LANG: 'en_US.UTF-8',
+    LC_ALL: 'en_US.UTF-8',
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+  };
+}
+
 const PROJECT_SYNC_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 export class SocketIOTerminalService {
@@ -318,23 +364,8 @@ export class SocketIOTerminalService {
 
       logger.info(`[SocketIO Terminal] Spawning PTY for project ${projectId} in ${workDir}`);
 
-      const bashPath = process.platform !== 'win32' && fs.existsSync('/bin/bash') ? '/bin/bash' :
-                       process.env.SHELL || '/bin/bash';
-
-      const sandboxedEnv: Record<string, string> = {
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor',
-        HOME: workDir,
-        PWD: workDir,
-        TMPDIR: '/tmp',
-        SHELL: bashPath,
-        USER: `user-${userId.slice(0, 8)}`,
-        LOGNAME: `user-${userId.slice(0, 8)}`,
-        PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
-        LANG: 'en_US.UTF-8',
-        LC_ALL: 'en_US.UTF-8',
-        PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
-      };
+      const bashPath = resolveShellBinary();
+      const sandboxedEnv = buildShellEnv(workDir, userId, bashPath);
 
       const resourceLimitedShell = process.platform === 'win32'
         ? 'powershell.exe'

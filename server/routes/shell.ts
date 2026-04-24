@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import * as fsSync from 'fs';
 import * as os from 'os';
 import { ensureAuthenticated } from '../middleware/auth';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
@@ -18,6 +19,39 @@ import { bulkSyncProjectFiles, ensureProjectDirectory, getProjectWorkspacePath }
 const logger = createLogger('shell-router');
 const router = Router();
 
+function resolveShellBinary(): string {
+  if (process.platform === 'win32') {
+    return process.env.COMSPEC || 'powershell.exe';
+  }
+
+  const isReplitVm = Boolean(process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT);
+  if (isReplitVm) {
+    return '/bin/sh';
+  }
+
+  const candidateShells = [
+    '/nix/store/d6mad4dkf6akii90k26dinhrg8a3xia8-replit-runtime-path/bin/bash',
+    '/bin/bash',
+    '/bin/sh',
+    process.env.SHELL,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidateShells) {
+    try {
+      if (candidate.startsWith('/') && fsSync.existsSync(candidate)) {
+        return candidate;
+      }
+      if (!candidate.startsWith('/')) {
+        return candidate;
+      }
+    } catch {
+      // Ignore and continue to the next candidate.
+    }
+  }
+
+  return '/bin/sh';
+}
+
 function getInteractiveShellArgs(shellBinary: string): string[] {
   const shellName = path.basename(shellBinary).toLowerCase();
 
@@ -30,6 +64,22 @@ function getInteractiveShellArgs(shellBinary: string): string[] {
   }
 
   return ['-i'];
+}
+
+function buildShellEnv(userHome: string, userId: number, shellBinary: string): NodeJS.ProcessEnv {
+  return {
+    PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
+    HOME: userHome,
+    PWD: userHome,
+    SHELL: shellBinary,
+    USER: `user${userId}`,
+    LOGNAME: `user${userId}`,
+    TERM: 'xterm-256color',
+    COLORTERM: 'truecolor',
+    LANG: 'en_US.UTF-8',
+    LC_ALL: 'en_US.UTF-8',
+    TMPDIR: '/tmp',
+  };
 }
 
 interface ShellSession {
@@ -262,22 +312,13 @@ echo ""
     }
 
     const pty = await getPty();
-    const shellBinary = process.env.SHELL || 'bash';
+    const shellBinary = resolveShellBinary();
     const shell = pty.spawn(shellBinary, getInteractiveShellArgs(shellBinary), {
       name: 'xterm-256color',
       cwd: shellCwd,
       cols: 120,
       rows: 30,
-      env: {
-        ...process.env,
-        HOME: userHome,
-        USER: `user${userId}`,
-        SHELL: shellBinary,
-        TERM: 'xterm-256color',
-        COLORTERM: 'truecolor',
-        LANG: 'en_US.UTF-8',
-        LC_ALL: 'en_US.UTF-8',
-      },
+      env: buildShellEnv(userHome, userId, shellBinary),
     });
 
     const session: ShellSession = {
