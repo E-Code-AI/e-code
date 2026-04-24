@@ -2,6 +2,7 @@ import { useState, useCallback, memo, forwardRef, useMemo } from 'react';
 import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { 
   Sparkles, 
@@ -13,7 +14,11 @@ import {
   AlertCircle,
   Loader2,
   Bot,
-  User
+  User,
+  Terminal,
+  FileCode,
+  Search,
+  Wrench
 } from 'lucide-react';
 import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
 import { ToolExecutionList } from './ToolExecutionDisplay';
@@ -191,6 +196,71 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
     description: t.description,
     status: t.status
   })) as Task[];
+
+  const toolSummary = useMemo(() => {
+    const executions = message.toolExecutions || [];
+    const summary = {
+      total: executions.length,
+      completed: 0,
+      running: 0,
+      failed: 0,
+      files: 0,
+      commands: 0,
+      searches: 0,
+      uniqueFiles: new Set<string>(),
+      currentLabel: '' as string | null,
+    };
+
+    executions.forEach((execution) => {
+      const toolName = execution.tool || '';
+      const path = execution.parameters?.path;
+      const filesChanged = execution.metadata?.filesChanged || [];
+
+      if (execution.status === 'running' || execution.status === 'pending') {
+        summary.running += 1;
+      } else if (execution.status === 'error' || (execution.status === 'complete' && execution.success === false)) {
+        summary.failed += 1;
+      } else if (execution.status === 'complete' && execution.success !== false) {
+        summary.completed += 1;
+      }
+
+      if (toolName.includes('search')) {
+        summary.searches += 1;
+      } else if (toolName.includes('command') || toolName.includes('install') || toolName.includes('diagnostic')) {
+        summary.commands += 1;
+      } else {
+        summary.files += 1;
+      }
+
+      if (typeof path === 'string' && path.length > 0) {
+        summary.uniqueFiles.add(path);
+      }
+      filesChanged.forEach((file: string) => {
+        if (file) summary.uniqueFiles.add(file);
+      });
+    });
+
+    const activeExecution = [...executions].reverse().find((execution) => execution.status === 'running' || execution.status === 'pending');
+    if (activeExecution) {
+      const path = activeExecution.parameters?.path;
+      const command = activeExecution.parameters?.command;
+      const query = activeExecution.parameters?.query || activeExecution.parameters?.pattern;
+      if (path) {
+        summary.currentLabel = `Editing ${path}`;
+      } else if (command) {
+        summary.currentLabel = `Running ${command}`;
+      } else if (query) {
+        summary.currentLabel = `Searching ${query}`;
+      } else {
+        summary.currentLabel = `Running ${activeExecution.tool}`;
+      }
+    }
+
+    return {
+      ...summary,
+      filesTouched: summary.uniqueFiles.size,
+    };
+  }, [message.toolExecutions]);
   
   return (
     <LazyMotionDiv
@@ -377,27 +447,86 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
             className="w-full mt-2"
             data-testid={`enhanced-tool-executions-${message.id}`}
           >
-            <div 
-              className="flex items-center gap-2 cursor-pointer py-1"
+            <div
+              className="rounded-xl border border-border/60 bg-muted/30 p-3"
+              data-testid={`enhanced-tools-summary-${message.id}`}
+            >
+              <div 
+                className="flex items-center gap-2 cursor-pointer"
               onClick={() => setIsExpanded(!isExpanded)}
               data-testid={`enhanced-tools-toggle-${message.id}`}
-            >
-              <span className="text-[11px] font-medium text-muted-foreground">
-                {message.toolExecutions!.length} tool execution{message.toolExecutions!.length !== 1 ? 's' : ''}
-              </span>
-              {isExpanded ? (
-                <ChevronUp className="h-3 w-3 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              )}
-            </div>
-            <div className={cn("collapsible-content", isExpanded && "expanded")}>
-              <div>
-                <ToolExecutionList 
-                  toolExecutions={message.toolExecutions!} 
-                  showFilters={false}
-                  compact={true}
-                />
+              >
+                <span className="text-[12px] font-medium text-foreground">
+                  {toolSummary.total} action{toolSummary.total !== 1 ? 's' : ''}
+                </span>
+                <div className="flex items-center gap-1.5 ml-auto">
+                  {toolSummary.completed > 0 && (
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-emerald-950 text-emerald-400 border-emerald-500/70">
+                      {toolSummary.completed} done
+                    </Badge>
+                  )}
+                  {toolSummary.running > 0 && (
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-blue-950 text-blue-400 border-blue-500/70">
+                      {toolSummary.running} running
+                    </Badge>
+                  )}
+                  {toolSummary.failed > 0 && (
+                    <Badge variant="outline" className="h-5 px-1.5 text-[10px] bg-red-950 text-red-400 border-red-500/70">
+                      {toolSummary.failed} failed
+                    </Badge>
+                  )}
+                  {isExpanded ? (
+                    <ChevronUp className="h-3 w-3 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                {toolSummary.currentLabel && (
+                  <span className="font-medium text-foreground truncate max-w-full">
+                    {toolSummary.currentLabel}
+                  </span>
+                )}
+                {toolSummary.files > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <FileCode className="h-3 w-3" />
+                    {toolSummary.files} file
+                    {toolSummary.files !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {toolSummary.commands > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Terminal className="h-3 w-3" />
+                    {toolSummary.commands} command
+                    {toolSummary.commands !== 1 ? 's' : ''}
+                  </span>
+                )}
+                {toolSummary.searches > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Search className="h-3 w-3" />
+                    {toolSummary.searches} search
+                    {toolSummary.searches !== 1 ? 'es' : ''}
+                  </span>
+                )}
+                {toolSummary.filesTouched > 0 && (
+                  <span className="inline-flex items-center gap-1">
+                    <Wrench className="h-3 w-3" />
+                    {toolSummary.filesTouched} file
+                    {toolSummary.filesTouched !== 1 ? 's' : ''} touched
+                  </span>
+                )}
+              </div>
+
+              <div className={cn("collapsible-content", isExpanded && "expanded")}>
+                <div className="mt-3">
+                  <ToolExecutionList 
+                    toolExecutions={message.toolExecutions!} 
+                    showFilters={false}
+                    compact={true}
+                  />
+                </div>
               </div>
             </div>
           </LazyMotionDiv>

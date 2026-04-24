@@ -49,17 +49,17 @@ const toolIcons: Record<string, React.ElementType> = {
 };
 
 const toolLabels: Record<string, string> = {
-  create_file: 'Created File',
-  edit_file: 'Edited File',
-  read_file: 'Read File',
-  delete_file: 'Deleted File',
-  list_directory: 'Listed Directory',
-  run_command: 'Executed Command',
-  install_package: 'Installed Package',
-  web_search: 'Web Search',
-  search_code: 'Code Search',
-  get_project_structure: 'Analyzed Project',
-  get_diagnostics: 'Ran Diagnostics',
+  create_file: 'Create file',
+  edit_file: 'Edit file',
+  read_file: 'Read file',
+  delete_file: 'Delete file',
+  list_directory: 'List directory',
+  run_command: 'Run command',
+  install_package: 'Install package',
+  web_search: 'Search web',
+  search_code: 'Search code',
+  get_project_structure: 'Inspect project',
+  get_diagnostics: 'Run diagnostics',
 };
 
 const toolCategories: Record<string, FilterType> = {
@@ -89,6 +89,13 @@ function CompactToolExecution({
   const [isExpanded, setIsExpanded] = useState(false);
   const Icon = toolIcons[tool] || Terminal;
   const label = toolLabels[tool] || tool;
+  const verb = status === 'running'
+    ? 'Running'
+    : status === 'pending'
+      ? 'Queued'
+      : status === 'error' || (status === 'complete' && !success)
+        ? 'Failed'
+        : 'Completed';
 
   const getStatusIcon = () => {
     if (status === 'complete' && success) {
@@ -147,7 +154,7 @@ function CompactToolExecution({
         >
           <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           <div className="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
-            <span className="text-[10px] sm:text-[11px] font-medium truncate">{label}</span>
+            <span className="text-[10px] sm:text-[11px] font-medium truncate">{verb}: {label}</span>
             {target && (
               <code className="text-[9px] sm:text-[10px] bg-background px-1 sm:px-1.5 py-0.5 rounded truncate max-w-[100px] sm:max-w-[200px] hidden xs:inline">
                 {target}
@@ -308,24 +315,37 @@ export function ToolExecutionList({
     <div className="space-y-1.5 sm:space-y-2" data-testid="tool-execution-list">
       {/* Compact inline stats (only show when there are multiple items or errors) */}
       {(toolExecutions.length > 1 || stats.errors > 0) && (
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-1">
-            {stats.success > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-950 text-emerald-600 border-emerald-500">
-                {stats.success} done
-              </Badge>
-            )}
-            {stats.running > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-950 text-blue-600 border-blue-500 animate-pulse">
-                {stats.running} running
-              </Badge>
-            )}
-            {stats.errors > 0 && (
-              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-950 text-red-600 border-red-500">
-                {stats.errors} failed
-              </Badge>
-            )}
-          </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {stats.success > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-950 text-emerald-400 border-emerald-500">
+              {stats.success} done
+            </Badge>
+          )}
+          {stats.running > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-950 text-blue-400 border-blue-500 animate-pulse">
+              {stats.running} running
+            </Badge>
+          )}
+          {stats.errors > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-950 text-red-400 border-red-500">
+              {stats.errors} failed
+            </Badge>
+          )}
+          {stats.files > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+              {stats.files} files
+            </Badge>
+          )}
+          {stats.commands > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+              {stats.commands} commands
+            </Badge>
+          )}
+          {stats.search > 0 && (
+            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
+              {stats.search} searches
+            </Badge>
+          )}
         </div>
       )}
 
