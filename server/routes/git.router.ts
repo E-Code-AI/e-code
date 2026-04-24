@@ -605,6 +605,42 @@ router.get('/github/connect', ensureAuthenticated, async (req: Request, res: Res
   }
 });
 
+router.get('/github/repos', ensureAuthenticated, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const accessToken = await githubOAuth.getUserToken(userId);
+    if (!accessToken) {
+      return res.status(401).json({ error: 'GitHub not connected', requiresAuth: true });
+    }
+
+    const page = Number.parseInt(String(req.query.page || '1'), 10) || 1;
+    const perPage = Math.min(Number.parseInt(String(req.query.perPage || '30'), 10) || 30, 100);
+    const repositories = await githubOAuth.getUserRepos(accessToken, page, perPage);
+
+    res.json({
+      repositories: repositories.map((repo) => ({
+        id: repo.id,
+        name: repo.name,
+        fullName: repo.full_name,
+        description: repo.description,
+        htmlUrl: repo.html_url,
+        cloneUrl: repo.clone_url,
+        private: repo.private,
+        defaultBranch: repo.default_branch,
+        updatedAt: repo.updated_at,
+        owner: repo.owner,
+      })),
+    });
+  } catch (error: any) {
+    logger.error('[Git] GitHub repos error:', error);
+    res.status(500).json({ error: error.message || 'Failed to load GitHub repositories' });
+  }
+});
+
 router.post('/github/disconnect', ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;

@@ -45,6 +45,22 @@ interface GitHubStatus {
   avatarUrl?: string;
 }
 
+interface GitHubRepoInfo {
+  id: number;
+  name: string;
+  fullName: string;
+  description?: string;
+  htmlUrl: string;
+  cloneUrl: string;
+  private: boolean;
+  defaultBranch: string;
+  updatedAt: string;
+  owner: {
+    login: string;
+    avatar_url?: string;
+  };
+}
+
 interface GitStatus {
   branch: string;
   ahead: number;
@@ -210,6 +226,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   const [commitMessage, setCommitMessage] = useState('');
   const [showConnections, setShowConnections] = useState(true);
   const [remoteUrl, setRemoteUrl] = useState('');
+  const [repoSearch, setRepoSearch] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedFileStaged, setSelectedFileStaged] = useState(false);
 
@@ -243,6 +260,13 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
     queryKey: [`/api/git/github/status`],
     queryFn: () => apiRequest('GET', `/api/git/github/status`),
+  });
+
+  const { data: githubReposData, isLoading: isLoadingGitHubRepos } = useQuery<{ repositories: GitHubRepoInfo[] }>({
+    queryKey: [`/api/git/github/repos`],
+    queryFn: () => apiRequest('GET', `/api/git/github/repos?perPage=100`),
+    enabled: !!githubStatus?.connected,
+    staleTime: 30000,
   });
 
   const { data: diffData, isLoading: isLoadingDiff } = useQuery<GitDiffResponse>({
@@ -349,6 +373,20 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
     },
   });
 
+  const cloneRepoMutation = useMutation({
+    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${projectId}/clone`, { url }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/remotes`] });
+      toast({ description: 'Repository imported into this project' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to import repository', variant: 'destructive' });
+    },
+  });
+
   const disconnectGitHubMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/git/github/disconnect`, {}),
     onSuccess: () => {
@@ -423,6 +461,12 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(branchSearch.toLowerCase())
+  );
+  const githubRepositories = githubReposData?.repositories || [];
+  const filteredRepositories = githubRepositories.filter((repo) =>
+    !repoSearch.trim()
+      || repo.fullName.toLowerCase().includes(repoSearch.toLowerCase())
+      || (repo.description || '').toLowerCase().includes(repoSearch.toLowerCase())
   );
 
   const importantBranches = filteredBranches.filter(b => b.name === 'main' || b.name === 'master');
@@ -524,10 +568,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
               <div className={cn("collapsible-content", showConnections && "expanded")}>
                 <div className="space-y-2">
-                  <div 
-                    className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
-                    data-testid="github-connection-section"
-                  >
+                    <div 
+                      className="flex items-center justify-between p-3 bg-card border border-border rounded-lg"
+                      data-testid="github-connection-section"
+                    >
                       {isLoadingGitHub ? (
                         <div className="flex items-center gap-3">
                           <SiGithub className="w-[18px] h-[18px]" />
@@ -590,6 +634,77 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                         </>
                       )}
                     </div>
+
+                    {githubStatus?.connected && (
+                      <div className="p-3 bg-card border border-border rounded-lg space-y-3" data-testid="github-repositories-section">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[15px] font-medium leading-tight text-foreground">GitHub repositories</div>
+                            <div className="text-[13px] text-muted-foreground">Link the current project to a repo or import one into this project.</div>
+                          </div>
+                          {isLoadingGitHubRepos && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                        </div>
+
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            value={repoSearch}
+                            onChange={(e) => setRepoSearch(e.target.value)}
+                            placeholder="Search repositories"
+                            className="pl-9 h-8 bg-background border-border rounded-lg"
+                            data-testid="input-github-repo-search"
+                          />
+                        </div>
+
+                        <div className="max-h-64 overflow-y-auto space-y-2">
+                          {filteredRepositories.length === 0 ? (
+                            <div className="text-[13px] text-muted-foreground py-2">
+                              {repoSearch.trim() ? 'No repositories match this search.' : 'No GitHub repositories available.'}
+                            </div>
+                          ) : filteredRepositories.slice(0, 20).map((repo) => (
+                            <div
+                              key={repo.id}
+                              className="flex items-start justify-between gap-3 p-3 bg-background border border-border rounded-lg"
+                              data-testid={`github-repo-${repo.fullName}`}
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-[15px] font-medium leading-tight text-foreground truncate">{repo.fullName}</span>
+                                  {repo.private && (
+                                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Private</span>
+                                  )}
+                                </div>
+                                {repo.description && (
+                                  <p className="text-[13px] text-muted-foreground mt-1 line-clamp-2">{repo.description}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-border rounded-lg"
+                                  disabled={connectRemoteMutation.isPending}
+                                  onClick={() => connectRemoteMutation.mutate(repo.cloneUrl)}
+                                  data-testid={`button-link-repo-${repo.fullName}`}
+                                >
+                                  Link
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-border rounded-lg"
+                                  disabled={cloneRepoMutation.isPending}
+                                  onClick={() => cloneRepoMutation.mutate(repo.cloneUrl)}
+                                  data-testid={`button-import-repo-${repo.fullName}`}
+                                >
+                                  {cloneRepoMutation.isPending ? 'Importing...' : 'Import'}
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between p-3 bg-card border border-border rounded-lg">
                       <div className="flex items-center gap-3">

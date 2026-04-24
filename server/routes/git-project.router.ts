@@ -7,6 +7,7 @@ import { storage } from '../storage';
 import { githubOAuth } from '../services/github-oauth';
 import jwt from 'jsonwebtoken';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('git-project-router');
 const router = Router();
@@ -99,6 +100,8 @@ async function syncDiskToDb(projectId: string, projectDir: string): Promise<void
       return files;
     }
     const allFiles = await walk(projectDir);
+    const diskRelativePaths = new Set(allFiles.map((absPath) => path.relative(projectDir, absPath)));
+
     for (const absPath of allFiles) {
       const relPath = path.relative(projectDir, absPath);
       const content = await fs.readFile(absPath, 'utf8').catch(() => null);
@@ -110,29 +113,26 @@ async function syncDiskToDb(projectId: string, projectDir: string): Promise<void
         await storage.createFile({ projectId, path: relPath, content }).catch(() => null);
       }
     }
+
+    const existingFiles = await storage.getFilesByProjectId(projectId).catch(() => []);
+    for (const file of existingFiles) {
+      if (file.isDirectory) continue;
+      const relPath = file.path || file.name;
+      if (!relPath || relPath.startsWith('.git/') || relPath.startsWith('node_modules/')) continue;
+      if (!diskRelativePaths.has(relPath)) {
+        await storage.deleteFile(file.id).catch(() => null);
+      }
+    }
+
     logger.info(`[git-project] synced ${allFiles.length} files from disk to DB for project ${projectId}`);
   } catch (err) {
     logger.error('[git-project] syncDiskToDb error:', err);
   }
 }
 
-const PROJECTS_BASE = path.join(process.cwd(), 'projects');
-
 async function getProjectDir(projectId: string): Promise<string> {
-  const canonicalDir = path.join(PROJECTS_BASE, projectId);
-  try {
-    await fs.access(canonicalDir);
-    return canonicalDir;
-  } catch {
-    const legacyDir = path.join(PROJECTS_BASE, `project-${projectId}`);
-    try {
-      await fs.access(legacyDir);
-      return legacyDir;
-    } catch {
-      await fs.mkdir(canonicalDir, { recursive: true });
-      return canonicalDir;
-    }
-  }
+  await ensureProjectDirectory(projectId);
+  return getProjectWorkspacePath(projectId);
 }
 
 async function syncProjectFiles(projectId: string, projectDir: string): Promise<void> {
@@ -300,6 +300,7 @@ router.post('/:projectId/stage', async (req: Request, res: Response) => {
   const filesToStage: string[] = paths || files || ['.'];
   try {
     const projectDir = await getProjectDir(projectId);
+    await syncProjectFiles(projectId, projectDir);
     await ensureGitInitialized(projectDir);
     await execa('git', ['add', '--', ...filesToStage], { cwd: projectDir });
     res.json({ success: true });
@@ -334,6 +335,7 @@ router.post('/:projectId/commit', async (req: Request, res: Response) => {
   }
   try {
     const projectDir = await getProjectDir(projectId);
+    await syncProjectFiles(projectId, projectDir);
     await ensureGitInitialized(projectDir);
     if (files && files.length > 0) {
       await execa('git', ['add', '--', ...files], { cwd: projectDir });
@@ -368,6 +370,7 @@ router.post('/:projectId/push', async (req: Request, res: Response) => {
 
     try {
       const { stdout, stderr } = await execa('git', ['push', pushUrl, `${branch}:${branch}`], { cwd: projectDir });
+      await syncDiskToDb(projectId, projectDir);
       res.json({ success: true, output: stdout || stderr });
     } catch (pushErr: any) {
       const msg = pushErr.stderr || pushErr.message || '';
@@ -514,17 +517,24 @@ router.post('/:projectId/remotes', async (req: Request, res: Response) => {
 router.post('/:projectId/clone', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { url } = req.body;
+  const userId = (req as any).user?.id ?? (req as any).bootstrapAuth?.userId;
   if (!url) {
     return res.status(400).json({ error: 'Repository URL is required' });
   }
   try {
     const projectDir = await getProjectDir(projectId);
+    const cloneUrl = userId ? await getAuthenticatedRemoteUrl(url, userId) : url;
     await fs.rm(projectDir, { recursive: true, force: true });
     await fs.mkdir(projectDir, { recursive: true });
-    await execa('git', ['clone', url, '.'], { cwd: projectDir });
+    await execa('git', ['clone', cloneUrl, '.'], { cwd: projectDir });
+    if (cloneUrl !== url) {
+      await execa('git', ['remote', 'set-url', 'origin', url], { cwd: projectDir }).catch(() => null);
+    }
+    await syncDiskToDb(projectId, projectDir);
     res.json({ success: true, message: 'Repository cloned successfully' });
   } catch (error: any) {
-    res.status(500).json({ error: error.message });
+    const msg = (error.stderr || error.message || '').replace(/https?:\/\/[^@]+@/g, 'https://');
+    res.status(500).json({ error: msg || 'Clone failed. Make sure GitHub is connected.' });
   }
 });
 

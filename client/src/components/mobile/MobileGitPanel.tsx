@@ -40,6 +40,22 @@ interface GitHubStatus {
   avatarUrl?: string;
 }
 
+interface GitHubRepoInfo {
+  id: number;
+  name: string;
+  fullName: string;
+  description?: string;
+  htmlUrl: string;
+  cloneUrl: string;
+  private: boolean;
+  defaultBranch: string;
+  updatedAt: string;
+  owner: {
+    login: string;
+    avatar_url?: string;
+  };
+}
+
 interface GitStatus {
   branch: string;
   ahead: number;
@@ -137,6 +153,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const [commitMessage, setCommitMessage] = useState('');
   const [showConnections, setShowConnections] = useState(true);
   const [remoteUrl, setRemoteUrl] = useState('');
+  const [repoSearch, setRepoSearch] = useState('');
   const [showChanges, setShowChanges] = useState(true);
 
   const { data: status, refetch: refetchStatus, isLoading, isError, error } = useQuery<GitStatus>({
@@ -169,6 +186,13 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
   const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
     queryKey: [`/api/git/github/status`],
     queryFn: () => apiRequest('GET', `/api/git/github/status`),
+  });
+
+  const { data: githubReposData, isLoading: isLoadingGitHubRepos } = useQuery<{ repositories: GitHubRepoInfo[] }>({
+    queryKey: [`/api/git/github/repos`],
+    queryFn: () => apiRequest('GET', `/api/git/github/repos?perPage=100`),
+    enabled: !!githubStatus?.connected,
+    staleTime: 30000,
   });
 
   const originRemote = remotesData?.remotes?.find(r => r.name === 'origin' && r.type === 'fetch');
@@ -247,6 +271,20 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
     },
   });
 
+  const cloneRepoMutation = useMutation({
+    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${projectId}/clone`, { url }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/remotes`] });
+      toast({ description: 'Repository imported into this project' });
+    },
+    onError: (error: any) => {
+      toast({ description: error.message || 'Failed to import repository', variant: 'destructive' });
+    },
+  });
+
   const disconnectGitHubMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/git/github/disconnect`, {}),
     onSuccess: () => {
@@ -319,6 +357,12 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
 
   const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(branchSearch.toLowerCase())
+  );
+  const githubRepositories = githubReposData?.repositories || [];
+  const filteredRepositories = githubRepositories.filter((repo) =>
+    !repoSearch.trim()
+      || repo.fullName.toLowerCase().includes(repoSearch.toLowerCase())
+      || (repo.description || '').toLowerCase().includes(repoSearch.toLowerCase())
   );
 
   const importantBranches = filteredBranches.filter(b => b.name === 'main' || b.name === 'master');
@@ -496,6 +540,75 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
                           </>
                         )}
                       </div>
+
+                      {githubStatus?.connected && (
+                        <div className="p-3 bg-card border border-border rounded-lg space-y-3" data-testid="github-repositories-section">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <div className="text-[15px] font-medium leading-tight text-foreground">GitHub repositories</div>
+                              <div className="text-[13px] text-muted-foreground">Link this project or import a repo into it.</div>
+                            </div>
+                            {isLoadingGitHubRepos && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                          </div>
+
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                            <Input
+                              value={repoSearch}
+                              onChange={(e) => setRepoSearch(e.target.value)}
+                              placeholder="Search repositories"
+                              className="pl-9 h-11 rounded-lg bg-card border-border text-[15px] text-foreground"
+                              data-testid="input-github-repo-search"
+                            />
+                          </div>
+
+                          <div className="space-y-2 max-h-64 overflow-y-auto">
+                            {filteredRepositories.length === 0 ? (
+                              <div className="text-[13px] text-muted-foreground py-1">
+                                {repoSearch.trim() ? 'No repositories match this search.' : 'No GitHub repositories available.'}
+                              </div>
+                            ) : filteredRepositories.slice(0, 20).map((repo) => (
+                              <div
+                                key={repo.id}
+                                className="p-3 bg-background border border-border rounded-lg space-y-2"
+                                data-testid={`github-repo-${repo.fullName}`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span className="text-[15px] font-medium text-foreground truncate">{repo.fullName}</span>
+                                  {repo.private && (
+                                    <span className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Private</span>
+                                  )}
+                                </div>
+                                {repo.description && (
+                                  <p className="text-[13px] text-muted-foreground line-clamp-2">{repo.description}</p>
+                                )}
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 h-10 rounded-lg border-border"
+                                    disabled={connectRemoteMutation.isPending}
+                                    onClick={() => connectRemoteMutation.mutate(repo.cloneUrl)}
+                                    data-testid={`button-link-repo-${repo.fullName}`}
+                                  >
+                                    Link
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 h-10 rounded-lg border-border"
+                                    disabled={cloneRepoMutation.isPending}
+                                    onClick={() => cloneRepoMutation.mutate(repo.cloneUrl)}
+                                    data-testid={`button-import-repo-${repo.fullName}`}
+                                  >
+                                    {cloneRepoMutation.isPending ? 'Importing...' : 'Import'}
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between min-h-[44px] p-3 bg-card border border-border rounded-lg">
                         <div className="flex items-center gap-3">
