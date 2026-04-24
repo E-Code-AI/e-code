@@ -988,25 +988,12 @@ export function useAutonomousChatIntegration({
         AgentEventBus.emit('agent:complete', { projectId, sessionId });
         AgentEventBus.emit('agent:status', { status: 'complete' });
         
-        if (lastMessageIdRef.current) {
-          updateMessage(conversationId, lastMessageIdRef.current, {
-            content: 'Build complete. Starting preview...',
-            isStreaming: false,
-            autonomousPayload: {
-              phase: 'complete',
-              progress: 100
-            }
-          });
-          previewReadyMessageIdRef.current = lastMessageIdRef.current;
-        } else {
-          const msg = createAutonomousMessage(
-            'autonomous_complete',
-            'Build complete. Starting preview...',
-            { phase: 'complete', progress: 100 }
-          );
-          addMessage(conversationId, msg);
-          previewReadyMessageIdRef.current = msg.id;
-        }
+        const completeMessageId = upsertAutonomousMessage(
+          'autonomous_complete',
+          'Build complete. Starting preview...',
+          { phase: 'complete', progress: 100 }
+        );
+        previewReadyMessageIdRef.current = completeMessageId;
         lastMessageIdRef.current = null;
         break;
       }
