@@ -390,8 +390,6 @@ export function ReplitAgentPanelV3({
 }: ReplitAgentPanelV3Props) {
   // Convert projectId to number early for consistent usage throughout component
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
-  const conversationStorageKey = projectIdNum ? `agent-current-conversation:${projectIdNum}` : null;
-  
   // Toast notifications - must be declared early before any callbacks that use it
   const { toast } = useToast();
   
@@ -514,24 +512,6 @@ export function ReplitAgentPanelV3({
   const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
   const [streamingContent, setStreamingContent] = useState('');
   const [activeThinking, setActiveThinking] = useState<ThinkingStep[]>([]);
-  const [capabilities, setCapabilities] = useState<AgentCapability[]>([
-    {
-      id: 'extended_thinking',
-      label: 'Extended Thinking',
-      icon: Brain,
-      enabled: true,
-      badge: 'PRO',
-      description: 'Deep reasoning with visible thought process'
-    },
-    {
-      id: 'high_power',
-      label: 'High Power Mode',
-      icon: Zap,
-      enabled: false,
-      badge: 'ENTERPRISE',
-      description: 'Use the most capable AI model available'
-    }
-  ]);
   
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
@@ -584,7 +564,7 @@ export function ReplitAgentPanelV3({
     appTesting: true, // ON by default per Replit Agent 3
     extendedThinking: false,
     highPowerModels: false,
-    webSearch: false
+    webSearch: true
   };
   
   const [internalAgentToolsSettings, setInternalAgentToolsSettings] = useState<AgentToolsSettings>(defaultSettings);
@@ -592,6 +572,9 @@ export function ReplitAgentPanelV3({
   // Use external settings if provided, otherwise use internal state
   const agentToolsSettings = externalAgentToolsSettings ?? internalAgentToolsSettings;
   const setAgentToolsSettings = onAgentToolsSettingsChange ?? setInternalAgentToolsSettings;
+  const extendedThinkingEnabled = agentToolsSettings.extendedThinking;
+  const webSearchEnabled = agentToolsSettings.webSearch;
+  const highPowerEnabled = agentToolsSettings.highPowerModels;
   
   // Ref to track previous settings for toast comparison (avoids stale closure issues)
   const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
@@ -673,39 +656,9 @@ export function ReplitAgentPanelV3({
       try {
         devLog('[ReplitAgentPanelV3] Starting conversation bootstrap for projectId:', projectId);
 
-        let response: { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
-        const preferredConversationId = conversationStorageKey
-          ? parseInt(localStorage.getItem(conversationStorageKey) || '', 10)
-          : NaN;
-
-        if (Number.isInteger(preferredConversationId) && preferredConversationId > 0) {
-          try {
-            const preferredConversation = await fetch(`/api/agent/conversation/${preferredConversationId}`, {
-              credentials: 'include'
-            }).then(async (res) => {
-              if (!res.ok) throw new Error('Preferred conversation unavailable');
-              return res.json();
-            });
-
-            if (preferredConversation?.projectId === projectIdNum) {
-              response = {
-                conversationId: preferredConversation.conversationId,
-                agentMode: preferredConversation.agentMode,
-                existing: true,
-              };
-            } else {
-              throw new Error('Preferred conversation belongs to another project');
-            }
-          } catch {
-            response = await apiRequest('POST', '/api/agent/conversation', {
-              projectId: projectId.toString()
-            }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
-          }
-        } else {
-          response = await apiRequest('POST', '/api/agent/conversation', {
-            projectId: projectId.toString()
-          }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
-        }
+        const response = await apiRequest('POST', '/api/agent/conversation', {
+          projectId: projectId.toString()
+        }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
 
         if (!isMounted) return;
         
@@ -722,9 +675,6 @@ export function ReplitAgentPanelV3({
 
         setConversationId(realConversationId);
         setAgentMode(response.agentMode);
-        if (conversationStorageKey) {
-          localStorage.setItem(conversationStorageKey, String(realConversationId));
-        }
         bootstrapCompleted = true;
         
         clearBootstrapTimers();
@@ -770,13 +720,7 @@ export function ReplitAgentPanelV3({
       isMounted = false;
       // Note: We DON'T clear the global timer here - it survives remounts intentionally
     };
-  }, [projectId, projectIdNum, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut, conversationStorageKey]);
-
-  useEffect(() => {
-    if (conversationId && conversationStorageKey) {
-      localStorage.setItem(conversationStorageKey, String(conversationId));
-    }
-  }, [conversationId, conversationStorageKey]);
+  }, [projectId, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut]);
 
   // ✅ FIX (Jan 2026): React to bootstrap timeout and seed fallback message
   // When the global timer fires, we need to:
@@ -823,26 +767,6 @@ export function ReplitAgentPanelV3({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
     enabled: !!conversationId,
   });
-
-  const { data: restoredAutonomySession } = useQuery<{ success: boolean; session: { id: string; status: string } }>({
-    queryKey: ['/api/autonomy/projects', projectIdNum, 'session'],
-    queryFn: async () => {
-      const res = await fetch(`/api/autonomy/projects/${projectIdNum}/session`, { credentials: 'include' });
-      if (!res.ok) {
-        throw new Error('No autonomy session');
-      }
-      return res.json();
-    },
-    enabled: projectIdNum > 0 && !autonomySessionId,
-    retry: false,
-    staleTime: 30000,
-  });
-
-  useEffect(() => {
-    if (!autonomySessionId && restoredAutonomySession?.session?.id) {
-      setAutonomySessionId(restoredAutonomySession.session.id);
-    }
-  }, [autonomySessionId, restoredAutonomySession]);
 
   // Fetch decomposed tasks for autonomy session
   const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
@@ -1497,9 +1421,6 @@ export function ReplitAgentPanelV3({
         setIsPendingResponse(true); // Show skeleton until first chunk
         setStreamingContent('');
 
-        // Show thinking if extended thinking is enabled
-        const extendedThinkingEnabled = capabilities.find(c => c.id === 'extended_thinking')?.enabled;
-        
         if (extendedThinkingEnabled) {
           const thinkingSteps = simulateThinkingSteps(userMessage.content);
           setActiveThinking(thinkingSteps);
@@ -1538,9 +1459,11 @@ export function ReplitAgentPanelV3({
                   content: m.content
                 })),
                 capabilities: {
-                  extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-                  webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-                  highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+                  extendedThinking: extendedThinkingEnabled,
+                  webSearch: webSearchEnabled,
+                  highPower: highPowerEnabled,
+                  appTesting: agentToolsSettings.appTesting,
+                  maxAutonomy: agentToolsSettings.maxAutonomy,
                 }
               })
             });
@@ -1796,12 +1719,6 @@ export function ReplitAgentPanelV3({
     window.history.replaceState({}, '', newUrl);
   }, [projectId, conversationId, autoStart, isWorking, initialPrompt, wsIsConnected, pendingAutoStart]); // ✅ FORTUNE 500 FIX: Added wsIsConnected + pendingAutoStart for WS readiness
 
-  const toggleCapability = useCallback((capabilityId: string) => {
-    setCapabilities(prev => prev.map(cap =>
-      cap.id === capabilityId ? { ...cap, enabled: !cap.enabled } : cap
-    ));
-  }, []);
-
   const simulateThinkingSteps = useCallback((message: string): ThinkingStep[] => {
     const baseTimestamp = new Date();
     return [
@@ -1932,9 +1849,6 @@ export function ReplitAgentPanelV3({
     setIsPendingResponse(true); // Show skeleton until first chunk
     setStreamingContent('');
 
-    // Show thinking steps if extended thinking is enabled
-    const extendedThinkingEnabled = capabilities.find(c => c.id === 'extended_thinking')?.enabled;
-    
     if (extendedThinkingEnabled) {
       const thinkingSteps = simulateThinkingSteps(userContent);
       setActiveThinking(thinkingSteps);
@@ -1980,9 +1894,11 @@ export function ReplitAgentPanelV3({
             content: m.content
           })),
           capabilities: {
-            extendedThinking: capabilities.find(c => c.id === 'extended_thinking')?.enabled,
-            webSearch: capabilities.find(c => c.id === 'web_search')?.enabled,
-            highPower: capabilities.find(c => c.id === 'high_power')?.enabled,
+            extendedThinking: extendedThinkingEnabled,
+            webSearch: webSearchEnabled,
+            highPower: highPowerEnabled,
+            appTesting: agentToolsSettings.appTesting,
+            maxAutonomy: agentToolsSettings.maxAutonomy,
           },
           images: imageAttachments.length > 0 ? imageAttachments : undefined
         })
@@ -2429,14 +2345,8 @@ export function ReplitAgentPanelV3({
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
   
   const hasUserMessages = messages.some(m => m.role === 'user');
-  const hasMeaningfulMessages = messages.some((message) => {
-    if (message.id === DEFAULT_AGENT_WELCOME_MESSAGE.id && message.content === DEFAULT_AGENT_WELCOME_MESSAGE.content) {
-      return false;
-    }
-    return Boolean(message.content?.trim());
-  });
   const showEmptyState = !hasUserMessages 
-    && !hasMeaningfulMessages
+    && messages.length <= 1 
     && !isPendingResponse 
     && !isWorking;
 
@@ -2502,7 +2412,7 @@ export function ReplitAgentPanelV3({
                     modelName={model?.name}
                     provider={provider || undefined}
                     supportsExtendedThinking={modelSupportsExtendedThinking}
-                    extendedThinkingEnabled={capabilities.find(c => c.id === 'extended_thinking')?.enabled}
+                    extendedThinkingEnabled={extendedThinkingEnabled}
                     compact={isCompactMode}
                     data-testid="current-model-chip"
                   />
@@ -3252,9 +3162,6 @@ export function ReplitAgentPanelV3({
           currentConversationId={conversationId}
           onSelectConversation={(nextConversationId) => {
             setConversationId(nextConversationId);
-            if (conversationStorageKey) {
-              localStorage.setItem(conversationStorageKey, String(nextConversationId));
-            }
             setHistoryModalOpen(false);
           }}
         />

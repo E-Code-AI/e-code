@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { WebSearchService } from '../services/web-search-service';
 import { BackgroundTestingService } from '../services/background-testing-service';
+import { AgentPreferencesService } from '../services/agent-preferences.service';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
 import { 
@@ -13,6 +14,7 @@ import {
 } from '@shared/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
+import type { IStorage } from '../storage';
 
 const logger = createLogger('agent-tools');
 
@@ -204,6 +206,10 @@ export default function createAgentToolsRouter(): Router {
         return res.status(400).json({ error: 'projectId and testPlan are required' });
       }
 
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
+      }
+
       const sessionId = crypto.randomUUID();
 
       // Create test recording entry in database
@@ -337,12 +343,15 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/testing/replays', async (req, res) => {
     try {
-      const userId = req.user!.id;
       const projectId = parseInt(req.query.projectId as string);
       const limit = parseInt(req.query.limit as string) || 20;
 
       if (!projectId) {
         return res.status(400).json({ error: 'projectId is required' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
       }
 
       // Get recordings with video URLs
@@ -527,12 +536,15 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/tools/testing/replays', async (req, res) => {
     try {
-      const userId = req.user!.id;
       const projectId = parseInt(req.query.projectId as string);
       const limit = parseInt(req.query.limit as string) || 20;
 
       if (!projectId) {
         return res.status(400).json({ error: 'projectId is required' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
       }
 
       const replays = await db.select()
@@ -576,6 +588,10 @@ export default function createAgentToolsRouter(): Router {
 
       if (!projectId || !testPlan) {
         return res.status(400).json({ error: 'projectId and testPlan are required' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
       }
 
       const sessionId = crypto.randomUUID();
@@ -892,9 +908,16 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/tools/status', async (req, res) => {
     try {
+      const storage: IStorage = (req.app.locals as any).storage;
+      const preferencesService = new AgentPreferencesService(storage);
+      const userId = req.user!.id;
+      const preferences = await preferencesService.getUserPreferences(userId);
+      const highPowerModels = preferencesService.getHighPowerModels();
+      const extendedThinkingModels = preferencesService.getExtendedThinkingModels();
+
       res.json({
         webSearch: {
-          enabled: true,
+          enabled: preferences?.autoWebSearch ?? true,
           status: 'operational',
           provider: 'DuckDuckGo'
         },
@@ -905,14 +928,14 @@ export default function createAgentToolsRouter(): Router {
           provider: 'Playwright'
         },
         extendedThinking: {
-          enabled: true,
+          enabled: preferences?.extendedThinking ?? false,
           status: 'operational',
-          models: ['claude-opus-4-7', 'claude-sonnet-4-6', 'o3', 'gpt-4.1']
+          models: extendedThinkingModels
         },
         highPowerModels: {
-          enabled: true,
+          enabled: preferences?.highPowerMode ?? false,
           status: 'operational',
-          models: ['gpt-4.1', 'claude-opus-4-7', 'gemini-2.5-pro', 'grok-3']
+          models: highPowerModels
         },
         maxAutonomy: {
           enabled: true,
