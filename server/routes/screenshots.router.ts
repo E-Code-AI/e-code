@@ -7,6 +7,7 @@ import { eq, desc } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { screenshotService } from '../services/screenshot-service';
+import { storage } from '../storage';
 
 const router = Router();
 const logger = createLogger('screenshots');
@@ -34,7 +35,9 @@ async function assertProjectAccess(userId: number, projectId: number): Promise<b
   }
   const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
   if (!project) return false;
-  return project.ownerId === userId;
+  if (project.ownerId === userId) return true;
+  const collaborators = await storage.getProjectCollaborators(String(projectId)).catch(() => []);
+  return collaborators.some((collaborator: any) => collaborator.userId === userId);
 }
 
 function toApiShape(row: typeof projectScreenshots.$inferSelect) {
@@ -105,6 +108,8 @@ router.post('/:projectId/capture', async (req, res) => {
     const { fullPage, deviceType, title, description } = parsed.data;
 
     const captured = await screenshotService.captureProjectPreview(projectId, userId, {
+      deviceType,
+      fullPage,
       storeAsBase64: true,
       storeInObjectStorage: true,
       metadata: {

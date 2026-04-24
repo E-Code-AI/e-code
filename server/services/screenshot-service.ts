@@ -17,6 +17,8 @@ export interface ScreenshotStorageOptions {
   projectId?: number;
   userId?: number;
   checkpointId?: number;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
+  fullPage?: boolean;
   metadata?: Record<string, string>;
 }
 
@@ -40,6 +42,7 @@ export interface StoredScreenshot {
 export class ScreenshotService {
   private browser: Browser | null = null;
   private objectStorageEnabled: boolean = false;
+  private initialized: boolean = false;
 
   async initialize() {
     try {
@@ -62,7 +65,41 @@ export class ScreenshotService {
     } catch (error) {
       logger.error('Failed to initialize screenshot service:', error);
       logger.info('Running in basic mode without browser automation');
+    } finally {
+      this.initialized = true;
     }
+  }
+
+  private async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+  }
+
+  private getViewport(deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop') {
+    switch (deviceType) {
+      case 'mobile':
+        return { width: 390, height: 844 };
+      case 'tablet':
+        return { width: 1024, height: 768 };
+      default:
+        return { width: 1920, height: 1080 };
+    }
+  }
+
+  private async resolveCaptureTarget(projectId: number): Promise<string> {
+    const { previewService } = await import('../preview/preview-service');
+    let preview = previewService.getPreview(String(projectId));
+
+    if (!preview || preview.status !== 'running') {
+      preview = await previewService.startPreviewFromProject(String(projectId));
+    }
+
+    if (preview?.status === 'running' && preview.primaryPort) {
+      return `http://127.0.0.1:${preview.primaryPort}/`;
+    }
+
+    return this.getProjectPreviewUrl(projectId);
   }
 
   async storeScreenshotInObjectStorage(
@@ -119,7 +156,9 @@ export class ScreenshotService {
     options: ScreenshotStorageOptions = {}
   ): Promise<StoredScreenshot> {
     try {
-      const previewUrl = this.getProjectPreviewUrl(projectId);
+      await this.ensureInitialized();
+      const viewport = this.getViewport(options.deviceType || 'desktop');
+      const previewUrl = await this.resolveCaptureTarget(projectId);
       logger.info(`Capturing screenshot for project ${projectId} at ${previewUrl}`);
 
       const storageType = options.storeInObjectStorage ? 'object_storage' : 
@@ -129,7 +168,7 @@ export class ScreenshotService {
         const page = await this.browser.newPage();
         
         try {
-          await page.setViewportSize({ width: 1920, height: 1080 });
+          await page.setViewportSize({ width: viewport.width, height: viewport.height });
           
           await page.goto(previewUrl, { 
             waitUntil: 'networkidle',
@@ -139,7 +178,7 @@ export class ScreenshotService {
           await page.waitForTimeout(2000);
 
           const screenshotBuffer = await page.screenshot({
-            fullPage: false,
+            fullPage: !!options.fullPage,
             type: 'png'
           });
 
@@ -190,8 +229,8 @@ export class ScreenshotService {
             thumbnailBase64,
             storageObject,
             metadata: {
-              width: 1920,
-              height: 1080,
+              width: viewport.width,
+              height: viewport.height,
               timestamp: new Date(),
               projectId,
               checkpointId: options.checkpointId,
@@ -215,8 +254,8 @@ export class ScreenshotService {
           thumbnail: `data:image/svg+xml;base64,${svgBase64}`,
           thumbnailBase64: svgBase64,
           metadata: {
-            width: 1920,
-            height: 1080,
+            width: viewport.width,
+            height: viewport.height,
             timestamp: new Date(),
             projectId,
             checkpointId: options.checkpointId,
@@ -343,7 +382,7 @@ export class ScreenshotService {
 
   private getProjectPreviewUrl(projectId: number): string {
     const baseUrl = process.env.PREVIEW_SERVICE_URL || process.env.APP_URL || 'http://localhost:3100';
-    return `${baseUrl}/preview/${projectId}`;
+    return `${baseUrl}/api/preview/projects/${projectId}/preview/`;
   }
 
   private getWorkflowPreviewUrl(projectId: number, workflow: string): string {

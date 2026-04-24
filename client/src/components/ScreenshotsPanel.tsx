@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Camera, Download, Trash2, ImageOff } from 'lucide-react';
+import { Camera, Download, Trash2, ImageOff, ExternalLink } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 
@@ -40,8 +40,9 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
   const [screenshotTitle, setScreenshotTitle] = useState('');
   const [screenshotDescription, setScreenshotDescription] = useState('');
   const [deviceType, setDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [fullPage, setFullPage] = useState(false);
 
-  const { data: screenshots, isLoading } = useQuery<Screenshot[]>({
+  const { data: screenshots, isLoading, isError, error } = useQuery<Screenshot[]>({
     queryKey: ['/api/screenshots', projectId],
     queryFn: () => apiRequest<Screenshot[]>('GET', `/api/screenshots/${projectId}`),
   });
@@ -52,6 +53,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
         title: screenshotTitle || undefined,
         description: screenshotDescription || undefined,
         deviceType,
+        fullPage,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/screenshots', projectId] });
@@ -61,6 +63,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
       });
       setScreenshotTitle('');
       setScreenshotDescription('');
+      setFullPage(false);
     },
     onError: (error: Error) => {
       toast({
@@ -93,8 +96,8 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
   const items = screenshots ?? [];
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
+    <div className="h-full overflow-auto p-4">
+      <div className="mb-6">
         <h3 className="text-[15px] font-semibold mb-2">Capture Screenshot</h3>
         <label htmlFor="screenshot-title" className="sr-only">Screenshot title</label>
         <input
@@ -127,6 +130,15 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
           <option value="tablet">Tablet (1024×768)</option>
           <option value="mobile">Mobile (390×844)</option>
         </select>
+        <label className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={fullPage}
+            onChange={(e) => setFullPage(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Capture full page
+        </label>
         <Button
           onClick={() => captureScreenshotMutation.mutate(undefined)}
           disabled={captureScreenshotMutation.isPending}
@@ -141,6 +153,10 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
         <h3 className="text-[15px] font-semibold mb-2">Screenshots Gallery</h3>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading screenshots…</p>
+        ) : isError ? (
+          <div className="rounded-md border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            {((error as Error | undefined)?.message) || 'Could not load screenshots'}
+          </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
             <ImageOff className="h-8 w-8 mb-2 opacity-60" />
@@ -148,7 +164,7 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
             <p className="text-xs mt-1">Capture a snapshot of your preview to see it here.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((screenshot) => {
               const label = screenshot.title || screenshot.name || `Screenshot ${screenshot.id}`;
               const dateLabel = formatDate(screenshot.createdAt);
@@ -167,7 +183,15 @@ export function ScreenshotsPanel({ projectId }: ScreenshotsPanelProps) {
                     {dateLabel && (
                       <p className="text-[11px] text-muted-foreground mt-1">{dateLabel}</p>
                     )}
-                    <div className="flex gap-1 mt-2">
+                    <div className="mt-2 flex gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.open(screenshot.imageUrl, '_blank', 'noopener')}
+                        aria-label="Open screenshot"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
