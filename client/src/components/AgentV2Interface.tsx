@@ -47,7 +47,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
   // Check for active build - RATE LIMIT FIX: Reduced polling frequency
   const { data: activeBuildData } = useQuery({
     queryKey: ['/api/agent-v2/active-build', projectId],
-    queryFn: () => apiRequest('GET', `/api/agent-v2/active-build/${projectId}`).then(res => res.json()),
+    queryFn: () => apiRequest('GET', `/api/agent-v2/active-build/${projectId}`),
     refetchInterval: 30000, // 30s (was 5s) - prevents rate limit exceeded
     refetchIntervalInBackground: false,
   });
@@ -57,7 +57,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
   // Get build progress - RATE LIMIT FIX: Reduced polling frequency
   const { data: progressData } = useQuery({
     queryKey: ['/api/agent-v2/build-progress', activeBuildId],
-    queryFn: () => apiRequest('GET', `/api/agent-v2/build-progress/${activeBuildId}`).then(res => res.json()),
+    queryFn: () => apiRequest('GET', `/api/agent-v2/build-progress/${activeBuildId}`),
     enabled: !!activeBuildId,
     refetchInterval: realTimeUpdates ? 10000 : 30000, // 10s/30s (was 1s/5s) - prevents rate limit
     refetchIntervalInBackground: false,
@@ -67,7 +67,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
 
   // Start build mutation
   const startBuild = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/agent-v2/start-build', data).then(res => res.json()),
+    mutationFn: (data: any) => apiRequest('POST', '/api/agent-v2/start-build', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/agent-v2/active-build', projectId] });
       toast({
@@ -87,7 +87,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
 
   // Stop build mutation
   const stopBuild = useMutation({
-    mutationFn: (buildId: string) => apiRequest('POST', `/api/agent-v2/stop-build/${buildId}`).then(res => res.json()),
+    mutationFn: (buildId: string) => apiRequest('POST', `/api/agent-v2/stop-build/${buildId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/agent-v2/active-build', projectId] });
       toast({
@@ -107,7 +107,7 @@ export function AgentV2Interface({ projectId }: AgentV2InterfaceProps) {
   // Provide context mutation
   const provideContext = useMutation({
     mutationFn: (data: { buildId: string; context: string }) => 
-      apiRequest('POST', `/api/agent-v2/provide-context/${data.buildId}`, { context: data.context }).then(res => res.json()),
+      apiRequest('POST', `/api/agent-v2/provide-context/${data.buildId}`, { context: data.context }),
     onSuccess: () => {
       toast({
         title: 'Context Provided',

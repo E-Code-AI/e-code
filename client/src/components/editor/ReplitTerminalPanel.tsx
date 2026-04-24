@@ -140,7 +140,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
 
     try {
       if (forceNewSession || !sessionIdRef.current) {
-        const sessionRes = await fetch('/api/shell/sessions', {
+        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, {
           method: 'POST',
           credentials: 'include',
         });

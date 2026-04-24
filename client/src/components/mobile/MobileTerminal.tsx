@@ -106,7 +106,7 @@ export function MobileTerminal({
 
     (async () => {
       try {
-        const sessionRes = await fetch('/api/shell/sessions', { method: 'POST', credentials: 'include' });
+        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
         if (!sessionRes.ok) throw new Error('session');
         const { sessionId } = await sessionRes.json();
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';

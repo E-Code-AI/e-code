@@ -44,7 +44,7 @@ interface EffortUsageReport {
 export function EffortPricingDisplay({ projectId, onClose }: EffortPricingDisplayProps) {
   const { data: usageReport, isLoading } = useQuery({
     queryKey: ['/api/effort/usage', projectId],
-    queryFn: () => apiRequest('GET', `/api/effort/usage/${projectId}`).then(res => res.json()),
+    queryFn: () => apiRequest('GET', `/api/effort/usage/${projectId}`),
     refetchInterval: 30000
   });
 

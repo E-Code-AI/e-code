@@ -150,7 +150,7 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
 
   // Toggle auto-checkpoints mutation
   const toggleAutoCheckpoints = useMutation({
-    mutationFn: (enable: boolean) => apiRequest('POST', '/api/checkpoints/auto-checkpoint', { projectId, enable }).then(res => res.json()),
+    mutationFn: (enable: boolean) => apiRequest('POST', '/api/checkpoints/auto-checkpoint', { projectId, enable }),
     onSuccess: (_, enable) => {
       setAutoCheckpointsEnabled(enable);
       toast({

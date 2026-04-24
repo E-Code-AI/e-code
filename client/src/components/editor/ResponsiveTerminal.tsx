@@ -83,7 +83,7 @@ export function ResponsiveTerminal({
 
     const connect = async () => {
       try {
-        const sessionRes = await fetch('/api/shell/sessions', { method: 'POST', credentials: 'include' });
+        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
         if (!sessionRes.ok || cancelled) return;
         const { sessionId } = await sessionRes.json();
         if (cancelled) return;
