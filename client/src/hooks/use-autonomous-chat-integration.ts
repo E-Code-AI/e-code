@@ -572,6 +572,31 @@ export function useAutonomousChatIntegration({
     isStreaming: payload.phase === 'planning' || payload.phase === 'executing'
   }), []);
 
+  const upsertAutonomousMessage = useCallback((
+    targetType: Message['type'],
+    content: string,
+    payload: AutonomousWorkspacePayload
+  ) => {
+    if (!conversationId) return null;
+
+    const existingMessages = useAgentConversationStore.getState().getMessages(conversationId);
+    const existingMessage = [...existingMessages].reverse().find((msg) => msg.type === targetType && msg.role === 'assistant');
+
+    if (existingMessage) {
+      updateMessage(conversationId, existingMessage.id, {
+        content,
+        autonomousPayload: payload,
+        isStreaming: payload.phase === 'planning' || payload.phase === 'executing',
+        timestamp: new Date()
+      });
+      return existingMessage.id;
+    }
+
+    const nextMessage = createAutonomousMessage(targetType, content, payload);
+    addMessage(conversationId, nextMessage);
+    return nextMessage.id;
+  }, [addMessage, conversationId, createAutonomousMessage, updateMessage]);
+
   // Use ref to store handleProgressEvent to avoid dependency changes triggering re-connections
   const handleProgressEventRef = useRef<((event: AutonomousProgressEvent) => void) | null>(null);
   
@@ -697,7 +722,7 @@ export function useAutonomousChatIntegration({
           store.setProgress(35);
           
           // Create rich inline plan card message
-          const planMsg = createAutonomousMessage(
+          lastMessageIdRef.current = upsertAutonomousMessage(
             'autonomous_plan',
             "I've created a plan for your app:",
             {
@@ -708,8 +733,6 @@ export function useAutonomousChatIntegration({
               appType: plan.appType || 'web-app'
             }
           );
-          addMessage(conversationId, planMsg);
-          lastMessageIdRef.current = planMsg.id;
         }
         break;
       }
@@ -721,7 +744,7 @@ export function useAutonomousChatIntegration({
           featureList: data?.features || []
         });
         
-        const msg = createAutonomousMessage(
+        lastMessageIdRef.current = upsertAutonomousMessage(
           'autonomous_plan',
           "I've created a plan for your app:",
           {
@@ -732,8 +755,6 @@ export function useAutonomousChatIntegration({
             planText: data?.planText
           }
         );
-        addMessage(conversationId, msg);
-        lastMessageIdRef.current = msg.id;
         break;
       }
 
