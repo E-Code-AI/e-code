@@ -267,6 +267,13 @@ export interface ExternalInputHandlers {
   onRemoveAttachment?: (id: string) => void;
 }
 
+const DEFAULT_AGENT_WELCOME_MESSAGE: Message = {
+  id: '1',
+  role: 'assistant',
+  content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
+  timestamp: new Date()
+};
+
 interface ReplitAgentPanelV3Props {
   projectId: string | number;
   className?: string;
@@ -417,15 +424,25 @@ export function ReplitAgentPanelV3({
   
   // Zustand store for message persistence across tab switches
   const { 
-    getMessages, 
     setMessages: setStoreMessages, 
     addMessage: addStoreMessage,
     clearMessages: clearStoreMessages,
     setLastSyncedAt,
-    getLastSyncedAt,
     hasConversation,
     migrateMessages
   } = useAgentConversationStore();
+  const conversationMessages = useAgentConversationStore(
+    useCallback(
+      (state) => state.messages[effectiveConversationId],
+      [effectiveConversationId]
+    )
+  );
+  const conversationLastSyncedAt = useAgentConversationStore(
+    useCallback(
+      (state) => (conversationId ? state.lastSyncedAt[conversationId] : undefined),
+      [conversationId]
+    )
+  );
   
   // ✅ FIX (Dec 25, 2025): Track if we're in an active build session for WebSocket streaming
   // Keep WebSocket connected after conversation is created, not just during bootstrap
@@ -471,12 +488,9 @@ export function ReplitAgentPanelV3({
   // ✅ FIX (Jan 2026): Use effectiveConversationId directly for Replit-style always-ready chat
   // This is always defined (conversationId or -projectIdNum as temp ID)
   // Get messages from store - effectiveConversationId is never null so always has messages
-  const messages = getMessages(effectiveConversationId) || [{
-    id: '1',
-    role: 'assistant' as const,
-    content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
-    timestamp: new Date()
-  }];
+  const messages = conversationMessages && conversationMessages.length > 0
+    ? conversationMessages
+    : [DEFAULT_AGENT_WELCOME_MESSAGE];
   
   // DEBUG: Messages log — DISABLED. Same reason as the Component render log above.
   
@@ -752,7 +766,7 @@ export function ReplitAgentPanelV3({
       };
       
       // Only add if we don't already have messages
-      const existingMessages = getMessages(tempConvId);
+      const existingMessages = useAgentConversationStore.getState().getMessages(tempConvId);
       if (existingMessages.length === 0) {
         addStoreMessage(tempConvId, fallbackMessage);
       }
@@ -826,7 +840,7 @@ export function ReplitAgentPanelV3({
       }
 
       const fetchedMessages = backendMessages.messages as Message[];
-      const existingMessages = getMessages(conversationId);
+      const existingMessages = useAgentConversationStore.getState().getMessages(conversationId);
       const meaningfulLocalCount = existingMessages.filter(m => m.id !== '1').length;
 
       // Only overwrite when local store has fewer real messages than backend.
@@ -845,7 +859,7 @@ export function ReplitAgentPanelV3({
         setTotalMessageCount(backendMessages.totalCount);
       }
     }
-  }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt, getMessages]);
+  }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt]);
   
   // Handler for "Show Previous Messages" button (Replit-style incremental loading)
   const handleLoadPreviousMessages = useCallback(async () => {
@@ -2530,7 +2544,7 @@ export function ReplitAgentPanelV3({
       <div className="flex flex-1 flex-col overflow-hidden min-h-0">
         {/* Sync Indicator */}
         <ConversationSyncIndicator
-          lastSyncedAt={conversationId ? getLastSyncedAt(conversationId) : undefined}
+          lastSyncedAt={conversationLastSyncedAt}
         />
         
         {/* Connection Error/Reconnecting Banner with Retry Button */}
