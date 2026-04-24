@@ -151,6 +151,24 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   const hasActions = message.actions && message.actions.length > 0;
   const isAutonomousMessage = message.type?.startsWith('autonomous_');
   const autonomousPayload = message.autonomousPayload;
+  const rendersDedicatedAutonomousBody =
+    message.type === 'autonomous_working' ||
+    message.type === 'autonomous_search' ||
+    message.type === 'autonomous_plan' ||
+    message.type === 'autonomous_build_options' ||
+    message.type === 'autonomous_progress' ||
+    message.type === 'autonomous_complete' ||
+    message.type === 'autonomous_error' ||
+    message.type === 'autonomous_file_operation' ||
+    message.type === 'autonomous_terminal' ||
+    message.type === 'autonomous_code' ||
+    message.type === 'autonomous_dependencies' ||
+    message.type === 'autonomous_action' ||
+    message.type === 'autonomous_thinking' ||
+    message.type === 'autonomous_timeline' ||
+    message.type === 'autonomous_checkpoint' ||
+    message.type === 'autonomous_task_list' ||
+    message.type === 'autonomous_preview';
   
   // Extract tasks from message content when no structured tasks exist (Replit-like task extraction)
   const extractedTasks = useMemo(() => {
@@ -253,7 +271,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           whileHover={{ scale: 1.005 }}
           transition={{ duration: 0.2 }}
         >
-          {!isUser && message.content ? (
+          {!isUser && message.content && !(isAutonomousMessage && rendersDedicatedAutonomousBody) ? (
             <RichMessageContent content={message.content} />
           ) : (
             <p 
