@@ -646,6 +646,7 @@ export class PTYTerminalService {
 
     try {
       const workDir = await this.setupProjectDirectory(projectId);
+      await fs.promises.mkdir(workDir, { recursive: true });
       
       const shell = this.getShell();
 

@@ -177,6 +177,17 @@ async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<
   }
 }
 
+async function ensureSpawnCwd(preferredCwd: string, fallbackCwd: string): Promise<string> {
+  try {
+    await fs.mkdir(preferredCwd, { recursive: true });
+    return preferredCwd;
+  } catch (error) {
+    logger.warn(`Failed to ensure shell cwd ${preferredCwd}, falling back to ${fallbackCwd}: ${error}`);
+    await fs.mkdir(fallbackCwd, { recursive: true });
+    return fallbackCwd;
+  }
+}
+
 // WebSocket server for shell connections (noServer mode)
 let shellWss: WebSocketServer | null = null;
 
@@ -310,6 +321,8 @@ echo ""
         logger.warn(`[Shell] Could not sync project files, using userHome: ${syncErr}`);
       }
     }
+
+    shellCwd = await ensureSpawnCwd(shellCwd, userHome);
 
     const pty = await getPty();
     const shellBinary = resolveShellBinary();

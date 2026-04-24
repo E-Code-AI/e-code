@@ -452,7 +452,7 @@ export class SocketIOTerminalService {
       const { getProjectWorkspacePath, bulkSyncProjectFiles, ensureProjectDirectory } = await import('../utils/project-fs-sync');
 
       if (now - lastSync < PROJECT_SYNC_CACHE_TTL_MS) {
-        const projectDir = getProjectWorkspacePath(projectId);
+        const projectDir = await ensureProjectDirectory(projectId);
         logger.info(`[SocketIO Terminal] Skipping sync for project ${projectId} (cached ${Math.round((now - lastSync) / 1000)}s ago)`);
         return projectDir;
       }
