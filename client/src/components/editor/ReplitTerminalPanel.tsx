@@ -331,14 +331,6 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     });
   };
 
-  const handleNewSession = () => {
-    handleReset();
-    toast({
-      title: 'New shell session',
-      description: 'Opened a fresh terminal session',
-    });
-  };
-
   const handleCopy = () => {
     if (xtermRef.current) {
       const selection = xtermRef.current.getSelection();
