@@ -153,8 +153,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5000',
-    // Reuse existing server in development for faster iteration
-    reuseExistingServer: !process.env.CI,
+    // Reuse an already-running server (CI pre-starts it in a separate step)
+    // and start one otherwise for local iteration.
+    reuseExistingServer: true,
     // Fortune 500-Grade: Extended timeout for cold start + Vite bundling
     timeout: parseInt(process.env.SERVER_TIMEOUT || String(TIMEOUT_TIERS.SERVER_STARTUP)),
     // Stdout/stderr handling
