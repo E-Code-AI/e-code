@@ -1601,9 +1601,31 @@ Provide specific code changes to fix these issues.`;
 
   // Build execution order respecting dependencies
   private buildExecutionOrder(steps: WorkflowStep[]): WorkflowStep[][] {
+    const stepIds = new Set(steps.map(step => step.id));
+    const normalizedSteps = steps.map(step => {
+      const normalizedDeps = Array.from(new Set(
+        (step.dependencies || []).filter(dep => {
+          if (dep === step.id) {
+            logger.warn(`[WorkflowEngine] Ignoring self-dependency on step ${step.id}`);
+            return false;
+          }
+          if (!stepIds.has(dep)) {
+            logger.warn(`[WorkflowEngine] Ignoring unknown dependency "${dep}" on step ${step.id}`);
+            return false;
+          }
+          return true;
+        })
+      ));
+
+      return {
+        ...step,
+        dependencies: normalizedDeps
+      };
+    });
+
     const order: WorkflowStep[][] = [];
     const completed = new Set<string>();
-    const remaining = [...steps];
+    const remaining = [...normalizedSteps];
     
     while (remaining.length > 0) {
       const group: WorkflowStep[] = [];
@@ -1622,6 +1644,11 @@ Provide specific code changes to fix these issues.`;
       }
       
       if (group.length === 0 && remaining.length > 0) {
+        const unresolved = remaining.map(step => ({
+          id: step.id,
+          dependencies: step.dependencies || []
+        }));
+        logger.error('[WorkflowEngine] Unresolvable workflow dependencies', { unresolved });
         throw new Error('Circular dependency detected in workflow');
       }
       
