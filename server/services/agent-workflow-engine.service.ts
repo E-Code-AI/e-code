@@ -26,6 +26,7 @@ import { buildVerificationService, verifyBuild } from './build-verification.serv
 import { responsiveValidationService, validateResponsive } from './responsive-validation.service';
 import { viewportValidationService, validateViewports } from './viewport-validation.service';
 import { checkpointService } from './checkpoint.service';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('agent-workflow-engine');
 
@@ -509,13 +510,13 @@ export class AgentWorkflowEngineService extends EventEmitter {
       
       // Run post-workflow validation before marking complete
       // ✅ FIX (Dec 14, 2025): Use correct project path instead of defaulting to '.'
-      // Priority: 1) session.context.workingDirectory, 2) projects/${projectId}, 3) workflow variable
+      // Priority: 1) session.context.workingDirectory, 2) canonical project workspace, 3) workflow variable
       let projectPath = session.context?.workingDirectory;
       if (!projectPath || projectPath === '.') {
-        // Fall back to the standard project directory pattern
+        // Fall back to the canonical project workspace
         const projectId = session.projectId || state.variables?.projectId;
         if (projectId) {
-          projectPath = path.join(process.cwd(), 'projects', String(projectId));
+          projectPath = getProjectWorkspacePath(projectId);
         } else {
           projectPath = '.';
         }

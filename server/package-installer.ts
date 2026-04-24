@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
 import { storage } from './storage';
+import { ensureProjectDirectory } from './utils/project-fs-sync';
 
 interface PackageInstallOptions {
   projectId: number;
@@ -245,13 +246,7 @@ export class PackageInstaller {
   }
 
   private async getProjectDirectory(projectId: number): Promise<string> {
-    const baseDir = path.join(process.cwd(), 'projects');
-    const projectDir = path.join(baseDir, `project-${projectId}`);
-    
-    // Ensure directory exists
-    await fs.mkdir(projectDir, { recursive: true });
-    
-    return projectDir;
+    return ensureProjectDirectory(projectId);
   }
 
   private async runCommand(

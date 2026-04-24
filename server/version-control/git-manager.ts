@@ -2,6 +2,7 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { storage } from '../storage';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 export interface GitStatus {
   branch: string;
@@ -28,12 +29,6 @@ export interface GitDiff {
 }
 
 export class GitManager {
-  private projectsPath: string;
-
-  constructor() {
-    this.projectsPath = path.join(process.cwd(), 'projects');
-  }
-
   async isGitInitialized(projectId: number): Promise<boolean> {
     const projectPath = await this.getProjectPath(projectId);
     
@@ -362,8 +357,7 @@ temp/
   }
 
   private async getProjectPath(projectId: number): Promise<string> {
-    await fs.mkdir(this.projectsPath, { recursive: true });
-    return path.join(this.projectsPath, `project-${projectId}`);
+    return ensureProjectDirectory(projectId);
   }
 
   private execGit(args: string[], cwd: string): Promise<string> {

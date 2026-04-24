@@ -1,8 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 import { createLogger } from '../utils/logger';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 const logger = createLogger('simple-git-manager');
@@ -25,7 +24,7 @@ export interface GitCommit {
 
 export class SimpleGitManager {
   private async getProjectDir(projectId: string): Promise<string> {
-    return path.join(process.cwd(), 'projects', projectId);
+    return ensureProjectDirectory(projectId);
   }
   
   async initRepository(projectId: string): Promise<void> {

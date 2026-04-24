@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as path from 'path';
 import { createLogger } from '../utils/logger';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);
 const logger = createLogger('simple-workflow-runner');
@@ -115,7 +115,7 @@ export class SimpleWorkflowRunner {
   }
   
   private async executeWorkflow(run: WorkflowRun, workflow: WorkflowConfig, projectId: string) {
-    const projectDir = path.join(process.cwd(), 'projects', projectId);
+    const projectDir = await ensureProjectDirectory(projectId);
     
     try {
       for (const step of workflow.steps) {
