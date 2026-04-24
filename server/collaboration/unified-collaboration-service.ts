@@ -196,6 +196,50 @@ export class UnifiedCollaborationService {
     }
     return this.userColorMap.get(odUserId)!;
   }
+
+  private getDedupedCollaborators(room: CollaborationRoom): CollaboratorInfo[] {
+    const deduped = new Map<string, CollaboratorInfo>();
+
+    for (const collaborator of room.collaborators.values()) {
+      const userKey = collaborator.odUserId.toString();
+      const existing = deduped.get(userKey);
+
+      if (!existing) {
+        deduped.set(userKey, collaborator);
+        continue;
+      }
+
+      const existingLastSeen = existing.lastSeen instanceof Date ? existing.lastSeen.getTime() : new Date(existing.lastSeen).getTime();
+      const collaboratorLastSeen = collaborator.lastSeen instanceof Date ? collaborator.lastSeen.getTime() : new Date(collaborator.lastSeen).getTime();
+
+      if (collaboratorLastSeen >= existingLastSeen) {
+        deduped.set(userKey, {
+          ...existing,
+          ...collaborator,
+          id: existing.id,
+          odUserId: existing.odUserId,
+          username: collaborator.username || existing.username,
+          avatar: collaborator.avatar || existing.avatar,
+          color: existing.color || collaborator.color,
+        });
+      }
+    }
+
+    return Array.from(deduped.values());
+  }
+
+  private hasOtherConnectionsForUser(room: CollaborationRoom, socketId: string, odUserId: string | number): boolean {
+    const userKey = odUserId.toString();
+
+    for (const [otherSocketId, collaborator] of room.collaborators.entries()) {
+      if (otherSocketId === socketId) continue;
+      if (collaborator.odUserId.toString() === userKey) {
+        return true;
+      }
+    }
+
+    return false;
+  }
   
   private setupSocketIO() {
     this.io.on('connection', async (socket: Socket) => {
@@ -235,14 +279,18 @@ export class UnifiedCollaborationService {
       };
       
       room.collaborators.set(socket.id, collaborator);
+
+      const isFirstConnectionForUser = !this.hasOtherConnectionsForUser(room, socket.id, odUserId);
       
       this.io.to(roomId).emit('collaborator:joined', {
         collaborator,
-        collaborators: Array.from(room.collaborators.values()),
+        collaborators: this.getDedupedCollaborators(room),
         chatHistory: room.chatMessages.slice(-50)
       });
       
-      this.addSystemMessage(room, `${displayName} joined the session`);
+      if (isFirstConnectionForUser) {
+        this.addSystemMessage(room, `${displayName} joined the session`);
+      }
       
       socket.on('cursor:update', (data: { lineNumber: number; column: number; file?: string }) => {
         const collab = room.collaborators.get(socket.id);
@@ -369,14 +417,19 @@ export class UnifiedCollaborationService {
           const room = this.rooms.get(roomId);
           if (room) {
             const collab = room.collaborators.get(socket.id);
-            if (collab) {
+            const wasLastConnectionForUser = collab
+              ? !this.hasOtherConnectionsForUser(room, socket.id, collab.odUserId)
+              : false;
+
+            room.collaborators.delete(socket.id);
+
+            if (collab && wasLastConnectionForUser) {
               this.addSystemMessage(room, `${collab.username} left the session`);
             }
-            room.collaborators.delete(socket.id);
             
             this.io.to(roomId).emit('collaborator:left', {
               socketId: socket.id,
-              collaborators: Array.from(room.collaborators.values())
+              collaborators: this.getDedupedCollaborators(room)
             });
             
             if (room.collaborators.size === 0) {
@@ -678,7 +731,7 @@ export class UnifiedCollaborationService {
     return {
       id: room.id,
       projectId: room.projectId,
-      collaborators: Array.from(room.collaborators.values()),
+      collaborators: this.getDedupedCollaborators(room),
       chatMessages: room.chatMessages.slice(-20),
       lastActivity: room.lastActivity,
       createdAt: room.createdAt

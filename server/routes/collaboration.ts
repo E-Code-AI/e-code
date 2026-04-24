@@ -442,21 +442,46 @@ router.get('/:projectId/users', requireAuth, async (req: Request, res: Response)
         )
       );
     
-    // Transform to frontend expected format
-    const collaborators = participants.map(p => ({
-      id: p.id,
-      username: p.username,
-      displayName: p.username,
-      avatarUrl: undefined,
-      role: 'editor',
-      status: 'online',
-      lastSeen: p.joinedAt,
+    const collaboratorsByUser = new Map<string, {
+      id: string;
+      username: string;
+      displayName: string;
+      avatarUrl: undefined;
+      role: 'editor';
+      status: 'online';
+      lastSeen: Date | null;
       cursor: {
-        x: 0,
-        y: 0,
-        color: p.cursorColor
+        x: number;
+        y: number;
+        color: string | null;
+      };
+    }>();
+
+    for (const participant of participants) {
+      const userKey = participant.odUserId.toString();
+      const existing = collaboratorsByUser.get(userKey);
+      const participantJoinedAt = participant.joinedAt ? new Date(participant.joinedAt).getTime() : 0;
+      const existingJoinedAt = existing?.lastSeen ? new Date(existing.lastSeen).getTime() : 0;
+
+      if (!existing || participantJoinedAt >= existingJoinedAt) {
+        collaboratorsByUser.set(userKey, {
+          id: userKey,
+          username: participant.username,
+          displayName: participant.username,
+          avatarUrl: undefined,
+          role: 'editor',
+          status: 'online',
+          lastSeen: participant.joinedAt,
+          cursor: {
+            x: 0,
+            y: 0,
+            color: participant.cursorColor
+          }
+        });
       }
-    }));
+    }
+    
+    const collaborators = Array.from(collaboratorsByUser.values());
     
     res.json({ collaborators });
   } catch (error) {

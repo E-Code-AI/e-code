@@ -134,6 +134,36 @@ export function ReplitMultiplayers({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
   const reconnectToastAtRef = useRef(0);
+  const liveCollaboratorsRef = useRef<Collaborator[]>([]);
+  const activityDedupeRef = useRef<Map<string, number>>(new Map());
+
+  const dedupeCollaborators = useCallback((collaborators: Collaborator[]) => {
+    const deduped = new Map<string, Collaborator>();
+
+    for (const collaborator of collaborators) {
+      const userKey = collaborator.id?.toString();
+      if (!userKey) continue;
+
+      const existing = deduped.get(userKey);
+      if (!existing) {
+        deduped.set(userKey, collaborator);
+        continue;
+      }
+
+      const existingScore =
+        (existing.status === 'online' ? 4 : existing.status === 'away' ? 2 : 1) +
+        (existing.currentFile ? 2 : 0) +
+        (existing.cursor ? 1 : 0);
+      const nextScore =
+        (collaborator.status === 'online' ? 4 : collaborator.status === 'away' ? 2 : 1) +
+        (collaborator.currentFile ? 2 : 0) +
+        (collaborator.cursor ? 1 : 0);
+
+      deduped.set(userKey, nextScore >= existingScore ? { ...existing, ...collaborator, id: existing.id } : existing);
+    }
+
+    return Array.from(deduped.values());
+  }, []);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -151,7 +181,21 @@ export function ReplitMultiplayers({
     }
   }, [clearReconnectTimer]);
 
-  const addActivityEvent = useCallback((event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
+  useEffect(() => {
+    liveCollaboratorsRef.current = liveCollaborators;
+  }, [liveCollaborators]);
+
+  const addActivityEvent = useCallback((event: Omit<ActivityEvent, 'id' | 'timestamp'> & { dedupeKey?: string }) => {
+    const dedupeKey = event.dedupeKey || `${event.type}:${event.userId}:${event.message}`;
+    const now = Date.now();
+    const lastSeen = activityDedupeRef.current.get(dedupeKey);
+
+    if (lastSeen && now - lastSeen < 5000) {
+      return;
+    }
+
+    activityDedupeRef.current.set(dedupeKey, now);
+
     const newEvent: ActivityEvent = {
       ...event,
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -181,7 +225,7 @@ export function ReplitMultiplayers({
     switch (message.type) {
       case 'active_users':
       case 'collaborators_update':
-        setLiveCollaborators(message.data.map((c: any) => ({
+        setLiveCollaborators(dedupeCollaborators(message.data.map((c: any) => ({
           id: c.userId?.toString() || c.id,
           username: c.username,
           displayName: c.displayName || c.username,
@@ -195,7 +239,7 @@ export function ReplitMultiplayers({
             color: c.color || CURSOR_COLORS[parseInt(c.userId || '0', 10) % CURSOR_COLORS.length]
           } : undefined,
           lastSeen: c.lastSeen
-        })));
+        }))));
         break;
 
       case 'collaborator_joined':
@@ -215,24 +259,27 @@ export function ReplitMultiplayers({
           return [...prev, joinedUser];
         });
 
-        addActivityEvent({
-          type: 'join',
-          userId: joinedUser.id,
-          username: joinedUser.username,
-          color: joinedUser.cursor?.color,
-          message: `${joinedUser.username} joined the session`
-        });
+        if (joinedUser.id !== String(user?.id)) {
+          addActivityEvent({
+            type: 'join',
+            userId: joinedUser.id,
+            username: joinedUser.username,
+            color: joinedUser.cursor?.color,
+            message: `${joinedUser.username} joined the session`,
+            dedupeKey: `join:${joinedUser.id}`
+          });
 
-        toast({
-          title: 'User joined',
-          description: `${joinedUser.username} joined the session`,
-        });
+          toast({
+            title: 'User joined',
+            description: `${joinedUser.username} joined the session`,
+          });
+        }
         break;
 
       case 'collaborator_left':
       case 'participant_leave':
         const leftUserId = message.data?.userId?.toString() || message.userId?.toString();
-        const leftUser = liveCollaborators.find(c => c.id === leftUserId);
+        const leftUser = liveCollaboratorsRef.current.find(c => c.id === leftUserId);
         
         setLiveCollaborators(prev => prev.filter(c => c.id !== leftUserId));
 
@@ -242,7 +289,8 @@ export function ReplitMultiplayers({
             userId: leftUserId,
             username: leftUser.username,
             color: leftUser.cursor?.color,
-            message: `${leftUser.username} left the session`
+            message: `${leftUser.username} left the session`,
+            dedupeKey: `leave:${leftUserId}`
           });
         }
 
@@ -304,7 +352,7 @@ export function ReplitMultiplayers({
         ));
         break;
     }
-  }, [liveCollaborators, followingUserId, toast]);
+  }, [addActivityEvent, dedupeCollaborators, followingUserId, toast, user?.id]);
 
   const connectWebSocket = useCallback(() => {
     if (!projectId || !user || socketRef.current?.connected) return;
@@ -341,7 +389,8 @@ export function ReplitMultiplayers({
           type: 'join',
           userId: String(user.id),
           username: user.username || 'You',
-          message: 'You joined the session'
+          message: 'You joined the session',
+          dedupeKey: `self-join:${user.id}`
         });
       });
 
@@ -361,6 +410,22 @@ export function ReplitMultiplayers({
             lastSeen: c.lastSeen,
           })),
         });
+
+        const joinedCollaboratorId = message.collaborator?.odUserId?.toString?.() || message.collaborator?.id?.toString?.();
+        if (joinedCollaboratorId && joinedCollaboratorId !== String(user.id)) {
+          handleWebSocketMessage({
+            type: 'participant_joined',
+            data: {
+              id: joinedCollaboratorId,
+              userId: joinedCollaboratorId,
+              username: message.collaborator?.username || 'Someone',
+              displayName: message.collaborator?.username || 'Someone',
+              avatarUrl: message.collaborator?.avatar,
+              role: 'editor',
+              color: message.collaborator?.color,
+            },
+          });
+        }
       });
 
       socket.on('collaborator:left', (message: any) => {
@@ -632,7 +697,7 @@ export function ReplitMultiplayers({
   } : null;
 
   const apiCollaborators = data?.collaborators || [];
-  const displayCollaborators: Collaborator[] = 
+  const displayCollaborators: Collaborator[] = dedupeCollaborators(
     liveCollaborators.length > 0 
       ? liveCollaborators 
       : propCollaborators.length > 0 
@@ -641,7 +706,8 @@ export function ReplitMultiplayers({
           ? apiCollaborators
           : currentUserCollaborator
             ? [currentUserCollaborator]
-            : [];
+            : []
+  );
 
   const onlineCount = displayCollaborators.filter(c => c.status === 'online').length;
 
