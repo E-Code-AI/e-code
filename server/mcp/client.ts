@@ -13,12 +13,12 @@ import {
 import { EventEmitter } from "events";
 import * as crypto from "crypto";
 
-// MCP Server URL configuration with production validation
+// MCP Server URL configuration
 const DEFAULT_MCP_SERVER_URL = "http://localhost:3200/mcp";
+const isMCPEnabled = process.env.ENABLE_MCP_SERVER === 'true';
 
-// ✅ B-C3 FIX: Require MCP_SERVER_URL in production
-if (process.env.NODE_ENV === 'production' && !process.env.MCP_SERVER_URL) {
-  throw new Error('[MCP] CRITICAL: MCP_SERVER_URL environment variable is required in production');
+if (process.env.NODE_ENV === 'production' && isMCPEnabled && !process.env.MCP_SERVER_URL) {
+  console.warn('[MCP] ENABLE_MCP_SERVER=true but MCP_SERVER_URL is not set. Falling back to default MCP URL.');
 }
 
 const MCP_SERVER_URL = process.env.MCP_SERVER_URL || DEFAULT_MCP_SERVER_URL;
