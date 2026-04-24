@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "NODE_ENV=production tsx server/index.ts"
+    "start": "NODE_ENV=production node dist/index.js"
   }
 }

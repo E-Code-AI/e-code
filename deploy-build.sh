@@ -7,8 +7,8 @@ echo "======================================"
 
 # Étape 1 : Installation des dépendances
 echo ""
-echo "📦 Installation des dépendances de production..."
-npm ci --omit=dev --verbose 2>&1 | tee -a build.log
+echo "📦 Installation des dépendances de build..."
+npm ci --include=dev --verbose 2>&1 | tee -a build.log
 echo "✅ Dépendances installées"
 
 # Étape 2 : Build de l'application

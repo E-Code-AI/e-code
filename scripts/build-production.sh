@@ -11,10 +11,9 @@ rm -rf dist server/public node_modules/.vite .vite
 echo "📦 Building optimized frontend assets..."
 NODE_ENV=production npx vite build
 
-# Step 3: Skip backend build - we'll use tsx in production
-echo "⚙️ Backend will use tsx in production (no build needed)..."
-# Note: For Replit deployment, we use tsx to run TypeScript directly
-# The .replit file specifies: run = ["sh", "-c", "NODE_ENV=production tsx server/index.ts"]
+# Step 3: Build backend bundle for production runtime
+echo "⚙️ Building backend bundle for production runtime..."
+node scripts/build-server.mjs
 
 # Step 4: Copy static assets to server/public
 echo "📂 Copying static assets to server/public..."

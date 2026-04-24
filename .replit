@@ -8,8 +8,8 @@ packages = ["glibcLocales", "jq", "libxcrypt", "imagemagick", "python3", "gcc", 
 
 [deployment]
 deploymentTarget = "vm"
-run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 ./node_modules/.bin/tsx runner/index.ts & RUNNER_BASE_URL=http://localhost:8081 NODE_OPTIONS='--max-old-space-size=4096' ./node_modules/.bin/tsx server/index.ts"]
-build = ["sh", "-c", "echo 'No build needed - dist/ is pre-built and committed'"]
+run = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; RUNNER_PORT=8081 node dist/runner.js & RUNNER_BASE_URL=http://localhost:8081 NODE_OPTIONS='--max-old-space-size=4096' node dist/index.js"]
+build = ["sh", "-c", ". /etc/profile 2>/dev/null; . ~/.nix-profile/etc/profile.d/nix.sh 2>/dev/null; npm run build"]
 
 [workflows]
 runButton = "Project"
@@ -120,11 +120,3 @@ externalPort = 80
 [[ports]]
 localPort = 24678
 externalPort = 3000
-
-[[ports]]
-localPort = 28788
-externalPort = 3001
-
-[[ports]]
-localPort = 28790
-externalPort = 3002
