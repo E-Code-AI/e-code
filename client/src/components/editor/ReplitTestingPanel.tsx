@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { LazyMotionDiv } from '@/lib/motion';
 import { 
   PlayCircle, 
@@ -25,6 +25,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface TestRun {
   id: string;
@@ -99,69 +101,76 @@ function LoadingSkeleton() {
 }
 
 export function ReplitTestingPanel({ projectId = 'default-project', className }: ReplitTestingPanelProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'passed' | 'failed' | 'pending'>('all');
   const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [latestOutput, setLatestOutput] = useState('');
 
-  const { data: testRuns = [], isLoading, refetch } = useQuery<TestRun[]>({
-    queryKey: [`/api/background-tests/status/${projectId}`],
+  const { data: detectedTests, isLoading: detectionLoading, refetch: refetchDetection } = useQuery<{ files: string[]; framework: string }>({
+    queryKey: ['/api/workspace/projects', projectId, 'tests/detect'],
     queryFn: async () => {
-      const res = await fetch(`/api/background-tests/status/${projectId}`, { credentials: 'include' });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return Array.isArray(data) ? data : (data ? [data] : []);
+      const res = await fetch(`/api/workspace/projects/${projectId}/tests/detect`, { credentials: 'include' });
+      if (!res.ok) return { files: [], framework: 'none' };
+      return res.json();
     },
     enabled: !!projectId,
-    refetchInterval: 30000,
-    refetchIntervalInBackground: false,
   });
 
-  useEffect(() => {
-    if (!projectId) return;
+  const { data: testRuns = [], isLoading: runsLoading, refetch } = useQuery<TestRun[]>({
+    queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspace/projects/${projectId}/test-runs`, { credentials: 'include' });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!projectId,
+    refetchInterval: (query) => query.state.data?.[0]?.status === 'running' ? 1500 : false,
+  });
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/background-tests?projectId=${projectId}`;
-    
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+  const latestRunId = testRuns[0]?.id;
+  const { data: latestRunDetails, isLoading: latestRunLoading } = useQuery<{ cases: TestCase[] } & TestRun>({
+    queryKey: ['/api/workspace/test-runs', latestRunId],
+    queryFn: async () => {
+      const res = await fetch(`/api/workspace/test-runs/${latestRunId}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch test run details');
+      return res.json();
+    },
+    enabled: !!latestRunId,
+    refetchInterval: latestRunId && testRuns[0]?.status === 'running' ? 1500 : false,
+  });
 
-    ws.onopen = () => {};
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        
-        if (message.type === 'initial') {
-        } else if (message.type === 'update' || message.type === 'complete') {
-          refetch();
-        } else if (message.type === 'test_case') {
-          setTestCases(prev => {
-            const filtered = prev.filter(tc => tc.id !== message.testCase.id);
-            return [...filtered, message.testCase];
-          });
-        }
-      } catch (error) {
-        console.error('[TestRuns] Error parsing WebSocket message:', error);
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('[TestRuns] WebSocket error:', error);
-    };
-
-    ws.onclose = () => {};
-
-    return () => {
-      ws.close();
-    };
-  }, [projectId, refetch]);
+  const runTestsMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest('POST', `/api/workspace/projects/${projectId}/tests/run`, {});
+    },
+    onSuccess: async (data: any) => {
+      setLatestOutput(data.output || '');
+      await Promise.all([
+        refetch(),
+        refetchDetection(),
+        queryClient.invalidateQueries({ queryKey: ['/api/workspace/test-runs'] }),
+      ]);
+      toast({
+        title: data.run?.status === 'failed' ? 'Tests finished with failures' : 'Tests completed',
+        description: `${data.run?.passedTests || 0}/${data.run?.totalTests || 0} passed`,
+        variant: data.run?.status === 'failed' ? 'destructive' : 'default',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to run tests',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const testSuites: TestSuite[] = [];
   const suiteMap = new Map<string, TestSuite>();
 
-  testCases.forEach(testCase => {
+  (latestRunDetails?.cases || []).forEach(testCase => {
     if (!suiteMap.has(testCase.suiteName)) {
       suiteMap.set(testCase.suiteName, {
         id: testCase.suiteName,
@@ -211,11 +220,12 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
     }
   };
 
-  const latestRun = testRuns[0];
+  const latestRun = latestRunDetails || testRuns[0];
   const totalTests = latestRun?.totalTests || 0;
   const passedTests = latestRun?.passedTests || 0;
   const failedTests = latestRun?.failedTests || 0;
   const skippedTests = latestRun?.skippedTests || 0;
+  const isLoading = detectionLoading || runsLoading || latestRunLoading;
 
   return (
     <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
@@ -228,11 +238,12 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => refetch()}
-            className="h-7 px-2 rounded bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] text-white text-[10px]"
+            onClick={() => runTestsMutation.mutate()}
+            disabled={runTestsMutation.isPending || !detectedTests?.files?.length}
+            className="h-7 px-2 rounded bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] disabled:opacity-50 text-white text-[10px]"
             data-testid="button-run-tests"
           >
-            <PlayCircle className="w-3.5 h-3.5 mr-1" />
+            {runTestsMutation.isPending ? <RefreshCw className="w-3.5 h-3.5 mr-1 animate-spin" /> : <PlayCircle className="w-3.5 h-3.5 mr-1" />}
             Run
           </Button>
           <DropdownMenu>
@@ -242,9 +253,9 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[var(--ecode-surface)] border-[var(--ecode-border)]">
-              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Configure Test Runner</DropdownMenuItem>
-              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Watch Mode</DropdownMenuItem>
-              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Coverage Report</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => refetchDetection()} className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Refresh detected tests</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => refetch()} className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Refresh recent runs</DropdownMenuItem>
+              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Framework: {detectedTests?.framework || 'none'}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -281,6 +292,18 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
           </div>
         )}
 
+        {detectedTests && (
+          <div className="flex items-center gap-1 flex-wrap">
+            <span className="text-[10px] uppercase tracking-wider text-[var(--ecode-text-muted)]">Detected:</span>
+            <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-[var(--ecode-border)] text-[var(--ecode-text)]">
+              {detectedTests.framework}
+            </Badge>
+            <Badge variant="outline" className="h-5 text-[10px] px-1.5 border-[var(--ecode-border)] text-[var(--ecode-text-muted)]">
+              {detectedTests.files.length} file{detectedTests.files.length === 1 ? '' : 's'}
+            </Badge>
+          </div>
+        )}
+
         <div className="flex items-center gap-1">
           <Input
             placeholder="Search tests..."
@@ -314,10 +337,14 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <FlaskConical className="w-12 h-12 text-muted-foreground opacity-40 mb-4" style={{ width: 48, height: 48 }} />
               <p className="text-[17px] font-medium leading-tight text-foreground mb-2">
-                {searchQuery ? 'No tests match your search' : 'No tests found'}
+                {searchQuery ? 'No tests match your search' : detectedTests?.files?.length ? 'No test results yet' : 'No tests found'}
               </p>
               <p className="text-[13px] text-muted-foreground max-w-[240px]">
-                {testRuns.length === 0 ? 'Run tests to see results here' : 'Create test files to get started'}
+                {!detectedTests?.files?.length
+                  ? 'Create test files in the project workspace to get started'
+                  : testRuns.length === 0
+                  ? 'Run tests to see real results here'
+                  : 'Adjust your search or run tests again'}
               </p>
             </div>
           ) : (
@@ -420,6 +447,17 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {latestOutput && (
+        <div className="border-t border-border p-3">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">
+            Latest Output
+          </p>
+          <pre className="max-h-40 overflow-auto rounded-lg bg-muted p-3 text-[11px] text-muted-foreground whitespace-pre-wrap break-words">
+            {latestOutput}
+          </pre>
         </div>
       )}
     </div>

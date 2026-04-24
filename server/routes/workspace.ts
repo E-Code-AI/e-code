@@ -4,9 +4,168 @@ import type { IStorage } from '../storage';
 import { z } from 'zod';
 import { insertLspDiagnosticSchema, insertSecurityScanSchema, insertVulnerabilitySchema, insertResourceMetricSchema } from '@shared/schema';
 import { ensureAuthenticated } from '../middleware/auth';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { spawn } from 'child_process';
 
 export function createWorkspaceRoutes(storage: IStorage) {
   const router = express.Router();
+
+  const TEST_FILE_PATTERNS = [
+    /\.test\.[jt]sx?$/i,
+    /\.spec\.[jt]sx?$/i,
+    /__tests__\/.*\.[jt]sx?$/i,
+    /test_.*\.py$/i,
+    /_test\.go$/i,
+    /spec\/.*\.(rb|js|ts)$/i,
+  ];
+
+  async function getProjectWorkspace(projectId: string): Promise<string> {
+    const { ensureProjectDirectory } = await import('../utils/project-fs-sync');
+    return ensureProjectDirectory(projectId);
+  }
+
+  async function collectTestFiles(projectDir: string, currentDir = projectDir): Promise<string[]> {
+    const entries = await fs.readdir(currentDir, { withFileTypes: true });
+    const files: string[] = [];
+
+    for (const entry of entries) {
+      if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist' || entry.name === 'build' || entry.name === '.next') {
+        continue;
+      }
+
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...await collectTestFiles(projectDir, fullPath));
+        continue;
+      }
+
+      const relativePath = path.relative(projectDir, fullPath);
+      if (TEST_FILE_PATTERNS.some((pattern) => pattern.test(relativePath))) {
+        files.push(relativePath);
+      }
+    }
+
+    return files.sort();
+  }
+
+  async function detectTestSetup(projectDir: string): Promise<{ framework: string; files: string[]; command: string[] | null }> {
+    const files = await collectTestFiles(projectDir);
+
+    let packageJson: any = null;
+    try {
+      packageJson = JSON.parse(await fs.readFile(path.join(projectDir, 'package.json'), 'utf8'));
+    } catch {}
+
+    const deps = {
+      ...(packageJson?.dependencies || {}),
+      ...(packageJson?.devDependencies || {}),
+    };
+
+    if (deps.vitest) return { framework: 'vitest', files, command: ['npx', 'vitest', 'run', '--reporter=json'] };
+    if (deps.jest) return { framework: 'jest', files, command: ['npx', 'jest', '--runInBand', '--json'] };
+    if (deps['@playwright/test'] || deps.playwright) return { framework: 'playwright', files, command: ['npx', 'playwright', 'test', '--reporter=json'] };
+    if (packageJson?.scripts?.test) return { framework: 'npm', files, command: ['npm', 'test'] };
+
+    try {
+      await fs.access(path.join(projectDir, 'pytest.ini'));
+      return { framework: 'pytest', files, command: ['pytest', '-q'] };
+    } catch {}
+
+    if (files.some((file) => file.endsWith('.py'))) return { framework: 'pytest', files, command: ['pytest', '-q'] };
+    return { framework: files.length > 0 ? 'detected' : 'none', files, command: null };
+  }
+
+  function extractJsonObject(stdout: string): any | null {
+    const start = stdout.indexOf('{');
+    const end = stdout.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return null;
+
+    try {
+      return JSON.parse(stdout.slice(start, end + 1));
+    } catch {
+      return null;
+    }
+  }
+
+  function buildFallbackSuites(files: string[], exitCode: number | null, output: string) {
+    const status = exitCode === 0 ? 'passed' : 'failed';
+    return files.map((file) => ({
+      name: file,
+      file,
+      tests: [{
+        name: path.basename(file),
+        status,
+        duration: 0,
+        error: status === 'failed' ? output.trim().slice(0, 4000) : undefined,
+      }],
+      passed: status === 'passed' ? 1 : 0,
+      failed: status === 'failed' ? 1 : 0,
+      skipped: 0,
+      duration: 0,
+    }));
+  }
+
+  function parseCommandResults(framework: string, stdout: string, stderr: string, files: string[], exitCode: number | null) {
+    const json = extractJsonObject(stdout);
+
+    if (framework === 'vitest' && json?.testResults) {
+      return json.testResults.map((suite: any) => ({
+        name: suite.name || suite.assertionResults?.[0]?.ancestorTitles?.join(' / ') || suite.file || 'Suite',
+        file: suite.name || suite.file || 'unknown',
+        tests: (suite.assertionResults || []).map((test: any) => ({
+          name: test.fullName || test.title || 'Test',
+          status: test.status === 'passed' ? 'passed' : test.status === 'failed' ? 'failed' : 'skipped',
+          duration: typeof test.duration === 'number' ? test.duration : 0,
+          error: Array.isArray(test.failureMessages) ? test.failureMessages.join('\n') : undefined,
+        })),
+        passed: suite.assertionResults?.filter((test: any) => test.status === 'passed').length || 0,
+        failed: suite.assertionResults?.filter((test: any) => test.status === 'failed').length || 0,
+        skipped: suite.assertionResults?.filter((test: any) => test.status === 'skipped' || test.status === 'pending').length || 0,
+        duration: suite.startTime && suite.endTime ? Math.max(0, suite.endTime - suite.startTime) : 0,
+      }));
+    }
+
+    if (framework === 'jest' && json?.testResults) {
+      return json.testResults.map((suite: any) => ({
+        name: suite.name || suite.testFilePath || 'Suite',
+        file: suite.name || suite.testFilePath || 'unknown',
+        tests: (suite.assertionResults || []).map((test: any) => ({
+          name: test.fullName || test.title || 'Test',
+          status: test.status === 'passed' ? 'passed' : test.status === 'failed' ? 'failed' : 'skipped',
+          duration: typeof test.duration === 'number' ? test.duration : 0,
+          error: Array.isArray(test.failureMessages) ? test.failureMessages.join('\n') : undefined,
+        })),
+        passed: suite.numPassingTests || 0,
+        failed: suite.numFailingTests || 0,
+        skipped: suite.numPendingTests || 0,
+        duration: suite.perfStats?.end && suite.perfStats?.start ? Math.max(0, suite.perfStats.end - suite.perfStats.start) : 0,
+      }));
+    }
+
+    return buildFallbackSuites(files, exitCode, stderr || stdout);
+  }
+
+  async function executeTestCommand(command: string[], cwd: string): Promise<{ stdout: string; stderr: string; exitCode: number | null; duration: number }> {
+    const [bin, ...args] = command;
+    const startedAt = Date.now();
+
+    return new Promise((resolve) => {
+      const child = spawn(bin, args, { cwd, shell: false, env: { ...process.env, CI: 'true' } });
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (chunk) => { stdout += chunk.toString(); });
+      child.stderr.on('data', (chunk) => { stderr += chunk.toString(); });
+      child.on('close', (exitCode) => {
+        resolve({ stdout, stderr, exitCode, duration: Date.now() - startedAt });
+      });
+      child.on('error', (error) => {
+        stderr += error.message;
+        resolve({ stdout, stderr, exitCode: 1, duration: Date.now() - startedAt });
+      });
+    });
+  }
 
   router.use('/projects/:projectId', ensureAuthenticated, async (req: Request, res: Response, next) => {
     try {
@@ -233,6 +392,115 @@ export function createWorkspaceRoutes(storage: IStorage) {
   // ============================================================================
   // TEST RUNS ROUTES - For Testing Panel
   // ============================================================================
+
+  router.get('/projects/:projectId/tests/detect', async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.params;
+      const projectDir = await getProjectWorkspace(projectId);
+      const detected = await detectTestSetup(projectDir);
+      res.json({
+        files: detected.files,
+        framework: detected.framework,
+      });
+    } catch (error) {
+      console.error('[API] Error detecting tests:', error);
+      res.status(500).json({ error: 'Failed to detect tests' });
+    }
+  });
+
+  router.post('/projects/:projectId/tests/run', async (req: Request, res: Response) => {
+    try {
+      const { projectId } = req.params;
+      const requestedFile = typeof req.body?.file === 'string' ? req.body.file : undefined;
+      const projectDir = await getProjectWorkspace(projectId);
+      const detected = await detectTestSetup(projectDir);
+
+      if (!detected.files.length) {
+        return res.status(400).json({ error: 'No test files detected' });
+      }
+
+      if (!detected.command) {
+        return res.status(400).json({ error: 'No supported test runner detected' });
+      }
+
+      const filesToRun = requestedFile ? detected.files.filter((file) => file === requestedFile) : detected.files;
+      if (!filesToRun.length) {
+        return res.status(400).json({ error: 'Requested test file not found in project workspace' });
+      }
+
+      const runId = `run-${Date.now()}`;
+      const testRunsService = (global as any).testRunsService;
+      const runApi = testRunsService || storage;
+      const createdRun = await runApi.createTestRun({
+        projectId: parseInt(projectId, 10),
+        runId,
+        runner: detected.framework,
+        status: 'running',
+        totalTests: filesToRun.length,
+        passedTests: 0,
+        failedTests: 0,
+        skippedTests: 0,
+        config: { file: requestedFile || null, files: filesToRun },
+      });
+
+      const command = [...detected.command];
+      if (requestedFile && detected.framework !== 'npm') {
+        command.push(requestedFile);
+      }
+
+      const { stdout, stderr, exitCode, duration } = await executeTestCommand(command, projectDir);
+      const suites = parseCommandResults(detected.framework, stdout, stderr, filesToRun, exitCode);
+
+      let passedTests = 0;
+      let failedTests = 0;
+      let skippedTests = 0;
+      let totalTests = 0;
+
+      for (const suite of suites) {
+        for (const test of suite.tests) {
+          totalTests += 1;
+          if (test.status === 'passed') passedTests += 1;
+          else if (test.status === 'failed') failedTests += 1;
+          else skippedTests += 1;
+
+          await runApi.createTestCase({
+            testRunId: createdRun.id,
+            suiteName: suite.name,
+            testName: test.name,
+            filePath: suite.file,
+            status: test.status,
+            duration: typeof test.duration === 'number' ? test.duration : null,
+            error: test.error || null,
+            errorStack: test.error || null,
+            startedAt: createdRun.startedAt,
+            completedAt: new Date(),
+          });
+        }
+      }
+
+      const updatedRun = await runApi.updateTestRun(createdRun.id, {
+        status: failedTests > 0 || exitCode !== 0 ? 'failed' : 'passed',
+        totalTests,
+        passedTests,
+        failedTests,
+        skippedTests,
+        duration,
+        completedAt: new Date(),
+      });
+
+      const cases = await storage.getTestCases(createdRun.id);
+
+      res.json({
+        run: updatedRun,
+        suites,
+        cases,
+        output: [stdout, stderr].filter(Boolean).join('\n').trim(),
+      });
+    } catch (error) {
+      console.error('[API] Error running tests:', error);
+      res.status(500).json({ error: 'Failed to run tests' });
+    }
+  });
 
   // Get test runs for a project
   router.get('/projects/:projectId/test-runs', async (req: Request, res: Response) => {
