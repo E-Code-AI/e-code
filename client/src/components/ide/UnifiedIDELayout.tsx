@@ -767,6 +767,73 @@ function UnifiedIDELayout({
     : publishState?.status === 'failed' ? 'failed' 
     : 'idle';
 
+  const getBootstrapPlaceholderName = (tabId?: string | null): string | null => {
+    if (!tabId || !bootstrapToken || isSchemaReady) return null;
+
+    const normalizedTabId = tabId.toLowerCase();
+
+    if (normalizedTabId === 'preview' || normalizedTabId === 'webpreview') return 'Preview';
+    if (normalizedTabId === 'deploy' || normalizedTabId === 'deployment') return 'Deploy';
+    if (normalizedTabId === 'files') return 'Files';
+
+    const gatedTabs = new Set([
+      'git',
+      'packages',
+      'secrets',
+      'env',
+      'env-vars',
+      'database',
+      'database-browser',
+      'auth',
+      'shell',
+      'storage',
+      'terminal',
+      'history',
+      'rewind',
+      'themes',
+      'multiplayers',
+      'checkpoints',
+      'settings',
+      'extensions',
+      'workflows',
+      'mcp-suite',
+      'debug',
+      'debugger',
+      'testing',
+      'test-runner',
+      'security',
+      'collaboration',
+      'multiplayer',
+      'search',
+      'global-search',
+      'logs',
+      'resources',
+      'screenshots',
+      'visual-editor',
+      'mcp',
+      'monitoring',
+      'networking',
+      'publishing',
+      'skills',
+      'ssh',
+      'automations',
+      'backup',
+      'config',
+      'feedback',
+      'github',
+      'integrations',
+      'merge-conflicts',
+    ]);
+
+    return gatedTabs.has(normalizedTabId) ? 'Files' : null;
+  };
+
+  const renderBootstrapPlaceholder = (tabId?: string | null) => {
+    const placeholderName = getBootstrapPlaceholderName(tabId);
+    if (!placeholderName) return null;
+    return <AppNotReadyPlaceholder tabName={placeholderName} projectId={projectId} />;
+  };
+
   // For mobile and tablet, show navigation even during loading (matches Replit behavior)
   // For desktop, show the full loading screen
   if (isLoadingProject && deviceType === 'desktop') {
@@ -798,10 +865,7 @@ function UnifiedIDELayout({
     
     switch (mobileActiveTab) {
       case 'preview':
-        // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
-        if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
-        }
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Preview..." /></div>}>
             <MobilePreviewPanel projectId={projectId} />
@@ -824,64 +888,70 @@ function UnifiedIDELayout({
           </AgentPanelErrorBoundary>
         );
       case 'deploy':
-        // Gate deploy with AppNotReadyPlaceholder until schema is ready (bootstrap only)
-        if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Deploy" projectId={projectId} />;
-        }
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deploy..." /></div>}>
             <ReplitDeploymentPanel projectId={projectId} />
           </Suspense>
         );
       case 'git':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Git..." /></div>}>
             <ReplitGitPanel projectId={projectId} />
           </Suspense>
         );
       case 'packages':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Packages..." /></div>}>
             <ReplitPackagesPanel projectId={projectId} />
           </Suspense>
         );
       case 'secrets':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Secrets..." /></div>}>
             <ReplitSecretsPanel projectId={projectId} />
           </Suspense>
         );
       case 'database':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
             <DatabasePanel projectId={projectId} />
           </Suspense>
         );
       case 'auth':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Auth..." /></div>}>
             <ReplitAuthPanel projectId={projectId} />
           </Suspense>
         );
       case 'shell':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
             <ShellPanel projectId={projectId} />
           </Suspense>
         );
       case 'storage':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Storage..." /></div>}>
             <AppStoragePanel projectId={projectId} />
           </Suspense>
         );
       case 'terminal':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Terminal..." /></div>}>
             <EnhancedMobileTerminal projectId={projectId} />
           </Suspense>
         );
       case 'files':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Files..." /></div>}>
             <ReplitFileExplorer
@@ -893,72 +963,84 @@ function UnifiedIDELayout({
           </Suspense>
         );
       case 'history':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading History..." /></div>}>
             <ReplitHistoryPanel projectId={projectId} />
           </Suspense>
         );
       case 'themes':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Themes..." /></div>}>
             <ReplitThemesPanel projectId={projectId} />
           </Suspense>
         );
       case 'multiplayers':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Multiplayers..." /></div>}>
             <ReplitMultiplayers projectId={projectId} />
           </Suspense>
         );
       case 'checkpoints':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
             <UnifiedCheckpointsPanel projectId={projectId} maxHeight="calc(100vh - 120px)" />
           </Suspense>
         );
       case 'settings':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Settings..." /></div>}>
             <ReplitSettingsPanel projectId={projectId} />
           </Suspense>
         );
       case 'extensions':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
             <ExtensionsMarketplace projectId={parseInt(projectId, 10)} className="h-full" />
           </Suspense>
         );
       case 'workflows':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Workflows..." /></div>}>
             <WorkflowsPanel projectId={projectId} />
           </Suspense>
         );
       case 'mcp-suite':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading MCP Suite..." /></div>}>
             <MCPServersPanel projectId={projectId ? Number(projectId) : undefined} />
           </Suspense>
         );
       case 'debug':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debug..." /></div>}>
             <ReplitDebuggerPanel projectId={projectId} />
           </Suspense>
         );
       case 'testing':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Testing..." /></div>}>
             <ReplitTestingPanel projectId={projectId} />
           </Suspense>
         );
       case 'security':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Security..." /></div>}>
             <MobileSecurityPanel projectId={projectId} />
           </Suspense>
         );
       case 'collaboration':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return user ? (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Collaboration..." /></div>}>
             <CollaborationPanel
@@ -971,6 +1053,7 @@ function UnifiedIDELayout({
           </Suspense>
         ) : null;
       case 'search':
+        if (renderBootstrapPlaceholder(mobileActiveTab)) return renderBootstrapPlaceholder(mobileActiveTab);
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
             <GlobalSearch
@@ -1030,6 +1113,7 @@ function UnifiedIDELayout({
   const renderTabletContent = () => {
     switch (tabletPanel) {
       case 'editor':
+        if (renderBootstrapPlaceholder('files')) return renderBootstrapPlaceholder('files');
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
             <LazyMobileCodeEditor
@@ -1040,16 +1124,14 @@ function UnifiedIDELayout({
           </Suspense>
         );
       case 'terminal':
+        if (renderBootstrapPlaceholder('terminal')) return renderBootstrapPlaceholder('terminal');
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
             <ReplitTerminalPanel projectId={projectId} />
           </Suspense>
         );
       case 'preview':
-        // Gate preview with AppNotReadyPlaceholder until schema is ready (bootstrap only)
-        if (!isSchemaReady && !!bootstrapToken) {
-          return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
-        }
+        if (renderBootstrapPlaceholder('preview')) return renderBootstrapPlaceholder('preview');
         return (
           <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
             <ResponsiveWebPreview projectId={projectId} />
@@ -1117,9 +1199,7 @@ function UnifiedIDELayout({
 
     // Preview panel - gate with AppNotReadyPlaceholder until schema is ready (bootstrap only)
     if (currentTab.id === 'preview' || currentTab.id === 'webpreview') {
-      if (!isSchemaReady && !!bootstrapToken) {
-        return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
-      }
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" /></div>}>
           <ResponsiveWebPreview projectId={projectId} />
@@ -1129,6 +1209,7 @@ function UnifiedIDELayout({
 
     // Console - Read-only runtime output (stdout, stderr, exit codes)
     if (currentTab.id === 'console') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Console..." /></div>}>
           <ReplitConsolePanel projectId={projectId} isRunning={isRunning} executionId={executionId} />
@@ -1138,6 +1219,7 @@ function UnifiedIDELayout({
 
     // Shell - Interactive PTY terminal with multi-session support
     if (currentTab.id === 'shell') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
           <ShellPanel projectId={projectId} />
@@ -1147,6 +1229,7 @@ function UnifiedIDELayout({
 
     // Terminal - xterm-based terminal panel
     if (currentTab.id === 'terminal') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Terminal..." /></div>}>
           <ReplitTerminalPanel projectId={projectId} />
@@ -1168,6 +1251,7 @@ function UnifiedIDELayout({
 
     // Git panel - inline
     if (currentTab.id === 'git') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Git..." /></div>}>
           <ReplitGitPanel projectId={projectId} />
@@ -1177,6 +1261,7 @@ function UnifiedIDELayout({
 
     // Packages panel - inline
     if (currentTab.id === 'packages') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Packages..." /></div>}>
           <ReplitPackagesPanel projectId={projectId} />
@@ -1186,6 +1271,7 @@ function UnifiedIDELayout({
 
     // Secrets panel - inline
     if (currentTab.id === 'secrets' || currentTab.id === 'env' || currentTab.id === 'env-vars') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Secrets..." /></div>}>
           <ReplitSecretsPanel projectId={projectId} />
@@ -1195,6 +1281,7 @@ function UnifiedIDELayout({
 
     // Database panel - inline
     if (currentTab.id === 'database' || currentTab.id === 'database-browser') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Database..." /></div>}>
           <DatabasePanel projectId={projectId} />
@@ -1204,6 +1291,7 @@ function UnifiedIDELayout({
 
     // Auth panel - inline
     if (currentTab.id === 'auth') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Auth..." /></div>}>
           <ReplitAuthPanel projectId={projectId} />
@@ -1213,6 +1301,7 @@ function UnifiedIDELayout({
 
     // Debug panel - inline
     if (currentTab.id === 'debugger' || currentTab.id === 'debug') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Debugger..." /></div>}>
           <ReplitDebuggerPanel projectId={projectId} />
@@ -1222,6 +1311,7 @@ function UnifiedIDELayout({
 
     // Settings panel - inline
     if (currentTab.id === 'settings') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Settings..." /></div>}>
           <ReplitSettingsPanel projectId={projectId} />
@@ -1231,6 +1321,7 @@ function UnifiedIDELayout({
 
     // History panel - inline
     if (currentTab.id === 'history' || currentTab.id === 'rewind') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading History..." /></div>}>
           <ReplitHistoryPanel projectId={projectId} />
@@ -1240,6 +1331,7 @@ function UnifiedIDELayout({
 
     // Checkpoints panel - inline
     if (currentTab.id === 'checkpoints') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Checkpoints..." /></div>}>
           <UnifiedCheckpointsPanel projectId={projectId} />
@@ -1249,6 +1341,7 @@ function UnifiedIDELayout({
 
     // Workflows panel - inline
     if (currentTab.id === 'workflows') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Workflows..." /></div>}>
           <WorkflowsPanel projectId={projectId} />
@@ -1258,6 +1351,7 @@ function UnifiedIDELayout({
 
     // Extensions panel - inline
     if (currentTab.id === 'extensions') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Extensions..." /></div>}>
           <ExtensionsMarketplace projectId={parseInt(projectId, 10)} />
@@ -1267,6 +1361,7 @@ function UnifiedIDELayout({
 
     // Security panel - inline
     if (currentTab.id === 'security') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Security..." /></div>}>
           <MobileSecurityPanel projectId={projectId} />
@@ -1276,6 +1371,7 @@ function UnifiedIDELayout({
 
     // Collaboration panel - inline
     if (currentTab.id === 'collaboration' || currentTab.id === 'multiplayer') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return user ? (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Collaboration..." /></div>}>
           <CollaborationPanel
@@ -1290,6 +1386,7 @@ function UnifiedIDELayout({
 
     // Global search - inline
     if (currentTab.id === 'search' || currentTab.id === 'global-search') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Search..." /></div>}>
           <GlobalSearch
@@ -1305,6 +1402,7 @@ function UnifiedIDELayout({
 
     // Deployment panel - inline
     if (currentTab.id === 'deployment' || currentTab.id === 'deploy') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Deployment..." /></div>}>
           <ReplitDeploymentPanel projectId={projectId} />
@@ -1314,6 +1412,7 @@ function UnifiedIDELayout({
 
     // Testing panel - inline
     if (currentTab.id === 'testing' || currentTab.id === 'test-runner') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tests..." /></div>}>
           <div className="h-full overflow-auto p-4">
@@ -1346,6 +1445,7 @@ function UnifiedIDELayout({
 
     // Resources panel - inline
     if (currentTab.id === 'resources') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Resources..." /></div>}>
           <ResourcesPanel projectId={projectId} />
@@ -1355,6 +1455,7 @@ function UnifiedIDELayout({
 
     // Logs viewer - inline
     if (currentTab.id === 'logs') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Logs..." /></div>}>
           <LogsViewerPanel projectId={projectId} />
@@ -1364,6 +1465,7 @@ function UnifiedIDELayout({
 
     // Screenshots - inline
     if (currentTab.id === 'screenshots') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Screenshots..." /></div>}>
           <ScreenshotsPanel projectId={Number(projectId)} />
@@ -1373,6 +1475,7 @@ function UnifiedIDELayout({
 
     // Visual editor - inline
     if (currentTab.id === 'visual-editor') {
+      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Visual Editor..." /></div>}>
           <VisualEditorPanel projectId={projectId} />
@@ -1444,20 +1547,20 @@ function UnifiedIDELayout({
     }
 
     
-    if (currentTab.id === 'automations') return <Suspense fallback={<ECodeLoading size="md" />}><AutomationsPanel projectId={projectId} onClose={() => handleTabClose('automations')} /></Suspense>;
-    if (currentTab.id === 'backup') return <Suspense fallback={<ECodeLoading size="md" />}><BackupRecoverySection projectId={projectId} /></Suspense>;
-    if (currentTab.id === 'config') return <Suspense fallback={<ECodeLoading size="md" />}><ConfigPanel projectId={projectId} onClose={() => handleTabClose('config')} /></Suspense>;
-    if (currentTab.id === 'feedback') return <Suspense fallback={<ECodeLoading size="md" />}><FeedbackInboxPanel projectId={projectId} onClose={() => handleTabClose('feedback')} onSendToAI={(text: string) => { setPendingAIMessage?.(text); setIsSidebarCollapsed(false); setLeftPanelTab('agent'); }} /></Suspense>;
-    if (currentTab.id === 'github') return <Suspense fallback={<ECodeLoading size="md" />}><GitHubPanel projectId={projectId} projectName={projectName} /></Suspense>;
-    if (currentTab.id === 'integrations') return <Suspense fallback={<ECodeLoading size="md" />}><IntegrationsPanel projectId={projectId} onClose={() => handleTabClose('integrations')} /></Suspense>;
-    if (currentTab.id === 'mcp') return <Suspense fallback={<ECodeLoading size="md" />}><MCPPanel projectId={projectId} onClose={() => handleTabClose('mcp')} /></Suspense>;
-    if (currentTab.id === 'mcp-suite') return <Suspense fallback={<ECodeLoading size="md" />}><MCPServersPanel projectId={projectId ? Number(projectId) : undefined} /></Suspense>;
-    if (currentTab.id === 'merge-conflicts') return <Suspense fallback={<ECodeLoading size="md" />}><MergeConflictPanel projectId={projectId} conflicts={mergeConflicts || []} resolutions={mergeResolutions || []} onClose={() => handleTabClose('merge-conflicts')} onMergeComplete={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onAbort={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onResolutionChange={(updated: any) => setMergeResolutions?.(updated)} /></Suspense>;
-    if (currentTab.id === 'monitoring') return <Suspense fallback={<ECodeLoading size="md" />}><MonitoringPanel projectId={projectId} onClose={() => handleTabClose('monitoring')} /></Suspense>;
-    if (currentTab.id === 'networking') return <Suspense fallback={<ECodeLoading size="md" />}><NetworkingPanel projectId={projectId} onClose={() => handleTabClose('networking')} /></Suspense>;
-    if (currentTab.id === 'publishing') return <Suspense fallback={<ECodeLoading size="md" />}><PublishingPanel projectId={projectId} onClose={() => handleTabClose('publishing')} /></Suspense>;
-    if (currentTab.id === 'skills') return <Suspense fallback={<ECodeLoading size="md" />}><SkillsPanel projectId={projectId} onClose={() => handleTabClose('skills')} /></Suspense>;
-    if (currentTab.id === 'ssh') return <Suspense fallback={<ECodeLoading size="md" />}><SSHPanel projectId={projectId} onClose={() => handleTabClose('ssh')} /></Suspense>;
+    if (currentTab.id === 'automations') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><AutomationsPanel projectId={projectId} onClose={() => handleTabClose('automations')} /></Suspense>;
+    if (currentTab.id === 'backup') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><BackupRecoverySection projectId={projectId} /></Suspense>;
+    if (currentTab.id === 'config') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><ConfigPanel projectId={projectId} onClose={() => handleTabClose('config')} /></Suspense>;
+    if (currentTab.id === 'feedback') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><FeedbackInboxPanel projectId={projectId} onClose={() => handleTabClose('feedback')} onSendToAI={(text: string) => { setPendingAIMessage?.(text); setIsSidebarCollapsed(false); setLeftPanelTab('agent'); }} /></Suspense>;
+    if (currentTab.id === 'github') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><GitHubPanel projectId={projectId} projectName={projectName} /></Suspense>;
+    if (currentTab.id === 'integrations') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><IntegrationsPanel projectId={projectId} onClose={() => handleTabClose('integrations')} /></Suspense>;
+    if (currentTab.id === 'mcp') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><MCPPanel projectId={projectId} onClose={() => handleTabClose('mcp')} /></Suspense>;
+    if (currentTab.id === 'mcp-suite') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><MCPServersPanel projectId={projectId ? Number(projectId) : undefined} /></Suspense>;
+    if (currentTab.id === 'merge-conflicts') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><MergeConflictPanel projectId={projectId} conflicts={mergeConflicts || []} resolutions={mergeResolutions || []} onClose={() => handleTabClose('merge-conflicts')} onMergeComplete={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onAbort={() => { setMergeConflicts?.([]); setMergeResolutions?.([]); handleTabClose('merge-conflicts'); }} onResolutionChange={(updated: any) => setMergeResolutions?.(updated)} /></Suspense>;
+    if (currentTab.id === 'monitoring') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><MonitoringPanel projectId={projectId} onClose={() => handleTabClose('monitoring')} /></Suspense>;
+    if (currentTab.id === 'networking') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><NetworkingPanel projectId={projectId} onClose={() => handleTabClose('networking')} /></Suspense>;
+    if (currentTab.id === 'publishing') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><PublishingPanel projectId={projectId} onClose={() => handleTabClose('publishing')} /></Suspense>;
+    if (currentTab.id === 'skills') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><SkillsPanel projectId={projectId} onClose={() => handleTabClose('skills')} /></Suspense>;
+    if (currentTab.id === 'ssh') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><SSHPanel projectId={projectId} onClose={() => handleTabClose('ssh')} /></Suspense>;
     if (currentTab.id === 'threads') return <Suspense fallback={<ECodeLoading size="md" />}><ThreadsPanel projectId={projectId} onClose={() => handleTabClose('threads')} /></Suspense>;
     if (currentTab.id === 'test-runner') return <Suspense fallback={<ECodeLoading size="md" />}><TestRunnerPanel projectId={projectId} onClose={() => handleTabClose('test-runner')} /></Suspense>;
     if (currentTab.id === 'security-scanner') return <Suspense fallback={<ECodeLoading size="md" />}><SecurityScannerPanel projectId={projectId} onClose={() => handleTabClose('security-scanner')} /></Suspense>;

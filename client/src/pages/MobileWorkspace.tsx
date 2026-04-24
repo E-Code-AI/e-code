@@ -31,6 +31,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
+import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
 
 const MobileTerminal = instrumentedLazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })),
@@ -69,6 +71,7 @@ export default function MobileWorkspace() {
 
   // Split-view: agent chat visible with floating preview overlay
   const [previewOverlay, setPreviewOverlay] = useState(false);
+  const isSchemaReady = useSchemaWarmingStore((s) => s.isReady);
 
   const handleTabChange = (tabId: MobileTab) => {
     if (tabId === 'files') {
@@ -118,6 +121,32 @@ export default function MobileWorkspace() {
 
   const isPreviewTab = activeTab === 'preview';
 
+  const getBootstrapPlaceholderName = (tabId?: string | null): string | null => {
+    if (!tabId || isSchemaReady) return null;
+
+    const normalizedTabId = tabId.toLowerCase();
+    if (normalizedTabId === 'preview') return 'Preview';
+    if (normalizedTabId === 'deploy') return 'Deploy';
+    if (normalizedTabId === 'files' || normalizedTabId === 'code') return 'Files';
+
+    const gatedTabs = new Set([
+      'terminal',
+      'git',
+      'database',
+      'auth',
+      'integrations',
+      'developer',
+    ]);
+
+    return gatedTabs.has(normalizedTabId) ? 'Files' : null;
+  };
+
+  const renderBootstrapPlaceholder = (tabId?: string | null) => {
+    const placeholderName = getBootstrapPlaceholderName(tabId);
+    if (!placeholderName) return null;
+    return <AppNotReadyPlaceholder tabName={placeholderName} projectId={projectId} />;
+  };
+
   // Tab title shown in header center
   const tabTitle: Record<MobileTab, string> = {
     agent: 'Agent',
@@ -144,9 +173,10 @@ export default function MobileWorkspace() {
         );
 
       case 'files':
-        return null;
+        return renderBootstrapPlaceholder('files');
 
       case 'code':
+        if (renderBootstrapPlaceholder('code')) return renderBootstrapPlaceholder('code');
         return (
           <LazyMobileCodeEditor 
             fileId={selectedFileId}
@@ -160,6 +190,7 @@ export default function MobileWorkspace() {
         );
 
       case 'terminal':
+        if (renderBootstrapPlaceholder('terminal')) return renderBootstrapPlaceholder('terminal');
         return (
           <Suspense fallback={<TerminalFallback />}>
             <MobileTerminal 
@@ -171,6 +202,7 @@ export default function MobileWorkspace() {
         );
 
       case 'deploy':
+        if (renderBootstrapPlaceholder('deploy')) return renderBootstrapPlaceholder('deploy');
         return (
           <MobileDeployPanel
             projectId={projectId}
@@ -179,6 +211,7 @@ export default function MobileWorkspace() {
         );
 
       case 'preview':
+        if (renderBootstrapPlaceholder('preview')) return renderBootstrapPlaceholder('preview');
         return (
           <MobilePreviewPanel 
             projectId={projectId}
@@ -302,11 +335,11 @@ export default function MobileWorkspace() {
           <SheetHeader className="px-4 py-3 border-b">
             <SheetTitle className="capitalize">{activeTool}</SheetTitle>
           </SheetHeader>
-          {activeTool === 'database' && <MobileDatabasePanel projectId={projectId} />}
-          {activeTool === 'auth' && <MobileSecretsPanel projectId={projectId} />}
-          {activeTool === 'integrations' && <MobilePackagesPanel projectId={projectId} />}
-          {activeTool === 'git' && <ReplitGitPanel projectId={projectId} className="h-full" mode="mobile" />}
-          {activeTool === 'developer' && <MobileDebugPanel projectId={projectId} />}
+          {activeTool === 'database' && (renderBootstrapPlaceholder('database') || <MobileDatabasePanel projectId={projectId} />)}
+          {activeTool === 'auth' && (renderBootstrapPlaceholder('auth') || <MobileSecretsPanel projectId={projectId} />)}
+          {activeTool === 'integrations' && (renderBootstrapPlaceholder('integrations') || <MobilePackagesPanel projectId={projectId} />)}
+          {activeTool === 'git' && (renderBootstrapPlaceholder('git') || <ReplitGitPanel projectId={projectId} className="h-full" mode="mobile" />)}
+          {activeTool === 'developer' && (renderBootstrapPlaceholder('developer') || <MobileDebugPanel projectId={projectId} />)}
           {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground text-[13px]">
