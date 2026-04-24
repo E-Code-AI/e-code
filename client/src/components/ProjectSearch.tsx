@@ -53,27 +53,26 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
 
     setIsSearching(true);
     try {
-      // Use real search API
-      const response = await apiRequest('POST', '/api/search', {
+      const data = await apiRequest<{
+        results?: any[];
+      }>('POST', '/api/search', {
         query: searchQuery,
         projectId,
-        type: 'files',
+        type: 'content',
         caseSensitive,
         useRegex
       });
-      
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-      
-      const data = await response.json();
-      
-      // Transform API results to match our interface
+
       const transformedResults: SearchResult[] = data.results?.map((result: any) => ({
         fileId: result.fileId || result.id,
-        fileName: result.fileName || result.name,
+        fileName: result.fileName || result.name || result.path?.split('/').pop(),
         filePath: result.filePath || result.path,
-        matches: result.matches || []
+        matches: (result.matches || []).map((match: any) => ({
+          line: match.line,
+          content: match.context || match.text || '',
+          startIndex: 0,
+          endIndex: (match.matchText || '').length,
+        })),
       })) || [];
       
       setResults(transformedResults);
@@ -105,7 +104,17 @@ export function ProjectSearch({ projectId, onFileSelect, className }: ProjectSea
     }
 
     try {
-      // Implement replace logic
+      await apiRequest('POST', '/api/search/replace', {
+        query: searchQuery,
+        replacement: replaceQuery,
+        projectId,
+        caseSensitive,
+        useRegex,
+        filePaths: results
+          .filter((result) => selectedFiles.has(result.fileId))
+          .map((result) => result.filePath),
+      });
+
       toast({
         title: 'Replace Complete',
         description: `Replaced in ${selectedFiles.size} files`,

@@ -1133,7 +1133,7 @@ function UnifiedIDELayout({
               onOpenTools={() => { setLeftPanelTab('tools'); setTabletPanel('agent'); }}
               onOpenDeploy={() => { setLeftPanelTab('deployment'); setTabletPanel('agent'); }}
               onOpenCommandPalette={() => setShowCommandPalette(true)}
-              onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('agent'); setTabletPanel('agent'); }}
+          onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('search'); setTabletPanel('search'); }}
               onOpenQuickFileSearch={() => setShowQuickFileSearch(true)}
               onOpenKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
             />
@@ -1943,7 +1943,7 @@ function UnifiedIDELayout({
           onOpenDeployAnalytics={() => setDeploymentTab('analytics')}
           showTabs={false}
           onOpenCommandPalette={() => setShowCommandPalette(true)}
-          onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('agent'); }}
+          onOpenGlobalSearch={() => { setIsSidebarCollapsed(false); setLeftPanelTab('search'); }}
         />
         
         <ReplitTabBar

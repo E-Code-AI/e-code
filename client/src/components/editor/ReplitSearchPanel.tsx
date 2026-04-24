@@ -1,9 +1,11 @@
-import { useState, useDeferredValue, useEffect } from 'react';
+import { useState, useDeferredValue } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { apiRequest } from '@/lib/queryClient';
+import { useLayoutStore } from '@/../../shared/stores/layoutStore';
 import {
   Search,
   FileText,
@@ -18,6 +20,7 @@ import { LazyMotionDiv } from '@/lib/motion';
 
 interface SearchResult {
   id: string;
+  fileId?: number;
   file: string;
   line: number;
   column: number;
@@ -54,33 +57,67 @@ function ShimmerSkeleton() {
   );
 }
 
-export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
+export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: string; onFileSelect?: (fileId: number, line?: number) => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'all' | 'files' | 'code' | 'symbols'>('all');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
+  const openFile = useLayoutStore((state) => state.openFile);
   
   const deferredQuery = useDeferredValue(searchQuery);
 
-  const searchUrl = (() => {
-    if (!projectId || !deferredQuery.trim()) return null;
-    
-    const params = new URLSearchParams({
-      q: deferredQuery.trim(),
-      caseSensitive: String(caseSensitive),
-      useRegex: String(useRegex),
-      type: searchType,
-    });
-    
-    if (searchType === 'files') {
-      return `/api/projects/${projectId}/files?${params.toString()}`;
-    }
-    return `/api/projects/${projectId}/search?${params.toString()}`;
-  })();
-
   const { data, isLoading, isFetching } = useQuery<SearchResponse>({
-    queryKey: [searchUrl],
-    enabled: !!searchUrl && deferredQuery.trim().length >= 2,
+    queryKey: ['/api/search/global', projectId, deferredQuery.trim(), searchType, caseSensitive, useRegex],
+    enabled: !!projectId && deferredQuery.trim().length >= 2,
+    queryFn: async () => {
+      const response = await apiRequest<{
+        results: Array<{
+          id: number;
+          name: string;
+          path: string;
+          matches: Array<{ line: number; column: number; context: string; matchText: string }>;
+        }>;
+        totalMatches: number;
+      }>('POST', '/api/search/global', {
+        query: deferredQuery.trim(),
+        projectId: String(projectId),
+        type: searchType === 'files' ? 'files' : searchType === 'symbols' ? 'symbols' : 'content',
+        caseSensitive,
+        useRegex,
+      });
+
+      const results: SearchResult[] = (response.results || []).flatMap((result) => {
+        if (searchType === 'files') {
+          return [{
+            id: `file-${result.id}`,
+            fileId: result.id,
+            file: result.path,
+            line: 1,
+            column: 1,
+            match: deferredQuery.trim(),
+            preview: result.path,
+            type: 'file' as const,
+          }];
+        }
+
+        return (result.matches || []).map((match, index) => ({
+          id: `${result.id}-${index}`,
+          fileId: result.id,
+          file: result.path,
+          line: match.line,
+          column: match.column,
+          match: match.matchText,
+          preview: match.context,
+          type: searchType === 'symbols' ? 'symbol' as const : 'code' as const,
+        }));
+      });
+
+      return {
+        results,
+        totalResults: results.length,
+        query: deferredQuery.trim(),
+      };
+    },
   });
 
   const results = data?.results || [];
@@ -96,6 +133,14 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
         return <Hash className="w-[18px] h-[18px] text-primary" />;
       default:
         return <FileCode className="w-[18px] h-[18px] text-muted-foreground" />;
+    }
+  };
+
+  const handleResultSelect = (result: SearchResult) => {
+    if (!result.fileId) return;
+    onFileSelect?.(result.fileId, result.line);
+    if (!onFileSelect) {
+      openFile(result.fileId);
     }
   };
 
@@ -223,6 +268,7 @@ export function ReplitSearchPanel({ projectId }: { projectId?: string }) {
             {results.map((result) => (
               <button
                 key={result.id}
+                onClick={() => handleResultSelect(result)}
                 className="w-full text-left px-2 py-2 hover:bg-accent rounded-lg group transition-colors"
                 data-testid={`result-item-${result.id}`}
               >

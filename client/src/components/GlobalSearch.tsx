@@ -72,6 +72,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
   const [isSearching, setIsSearching] = useState(false);
   const [selectedResult, setSelectedResult] = useState<number>(0);
   const [expandedResults, setExpandedResults] = useState<Set<number>>(new Set());
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
     fileTypes: [],
     excludePaths: ['node_modules', '.git', 'dist', 'build'],
@@ -109,9 +110,14 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
   }, []);
 
   const performSearch = async () => {
+    if (!debouncedQuery.trim()) {
+      setResults([]);
+      return;
+    }
+
     setIsSearching(true);
     try {
-      const response = await apiRequest('POST', `/api/search/global`, {
+      const data = await apiRequest<{ results: SearchResult[] }>('POST', `/api/search/global`, {
         query: debouncedQuery,
         projectId: String(projectId),
         type: searchType,
@@ -121,10 +127,6 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
         excludePattern: filters.excludePaths?.join(','),
         filePattern: filters.fileTypes?.join(',')
       });
-
-      if (!response.ok) throw new Error('Search failed');
-
-      const data = await response.json();
       setResults(data.results || []);
       
       // Add to recent searches
@@ -164,7 +166,7 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
   const handleResultClick = async (result: SearchResult) => {
     try {
       // Fetch full file details
-      const response = await fetch(`/api/files/${result.id}`, {
+      const response = await fetch(`/api/projects/${projectId}/files/${result.id}`, {
         credentials: 'include'
       });
       
@@ -326,11 +328,49 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
                 <span className="text-[11px]">Regex</span>
               </label>
 
-              <Button variant="ghost" size="sm" className="ml-auto h-6 px-2 text-[11px]">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto h-6 px-2 text-[11px]"
+                onClick={() => setShowAdvancedFilters((prev) => !prev)}
+                data-testid="button-toggle-search-filters"
+              >
                 <Filter className="h-3 w-3 mr-1" />
-                More filters
+                {showAdvancedFilters ? 'Hide filters' : 'More filters'}
               </Button>
             </div>
+            {showAdvancedFilters && (
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="search-file-types" className="text-[11px] text-muted-foreground">Include</Label>
+                  <Input
+                    id="search-file-types"
+                    value={filters.fileTypes.join(',')}
+                    onChange={(e) => setFilters((prev) => ({
+                      ...prev,
+                      fileTypes: e.target.value.split(',').map((value) => value.trim()).filter(Boolean),
+                    }))}
+                    placeholder="*.ts,*.tsx"
+                    className="mt-1 h-8 text-xs"
+                    data-testid="input-search-file-types"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="search-exclude-paths" className="text-[11px] text-muted-foreground">Exclude</Label>
+                  <Input
+                    id="search-exclude-paths"
+                    value={filters.excludePaths.join(',')}
+                    onChange={(e) => setFilters((prev) => ({
+                      ...prev,
+                      excludePaths: e.target.value.split(',').map((value) => value.trim()).filter(Boolean),
+                    }))}
+                    placeholder="node_modules,dist,.git"
+                    className="mt-1 h-8 text-xs"
+                    data-testid="input-search-exclude-paths"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search Results */}

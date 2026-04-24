@@ -216,7 +216,7 @@ export function SplitsEditorLayoutV2({
         ),
         search: (
           <PanelShell title="Search">
-            <ReplitSearchPanel />
+            <ReplitSearchPanel projectId={effectiveProjectId} />
           </PanelShell>
         ),
         git: (

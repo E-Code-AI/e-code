@@ -185,7 +185,17 @@ export function ReplitEditorLayout({
       case 'agent':
         return <ReplitAgentPanelV3 projectId={projectId || '1'} className="h-full" />;
       case 'search':
-        return <ReplitSearchPanel projectId={projectId} />;
+        return (
+          <ReplitSearchPanel
+            projectId={projectId}
+            onFileSelect={(fileId) => {
+              const target = files.find((file) => file.id === fileId);
+              if (target) {
+                onFileSelect?.(target);
+              }
+            }}
+          />
+        );
       case 'git':
         return <ReplitGitPanel projectId={projectId} />;
       case 'debug':
