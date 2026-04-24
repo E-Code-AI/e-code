@@ -44,6 +44,13 @@ const DEVICE_SIZES = {
 
 type PreviewState = 'loading' | 'starting' | 'building' | 'running' | 'error' | 'preview-error' | 'iframe-error' | 'no-content' | 'no-files' | 'stopped' | 'offline';
 
+interface PreviewDiagnostics {
+  status?: string;
+  logs?: string[];
+  primaryPort?: number | null;
+  frameworkType?: string;
+}
+
 export function ResponsiveWebPreview({ 
   projectId, 
   isRunning,
@@ -115,6 +122,19 @@ export function ResponsiveWebPreview({
 
   const previewUrl = previewData?.previewUrl || '';
   const previewStatus = previewData?.status;
+  const {
+    data: previewDiagnostics,
+    refetch: refetchDiagnostics,
+  } = useQuery<PreviewDiagnostics>({
+    queryKey: ['/api/preview/projects', projectId, 'preview', 'status'],
+    queryFn: () => apiRequest('GET', `/api/preview/projects/${projectId}/preview/status`),
+    enabled: !!projectId && (previewStatus === 'starting' || previewStatus === 'error' || previewStatus === 'stopped'),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'starting') return 2000;
+      return false;
+    }
+  });
   
   // Build iframe URL with cache buster
   const iframeSrc = previewUrl ? `${previewUrl}${previewUrl.includes('?') ? '&' : '?'}_cb=${cacheBuster}` : '';
@@ -296,11 +316,12 @@ export function ResponsiveWebPreview({
     } else if (currentState === 'preview-error' || currentState === 'stopped') {
       autoStartAttemptedRef.current = false;
       startPreview();
+      refetchDiagnostics();
     } else if (currentState === 'iframe-error' || iframeRef.current) {
       setCacheBuster(prev => prev + 1);
       refetchPreview();
     }
-  }, [currentState, refetchPreview, startPreview]);
+  }, [currentState, refetchPreview, startPreview, refetchDiagnostics]);
 
   const handleExternalOpen = useCallback(() => {
     if (previewUrl) {
@@ -505,8 +526,13 @@ export function ResponsiveWebPreview({
               Preview server failed to start
             </p>
             <p className="text-[13px] text-[var(--ecode-text-muted)] mb-4 max-w-xs">
-              {previewData?.message || 'Check that your project has a valid start script.'}
+              {previewData?.message || previewDiagnostics?.logs?.slice(-1)[0] || 'Check that your project has a valid start script.'}
             </p>
+            {previewDiagnostics?.frameworkType && (
+              <p className="text-[11px] text-[var(--ecode-text-muted)] mb-3">
+                Framework: {previewDiagnostics.frameworkType}
+              </p>
+            )}
             <Button variant="outline" size="sm" onClick={() => { autoStartAttemptedRef.current = false; startPreview(); }} className="gap-2">
               <RefreshCw className="h-3.5 w-3.5" />
               Retry
