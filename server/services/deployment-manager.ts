@@ -6,6 +6,7 @@ import { storage } from '../storage';
 import { billingService } from './billing-service';
 import { deploymentWebSocketService, DeploymentStatusType, UIStatusType, translateStatusToUI } from './deployment-websocket-service';
 import { sslRenewalService } from './ssl-renewal.service';
+import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 export interface DeploymentConfig {
   id: string;
@@ -200,6 +201,33 @@ export class DeploymentManager {
     return deploymentId;
   }
 
+  private async persistDeploymentState(
+    deploymentId: string,
+    deployment: DeploymentStatus,
+    extraUpdates: Record<string, unknown> = {}
+  ): Promise<void> {
+    try {
+      const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+      if (!dbDeployment) {
+        return;
+      }
+
+      await storage.updateDeployment(dbDeployment.id, {
+        status: deployment.status,
+        url: deployment.url || deployment.customUrl || dbDeployment.url,
+        customDomain: deployment.customUrl?.replace(/^https?:\/\//, '') || dbDeployment.customDomain || null,
+        buildLogs: deployment.buildLog.join('\n'),
+        deploymentLogs: deployment.deploymentLog.join('\n'),
+        metadata: {
+          ...((dbDeployment.metadata as Record<string, unknown>) || {}),
+          ...extraUpdates,
+        },
+      });
+    } catch (error) {
+      console.error(`[DeploymentManager] Failed to persist deployment state for ${deploymentId}:`, error);
+    }
+  }
+
   private async setupSSLCertificate(deploymentId: string, domain: string) {
     const deployment = this.deployments.get(deploymentId);
     if (!deployment) return;
@@ -314,6 +342,7 @@ export class DeploymentManager {
       const buildingLog = '🔨 Starting build process...';
       deployment.status = 'building';
       deployment.buildLog.push(buildingLog);
+      await this.persistDeploymentState(deploymentId, deployment);
       this.broadcastStatusChange(deploymentId, 'building', 'pending');
       this.broadcastBuildLog(deploymentId, buildingLog);
       
@@ -321,12 +350,14 @@ export class DeploymentManager {
       
       const buildCompleteLog = '✅ Build completed successfully';
       deployment.buildLog.push(buildCompleteLog);
+      await this.persistDeploymentState(deploymentId, deployment);
       this.broadcastBuildLog(deploymentId, buildCompleteLog);
       
       // Status: building -> deploying
       const deployingLog = '🚀 Starting deployment...';
       deployment.status = 'deploying';
       deployment.deploymentLog.push(deployingLog);
+      await this.persistDeploymentState(deploymentId, deployment);
       this.broadcastStatusChange(deploymentId, 'deploying', 'building');
       this.broadcastDeployLog(deploymentId, deployingLog);
       
@@ -405,6 +436,7 @@ export class DeploymentManager {
 
       const liveLog = `🎉 Your app is live at ${deployment.url || deployment.customUrl}`;
       deployment.deploymentLog.push(liveLog);
+      await this.persistDeploymentState(deploymentId, deployment, { lastError: null });
       this.broadcastStatusChange(deploymentId, 'active', 'deploying', deployment.url || deployment.customUrl);
       this.broadcastDeployLog(deploymentId, liveLog);
 
@@ -413,16 +445,22 @@ export class DeploymentManager {
       deployment.status = 'failed';
       const errorLog = `❌ Deployment failed: ${error.message || error}`;
       deployment.deploymentLog.push(errorLog);
+      await this.persistDeploymentState(deploymentId, deployment, {
+        lastError: error.message || String(error),
+      });
       this.broadcastStatusChange(deploymentId, 'failed', previousStatus as DeploymentStatusType);
       this.broadcastDeployLog(deploymentId, errorLog);
       this.broadcastError(deploymentId, errorLog);
       
-      // Update database with failure
-      const numericDeploymentId = parseInt(deploymentId, 10);
-      if (!isNaN(numericDeploymentId)) {
-        await storage.updateDeploymentStatus(numericDeploymentId, {
-          status: 'failed'
-        });
+      try {
+        const dbDeployment = await storage.getDeploymentByExternalId(deploymentId);
+        if (dbDeployment) {
+          await storage.updateDeploymentStatus(dbDeployment.id, {
+            status: 'failed'
+          });
+        }
+      } catch (dbError) {
+        console.error(`[DeploymentManager] Failed to persist failed status for ${deploymentId}:`, dbError);
       }
     }
   }
@@ -431,8 +469,8 @@ export class DeploymentManager {
     const deployment = this.deployments.get(deploymentId);
     if (!deployment) throw new Error('Deployment not found');
 
-    const projectPath = path.join(this.baseDeploymentPath, deploymentId);
-    await fs.mkdir(projectPath, { recursive: true });
+    await ensureProjectDirectory(config.projectId);
+    const projectPath = getProjectWorkspacePath(config.projectId);
 
     // Build steps based on deployment type
     const buildSteps = this.getBuildSteps(config);
@@ -440,16 +478,21 @@ export class DeploymentManager {
     for (const step of buildSteps) {
       const stepLog = `🔨 ${step.description}`;
       deployment.buildLog.push(stepLog);
+      await this.persistDeploymentState(deploymentId, deployment);
       this.broadcastBuildLog(deploymentId, stepLog);
       
       try {
         await this.executeCommand(step.command, projectPath);
         const successLog = `✅ ${step.description} completed`;
         deployment.buildLog.push(successLog);
+        await this.persistDeploymentState(deploymentId, deployment);
         this.broadcastBuildLog(deploymentId, successLog);
       } catch (error: any) {
         const errorLog = `❌ ${step.description} failed: ${error}`;
         deployment.buildLog.push(errorLog);
+        await this.persistDeploymentState(deploymentId, deployment, {
+          lastError: error.message || String(error),
+        });
         this.broadcastBuildLog(deploymentId, errorLog);
         throw error;
       }
@@ -654,12 +697,23 @@ export class DeploymentManager {
   private async executeCommand(command: string, cwd: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const process = spawn('sh', ['-c', command], { cwd });
+      let stdout = '';
+      let stderr = '';
+
+      process.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
+      });
+
+      process.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
       
       process.on('close', (code) => {
         if (code === 0) {
           resolve();
         } else {
-          reject(new Error(`Command failed with code ${code}`));
+          const details = [stderr.trim(), stdout.trim()].filter(Boolean).join('\n').trim();
+          reject(new Error(details || `Command failed with code ${code}`));
         }
       });
 

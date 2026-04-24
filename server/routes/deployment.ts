@@ -956,6 +956,15 @@ router.get('/projects/:projectId/publish/status', ensureAuthenticated, async (re
     
     // Translate to UI-friendly status
     const uiStatus = translateStatusToUI(internalStatus, lastCodeChange, deployedAt);
+    const persistedError =
+      (currentDeployment?.metadata as any)?.lastError ||
+      (typeof currentDeployment?.deploymentLogs === 'string'
+        ? currentDeployment.deploymentLogs.split('\n').filter(Boolean).reverse().find((line: string) => line.includes('failed'))
+        : null) ||
+      (typeof currentDeployment?.buildLogs === 'string'
+        ? currentDeployment.buildLogs.split('\n').filter(Boolean).reverse().find((line: string) => line.includes('failed'))
+        : null) ||
+      null;
 
     // Prepare response in format expected by ReplitPublishButton
     res.json({
@@ -963,7 +972,9 @@ router.get('/projects/:projectId/publish/status', ensureAuthenticated, async (re
       url: activeDeployment?.url || liveStatus?.url || null,
       deployedAt: deployedAt ? new Date(deployedAt).toISOString() : null,
       lastCodeChange: lastCodeChange ? new Date(lastCodeChange).toISOString() : null,
-      errorMessage: internalStatus === 'failed' ? 'Deployment failed. Check logs for details.' : null,
+      errorMessage: internalStatus === 'failed'
+        ? persistedError || 'Deployment failed. Check logs for details.'
+        : null,
       success: true,
       publish: {
         isPublished: !!activeDeployment,
