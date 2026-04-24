@@ -202,6 +202,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/ecode_test
           REDIS_URL: redis://localhost:6379/1
+          NODE_OPTIONS: '--max-old-space-size=6144'
 
   ##############################################################################
   # JOB 4: E2E Tests
@@ -249,7 +250,7 @@ jobs:
           NODE_ENV: production
 
       - name: Start application
-        run: npm start &
+        run: npx tsx server/index.ts &
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/ecode_test
           REDIS_URL: redis://localhost:6379/1
@@ -258,6 +259,7 @@ jobs:
           SESSION_SECRET: test-ci-session-secret-for-e2e-only
           JWT_SECRET: test-ci-jwt-secret-for-e2e-only
           DATABASE_ENCRYPTION_KEY: test-ci-database-encryption-key-for-e2e-only-0123456789abcdef
+          STORAGE_BACKEND: local
 
       - name: Wait for application
         run: npx wait-on http://localhost:5000/health -t 60000
