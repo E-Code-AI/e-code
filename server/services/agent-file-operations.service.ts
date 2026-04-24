@@ -14,6 +14,7 @@ import {
 } from '@shared/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('file-ops');
 import { diff_match_patch } from 'diff-match-patch';
@@ -176,7 +177,7 @@ export class AgentFileOperationsService extends EventEmitter {
       const __ext = path.extname(__fn);
       const __scaffoldDirs = new Set(['backend','frontend','src','app','server','client','public','api','components','pages','routes','controllers','models','views','services','utils','helpers','hooks','lib','libs','config','configs','middleware','middlewares','tests','test','docs','scripts','assets','static','styles','data','types','interfaces','modules','features','store','schemas','migrations','bin','dist','build']);
       if (!__ext && (__scaffoldDirs.has(__fn) || filePath.endsWith('/'))) {
-        const __abs = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
+        const __abs = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.', session);
         await fs.mkdir(__abs, { recursive: true });
         const [__op] = await db.insert(fileOperations).values({ sessionId, operationType: 'file_create', filePath, content: '', checksum: this.calculateChecksum(''), status: 'completed', executedAt: new Date(), completedAt: new Date(), metadata: { fileSize: 0, mimeType: 'inode/directory', encoding: 'utf-8', isDirectory: true } }).returning();
         await this.createAuditEntry(sessionId, userId, 'file_create', filePath);
@@ -187,7 +188,7 @@ export class AgentFileOperationsService extends EventEmitter {
       this.validateFileSize(content);
 
       // Get absolute path
-      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
+      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.', session);
       
       // Check if file exists for versioning
       let previousContent: string | null = null;
@@ -329,7 +330,7 @@ export class AgentFileOperationsService extends EventEmitter {
       const session = await this.validateSession(sessionId);
       this.validateFilePath(filePath);
       
-      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
+      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.', session);
       
       // Read file
       const content = await fs.readFile(absolutePath, 'utf-8');
@@ -376,7 +377,7 @@ export class AgentFileOperationsService extends EventEmitter {
       const session = await this.validateSession(sessionId);
       this.validateFilePath(filePath);
       
-      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.');
+      const absolutePath = this.getAbsolutePath(filePath, session.context?.workingDirectory || '.', session);
       
       // Read file for backup
       const previousContent = await fs.readFile(absolutePath, 'utf-8');
@@ -429,8 +430,8 @@ export class AgentFileOperationsService extends EventEmitter {
       this.validateFilePath(newPath);
       
       const workingDir = session.context?.workingDirectory || '.';
-      const absoluteOldPath = this.getAbsolutePath(oldPath, workingDir);
-      const absoluteNewPath = this.getAbsolutePath(newPath, workingDir);
+      const absoluteOldPath = this.getAbsolutePath(oldPath, workingDir, session);
+      const absoluteNewPath = this.getAbsolutePath(newPath, workingDir, session);
       
       // Read content for backup
       const content = await fs.readFile(absoluteOldPath, 'utf-8');
@@ -480,7 +481,7 @@ export class AgentFileOperationsService extends EventEmitter {
   ): Promise<any[]> {
     try {
       const session = await this.validateSession(sessionId);
-      const absolutePath = this.getAbsolutePath(dirPath, session.context?.workingDirectory || '.');
+      const absolutePath = this.getAbsolutePath(dirPath, session.context?.workingDirectory || '.', session);
       
       const items: any[] = [];
       
@@ -567,7 +568,8 @@ export class AgentFileOperationsService extends EventEmitter {
       const session = await this.validateSession(sessionId);
       const absolutePath = this.getAbsolutePath(
         originalOp.filePath, 
-        session.context?.workingDirectory || '.'
+        session.context?.workingDirectory || '.',
+        session
       );
       
       // Determine rollback action
@@ -610,7 +612,8 @@ export class AgentFileOperationsService extends EventEmitter {
         // Reverse the rename/move
         const oldAbsPath = this.getAbsolutePath(
           originalOp.newPath!, 
-          session.context?.workingDirectory || '.'
+          session.context?.workingDirectory || '.',
+          session
         );
         await fs.rename(oldAbsPath, absolutePath);
         rollbackOp = {
@@ -727,16 +730,31 @@ export class AgentFileOperationsService extends EventEmitter {
     }
   }
 
-  private getAbsolutePath(filePath: string, workingDir: string): string {
-    // Ensure we stay within project boundaries
-    const projectRoot = process.cwd();
-    const resolved = path.resolve(projectRoot, workingDir, filePath);
-    
-    if (!resolved.startsWith(projectRoot)) {
+  private getAbsolutePath(filePath: string, workingDir: string, session?: AgentSession): string {
+    const projectRoot = this.getProjectRoot(workingDir, session);
+    const resolved = path.isAbsolute(filePath)
+      ? path.resolve(filePath)
+      : path.resolve(projectRoot, filePath);
+    const relative = path.relative(projectRoot, resolved);
+
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new Error('File path outside project boundaries');
     }
-    
+
     return resolved;
+  }
+
+  private getProjectRoot(workingDir: string, session?: AgentSession): string {
+    const projectId = session?.projectId ?? (session?.context as { projectId?: number } | undefined)?.projectId;
+    if (projectId) {
+      return getProjectWorkspacePath(projectId);
+    }
+
+    if (path.isAbsolute(workingDir)) {
+      return path.resolve(workingDir);
+    }
+
+    return path.resolve(process.cwd(), workingDir);
   }
 
   private calculateChecksum(content: string): string {

@@ -12,6 +12,7 @@ import {
 } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import kill from 'tree-kill';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 // Command execution event for real-time streaming
 export interface CommandExecutionEvent {
@@ -100,7 +101,8 @@ export class AgentCommandExecutionService extends EventEmitter {
       
       // Prepare execution environment
       const workingDirectory = this.resolveWorkingDirectory(
-        options.workingDirectory || session.context?.workingDirectory || '.'
+        options.workingDirectory || session.context?.workingDirectory || '.',
+        session
       );
       
       // ✅ FIX (Nov 30, 2025): Separate execution env (full) from stored env (filtered)
@@ -456,16 +458,31 @@ export class AgentCommandExecutionService extends EventEmitter {
     }
   }
 
-  private resolveWorkingDirectory(dir: string): string {
-    const projectRoot = process.cwd();
-    const resolved = path.resolve(projectRoot, dir);
-    
-    // Ensure working directory is within project bounds
-    if (!resolved.startsWith(projectRoot)) {
+  private resolveWorkingDirectory(dir: string, session?: AgentSession): string {
+    const projectRoot = this.getProjectRoot(dir, session);
+    const resolved = path.isAbsolute(dir)
+      ? path.resolve(dir)
+      : path.resolve(projectRoot, dir);
+    const relative = path.relative(projectRoot, resolved);
+
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new Error('Working directory outside project boundaries');
     }
-    
+
     return resolved;
+  }
+
+  private getProjectRoot(dir: string, session?: AgentSession): string {
+    const projectId = session?.projectId ?? (session?.context as { projectId?: number } | undefined)?.projectId;
+    if (projectId) {
+      return getProjectWorkspacePath(projectId);
+    }
+
+    if (path.isAbsolute(dir)) {
+      return path.resolve(dir);
+    }
+
+    return process.cwd();
   }
 
   private async validateSession(sessionId: string): Promise<AgentSession> {

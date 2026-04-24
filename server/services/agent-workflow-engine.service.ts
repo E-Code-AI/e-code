@@ -747,10 +747,15 @@ export class AgentWorkflowEngineService extends EventEmitter {
     userId: string,
     state: WorkflowState
   ): Promise<any> {
+    const sessionProjectId = session.projectId || (session.context as any)?.projectId || state.variables?.projectId;
+    const projectPath = session.context?.workingDirectory && session.context.workingDirectory !== '.'
+      ? session.context.workingDirectory
+      : (sessionProjectId ? getProjectWorkspacePath(sessionProjectId) : '.');
+
     const context = {
       sessionId: session.id,
       userId,
-      projectPath: session.context?.workingDirectory || '.',
+      projectPath,
       environment: session.context?.environment || {}
     };
     
@@ -888,7 +893,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
     
     const resolved = this.resolveVariables(effectiveConfig, state);
     const operation = resolved.operation;
-    const filePath = resolved.path;
+    const filePath = this.normalizeProjectPath(resolved.path, context.projectPath);
     const content = resolved.content;
 
     if (!filePath || typeof filePath !== 'string') {
@@ -942,6 +947,19 @@ export class AgentWorkflowEngineService extends EventEmitter {
     }
     
     return result;
+  }
+
+  private normalizeProjectPath(inputPath: any, projectPath: string): any {
+    if (typeof inputPath !== 'string' || !inputPath || !path.isAbsolute(inputPath) || !path.isAbsolute(projectPath)) {
+      return inputPath;
+    }
+
+    const relative = path.relative(projectPath, inputPath);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      return inputPath;
+    }
+
+    return relative || '.';
   }
 
   // Execute command step
