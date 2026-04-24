@@ -165,14 +165,13 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   const createMutation = useMutation({
     mutationFn: async (data: { key: string; value: string; isSecret: boolean; environment: string }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', '/api/env-vars', {
+      return apiRequest('POST', '/api/env-vars', {
         projectId: projectId.toString(),
         key: data.key.toUpperCase().replace(/\s+/g, '_'),
         value: data.value,
         isSecret: data.isSecret,
         environment: data.environment
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Environment variable created' });
@@ -191,12 +190,11 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, value, isSecret, environment }: { id: string; value?: string; isSecret?: boolean; environment?: string }) => {
-      const response = await apiRequest('PATCH', `/api/env-vars/${id}`, {
+      return apiRequest('PATCH', `/api/env-vars/${id}`, {
         ...(value !== undefined && { value }),
         ...(isSecret !== undefined && { isSecret }),
         ...(environment !== undefined && { environment })
       });
-      return response.json();
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Environment variable updated' });
@@ -215,8 +213,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('DELETE', `/api/env-vars/${id}`, {});
-      return response.json();
+      return apiRequest('DELETE', `/api/env-vars/${id}`, {});
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Environment variable deleted' });
@@ -233,8 +230,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
 
   const revealMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await apiRequest('POST', `/api/env-vars/${id}/reveal`, {});
-      return response.json();
+      return apiRequest<{ value: string }>('POST', `/api/env-vars/${id}/reveal`, {});
     },
     onSuccess: (data, id) => {
       setRevealedSecrets(prev => ({ ...prev, [id]: data.value }));
@@ -262,11 +258,10 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   const importMutation = useMutation({
     mutationFn: async (data: { content: string; environment: string }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/env-vars/${projectId}/import`, {
+      return apiRequest<{ imported: number; skipped: number }>('POST', `/api/env-vars/${projectId}/import`, {
         content: data.content,
         environment: data.environment
       });
-      return response.json();
     },
     onSuccess: (data) => {
       toast({ 

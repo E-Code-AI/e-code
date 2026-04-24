@@ -3,9 +3,31 @@ import express, { Request, Response } from 'express';
 import type { IStorage } from '../storage';
 import { z } from 'zod';
 import { insertLspDiagnosticSchema, insertSecurityScanSchema, insertVulnerabilitySchema, insertResourceMetricSchema } from '@shared/schema';
+import { ensureAuthenticated } from '../middleware/auth';
 
 export function createWorkspaceRoutes(storage: IStorage) {
   const router = express.Router();
+
+  router.use('/projects/:projectId', ensureAuthenticated, async (req: Request, res: Response, next) => {
+    try {
+      const userId = (req.user as any)?.id;
+      const { projectId } = req.params;
+
+      if (!userId || !projectId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const hasAccess = await storage.isProjectCollaborator(projectId, userId);
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'Access denied to this project' });
+      }
+
+      return next();
+    } catch (error) {
+      console.error('[API] Workspace access validation failed:', error);
+      return res.status(500).json({ error: 'Failed to validate project access' });
+    }
+  });
 
   // ============================================================================
   // LSP DIAGNOSTICS ROUTES - For Problems Panel
@@ -116,21 +138,7 @@ export function createWorkspaceRoutes(storage: IStorage) {
   // Helper function to check project access authorization
   async function checkProjectAccess(userId: string, projectId: string): Promise<boolean> {
     try {
-      const project = await storage.getProject(projectId);
-      if (!project) return false;
-
-      // Check if user owns the project
-      if (project.ownerId === userId) return true;
-
-      // Check team membership
-      try {
-        const teamMember = await storage.getTeamMemberByUserAndProject?.(userId, projectId);
-        if (teamMember) return true;
-      } catch (error) {
-        console.debug('[API] Team membership check skipped:', error);
-      }
-
-      return false;
+      return await storage.isProjectCollaborator(projectId, userId);
     } catch (error) {
       console.error('[API] Authorization error:', error);
       return false;
@@ -741,10 +749,14 @@ export function createWorkspaceRoutes(storage: IStorage) {
   // ============================================================================
 
   // Get user's pane configurations
-  router.get('/users/:userId/pane-configs', async (req: Request, res: Response) => {
+  router.get('/users/:userId/pane-configs', ensureAuthenticated, async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
       const { projectId } = req.query;
+
+      if (String((req.user as any)?.id) !== String(userId)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
 
       const configs = await storage.getUserPaneConfigurations(
         userId,
@@ -759,9 +771,12 @@ export function createWorkspaceRoutes(storage: IStorage) {
   });
 
   // Create pane configuration
-  router.post('/users/:userId/pane-configs', async (req: Request, res: Response) => {
+  router.post('/users/:userId/pane-configs', ensureAuthenticated, async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
+      if (String((req.user as any)?.id) !== String(userId)) {
+        return res.status(403).json({ error: 'Access denied' });
+      }
       const config = await storage.createPaneConfiguration({
         ...req.body,
         userId,

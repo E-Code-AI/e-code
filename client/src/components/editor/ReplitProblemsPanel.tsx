@@ -41,9 +41,7 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
     queryKey: ['/api/workspace/diagnostics', projectId],
     queryFn: async () => {
       if (!projectId) return [];
-      const res = await apiRequest('GET', `/api/workspace/projects/${projectId}/diagnostics`);
-      if (!res.ok) return [];
-      return res.json();
+      return apiRequest<any[]>('GET', `/api/workspace/projects/${projectId}/diagnostics`);
     },
     enabled: !!projectId,
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s

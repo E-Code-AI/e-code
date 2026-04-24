@@ -124,17 +124,18 @@ function initializeShellWebSocket() {
       return;
     }
     
-    // SECURITY FIX #20: Validate project ownership if projectId provided
+    // SECURITY FIX #20: Validate project access if projectId provided
     if (projectId) {
       try {
         const { storage } = await import('../storage');
         const project = await storage.getProject(projectId);
-        if (!project || project.ownerId !== userId) {
-          ws.close(1008, 'Access denied: You do not own this project');
+        const hasAccess = !!project && await storage.isProjectCollaborator(projectId, userId);
+        if (!hasAccess) {
+          ws.close(1008, 'Access denied: You do not have access to this project');
           return;
         }
       } catch (error) {
-        logger.error('Failed to validate project ownership:', error);
+        logger.error('Failed to validate project access:', error);
         ws.close(1008, 'Project validation failed');
         return;
       }

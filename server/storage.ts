@@ -69,6 +69,7 @@ import {
   aiApprovalQueue, aiAuditLogs,
   bounties, bountySubmissions, bountyReviews,
   agentSessions,
+  collaborationSessions, sessionParticipants,
   alerts, insertAlertSchema,
   insertAiApprovalQueueSchema, insertAiAuditLogSchema,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
@@ -2765,13 +2766,89 @@ export class DatabaseStorage implements IStorage {
 
   // Collaboration methods
   async getProjectCollaborators(projectId: string | number): Promise<any[]> {
-    // Return empty array for now - proper implementation would use a collaborators table
-    return [];
+    const project = await this.getProject(projectId);
+    if (!project) {
+      return [];
+    }
+
+    const collaboratorsByUserId = new Map<number, any>();
+
+    // Team projects grant access to active team members.
+    // Personal projects use tenantId = ownerId, so skip team lookup in that case.
+    if (project.tenantId && project.tenantId !== project.ownerId) {
+      const teamCollaborators = await this.db
+        .select({
+          userId: users.id,
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          role: teamMembers.role,
+          joinedAt: teamMembers.joinedAt,
+          source: sql<string>`'team'`,
+        })
+        .from(teamMembers)
+        .innerJoin(users, eq(teamMembers.userId, users.id))
+        .where(
+          and(
+            eq(teamMembers.teamId, project.tenantId),
+            eq(teamMembers.isActive, true),
+          )
+        );
+
+      for (const collaborator of teamCollaborators) {
+        collaboratorsByUserId.set(collaborator.userId, collaborator);
+      }
+    }
+
+    // Active collaboration sessions also grant project access across IDE panels.
+    const sessionCollaborators = await this.db
+      .select({
+        userId: sessionParticipants.userId,
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        role: sql<string>`'collaborator'`,
+        joinedAt: sessionParticipants.joinedAt,
+        source: sql<string>`'session'`,
+        sessionId: sessionParticipants.sessionId,
+      })
+      .from(sessionParticipants)
+      .innerJoin(collaborationSessions, eq(sessionParticipants.sessionId, collaborationSessions.id))
+      .innerJoin(users, eq(sessionParticipants.userId, users.id))
+      .where(
+        and(
+          eq(collaborationSessions.projectId, _num(projectId)),
+          eq(collaborationSessions.active, true),
+          eq(sessionParticipants.active, true),
+        )
+      );
+
+    for (const collaborator of sessionCollaborators) {
+      const existing = collaboratorsByUserId.get(collaborator.userId);
+      collaboratorsByUserId.set(collaborator.userId, {
+        ...existing,
+        ...collaborator,
+        role: existing?.role ?? collaborator.role,
+        source: existing ? 'team+session' : collaborator.source,
+      });
+    }
+
+    return Array.from(collaboratorsByUserId.values());
   }
 
   async isProjectCollaborator(projectId: string | number, userId: string | number): Promise<boolean> {
     const project = await this.getProject(projectId);
-    return project?.ownerId === userId;
+    if (!project) {
+      return false;
+    }
+
+    const normalizedUserId = _num(userId);
+    if (project.ownerId === normalizedUserId) {
+      return true;
+    }
+
+    const collaborators = await this.getProjectCollaborators(projectId);
+    return collaborators.some((collaborator: any) => collaborator.userId === normalizedUserId);
   }
 
   // Project activity methods

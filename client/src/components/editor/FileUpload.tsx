@@ -27,13 +27,7 @@ export function FileUpload({ projectId, parentId, onClose, className }: FileUplo
         formData.append('parentId', parentId.toString());
       }
 
-      const res = await apiRequest('POST', `/api/upload/projects/${projectId}/upload-multiple`, formData);
-
-      if (!res.ok) {
-        throw new Error('Failed to upload files');
-      }
-
-      return res.json();
+      return apiRequest('POST', `/api/upload/projects/${projectId}/upload-multiple`, formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/files/${projectId}`] });

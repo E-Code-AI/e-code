@@ -77,9 +77,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
     queryKey: ['/api/projects', projectId, 'themes'],
     queryFn: async () => {
       if (!projectId) return null;
-      const res = await apiRequest('GET', `/api/projects/${projectId}/themes`);
-      if (!res.ok) throw new Error('Failed to fetch theme settings');
-      return await res.json();
+      return apiRequest<ThemeSettings>('GET', `/api/projects/${projectId}/themes`);
     },
     enabled: !!projectId,
   });
@@ -100,9 +98,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   const saveThemeMutation = useMutation({
     mutationFn: async (settings: Partial<ThemeSettings>) => {
       if (!projectId) throw new Error('No project ID');
-      const res = await apiRequest('PUT', `/api/projects/${projectId}/themes`, settings);
-      if (!res.ok) throw new Error('Failed to save theme settings');
-      return await res.json();
+      return apiRequest<ThemeSettings>('PUT', `/api/projects/${projectId}/themes`, settings);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'themes'] });
