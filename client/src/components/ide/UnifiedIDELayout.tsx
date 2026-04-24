@@ -1601,6 +1601,7 @@ function UnifiedIDELayout({
         <ReplitToolsSheet
           open={showToolsSheet}
           onClose={() => setShowToolsSheet(false)}
+          availableTools={availableTools}
           onSelectTool={(tool) => {
             handleAddTool(tool);
             handleAddOpenTab(tool);
@@ -1800,6 +1801,7 @@ function UnifiedIDELayout({
         <ReplitToolsSheet
           open={showToolsSheet}
           onClose={() => setShowToolsSheet(false)}
+          availableTools={availableTools}
           onSelectTool={(tool) => {
             handleAddTool(tool);
             handleAddOpenTab(tool);
@@ -2066,6 +2068,7 @@ function UnifiedIDELayout({
       <ReplitToolsSheet
         open={showToolsSheet}
         onClose={() => setShowToolsSheet(false)}
+        availableTools={availableTools}
         onSelectTool={(tool) => {
           handleAddTool(tool);
           // Also add to open tabs for mobile navigation (harmless on desktop)

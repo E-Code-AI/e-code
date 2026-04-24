@@ -296,6 +296,25 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     badge: 'NEW',
     keywords: ['test', 'recording', 'playback', 'replay'],
   },
+  'screenshots': {
+    id: 'screenshots',
+    label: 'Screenshots',
+    icon: Eye,
+    emoji: '📸',
+    category: 'Tools',
+    description: 'Capture and review project screenshots',
+    keywords: ['screenshots', 'capture', 'images'],
+  },
+  'mcp-suite': {
+    id: 'mcp-suite',
+    label: 'MCP Suite',
+    icon: Layers,
+    emoji: '🧠',
+    category: 'AI',
+    description: 'Manage MCP servers and tools',
+    keywords: ['mcp', 'servers', 'tools', 'context'],
+    badge: 'NEW',
+  },
 
   // AI & Automation
   'ai-assistant': {

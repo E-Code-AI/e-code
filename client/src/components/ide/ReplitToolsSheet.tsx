@@ -24,6 +24,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
+import { TOOL_REGISTRY } from '@/lib/tool-registry';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg 
@@ -48,7 +49,7 @@ export interface ToolItem {
   iconColor?: string;
 }
 
-const defaultTools: ToolItem[] = [
+const fallbackTools: ToolItem[] = [
   { id: 'search', icon: Search, title: 'Search', description: 'Search through your files', section: 'search' },
   { id: 'files', icon: FileText, title: 'Files', description: 'Find a file', section: 'search' },
   { id: 'agent', icon: ReplitAgentIcon, title: 'Agent', description: 'Agent can make changes, review its work, and debug itself automatically.', section: 'tools', iconColor: 'text-[#7C65C1]' },
@@ -75,6 +76,7 @@ interface ReplitToolsSheetProps {
   open: boolean;
   onClose: () => void;
   onSelectTool: (toolId: string) => void;
+  availableTools?: { id: string; label: string; icon: string }[];
   className?: string;
 }
 
@@ -82,19 +84,47 @@ export const ReplitToolsSheet = memo(function ReplitToolsSheet({
   open,
   onClose,
   onSelectTool,
+  availableTools = [],
   className,
 }: ReplitToolsSheetProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
+  const toolItemsSource = useMemo(() => {
+    if (availableTools.length === 0) {
+      return fallbackTools;
+    }
+
+    return availableTools.map((tool) => {
+      const metadata = TOOL_REGISTRY[tool.id];
+      if (!metadata) {
+        return {
+          id: tool.id,
+          icon: FileText,
+          title: tool.label,
+          description: tool.label,
+          section: tool.id === 'search' || tool.id === 'files' ? 'search' : 'tools',
+        } satisfies ToolItem;
+      }
+
+      return {
+        id: metadata.id,
+        icon: metadata.icon,
+        title: metadata.label,
+        description: metadata.description,
+        section: metadata.id === 'search' || metadata.id === 'files' ? 'search' : 'tools',
+      } satisfies ToolItem;
+    });
+  }, [availableTools]);
+
   const filteredTools = useMemo(() => {
-    if (!searchQuery.trim()) return defaultTools;
+    if (!searchQuery.trim()) return toolItemsSource;
     const query = searchQuery.toLowerCase();
-    return defaultTools.filter(
+    return toolItemsSource.filter(
       tool =>
         tool.title.toLowerCase().includes(query) ||
         tool.description.toLowerCase().includes(query)
     );
-  }, [searchQuery]);
+  }, [searchQuery, toolItemsSource]);
 
   const { searchItems, toolItems } = useMemo(() => ({
     searchItems: filteredTools.filter(t => t.section === 'search'),
