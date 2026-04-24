@@ -187,6 +187,7 @@ export function useAutonomousChatIntegration({
   const { addMessage, updateMessage } = useAgentConversationStore();
   const wsRef = useRef<WebSocket | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+  const previewReadyMessageIdRef = useRef<string | null>(null);
   const planTextRef = useRef<string>('');
   const hasConnectedRef = useRef(false);
   // ✅ NEW (Jan 26, 2026): Track task list message ID for in-place updates (Fortune 500 UX)
@@ -931,6 +932,17 @@ export function useAutonomousChatIntegration({
                 if (data.previewUrl && (data.status === 'running' || data.status === 'static')) {
                   clearInterval(timer);
                   previewPollTimerRef.current = null;
+                  if (previewReadyMessageIdRef.current) {
+                    updateMessage(conversationId, previewReadyMessageIdRef.current, {
+                      content: 'Build complete. Preview is ready.',
+                      isStreaming: false,
+                      autonomousPayload: {
+                        phase: 'complete',
+                        progress: 100
+                      }
+                    });
+                    previewReadyMessageIdRef.current = null;
+                  }
                   return;
                 }
               } catch {
@@ -957,20 +969,22 @@ export function useAutonomousChatIntegration({
         
         if (lastMessageIdRef.current) {
           updateMessage(conversationId, lastMessageIdRef.current, {
-            content: 'Build complete! Your app is ready.',
+            content: 'Build complete. Starting preview...',
             isStreaming: false,
             autonomousPayload: {
               phase: 'complete',
               progress: 100
             }
           });
+          previewReadyMessageIdRef.current = lastMessageIdRef.current;
         } else {
           const msg = createAutonomousMessage(
             'autonomous_complete',
-            'Build complete! Your app is ready.',
+            'Build complete. Starting preview...',
             { phase: 'complete', progress: 100 }
           );
           addMessage(conversationId, msg);
+          previewReadyMessageIdRef.current = msg.id;
         }
         lastMessageIdRef.current = null;
         break;
