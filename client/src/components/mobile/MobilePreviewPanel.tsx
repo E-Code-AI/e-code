@@ -281,11 +281,18 @@ export function MobilePreviewPanel({
 
         {/* Iframe content */}
         <div className="flex-1 relative bg-background overflow-hidden">
-          {isStatusLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-            </div>
-          ) : isPreviewRunning || isPreviewStarting ? (
+        {showBuildSplash ? (
+          <SplashScreenSequence
+            phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
+            progress={buildProgress || (buildPhase === 'complete' ? 95 : 10)}
+            currentTask={currentTask || (buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
+            loopUntilComplete
+          />
+        ) : isStatusLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          </div>
+        ) : isPreviewRunning || isPreviewStarting ? (
             <iframe
               ref={iframeRef}
               key={iframeKey}
@@ -470,17 +477,17 @@ export function MobilePreviewPanel({
 
       {/* ── CONTENT AREA ── */}
       <div className="flex-1 relative bg-background overflow-hidden">
-        {isStatusLoading ? (
-          <div className="flex items-center justify-center h-full bg-background">
-            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
-          </div>
-        ) : showBuildSplash ? (
+        {showBuildSplash ? (
           <SplashScreenSequence
             phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
             progress={buildProgress || (buildPhase === 'complete' ? 95 : 10)}
             currentTask={currentTask || (buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
             loopUntilComplete
           />
+        ) : isStatusLoading ? (
+          <div className="flex items-center justify-center h-full bg-background">
+            <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
+          </div>
         ) : isPreviewError ? (
           <ErrorState message={previewStatus?.message} onRetry={handleRetry} isRetrying={startPreviewMutation.isPending} />
         ) : !isPreviewRunning && !isPreviewStarting ? (
