@@ -83,6 +83,7 @@ import storageRouter from './storage.router';
 import kvStoreRouter from './kv-store.router';
 import extensionsRouter from './extensions.router';
 import workflowsRouter from './workflows.router';
+import integrationsRouter from './integrations.router';
 import teamsRouter from './teams.router';
 import polyglotRouter from '../polyglot-routes';
 import twoFactorRouter from './2fa.router';
@@ -531,6 +532,9 @@ export class MainRouter {
 
     // Environment Variables routes (Priorité 1 - Core IDE)
     app.use('/api/env-vars', tierRateLimiters.api, envVarsRouter);
+
+    // Integrations routes (IDE integrations panel)
+    app.use('/api', tierRateLimiters.api, integrationsRouter);
 
     // SSH keys routes (user-level SSH key management)
     app.use('/api/ssh-keys', tierRateLimiters.api, sshKeysRouter);

@@ -114,27 +114,21 @@ export default function IntegrationsPanel({ projectId, onClose }: { projectId: s
   const catalogQuery = useQuery<CatalogEntry[]>({
     queryKey: ["/api/integrations/catalog"],
     queryFn: async () => {
-      const res = await fetch("/api/integrations/catalog", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load catalog");
-      return res.json();
+      return apiRequest<CatalogEntry[]>("GET", "/api/integrations/catalog");
     },
   });
 
   const integrationsQuery = useQuery<ProjectIntegration[]>({
     queryKey: ["/api/projects", projectId, "integrations"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/integrations`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load integrations");
-      return res.json();
+      return apiRequest<ProjectIntegration[]>("GET", `/api/projects/${projectId}/integrations`);
     },
   });
 
   const userConnectionsQuery = useQuery<{ id: string; userId: string; integrationId: string; status: string; connectedAt: string; integration: CatalogEntry }[]>({
     queryKey: ["/api/user/connections"],
     queryFn: async () => {
-      const res = await fetch("/api/user/connections", { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load connections");
-      return res.json();
+      return apiRequest<{ id: string; userId: string; integrationId: string; status: string; connectedAt: string; integration: CatalogEntry }[]>("GET", "/api/user/connections");
     },
   });
 
@@ -142,17 +136,14 @@ export default function IntegrationsPanel({ projectId, onClose }: { projectId: s
     queryKey: ["/api/projects", projectId, "integrations", expandedLogId, "logs"],
     queryFn: async () => {
       if (!expandedLogId) return [];
-      const res = await fetch(`/api/projects/${projectId}/integrations/${expandedLogId}/logs`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load logs");
-      return res.json();
+      return apiRequest<IntegrationLog[]>("GET", `/api/projects/${projectId}/integrations/${expandedLogId}/logs`);
     },
     enabled: !!expandedLogId,
   });
 
   const connectMutation = useMutation({
     mutationFn: async ({ integrationId, config }: { integrationId: string; config: Record<string, string> }) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/integrations`, { integrationId, config });
-      return res.json();
+      return apiRequest<ProjectIntegration>("POST", `/api/projects/${projectId}/integrations`, { integrationId, config });
     },
     onSuccess: (data: ProjectIntegration) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "integrations"] });
@@ -186,8 +177,7 @@ export default function IntegrationsPanel({ projectId, onClose }: { projectId: s
 
   const oauthStartMutation = useMutation({
     mutationFn: async (integrationId: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/integrations/oauth/start`, { integrationId });
-      return res.json();
+      return apiRequest<{ authUrl: string; state: string }>("POST", `/api/projects/${projectId}/integrations/oauth/start`, { integrationId });
     },
     onSuccess: (data: { authUrl: string; state: string }) => {
       window.open(data.authUrl, "_blank", "width=600,height=700,popup=yes");
@@ -206,8 +196,7 @@ export default function IntegrationsPanel({ projectId, onClose }: { projectId: s
   const testMutation = useMutation({
     mutationFn: async (integrationId: string) => {
       setTestingId(integrationId);
-      const res = await apiRequest("POST", `/api/projects/${projectId}/integrations/${integrationId}/test`);
-      return res.json();
+      return apiRequest<any>("POST", `/api/projects/${projectId}/integrations/${integrationId}/test`);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "integrations"] });
@@ -679,9 +668,7 @@ function McpServersSection({ projectId }: { projectId: string }) {
   const mcpServersQuery = useQuery<McpServer[]>({
     queryKey: ["/api/projects", projectId, "mcp", "servers"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/mcp/servers`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load MCP servers");
-      return res.json();
+      return apiRequest<McpServer[]>("GET", `/api/projects/${projectId}/mcp/servers`);
     },
   });
 
@@ -689,9 +676,7 @@ function McpServersSection({ projectId }: { projectId: string }) {
     queryKey: ["/api/projects", projectId, "mcp", "servers", expandedToolsId, "tools"],
     queryFn: async () => {
       if (!expandedToolsId) return [];
-      const res = await fetch(`/api/projects/${projectId}/mcp/servers/${expandedToolsId}/tools`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load tools");
-      return res.json();
+      return apiRequest<McpTool[]>("GET", `/api/projects/${projectId}/mcp/servers/${expandedToolsId}/tools`);
     },
     enabled: !!expandedToolsId,
   });
@@ -706,19 +691,18 @@ function McpServersSection({ projectId }: { projectId: string }) {
           baseUrl: mcpBaseUrl,
           headers: headersObj,
         });
-        const testData = await testRes.json();
+        const testData = testRes as any;
         if (!testData.success) {
           throw new Error(testData.message || "Connection test failed. Fix the URL or headers and try again.");
         }
       }
       const headersObj = Object.fromEntries(mcpHeaders.map(h => [h.key, h.value]));
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers`, {
+      return apiRequest<McpServer>("POST", `/api/projects/${projectId}/mcp/servers`, {
         name: mcpName,
         baseUrl: mcpBaseUrl,
         headers: headersObj,
         serverType: "remote",
       });
-      return res.json();
     },
     onSuccess: async (server: McpServer) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -744,8 +728,7 @@ function McpServersSection({ projectId }: { projectId: string }) {
   const testMcpServer = useMutation({
     mutationFn: async (serverId: string) => {
       setTestingServerId(serverId);
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/test`);
-      return res.json();
+      return apiRequest<{ success: boolean; message: string }>("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/test`);
     },
     onSuccess: (data: { success: boolean; message: string }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -766,11 +749,10 @@ function McpServersSection({ projectId }: { projectId: string }) {
     mutationFn: async () => {
       setIsTesting(true);
       const headersObj = Object.fromEntries(mcpHeaders.map(h => [h.key, h.value]));
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers/test-remote`, {
+      return apiRequest<{ success: boolean; message: string }>("POST", `/api/projects/${projectId}/mcp/servers/test-remote`, {
         baseUrl: mcpBaseUrl,
         headers: headersObj,
       });
-      return res.json();
     },
     onSuccess: (data: { success: boolean; message: string }) => {
       if (data.success) setTestPassed(true);
