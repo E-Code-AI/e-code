@@ -451,12 +451,12 @@ export class CollaborativeEditingService {
    * Generate a shareable collaboration link
    */
   async generateCollaborationLink(projectId: string, fileId: number): Promise<string> {
-    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5000';
+    const baseUrl = (process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5000').replace(/\/$/, '');
     const token = crypto.randomBytes(32).toString('hex');
     
-    // Store the token in database for verification (you might want to add a collaboration_tokens table)
-    // For now, we'll return a simple link structure
-    return `${baseUrl}/collaborate/${projectId}/${fileId}?token=${token}`;
+    // We do not have a dedicated /collaborate route wired in the current app shell.
+    // Return a real IDE URL so the shared link is immediately usable.
+    return `${baseUrl}/ide/${projectId}?collaboration=${token}`;
   }
 
   /**

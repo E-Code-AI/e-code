@@ -101,22 +101,18 @@ export function CollaborativeProvider({
     };
   }, []);
 
-  const initializeYjs = useCallback(() => {
+  const initializeYjs = useCallback((currentUserId: string, currentUserName: string, currentColor: string) => {
     if (!editor || collaborationExtensionsRef.current || !ydocRef.current || !awarenessRef.current) return;
 
     const ydoc = ydocRef.current;
     const awareness = awarenessRef.current;
 
-    const userId = localStorage.getItem('userId') || `user-${Date.now()}`;
-    const userName = localStorage.getItem('userName') || 'Anonymous';
-    const color = userColor || userColors[Math.floor(Math.random() * userColors.length)];
-
     const extensions = createCollaborationExtension({
       doc: ydoc,
       provider: providerRef.current,
-      userId,
-      userName,
-      userColor: color,
+      userId: currentUserId,
+      userName: currentUserName,
+      userColor: currentColor,
       awareness,
       textField: 'content',
     });
@@ -128,7 +124,7 @@ export function CollaborativeProvider({
       setParticipants(newParticipants);
     });
 
-  }, [editor, userColor, convertCollaboratorToParticipant]);
+  }, [editor, convertCollaboratorToParticipant]);
 
   useEffect(() => {
     if (!enabled || !editor) return;
@@ -157,7 +153,7 @@ export function CollaborativeProvider({
     awarenessRef.current = provider.awareness;
     setSessionId(`project-${projectId}-file-${fileId}`);
     setUserColor(color);
-    initializeYjs();
+    initializeYjs(currentUserId, currentUserName, color);
 
     const handleStatus = (event: { status: string }) => {
       const connected = event.status === 'connected';
@@ -202,11 +198,11 @@ export function CollaborativeProvider({
 
   const generateShareLink = async (): Promise<string> => {
     try {
-      const response = await apiRequest('POST', '/api/collaboration/generate-link', { projectId, fileId });
-
-      if (!response.ok) throw new Error('Failed to generate share link');
-
-      const { link } = await response.json();
+      const response = await apiRequest<{ link?: string }>('POST', '/api/collaboration/generate-link', { projectId, fileId });
+      const link = response?.link;
+      if (!link) {
+        throw new Error('Failed to generate share link');
+      }
       setShareLink(link);
       return link;
     } catch (error) {

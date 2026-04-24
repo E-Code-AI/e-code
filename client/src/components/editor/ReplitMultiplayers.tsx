@@ -159,132 +159,6 @@ export function ReplitMultiplayers({
     refetchInterval: isConnected ? false : 30000,
   });
 
-  const connectWebSocket = useCallback(() => {
-    if (!projectId || !user || socketRef.current?.connected) return;
-
-    try {
-      const socket = io(window.location.origin, {
-        path: '/ws/collaboration',
-        query: {
-          projectId: String(projectId),
-          odUserId: String(user.id),
-          username: user.username || 'Anonymous',
-          avatar: user.avatarUrl || undefined,
-        },
-        transports: ['websocket', 'polling'],
-        withCredentials: true,
-        forceNew: true,
-        timeout: 30000,
-      });
-
-      socketRef.current = socket;
-
-      socket.on('connect', () => {
-        setIsConnected(true);
-        reconnectAttemptsRef.current = 0;
-
-        addActivityEvent({
-          type: 'join',
-          userId: String(user.id),
-          username: user.username || 'You',
-          message: 'You joined the session'
-        });
-      });
-
-      socket.on('collaborator:joined', (message: any) => {
-        handleWebSocketMessage({
-          type: 'collaborators_update',
-          data: message.collaborators.map((c: any) => ({
-            id: c.id,
-            userId: c.odUserId,
-            username: c.username,
-            avatarUrl: c.avatar,
-            isOnline: true,
-            role: 'editor',
-            currentFile: c.currentFile,
-            cursor: c.cursor,
-            color: c.color,
-            lastSeen: c.lastSeen,
-          })),
-        });
-      });
-
-      socket.on('collaborator:left', (message: any) => {
-        handleWebSocketMessage({
-          type: 'collaborators_update',
-          data: message.collaborators.map((c: any) => ({
-            id: c.id,
-            userId: c.odUserId,
-            username: c.username,
-            avatarUrl: c.avatar,
-            isOnline: true,
-            role: 'editor',
-            currentFile: c.currentFile,
-            cursor: c.cursor,
-            color: c.color,
-            lastSeen: c.lastSeen,
-          })),
-        });
-      });
-
-      socket.on('cursor:updated', (data: any) => {
-        handleWebSocketMessage({
-          type: 'cursor_update',
-          data: {
-            userId: data.odUserId,
-            position: {
-              line: data.cursor?.lineNumber || 0,
-              column: data.cursor?.column || 0,
-            },
-          },
-        });
-      });
-
-      socket.on('activity:updated', (data: any) => {
-        if (!data.currentFile) return;
-        handleWebSocketMessage({
-          type: 'file_open',
-          data: {
-            userId: data.odUserId,
-            username: data.username || 'Someone',
-            fileName: data.currentFile,
-          },
-        });
-      });
-
-      socket.on('status:updated', (data: any) => {
-        handleWebSocketMessage({
-          type: 'status_change',
-          data: {
-            userId: data.odUserId,
-            status: data.status === 'active' ? 'online' : data.status,
-          },
-        });
-      });
-
-      socket.on('disconnect', () => {
-        setIsConnected(false);
-        socketRef.current = null;
-
-        if (reconnectAttemptsRef.current < 5) {
-          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
-          reconnectAttemptsRef.current++;
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            connectWebSocket();
-          }, delay);
-        }
-      });
-
-      socket.on('connect_error', (error) => {
-        console.error('Socket.IO collaboration error:', error);
-        setIsConnected(false);
-      });
-    } catch (error) {
-      console.error('Failed to connect to collaboration server:', error);
-    }
-  }, [projectId, user, addActivityEvent, handleWebSocketMessage]);
-
   const handleWebSocketMessage = useCallback((message: any) => {
     switch (message.type) {
       case 'active_users':
@@ -414,6 +288,132 @@ export function ReplitMultiplayers({
     }
   }, [liveCollaborators, followingUserId, toast]);
 
+  const connectWebSocket = useCallback(() => {
+    if (!projectId || !user || socketRef.current?.connected) return;
+
+    try {
+      const socket = io(window.location.origin, {
+        path: '/ws/collaboration',
+        query: {
+          projectId: String(projectId),
+          odUserId: String(user.id),
+          username: user.username || 'Anonymous',
+          avatar: user.avatarUrl || undefined,
+        },
+        transports: ['websocket', 'polling'],
+        withCredentials: true,
+        forceNew: true,
+        timeout: 30000,
+      });
+
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        setIsConnected(true);
+        reconnectAttemptsRef.current = 0;
+
+        addActivityEvent({
+          type: 'join',
+          userId: String(user.id),
+          username: user.username || 'You',
+          message: 'You joined the session'
+        });
+      });
+
+      socket.on('collaborator:joined', (message: any) => {
+        handleWebSocketMessage({
+          type: 'collaborators_update',
+          data: message.collaborators.map((c: any) => ({
+            id: c.id,
+            userId: c.odUserId,
+            username: c.username,
+            avatarUrl: c.avatar,
+            isOnline: true,
+            role: 'editor',
+            currentFile: c.currentFile,
+            cursor: c.cursor,
+            color: c.color,
+            lastSeen: c.lastSeen,
+          })),
+        });
+      });
+
+      socket.on('collaborator:left', (message: any) => {
+        handleWebSocketMessage({
+          type: 'collaborators_update',
+          data: message.collaborators.map((c: any) => ({
+            id: c.id,
+            userId: c.odUserId,
+            username: c.username,
+            avatarUrl: c.avatar,
+            isOnline: true,
+            role: 'editor',
+            currentFile: c.currentFile,
+            cursor: c.cursor,
+            color: c.color,
+            lastSeen: c.lastSeen,
+          })),
+        });
+      });
+
+      socket.on('cursor:updated', (data: any) => {
+        handleWebSocketMessage({
+          type: 'cursor_update',
+          data: {
+            userId: data.odUserId,
+            position: {
+              line: data.cursor?.lineNumber || 0,
+              column: data.cursor?.column || 0,
+            },
+          },
+        });
+      });
+
+      socket.on('activity:updated', (data: any) => {
+        if (!data.currentFile) return;
+        handleWebSocketMessage({
+          type: 'file_open',
+          data: {
+            userId: data.odUserId,
+            username: data.username || 'Someone',
+            fileName: data.currentFile,
+          },
+        });
+      });
+
+      socket.on('status:updated', (data: any) => {
+        handleWebSocketMessage({
+          type: 'status_change',
+          data: {
+            userId: data.odUserId,
+            status: data.status === 'active' ? 'online' : data.status,
+          },
+        });
+      });
+
+      socket.on('disconnect', () => {
+        setIsConnected(false);
+        socketRef.current = null;
+
+        if (reconnectAttemptsRef.current < 5) {
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
+          reconnectAttemptsRef.current++;
+          
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connectWebSocket();
+          }, delay);
+        }
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('Socket.IO collaboration error:', error);
+        setIsConnected(false);
+      });
+    } catch (error) {
+      console.error('Failed to connect to collaboration server:', error);
+    }
+  }, [projectId, user, addActivityEvent, handleWebSocketMessage]);
+
   useEffect(() => {
     if (projectId) {
       connectWebSocket();
@@ -540,11 +540,26 @@ export function ReplitMultiplayers({
   };
 
   const handleCopyLink = async () => {
-    const inviteLink = `${window.location.origin}/join/${projectId}`;
-    await navigator.clipboard.writeText(inviteLink);
-    setCopiedLink(true);
-    toast({ title: 'Link copied', description: 'Invite link copied to clipboard' });
-    setTimeout(() => setCopiedLink(false), 2000);
+    try {
+      const inviteLink = fileId
+        ? (await apiRequest<{ link?: string }>('POST', '/api/collaboration/generate-link', { projectId, fileId }))?.link
+        : `${window.location.origin}/ide/${projectId}`;
+
+      if (!inviteLink) {
+        throw new Error('Unable to generate invite link');
+      }
+
+      await navigator.clipboard.writeText(inviteLink);
+      setCopiedLink(true);
+      toast({ title: 'Link copied', description: 'Invite link copied to clipboard' });
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch (error: any) {
+      toast({
+        title: 'Copy failed',
+        description: error?.message || 'Failed to generate invite link',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleFollowUser = (collaboratorId: string) => {
