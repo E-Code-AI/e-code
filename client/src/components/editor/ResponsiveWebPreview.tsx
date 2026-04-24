@@ -344,6 +344,8 @@ export function ResponsiveWebPreview({
   const showSplashSequence =
     currentState === 'building' ||
     currentState === 'starting' ||
+    (currentState === 'stopped' && (autoStartAttemptedRef.current || buildPhase === 'complete')) ||
+    (currentState === 'no-content' && (autoStartAttemptedRef.current || buildPhase === 'complete')) ||
     (currentState === 'running' && iframeLoading && (buildPhase === 'complete' || isStartingPreview));
   const splashTask =
     currentTask ||

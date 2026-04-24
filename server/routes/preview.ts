@@ -272,8 +272,8 @@ async function workspaceHasRunnableFiles(projectId: string): Promise<boolean> {
 }
 
 const resolvePreviewAccess = async (req: any, res: any) => {
-  const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
-  const projectIdParam = req.params.projectId || req.params.id;
+  const bootstrapToken = req?.query?.bootstrap || req?.headers?.['x-bootstrap-token'];
+  const projectIdParam = req?.params?.projectId || req?.params?.id;
   const projectIdNum = parseInt(projectIdParam, 10);
   if (isNaN(projectIdNum) || projectIdNum <= 0) {
     res.status(400).json({ message: "Invalid project ID" });
@@ -304,7 +304,7 @@ const resolvePreviewAccess = async (req: any, res: any) => {
     }
   }
 
-  const userId = req.user?.id;
+  const userId = req?.user?.id;
   if (!userId) {
     res.status(401).json({ message: "Unauthorized" });
     return null;
