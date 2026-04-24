@@ -406,17 +406,14 @@ export function useIDEWorkspace(projectId: string) {
     setActiveTab(tabId);
   }, [files, isLoadingFiles, tabs, selectedFileId]);
 
-  // Auto-start runtime
+  // Auto-start preview
   useEffect(() => {
     if (!runtimeAutoStarted && projectId && project && !isLoadingProject) {
       setRuntimeAutoStarted(true);
-      apiRequest<{ success?: boolean; executionId?: string }>('POST', '/api/runtime/start', {
-        projectId,
-        mainFile: undefined,
-        timeout: 30000
-      }).then((data) => {
+      apiRequest<{ success?: boolean; executionId?: string; runId?: string }>('POST', `/api/preview/projects/${projectId}/preview/start`, {})
+      .then((data) => {
         setIsRunning(true);
-        if (data?.executionId) setExecutionId(data.executionId);
+        if (data?.executionId || data?.runId) setExecutionId((data?.executionId || data?.runId) as string);
       }).catch(() => {
       });
     }
@@ -449,17 +446,17 @@ export function useIDEWorkspace(projectId: string) {
   const handleRunStop = useCallback(async () => {
     if (isRunning) {
       try {
-        await apiRequest('POST', '/api/runtime/stop', { projectId, executionId });
+        await apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {});
       } catch (_) {}
       setIsRunning(false);
       setExecutionId(undefined);
     } else {
       try {
-        const data = await apiRequest<{ success?: boolean; executionId?: string }>(
-          'POST', '/api/runtime/start', { projectId, mainFile: undefined, timeout: 30000 }
+        const data = await apiRequest<{ success?: boolean; executionId?: string; runId?: string }>(
+          'POST', `/api/preview/projects/${projectId}/preview/start`, {}
         );
         setIsRunning(true);
-        if (data?.executionId) setExecutionId(data.executionId);
+        if (data?.executionId || data?.runId) setExecutionId((data?.executionId || data?.runId) as string);
       } catch (_) {
         setIsRunning(false);
       }
