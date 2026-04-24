@@ -63,7 +63,8 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
     },
     onSuccess: () => {
       toast({ title: 'Checkpoint restored', description: 'Your project has been restored to the selected checkpoint' });
-      queryClient.invalidateQueries({ queryKey: ['/api/files', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
       setShowConfirmRestore(false);
       onRestore?.(selectedCheckpoint!.id);
     },

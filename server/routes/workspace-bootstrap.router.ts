@@ -351,9 +351,13 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
         try {
           const installStartTime = Date.now();
           
-          await execAsync('npm install --prefer-offline --no-audit', { 
+          await execAsync('npm install --include=dev --prefer-offline --no-audit', { 
             cwd: scaffoldPath, 
-            timeout: 120000 
+            timeout: 120000,
+            env: {
+              ...process.env,
+              NODE_ENV: 'development',
+            }
           });
           
           logger.info(`[Bootstrap] ✅ Background npm install completed in ${Date.now() - installStartTime}ms`, {
@@ -369,9 +373,13 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
       // Legacy blocking behavior
       try {
         logger.info(`[Bootstrap] Running npm install in ${scaffoldPath}`);
-        const { stdout } = await execAsync('npm install --prefer-offline --no-audit', { 
+        const { stdout } = await execAsync('npm install --include=dev --prefer-offline --no-audit', { 
           cwd: scaffoldPath, 
-          timeout: 120000 
+          timeout: 120000,
+          env: {
+            ...process.env,
+            NODE_ENV: 'development',
+          }
         });
         logger.info(`[Bootstrap] ✅ npm install completed`, { 
           stdout: stdout.substring(0, 500) 
