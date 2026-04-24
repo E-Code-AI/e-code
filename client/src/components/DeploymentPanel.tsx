@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface DeploymentData {
   id?: number;
@@ -57,6 +58,8 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   const [, navigate] = useLocation();
   const [showAgentSuggestions, setShowAgentSuggestions] = React.useState(true);
   const [showBuildErrors, setShowBuildErrors] = React.useState(true);
+  const previousStatusRef = React.useRef<DeploymentData['status']>();
+  const { toast } = useToast();
 
   // Fetch deployment data from the backend
   const { data: deploymentResponse, isLoading, refetch } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
@@ -83,17 +86,24 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleRedeploy = async () => {
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
+      await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
         type: deployment?.type || 'autoscale',
         regions: deployment?.regions || ['us-east-1'],
         environment: deployment?.environment || 'production',
         sslEnabled: true
       });
-      if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
-      }
+      toast({
+        title: 'Deployment started',
+        description: 'Your latest build is being deployed.',
+      });
+      await queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
     } catch (error) {
       console.error('Failed to redeploy:', error);
+      toast({
+        title: 'Deployment failed to start',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -107,6 +117,30 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
       console.error('Failed to run security scan:', error);
     }
   };
+
+  React.useEffect(() => {
+    const currentStatus = deployment?.status;
+    const previousStatus = previousStatusRef.current;
+
+    if (previousStatus && previousStatus !== currentStatus) {
+      if ((previousStatus === 'building' || previousStatus === 'deploying') && (currentStatus === 'running' || currentStatus === 'active')) {
+        toast({
+          title: 'Deploy complete',
+          description: deployment?.url || deployment?.domain || 'Your deployment is now live.',
+        });
+      }
+
+      if ((previousStatus === 'building' || previousStatus === 'deploying') && currentStatus === 'failed') {
+        toast({
+          title: 'Deploy failed',
+          description: 'Check the build errors for details.',
+          variant: 'destructive',
+        });
+      }
+    }
+
+    previousStatusRef.current = currentStatus;
+  }, [deployment?.status, deployment?.url, deployment?.domain, toast]);
 
   if (isLoading) {
     return (

@@ -489,6 +489,54 @@ export function createTerminalWebSocket(
 }
 
 /**
+ * Create a resilient WebSocket instance for shell connections on the /shell endpoint.
+ * This is used by the mounted IDE terminal panel.
+ */
+export function createShellWebSocket(
+  projectId: string | number,
+  sessionId: string
+): ResilientWebSocket {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const params = new URLSearchParams({
+    projectId: String(projectId),
+    sessionId,
+  });
+
+  return new ResilientWebSocket({
+    url: `${protocol}//${window.location.host}/shell?${params.toString()}`,
+    maxReconnectAttempts: 15,
+    baseDelay: 500,
+    maxDelay: 30000,
+    jitterFactor: 0.25,
+    enableHeartbeat: false,
+    circuitBreakerThreshold: 5,
+    circuitBreakerResetTime: 45000,
+  });
+}
+
+/**
+ * Create a resilient WebSocket instance for preview updates.
+ */
+export function createPreviewWebSocket(
+  projectId: string | number
+): ResilientWebSocket {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+  return new ResilientWebSocket({
+    url: `${protocol}//${window.location.host}/ws/preview?projectId=${projectId}`,
+    maxReconnectAttempts: 20,
+    baseDelay: 750,
+    maxDelay: 30000,
+    jitterFactor: 0.25,
+    enableHeartbeat: true,
+    heartbeatInterval: 45000,
+    heartbeatTimeout: 15000,
+    circuitBreakerThreshold: 6,
+    circuitBreakerResetTime: 60000,
+  });
+}
+
+/**
  * Create a resilient WebSocket instance for security scan connections
  * NOTE: Heartbeat is ENABLED - uses JSON protocol
  */

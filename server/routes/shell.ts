@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
-import { spawn, ChildProcess } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import * as os from 'os';
@@ -22,12 +21,47 @@ const router = Router();
 interface ShellSession {
   id: string;
   userId: number;
-  process: ChildProcess;
+  process: any;
   cwd: string;
   created: Date;
 }
 
 const shellSessions = new Map<string, ShellSession>();
+let ptyModule: typeof import('node-pty') | null = null;
+
+export function handleShellClientMessage(
+  raw: string,
+  shell: { write: (data: string) => void; resize: (cols: number, rows: number) => void }
+): 'input' | 'resize' | 'raw' {
+  try {
+    const message = JSON.parse(raw);
+
+    if (message.type === 'input' && typeof message.data === 'string') {
+      shell.write(message.data);
+      return 'input';
+    }
+
+    if (message.type === 'resize' && Number.isFinite(message.cols) && Number.isFinite(message.rows)) {
+      shell.resize(
+        Math.max(1, Number(message.cols)),
+        Math.max(1, Number(message.rows))
+      );
+      return 'resize';
+    }
+  } catch {
+    // Fall back to raw writes for legacy clients.
+  }
+
+  shell.write(raw);
+  return 'raw';
+}
+
+async function getPty(): Promise<typeof import('node-pty')> {
+  if (!ptyModule) {
+    ptyModule = await import('node-pty');
+  }
+  return ptyModule;
+}
 
 async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<number | null> {
   const requestUser = (req as any).user;
@@ -129,7 +163,10 @@ function initializeShellWebSocket() {
       try {
         const { storage } = await import('../storage');
         const project = await storage.getProject(projectId);
-        const hasAccess = !!project && await storage.isProjectCollaborator(projectId, userId);
+        const hasAccess = !!project && (
+          project.ownerId === userId ||
+          await storage.isProjectCollaborator(projectId, userId)
+        );
         if (!hasAccess) {
           ws.close(1008, 'Access denied: You do not have access to this project');
           return;
@@ -210,20 +247,23 @@ echo ""
       }
     }
 
-    // Spawn bash process
-    const shell = spawn('bash', ['--login'], {
+    const pty = await getPty();
+    const shellBinary = process.env.SHELL || 'bash';
+    const shell = pty.spawn(shellBinary, ['-i'], {
+      name: 'xterm-256color',
       cwd: shellCwd,
+      cols: 120,
+      rows: 30,
       env: {
         ...process.env,
-        HOME: shellCwd,
+        HOME: userHome,
         USER: `user${userId}`,
-        SHELL: '/bin/bash',
+        SHELL: shellBinary,
         TERM: 'xterm-256color',
         COLORTERM: 'truecolor',
         LANG: 'en_US.UTF-8',
         LC_ALL: 'en_US.UTF-8',
       },
-      shell: false,
     });
 
     const session: ShellSession = {
@@ -236,32 +276,23 @@ echo ""
 
     shellSessions.set(sessionId, session);
 
-    // Handle shell output
-    shell.stdout.on('data', (data) => {
+    shell.onData((data: string) => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data.toString());
+        ws.send(data);
       }
     });
 
-    shell.stderr.on('data', (data) => {
+    shell.onExit(({ exitCode }: { exitCode: number }) => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data.toString());
-      }
-    });
-
-    // Handle shell exit
-    shell.on('exit', (code) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(`\r\n\x1b[31mShell exited with code ${code}\x1b[0m\r\n`);
+        ws.send(`\r\n\x1b[31mShell exited with code ${exitCode}\x1b[0m\r\n`);
         ws.close();
       }
       shellSessions.delete(sessionId);
     });
 
-    // Handle WebSocket messages (user input)
+    // Handle WebSocket messages from xterm.js.
     ws.on('message', (data) => {
-      const input = data.toString();
-      shell.stdin.write(input);
+      handleShellClientMessage(data.toString(), shell);
     });
 
     // Handle WebSocket close

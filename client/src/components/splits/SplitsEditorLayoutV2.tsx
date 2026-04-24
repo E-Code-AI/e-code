@@ -4,37 +4,163 @@
  * Simplified version to prove floating panes work on desktop
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { File } from '@shared/schema';
 import { SplitsLayout } from './SplitsLayout';
 import { ReplitToolDock } from '../editor/ReplitToolDock';
-import { ReplitFileSidebar } from '../editor/ReplitFileSidebar';
-import { ReplitSearchPanel } from '../editor/ReplitSearchPanel';
-import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
-import { ReplitGitPanel } from '../editor/ReplitGitPanel';
-import { ReplitDebuggerPanel } from '../editor/ReplitDebuggerPanel';
-import { ReplitTestingPanel } from '../editor/ReplitTestingPanel';
-import { ReplitDatabasePanel } from '../editor/ReplitDatabasePanel';
-import { ReplitPackagesPanel } from '../editor/ReplitPackagesPanel';
-import { ReplitHistoryPanel } from '../editor/ReplitHistoryPanel';
-import { ReplitSecretsPanel } from '../editor/ReplitSecretsPanel';
-import { ReplitSettingsPanel } from '../editor/ReplitSettingsPanel';
-import { ReplitProblemsPanel } from '../editor/ReplitProblemsPanel';
-import { ReplitOutputPanel } from '../editor/ReplitOutputPanel';
 import { ReplitStatusBar } from '../editor/ReplitStatusBar';
 import { ReplitBreadcrumbs } from '../editor/ReplitBreadcrumbs';
-import { ReplitTerminal } from '../terminal/ReplitTerminal';
 import { MultiTabEditor } from '../editor/MultiTabEditor';
+import { ReplitFileExplorer } from '../editor/ReplitFileExplorer';
 import { CommandPalette, generateDefaultCommands } from '../command-palette/CommandPalette';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLayoutStore } from '@/../../shared/stores/layoutStore';
 import useSplitsStore from '@/stores/splits-store';
 import { useDeviceType } from '@/hooks/use-media-query';
 import { createEditorDefaultLayout, TOOL_DOCK_TO_TAB_MAP } from './EditorDefaultLayout';
-import { Play, Share2, Rocket } from 'lucide-react';
+import { Share2, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { isPaneGroup } from '@/types/splits';
+import { RunButton } from '@/components/RunButton';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { PanelShell } from '../editor/PanelShell';
+
+const ReplitSearchPanel = instrumentedLazy(() => import('../editor/ReplitSearchPanel').then((module) => ({ default: module.ReplitSearchPanel })), 'ReplitSearchPanel');
+const ReplitAgentPanelV3 = instrumentedLazy(() => import('../ai/ReplitAgentPanelV3').then((module) => ({ default: module.ReplitAgentPanelV3 })), 'ReplitAgentPanelV3');
+const ReplitGitPanel = instrumentedLazy(() => import('../editor/ReplitGitPanel').then((module) => ({ default: module.ReplitGitPanel })), 'ReplitGitPanel');
+const ReplitDebuggerPanel = instrumentedLazy(() => import('../editor/ReplitDebuggerPanel').then((module) => ({ default: module.ReplitDebuggerPanel })), 'ReplitDebuggerPanel');
+const ReplitTestingPanel = instrumentedLazy(() => import('../editor/ReplitTestingPanel').then((module) => ({ default: module.ReplitTestingPanel })), 'ReplitTestingPanel');
+const ReplitDatabasePanel = instrumentedLazy(() => import('../editor/ReplitDatabasePanel').then((module) => ({ default: module.ReplitDatabasePanel })), 'ReplitDatabasePanel');
+const ReplitPackagesPanel = instrumentedLazy(() => import('../editor/ReplitPackagesPanel').then((module) => ({ default: module.ReplitPackagesPanel })), 'ReplitPackagesPanel');
+const ReplitHistoryPanel = instrumentedLazy(() => import('../editor/ReplitHistoryPanel').then((module) => ({ default: module.ReplitHistoryPanel })), 'ReplitHistoryPanel');
+const ReplitSecretsPanel = instrumentedLazy(() => import('../editor/ReplitSecretsPanel').then((module) => ({ default: module.ReplitSecretsPanel })), 'ReplitSecretsPanel');
+const ReplitSettingsPanel = instrumentedLazy(() => import('../editor/ReplitSettingsPanel').then((module) => ({ default: module.ReplitSettingsPanel })), 'ReplitSettingsPanel');
+const ReplitProblemsPanel = instrumentedLazy(() => import('../editor/ReplitProblemsPanel').then((module) => ({ default: module.ReplitProblemsPanel })), 'ReplitProblemsPanel');
+const ReplitOutputPanel = instrumentedLazy(() => import('../editor/ReplitOutputPanel').then((module) => ({ default: module.ReplitOutputPanel })), 'ReplitOutputPanel');
+const ReplitTerminalPanel = instrumentedLazy(() => import('../editor/ReplitTerminalPanel').then((module) => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel');
+const ResponsiveWebPreview = instrumentedLazy(() => import('../editor/ResponsiveWebPreview').then((module) => ({ default: module.ResponsiveWebPreview })), 'ResponsiveWebPreview');
+
+function ProjectFileExplorer({ projectId }: { projectId: string }) {
+  const { openFile, activeFileId } = useLayoutStore();
+
+  return (
+    <ReplitFileExplorer
+      projectId={projectId}
+      selectedFileId={activeFileId}
+      onFileSelect={(file) => {
+        if (!file.type || file.type === 'file') {
+          openFile(file.id);
+        }
+      }}
+    />
+  );
+}
+
+function ProjectEditorPane({ projectId }: { projectId: string }) {
+  const { toast } = useToast();
+  const saveTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+  const lastSaveToastAtRef = useRef(0);
+  const { activeFileId, openFile } = useLayoutStore();
+  const { data: files = [] } = useQuery<File[]>({
+    queryKey: [`/api/projects/${projectId}/files`],
+    enabled: !!projectId,
+  });
+
+  const saveFileMutation = useMutation({
+    mutationFn: async ({ fileId, content }: { fileId: number; content: string }) =>
+      apiRequest<File>('PATCH', `/api/projects/${projectId}/files/by-id/${fileId}`, { content }),
+    onSuccess: (updatedFile) => {
+      queryClient.setQueryData<File[]>([`/api/projects/${projectId}/files`], (existing = []) =>
+        existing.map((file) => (file.id === updatedFile.id ? { ...file, ...updatedFile } : file))
+      );
+
+      if (Date.now() - lastSaveToastAtRef.current > 4000) {
+        lastSaveToastAtRef.current = Date.now();
+        toast({
+          title: 'File saved',
+          description: `${updatedFile.name || 'Changes'} synced to your workspace.`,
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to save file',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!activeFileId) {
+      const firstFile = files.find((file) => !file.isDirectory);
+      if (firstFile?.id) {
+        openFile(firstFile.id);
+      }
+    }
+  }, [activeFileId, files, openFile]);
+
+  useEffect(() => {
+    return () => {
+      for (const timeout of saveTimeoutsRef.current.values()) {
+        clearTimeout(timeout);
+      }
+      saveTimeoutsRef.current.clear();
+    };
+  }, []);
+
+  return (
+    <div className="h-full flex flex-col bg-[var(--ecode-editor-bg)]">
+      <EditorBreadcrumbs projectId={projectId} files={files} />
+      <div className="flex-1 overflow-hidden">
+        <MultiTabEditor
+          files={files}
+          onChange={(fileId, content) => {
+            const existingTimeout = saveTimeoutsRef.current.get(fileId);
+            if (existingTimeout) {
+              clearTimeout(existingTimeout);
+            }
+
+            const timeout = setTimeout(() => {
+              saveFileMutation.mutate({ fileId, content });
+              saveTimeoutsRef.current.delete(fileId);
+            }, 400);
+
+            saveTimeoutsRef.current.set(fileId, timeout);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function EditorBreadcrumbs({ projectId, files }: { projectId: string; files: File[] }) {
+  const { activeFileId } = useLayoutStore();
+  const activeFilePath = files.find((file) => file.id === activeFileId)?.path || '';
+
+  return (
+    <ReplitBreadcrumbs
+      filePath={activeFilePath}
+      onNavigate={(path) => {
+        const target = files.find((file) => file.path === path);
+        if (target?.id) {
+          useLayoutStore.getState().openFile(target.id);
+        }
+      }}
+    />
+  );
+}
+
+function ProjectPreviewPane({ projectId }: { projectId: string }) {
+  return (
+    <PanelShell title="Preview">
+      <ResponsiveWebPreview projectId={projectId} className="h-full" />
+    </PanelShell>
+  );
+}
 
 interface SplitsEditorLayoutV2Props {
   files?: File[];
@@ -61,6 +187,7 @@ export function SplitsEditorLayoutV2({
 }: SplitsEditorLayoutV2Props) {
   const commandPalette = useCommandPalette();
   const { activeTool, setActiveTool } = useLayoutStore();
+  const effectiveProjectId = projectId || '1';
   
   // Device detection for responsive UI (tablet gets compact mode, laptop gets desktop mode)
   const rawDeviceType = useDeviceType();
@@ -83,136 +210,108 @@ export function SplitsEditorLayoutV2({
     if (!root) {
       const panelContent = {
         files: (
-          <ReplitFileSidebar
-            files={files}
-            activeFileId={activeFileId}
-            onFileSelect={onFileSelect}
-            onFileCreate={onFileCreate}
-            onFileDelete={onFileDelete}
-            onFileRename={onFileRename}
-            projectName={projectName}
-            projectId={Number(projectId)}
-          />
+          <PanelShell title="Files">
+            <ProjectFileExplorer projectId={effectiveProjectId} />
+          </PanelShell>
         ),
-        search: <ReplitSearchPanel />,
-        git: <ReplitGitPanel projectId={projectId} />,
-        agent: <ReplitAgentPanelV3 projectId={projectId || '1'} mode={agentMode as 'desktop' | 'tablet' | 'mobile'} />,
-        debugger: <ReplitDebuggerPanel projectId={projectId} />,
-        testing: <ReplitTestingPanel projectId={projectId} />,
-        database: <ReplitDatabasePanel projectId={projectId} />,
-        packages: <ReplitPackagesPanel projectId={projectId} />,
-        history: <ReplitHistoryPanel projectId={projectId} />,
-        secrets: <ReplitSecretsPanel projectId={projectId} />,
-        settings: <ReplitSettingsPanel />,
+        search: (
+          <PanelShell title="Search">
+            <ReplitSearchPanel />
+          </PanelShell>
+        ),
+        git: (
+          <PanelShell title="Git">
+            <ReplitGitPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        agent: (
+          <PanelShell title="AI Agent">
+            <ReplitAgentPanelV3 projectId={effectiveProjectId} mode={agentMode as 'desktop' | 'tablet' | 'mobile'} />
+          </PanelShell>
+        ),
+        debugger: (
+          <PanelShell title="Debugger">
+            <ReplitDebuggerPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        testing: (
+          <PanelShell title="Testing">
+            <ReplitTestingPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        database: (
+          <PanelShell title="Database">
+            <ReplitDatabasePanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        packages: (
+          <PanelShell title="Packages">
+            <ReplitPackagesPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        history: (
+          <PanelShell title="History">
+            <ReplitHistoryPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        secrets: (
+          <PanelShell title="Secrets">
+            <ReplitSecretsPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
+        settings: (
+          <PanelShell title="Settings">
+            <ReplitSettingsPanel />
+          </PanelShell>
+        ),
         editor: (
-          <div className="h-full flex flex-col bg-[var(--ecode-editor-bg)]">
-            <ReplitBreadcrumbs
-              filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-              onNavigate={(path) => {}}
-            />
-            <div className="flex-1 overflow-hidden">
-              <MultiTabEditor
-                files={files}
-                activeFileId={activeFileId}
-                onFileSelect={onFileSelect}
-                onChange={(fileId, content) => {}}
-              />
-            </div>
-          </div>
+          <PanelShell title="Editor">
+            <ProjectEditorPane projectId={effectiveProjectId} />
+          </PanelShell>
         ),
         terminal: (
-          <ReplitTerminal 
-            projectId={Number(projectId) || 1} 
-            className="h-full"
-            theme="dark"
-            allowMultipleSessions={true}
-          />
+          <PanelShell title="Terminal">
+            <ReplitTerminalPanel projectId={effectiveProjectId} className="h-full" />
+          </PanelShell>
         ),
-        output: <ReplitOutputPanel projectId={projectId} />,
+        output: (
+          <PanelShell title="Output">
+            <ReplitOutputPanel projectId={effectiveProjectId} />
+          </PanelShell>
+        ),
         problems: (
-          <ReplitProblemsPanel 
-            projectId={projectId}
-            onFileNavigate={(file, line, column) => {}}
-          />
+          <PanelShell title="Problems">
+            <ReplitProblemsPanel 
+              projectId={effectiveProjectId}
+              onFileNavigate={(file, line, column) => {}}
+            />
+          </PanelShell>
         ),
         console: (
-          <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-            <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
-              Console output will appear here...
-            </p>
-          </div>
+          <PanelShell title="Console">
+            <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
+              <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
+                Console output will appear here...
+              </p>
+            </div>
+          </PanelShell>
         ),
         debugConsole: (
-          <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-            <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
-              Debug console ready. Start debugging to see output here.
-            </p>
-          </div>
-        ),
-        preview: (
-          <div className="h-full w-full flex flex-col bg-[var(--ecode-surface)]">
-            {/* Browser-like Header */}
-            <div className="flex items-center gap-2 h-10 px-3 border-b border-[var(--ecode-border)] bg-[var(--ecode-background)]">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/80" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                <div className="w-3 h-3 rounded-full bg-green-500/80" />
-              </div>
-              <div className="flex-1 flex items-center justify-center">
-                <div className="flex items-center gap-2 px-3 py-1 rounded bg-[var(--ecode-surface)] border border-[var(--ecode-border)] text-[11px] text-[var(--ecode-text-muted)]">
-                  <span className="opacity-60">🔒</span>
-                  <span>localhost:5000</span>
-                </div>
-              </div>
+          <PanelShell title="Debug Console">
+            <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
+              <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
+                Debug console ready. Start debugging to see output here.
+              </p>
             </div>
-            
-            {/* Wireframe App Preview */}
-            <div className="flex-1 overflow-auto p-4">
-              <div className="max-w-lg mx-auto space-y-4">
-                {/* Header Wireframe */}
-                <div className="flex items-center justify-between p-4 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)]">
-                  <div className="w-24 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
-                  <div className="flex gap-2">
-                    <div className="w-16 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
-                    <div className="w-16 h-6 rounded bg-[var(--ecode-border)] animate-pulse" />
-                  </div>
-                </div>
-                
-                {/* Hero Wireframe */}
-                <div className="p-6 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)] space-y-4">
-                  <div className="w-3/4 h-8 rounded bg-[var(--ecode-border)] animate-pulse mx-auto" />
-                  <div className="w-2/3 h-4 rounded bg-[var(--ecode-border)] animate-pulse mx-auto" />
-                  <div className="w-32 h-10 rounded bg-[var(--ecode-accent)]/20 border border-[var(--ecode-accent)]/40 mx-auto animate-pulse" />
-                </div>
-                
-                {/* Content Cards Wireframe */}
-                <div className="grid grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="p-4 rounded-lg border border-dashed border-[var(--ecode-border)] bg-[var(--ecode-background)] space-y-3">
-                      <div className="w-full h-20 rounded bg-[var(--ecode-border)] animate-pulse" />
-                      <div className="w-3/4 h-4 rounded bg-[var(--ecode-border)] animate-pulse" />
-                      <div className="w-1/2 h-3 rounded bg-[var(--ecode-border)] animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Build Status */}
-                <div className="flex items-center justify-center gap-2 p-4 rounded-lg border border-dashed border-[var(--ecode-accent)]/30 bg-[var(--ecode-accent)]/5">
-                  <div className="w-2 h-2 rounded-full bg-[var(--ecode-accent)] animate-pulse" />
-                  <span className="text-[13px] text-[var(--ecode-text-muted)] font-[family-name:var(--ecode-font-sans)]">
-                    Your app preview will appear here when running
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          </PanelShell>
         ),
+        preview: <ProjectPreviewPane projectId={effectiveProjectId} />,
       };
       
-      const defaultLayout = createEditorDefaultLayout(projectId || '1', panelContent);
+      const defaultLayout = createEditorDefaultLayout(effectiveProjectId, panelContent);
       initializeLayout(defaultLayout);
     }
-  }, [root, projectId, files, activeFileId, onFileSelect, onFileCreate, onFileDelete, onFileRename, projectName, initializeLayout]);
+  }, [root, effectiveProjectId, agentMode, initializeLayout]);
 
   // Sync tool dock with active pane using store actions (no mutations!)
   const handleToolChange = (tool: string) => {
@@ -272,15 +371,11 @@ export function SplitsEditorLayoutV2({
           </div>
           
           <div className="flex items-center gap-2">
-            <Button 
-              size="sm" 
-              variant="default"
-              className="bg-[var(--ecode-button-primary)] hover:bg-[var(--ecode-button-primary-hover)] text-white gap-2"
-              data-testid="button-run-project"
-            >
-              <Play className="h-4 w-4" />
-              Run
-            </Button>
+            <RunButton
+              projectId={effectiveProjectId}
+              size="sm"
+              className="bg-[var(--ecode-button-primary)] hover:bg-[var(--ecode-button-primary-hover)] text-white"
+            />
             <Button 
               size="sm" 
               variant="outline" 
@@ -288,7 +383,7 @@ export function SplitsEditorLayoutV2({
               data-testid="button-share-project"
             >
               <Share2 className="h-4 w-4" />
-              Share
+              <span className="hidden lg:inline">Share</span>
             </Button>
             <Button 
               size="sm" 
@@ -297,7 +392,7 @@ export function SplitsEditorLayoutV2({
               data-testid="button-deploy-project"
             >
               <Rocket className="h-4 w-4" />
-              Deploy
+              <span className="hidden lg:inline">Deploy</span>
             </Button>
           </div>
         </div>

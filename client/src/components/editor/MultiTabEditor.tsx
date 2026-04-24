@@ -23,6 +23,28 @@ import { useLayoutStore } from '@/../../shared/stores/layoutStore';
 import { DraggableTabBar } from './DraggableTabBar';
 import { EditorToolbar } from './EditorToolbar';
 
+const LARGE_FILE_SIZE_BYTES = 250_000;
+const LARGE_FILE_LINE_COUNT = 5_000;
+
+function isLargeFile(file: File): boolean {
+  const content = file.content || '';
+  if (content.length >= LARGE_FILE_SIZE_BYTES) {
+    return true;
+  }
+
+  let lineCount = 1;
+  for (let i = 0; i < content.length; i++) {
+    if (content.charCodeAt(i) === 10) {
+      lineCount++;
+      if (lineCount >= LARGE_FILE_LINE_COUNT) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 interface EditorInstance {
   view: EditorView;
   container: HTMLDivElement;
@@ -68,8 +90,8 @@ export function MultiTabEditor({
     try {
       const languageCompartment = new Compartment();
       const themeCompartment = new Compartment();
-      
-      const languageSupport = await loadLanguageForFile(file.name);
+      const largeFile = isLargeFile(file);
+      const languageSupport = largeFile ? null : await loadLanguageForFile(file.name);
 
       const updateListener = EditorView.updateListener.of((update) => {
         if (update.docChanged) {
@@ -190,6 +212,7 @@ export function MultiTabEditor({
       }
 
       requestAnimationFrame(() => {
+        activeInstance.view.requestMeasure();
         activeInstance.view.focus();
       });
     };

@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
+import { createShellWebSocket, type ConnectionState, type ResilientWebSocket } from '@/lib/websocket-resilience';
 
 interface ReplitTerminalPanelProps {
   projectId?: string | number;
@@ -37,17 +38,19 @@ function ShimmerSkeleton({ className }: { className?: string }) {
   );
 }
 
-function ConnectionBadge({ isConnecting, isConnected }: { isConnecting: boolean; isConnected: boolean }) {
-  if (isConnecting) {
+function ConnectionBadge({ connectionState }: { connectionState: ConnectionState }) {
+  if (connectionState === 'connecting' || connectionState === 'reconnecting') {
     return (
       <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
         <Loader2 className="w-3 h-3 animate-spin text-[hsl(142,72%,42%)]" />
-        <span className="text-[10px] text-[var(--ecode-text-muted)]">Connecting</span>
+        <span className="text-[10px] text-[var(--ecode-text-muted)]">
+          {connectionState === 'reconnecting' ? 'Reconnecting' : 'Connecting'}
+        </span>
       </div>
     );
   }
   
-  if (isConnected) {
+  if (connectionState === 'connected') {
     return (
       <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--ecode-surface)] border border-[var(--ecode-border)]">
         <Wifi className="w-3 h-3 text-[hsl(142,72%,42%)]" />
@@ -96,13 +99,16 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wsRef = useRef<ResilientWebSocket | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const cleanupSocketRef = useRef<(() => void) | null>(null);
+  const hasMountedRef = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const { toast } = useToast();
   const { theme } = useTheme();
 
@@ -112,55 +118,75 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     }
   }, [theme]);
 
-  const connectWebSocket = useCallback(async () => {
+  const writeSystemMessage = useCallback((message: string) => {
+    xtermRef.current?.writeln(message);
+  }, []);
+
+  const destroySocket = useCallback(() => {
+    if (cleanupSocketRef.current) {
+      cleanupSocketRef.current();
+      cleanupSocketRef.current = null;
+    }
+    if (wsRef.current) {
+      wsRef.current.destroy();
+      wsRef.current = null;
+    }
+  }, []);
+
+  const connectWebSocket = useCallback(async (forceNewSession = false) => {
     if (!projectId) return;
 
     setIsConnecting(true);
 
     try {
-      // Get a shell session ID first
-      const sessionRes = await fetch('/api/shell/sessions', {
-        method: 'POST',
-        credentials: 'include',
+      if (forceNewSession || !sessionIdRef.current) {
+        const sessionRes = await fetch('/api/shell/sessions', {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (!sessionRes.ok) throw new Error('Failed to create shell session');
+        const { sessionId } = await sessionRes.json();
+        sessionIdRef.current = sessionId;
+      }
+
+      destroySocket();
+
+      const socket = createShellWebSocket(projectId, sessionIdRef.current);
+      wsRef.current = socket;
+
+      const unsubscribeState = socket.onStateChange((event) => {
+        setConnectionState(event.state);
+        setIsConnected(event.state === 'connected');
+        setIsConnecting(event.state === 'connecting' || event.state === 'reconnecting');
+
+        if (event.state === 'connected') {
+          setIsLoading(false);
+          writeSystemMessage('\x1b[1;32m✓ Connected to terminal server\x1b[0m');
+
+          if (xtermRef.current) {
+            socket.send({
+              type: 'resize',
+              cols: xtermRef.current.cols,
+              rows: xtermRef.current.rows,
+            });
+          }
+        }
+
+        if (event.state === 'reconnecting') {
+          writeSystemMessage('\r\n\x1b[1;33m⚠ Connection lost. Reconnecting terminal...\x1b[0m');
+        }
+
+        if (event.state === 'failed' || event.state === 'circuit_open') {
+          writeSystemMessage('\r\n\x1b[1;31m✗ Unable to reconnect terminal automatically\x1b[0m');
+        }
       });
-      if (!sessionRes.ok) throw new Error('Failed to create shell session');
-      const { sessionId } = await sessionRes.json();
 
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
-
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-      
-      ws.onopen = () => {
-        setIsConnected(true);
-        setIsConnecting(false);
-        setIsLoading(false);
-        
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\x1b[1;32m✓ Connected to terminal server\x1b[0m');
-        }
-        
-        if (fitAddonRef.current && xtermRef.current) {
-          ws.send(JSON.stringify({
-            type: 'resize',
-            cols: xtermRef.current.cols,
-            rows: xtermRef.current.rows
-          }));
-        }
-        
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-          reconnectTimeoutRef.current = null;
-        }
-      };
-      
-      ws.onmessage = (event) => {
+      const unsubscribeMessage = socket.onMessage((event) => {
         if (!xtermRef.current) return;
-        
+
         try {
           const message = JSON.parse(event.data);
-          
+
           switch (message.type) {
             case 'output':
               xtermRef.current.write(message.data);
@@ -174,40 +200,33 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
             default:
               xtermRef.current.write(message.data || event.data);
           }
-        } catch { /* Raw terminal data - expected when message is not JSON */
+        } catch {
           xtermRef.current.write(event.data);
         }
+      });
+
+      cleanupSocketRef.current = () => {
+        unsubscribeState();
+        unsubscribeMessage();
       };
-      
-      ws.onclose = () => {
-        setIsConnected(false);
-        setIsConnecting(false);
-        
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\r\n\x1b[1;33m⚠ Connection closed. Reconnecting...\x1b[0m');
-        }
-        
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (wsRef.current?.readyState === WebSocket.CLOSED) {
-            connectWebSocket();
-          }
-        }, 3000);
-      };
-      
-      ws.onerror = () => {
-        setIsConnecting(false);
-        if (xtermRef.current) {
-          xtermRef.current.writeln('\r\n\x1b[1;31m✗ Connection error\x1b[0m');
-        }
-      };
+
+      socket.connect();
     } catch (error) {
       setIsConnecting(false);
       console.error('[Terminal] WebSocket connection error:', error);
+      if (hasMountedRef.current) {
+        toast({
+          title: 'Terminal unavailable',
+          description: error instanceof Error ? error.message : 'Failed to connect to the terminal service.',
+          variant: 'destructive',
+        });
+      }
     }
-  }, [projectId]);
+  }, [destroySocket, projectId, toast, writeSystemMessage]);
 
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
+    hasMountedRef.current = true;
 
     const term = new XTerm({
       theme: getTerminalTheme(),
@@ -239,13 +258,13 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     term.writeln('');
 
     term.onData((data) => {
-      if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      if (!wsRef.current?.isConnected()) {
         return;
       }
-      wsRef.current.send(JSON.stringify({ type: 'input', data }));
+      wsRef.current.send({ type: 'input', data });
     });
 
-    connectWebSocket();
+    connectWebSocket(true);
     
     setTimeout(() => setIsLoading(false), 1500);
 
@@ -253,12 +272,12 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       if (fitAddonRef.current) {
         fitAddonRef.current.fit();
         
-        if (wsRef.current?.readyState === WebSocket.OPEN && xtermRef.current) {
-          wsRef.current.send(JSON.stringify({
+        if (wsRef.current?.isConnected() && xtermRef.current) {
+          wsRef.current.send({
             type: 'resize',
             cols: xtermRef.current.cols,
             rows: xtermRef.current.rows
-          }));
+          });
         }
       }
     };
@@ -273,18 +292,14 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
     return () => {
       window.removeEventListener('resize', handleResize);
       resizeObserver.disconnect();
-      
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      
+
+      destroySocket();
       term.dispose();
+      xtermRef.current = null;
+      fitAddonRef.current = null;
+      hasMountedRef.current = false;
     };
-  }, [connectWebSocket]);
+  }, [connectWebSocket, destroySocket]);
 
   const handleClear = () => {
     if (xtermRef.current) {
@@ -293,9 +308,8 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   };
 
   const handleReset = () => {
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
+    destroySocket();
+    sessionIdRef.current = null;
     
     if (xtermRef.current) {
       xtermRef.current.reset();
@@ -306,7 +320,15 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       xtermRef.current.writeln('');
     }
     
-    setTimeout(connectWebSocket, 500);
+    setTimeout(() => connectWebSocket(true), 300);
+  };
+
+  const handleNewSession = () => {
+    handleReset();
+    toast({
+      title: 'New shell session',
+      description: 'Opened a fresh terminal session',
+    });
   };
 
   const handleNewSession = () => {
@@ -346,7 +368,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
             <span className="text-xs font-medium text-[var(--ecode-text)]">Shell</span>
           </div>
           
-          <ConnectionBadge isConnecting={isConnecting} isConnected={isConnected} />
+              <ConnectionBadge connectionState={connectionState} />
           
           <TerminalMetricsIndicator compact data-testid="replit-terminal-panel-metrics" />
         </div>

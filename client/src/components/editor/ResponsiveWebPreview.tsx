@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -20,6 +20,8 @@ import { useMediaQuery } from '@/hooks/use-media-query';
 import { useQuery } from '@tanstack/react-query';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { apiRequest } from '@/lib/queryClient';
+import { createPreviewWebSocket, type ResilientWebSocket } from '@/lib/websocket-resilience';
+import { useToast } from '@/hooks/use-toast';
 
 interface ResponsiveWebPreviewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -55,10 +57,15 @@ export function ResponsiveWebPreview({
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [cacheBuster, setCacheBuster] = useState(0);
   const [isStartingPreview, setIsStartingPreview] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
   const autoStartAttemptedRef = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevUrlRef = useRef<string>('');
+  const previewWsRef = useRef<ResilientWebSocket | null>(null);
+  const previewWsCleanupRef = useRef<(() => void) | null>(null);
+  const fileChangeToastAtRef = useRef(0);
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const { toast } = useToast();
   
   const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress } = useAutonomousBuildStore();
 
@@ -172,6 +179,86 @@ export function ResponsiveWebPreview({
     }
   }, [previewUrl]);
 
+  useEffect(() => {
+    if (!projectId || !isOnline) {
+      return;
+    }
+
+    const previewWs = createPreviewWebSocket(projectId);
+    previewWsRef.current = previewWs;
+
+    const unsubscribeState = previewWs.onStateChange((event) => {
+      setWsConnected(event.state === 'connected');
+
+      if (event.state === 'connected') {
+        previewWs.send({ type: 'subscribe', projectId: Number(projectId) || projectId });
+      }
+    });
+
+    const unsubscribeMessage = previewWs.onMessage((event) => {
+      try {
+        const message = JSON.parse(event.data);
+
+        switch (message.type) {
+          case 'connected':
+          case 'subscribed':
+          case 'pong':
+            break;
+          case 'preview:start':
+          case 'preview:ready':
+          case 'preview:stop':
+          case 'preview:error':
+          case 'preview:rebuild':
+            refetchPreview();
+            if (message.type === 'preview:rebuild') {
+              setIframeLoading(true);
+            }
+            break;
+          case 'preview:file-change':
+            setCacheBuster((prev) => prev + 1);
+            refetchPreview();
+            if (Date.now() - fileChangeToastAtRef.current > 5000) {
+              fileChangeToastAtRef.current = Date.now();
+              toast({
+                title: 'Preview updated',
+                description: message.filePath ? `${message.filePath} changed` : 'Project files changed',
+              });
+            }
+            break;
+          default:
+            break;
+        }
+      } catch {
+        // Ignore malformed preview events.
+      }
+    });
+
+    previewWsCleanupRef.current = () => {
+      unsubscribeState();
+      unsubscribeMessage();
+    };
+
+    previewWs.connect();
+
+    return () => {
+      if (previewWsCleanupRef.current) {
+        previewWsCleanupRef.current();
+        previewWsCleanupRef.current = null;
+      }
+      previewWs.destroy();
+      previewWsRef.current = null;
+      setWsConnected(false);
+    };
+  }, [projectId, isOnline, refetchPreview, toast]);
+
+  useEffect(() => {
+    return () => {
+      if (iframeRef.current) {
+        iframeRef.current.src = 'about:blank';
+      }
+    };
+  }, []);
+
   const handleRefresh = useCallback(() => {
     setIframeError(false);
     setIframeLoading(true);
@@ -246,9 +333,15 @@ export function ResponsiveWebPreview({
           )}
 
           {/* URL Bar */}
-          <div className="flex-1 flex items-center gap-2 max-w-lg">
-            <div className="flex-1 bg-[var(--ecode-background)] rounded px-2 py-1 text-[11px] truncate">
+          <div className="flex min-w-0 flex-1 items-center gap-2 max-w-lg">
+            <div className="flex-1 truncate rounded bg-[var(--ecode-background)] px-2 py-1 text-[11px]">
               {previewUrl}
+            </div>
+            <div className={cn(
+              "hidden rounded-full px-2 py-0.5 text-[10px] sm:inline-flex",
+              wsConnected ? "bg-emerald-500/10 text-emerald-600" : "bg-yellow-500/10 text-yellow-600"
+            )}>
+              {wsConnected ? 'Live' : 'Polling'}
             </div>
           </div>
         </div>

@@ -263,7 +263,10 @@ export default function Editor(props: EditorProps = {}) {
 
   const saveFileMutation = useMutation({
     mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
-      return await apiRequest("PATCH", `/api/files/${fileId}`, { content });
+      if (!resolvedProjectId) {
+        throw new Error("Project is not available for saving");
+      }
+      return await apiRequest("PATCH", `/api/projects/${resolvedProjectId}/files/by-id/${fileId}`, { content });
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;
@@ -290,19 +293,27 @@ export default function Editor(props: EditorProps = {}) {
       if (!resolvedProjectId) {
         throw new Error("Project is not available for file creation");
       }
-      return await apiRequest("POST", `/api/files/${resolvedProjectId}`, {
+      const normalizedName = name.trim();
+      const parentPath = parentId != null
+        ? files.find((file) => file.id === parentId)?.path
+        : null;
+      const filePath = parentPath ? `${parentPath}/${normalizedName}` : normalizedName;
+
+      return await apiRequest("POST", `/api/projects/${resolvedProjectId}/files`, {
         name,
-        isFolder,
+        path: filePath,
+        isDirectory: isFolder,
         parentId: parentId ?? null,
         content: isFolder ? null : "",
       });
     },
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       if (!resolvedProjectId) return;
+      const createdFile = data?.file ?? data;
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${resolvedProjectId}/files`] });
       toast({
-        title: data.isFolder ? "Folder created" : "File created",
-        description: `${data.name} has been created.`,
+        title: createdFile?.isDirectory ? "Folder created" : "File created",
+        description: `${createdFile?.name || 'New item'} has been created.`,
       });
     },
     onError: (error: Error) => {
@@ -316,7 +327,10 @@ export default function Editor(props: EditorProps = {}) {
 
   const deleteFileMutation = useMutation({
     mutationFn: async (fileId: number) => {
-      await apiRequest("DELETE", `/api/files/${fileId}`);
+      if (!resolvedProjectId) {
+        throw new Error("Project is not available for delete");
+      }
+      await apiRequest("DELETE", `/api/projects/${resolvedProjectId}/files/by-id/${fileId}`);
       return fileId;
     },
     onSuccess: (fileId) => {
@@ -341,7 +355,21 @@ export default function Editor(props: EditorProps = {}) {
 
   const renameFileMutation = useMutation({
     mutationFn: async ({ fileId, name }: { fileId: number, name: string }) => {
-      return await apiRequest("PATCH", `/api/files/${fileId}`, { name });
+      if (!resolvedProjectId) {
+        throw new Error("Project is not available for rename");
+      }
+
+      const target = files.find((file) => file.id === fileId);
+      if (!target) {
+        throw new Error("File not found");
+      }
+
+      const parentPath = target.parentId != null
+        ? files.find((file) => file.id === target.parentId)?.path
+        : null;
+      const nextPath = parentPath ? `${parentPath}/${name}` : name;
+
+      return await apiRequest("PATCH", `/api/projects/${resolvedProjectId}/files/by-id/${fileId}`, { name, path: nextPath });
     },
     onSuccess: (data) => {
       if (!resolvedProjectId) return;

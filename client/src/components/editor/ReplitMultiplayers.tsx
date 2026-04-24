@@ -133,6 +133,23 @@ export function ReplitMultiplayers({
   const socketRef = useRef<Socket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const reconnectToastAtRef = useRef(0);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const destroySocket = useCallback(() => {
+    clearReconnectTimer();
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+  }, [clearReconnectTimer]);
 
   const addActivityEvent = useCallback((event: Omit<ActivityEvent, 'id' | 'timestamp'>) => {
     const newEvent: ActivityEvent = {
@@ -293,6 +310,8 @@ export function ReplitMultiplayers({
     if (!projectId || !user || socketRef.current?.connected) return;
 
     try {
+      clearReconnectTimer();
+
       const socket = io(window.location.origin, {
         path: '/ws/collaboration',
         query: {
@@ -305,6 +324,10 @@ export function ReplitMultiplayers({
         withCredentials: true,
         forceNew: true,
         timeout: 30000,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 10000,
       });
 
       socketRef.current = socket;
@@ -312,6 +335,7 @@ export function ReplitMultiplayers({
       socket.on('connect', () => {
         setIsConnected(true);
         reconnectAttemptsRef.current = 0;
+        clearReconnectTimer();
 
         addActivityEvent({
           type: 'join',
@@ -399,7 +423,15 @@ export function ReplitMultiplayers({
         if (reconnectAttemptsRef.current < 5) {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
           reconnectAttemptsRef.current++;
-          
+
+          if (Date.now() - reconnectToastAtRef.current > 5000) {
+            reconnectToastAtRef.current = Date.now();
+            toast({
+              title: 'Collaboration reconnecting',
+              description: 'Trying to restore the live session…',
+            });
+          }
+
           reconnectTimeoutRef.current = setTimeout(() => {
             connectWebSocket();
           }, delay);
@@ -409,11 +441,18 @@ export function ReplitMultiplayers({
       socket.on('connect_error', (error) => {
         console.error('Socket.IO collaboration error:', error);
         setIsConnected(false);
+        if (reconnectAttemptsRef.current >= 5) {
+          toast({
+            title: 'Collaboration unavailable',
+            description: 'The live collaboration server could not be reached.',
+            variant: 'destructive',
+          });
+        }
       });
     } catch (error) {
       console.error('Failed to connect to collaboration server:', error);
     }
-  }, [projectId, user, addActivityEvent, handleWebSocketMessage]);
+  }, [projectId, user, addActivityEvent, clearReconnectTimer, handleWebSocketMessage, toast]);
 
   useEffect(() => {
     if (projectId) {
@@ -421,15 +460,9 @@ export function ReplitMultiplayers({
     }
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
+      destroySocket();
     };
-  }, [projectId, connectWebSocket]);
+  }, [projectId, connectWebSocket, destroySocket]);
 
   useEffect(() => {
     if (data?.pendingInvites) {
