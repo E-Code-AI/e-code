@@ -28,8 +28,6 @@ export const AI_MODEL_PRICING = {
   'claude-opus-4-7': { input: 0.015, output: 0.075, creditsPerThousand: 0.09 },
   'claude-haiku-4-5-20251001': { input: 0.0008, output: 0.004, creditsPerThousand: 0.005 },
   'claude-3-7-sonnet-20250219': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
-  'claude-sonnet-4-6': { input: 0.003, output: 0.015, creditsPerThousand: 0.018 },
-  'claude-haiku-4-5-20251001': { input: 0.0008, output: 0.004, creditsPerThousand: 0.005 },
   'claude-3-opus-20240229': { input: 0.015, output: 0.075, creditsPerThousand: 0.09 },
   'claude-3-haiku-20240307': { input: 0.00025, output: 0.00125, creditsPerThousand: 0.0015 },
 

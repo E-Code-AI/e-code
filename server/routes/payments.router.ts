@@ -9,12 +9,11 @@ import { retryFailedQueueItems, getQueueHealthMetrics } from '../workflows/payg-
 const router = Router();
 const startupLogger = createLogger('payments-router-startup');
 
-// Stripe webhooks must be auth'd by their shared secret. Missing secret in prod =
-// webhooks fail at request time with a hard-to-debug 500. Fail fast at startup instead.
+// Stripe webhooks must be auth'd by their shared secret. Missing secret should not
+// crash the whole platform at module load time; webhook endpoints can fail closed.
 if (process.env.NODE_ENV === 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
-  startupLogger.error('FATAL: STRIPE_WEBHOOK_SECRET is required in production but missing.');
-  startupLogger.error('Set it in your hosting provider secrets (Replit Secrets, env vars, etc.) before deploying.');
-  throw new Error('STRIPE_WEBHOOK_SECRET is required in production');
+  startupLogger.error('STRIPE_WEBHOOK_SECRET is missing in production. Stripe webhook processing will remain unavailable until it is configured.');
+  startupLogger.error('Set it in your hosting provider secrets (Replit Secrets, env vars, etc.) to enable webhook verification.');
 }
 if (process.env.NODE_ENV !== 'production' && !process.env.STRIPE_WEBHOOK_SECRET) {
   startupLogger.warn('STRIPE_WEBHOOK_SECRET not set — Stripe webhook processing will reject requests in dev.');
