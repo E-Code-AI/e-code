@@ -2533,7 +2533,7 @@ export function ReplitAgentPanelV3({
           className="mx-3 sm:mx-4 mt-2 px-4 py-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2 text-[13px] text-yellow-700 dark:text-yellow-400"
           data-testid="bootstrap-warning-banner"
         >
-          <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
           <span>Still connecting to the agent — this is taking longer than usual...</span>
         </div>
       )}
@@ -2784,7 +2784,6 @@ export function ReplitAgentPanelV3({
                 onChange={handleModeChange}
               />
               <span className="hidden sm:inline text-[10px] text-muted-foreground">
-                {isBootstrapping && !conversationId && "Initializing agent..."}
                 {(!isBootstrapping || conversationId) && agentMode === 'build' && "Agent will autonomously make changes"}
                 {(!isBootstrapping || conversationId) && agentMode === 'plan' && "Agent will brainstorm without changes"}
                 {(!isBootstrapping || conversationId) && agentMode === 'edit' && "Targeted changes to specific files"}
