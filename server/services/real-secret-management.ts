@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { db } from '../db';
 import { projects, users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { getSessionSecret } from '../utils/secrets-manager';
 
 const logger = {
   info: (message: string, ...args: any[]) => {},
@@ -40,27 +41,22 @@ export class RealSecretManagementService {
   private nextSecretId = 1;
 
   constructor() {
-    // CRITICAL: Use existing ENCRYPTION_KEY for consistency with other services
-    const keyString = process.env.ENCRYPTION_KEY;
-    
-    if (!keyString) {
-      if (process.env.NODE_ENV === 'production') {
-        const errorMsg =
-          '🚨 CRITICAL: ENCRYPTION_KEY environment variable is required!\n' +
-          'This key is used across all encryption services (2FA, secrets, etc.)\n' +
-          'Without this, encrypted secrets will be lost on every restart!';
-        logger.error(errorMsg);
-        throw new Error('ENCRYPTION_KEY is required for RealSecretManagementService');
-      }
-      // Development fallback: use a derived key (secrets are ephemeral anyway in dev)
-      logger.warn('ENCRYPTION_KEY not set — using dev fallback key. Secrets are ephemeral this session.');
+    // Prefer a dedicated encryption key, but fall back to the managed session secret
+    // so this service never crashes the whole platform at module load time.
+    const keyString =
+      process.env.ENCRYPTION_KEY ||
+      process.env.SECRET_KEY ||
+      process.env.SESSION_SECRET ||
+      getSessionSecret();
+
+    if (!process.env.ENCRYPTION_KEY) {
+      logger.warn('ENCRYPTION_KEY not set — RealSecretManagementService is using a fallback secret source.');
     }
-    
-    // Derive 32-byte key — fall back to a dev-only seed when key is missing
+
     const effectiveKey = keyString || 'dev-only-fallback-key-not-for-production';
     this.encryptionKey = crypto.createHash('sha256').update(effectiveKey).digest();
     
-    logger.info('✅ Real Secret Management Service initialized with AES-256-GCM encryption (using ENCRYPTION_KEY)');
+    logger.info('✅ Real Secret Management Service initialized with AES-256-GCM encryption');
   }
 
   private encrypt(text: string): EncryptedData {
