@@ -2429,8 +2429,14 @@ export function ReplitAgentPanelV3({
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
   
   const hasUserMessages = messages.some(m => m.role === 'user');
+  const hasMeaningfulMessages = messages.some((message) => {
+    if (message.id === DEFAULT_AGENT_WELCOME_MESSAGE.id && message.content === DEFAULT_AGENT_WELCOME_MESSAGE.content) {
+      return false;
+    }
+    return Boolean(message.content?.trim());
+  });
   const showEmptyState = !hasUserMessages 
-    && messages.length <= 1 
+    && !hasMeaningfulMessages
     && !isPendingResponse 
     && !isWorking;
 
