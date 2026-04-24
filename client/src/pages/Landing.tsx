@@ -229,7 +229,16 @@ export default function Landing() {
       } else {
         throw new Error(result.error || 'Bootstrap failed');
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Preserve prompt and continue after login if bootstrap requires auth
+      if (error?.status === 401 || error?.status === 403 ||
+          error?.message?.includes('Unauthorized') || error?.message?.includes('403')) {
+        sessionStorage.setItem('pendingAppDescription', pendingBuildPrompt);
+        sessionStorage.setItem('triggerBuildOnLanding', 'true');
+        navigate('/login');
+        return;
+      }
+
       toast({
         title: 'Error',
         description: 'Failed to create workspace. Please try again.',

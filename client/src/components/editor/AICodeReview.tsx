@@ -101,7 +101,7 @@ export default function AICodeReview({
       }, 200);
 
       try {
-        const response = await apiRequest('POST', '/api/code-review/analyze', {
+        const response = await apiRequest<{ review: ReviewResult }>('POST', '/api/code-review/analyze', {
           projectId,
           fileId,
           filePath,
@@ -120,9 +120,7 @@ export default function AICodeReview({
 
         clearInterval(progressInterval);
         setProgress(100);
-        
-        const data = await response.json();
-        return data.review as ReviewResult;
+        return response.review as ReviewResult;
       } finally {
         clearInterval(progressInterval);
         setIsReviewing(false);
@@ -152,8 +150,7 @@ export default function AICodeReview({
 
   const applyFixMutation = useMutation({
     mutationFn: async ({ issueId, fixCode }: { issueId: number; fixCode: string }) => {
-      const response = await apiRequest('POST', `/api/code-review/fix/${issueId}`, { fixCode });
-      return response.json();
+      return apiRequest('POST', `/api/code-review/fix/${issueId}`, { fixCode });
     },
     onSuccess: (_, { issueId }) => {
       toast({
