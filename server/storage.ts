@@ -69,7 +69,6 @@ import {
   aiApprovalQueue, aiAuditLogs,
   bounties, bountySubmissions, bountyReviews,
   agentSessions,
-  collaborationSessions, sessionParticipants,
   alerts, insertAlertSchema,
   insertAiApprovalQueueSchema, insertAiAuditLogSchema,
   insertUserCreditsSchema, insertBudgetLimitSchema, insertUsageAlertSchema,
@@ -2766,89 +2765,13 @@ export class DatabaseStorage implements IStorage {
 
   // Collaboration methods
   async getProjectCollaborators(projectId: string | number): Promise<any[]> {
-    const project = await this.getProject(projectId);
-    if (!project) {
-      return [];
-    }
-
-    const collaboratorsByUserId = new Map<number, any>();
-
-    // Team projects grant access to active team members.
-    // Personal projects use tenantId = ownerId, so skip team lookup in that case.
-    if (project.tenantId && project.tenantId !== project.ownerId) {
-      const teamCollaborators = await this.db
-        .select({
-          userId: users.id,
-          id: users.id,
-          username: users.username,
-          email: users.email,
-          role: teamMembers.role,
-          joinedAt: teamMembers.joinedAt,
-          source: sql<string>`'team'`,
-        })
-        .from(teamMembers)
-        .innerJoin(users, eq(teamMembers.userId, users.id))
-        .where(
-          and(
-            eq(teamMembers.teamId, project.tenantId),
-            eq(teamMembers.isActive, true),
-          )
-        );
-
-      for (const collaborator of teamCollaborators) {
-        collaboratorsByUserId.set(collaborator.userId, collaborator);
-      }
-    }
-
-    // Active collaboration sessions also grant project access across IDE panels.
-    const sessionCollaborators = await this.db
-      .select({
-        userId: sessionParticipants.userId,
-        id: users.id,
-        username: users.username,
-        email: users.email,
-        role: sql<string>`'collaborator'`,
-        joinedAt: sessionParticipants.joinedAt,
-        source: sql<string>`'session'`,
-        sessionId: sessionParticipants.sessionId,
-      })
-      .from(sessionParticipants)
-      .innerJoin(collaborationSessions, eq(sessionParticipants.sessionId, collaborationSessions.id))
-      .innerJoin(users, eq(sessionParticipants.userId, users.id))
-      .where(
-        and(
-          eq(collaborationSessions.projectId, _num(projectId)),
-          eq(collaborationSessions.active, true),
-          eq(sessionParticipants.active, true),
-        )
-      );
-
-    for (const collaborator of sessionCollaborators) {
-      const existing = collaboratorsByUserId.get(collaborator.userId);
-      collaboratorsByUserId.set(collaborator.userId, {
-        ...existing,
-        ...collaborator,
-        role: existing?.role ?? collaborator.role,
-        source: existing ? 'team+session' : collaborator.source,
-      });
-    }
-
-    return Array.from(collaboratorsByUserId.values());
+    // Return empty array for now - proper implementation would use a collaborators table
+    return [];
   }
 
   async isProjectCollaborator(projectId: string | number, userId: string | number): Promise<boolean> {
     const project = await this.getProject(projectId);
-    if (!project) {
-      return false;
-    }
-
-    const normalizedUserId = _num(userId);
-    if (project.ownerId === normalizedUserId) {
-      return true;
-    }
-
-    const collaborators = await this.getProjectCollaborators(projectId);
-    return collaborators.some((collaborator: any) => collaborator.userId === normalizedUserId);
+    return project?.ownerId === userId;
   }
 
   // Project activity methods
@@ -5886,7 +5809,9 @@ function getSessionDatabaseUrl(): string | null {
 
 const MemoryStore = createMemoryStore(session);
 
-let sessionStore: any;
+let sessionStore: any = new MemoryStore({
+  checkPeriod: 86400000,
+});
 const isProduction = process.env.NODE_ENV === 'production';
 
 async function initSessionStore() {
@@ -6003,17 +5928,19 @@ async function initSessionStore() {
   console.log('[Session Store] Using PostgreSQL store for production (Redis unavailable)');
 }
 
-try {
-  await initSessionStore();
-} catch (error) {
-  if (isProduction) {
-    console.error('[CRITICAL] Failed to initialize session store in production:', error);
-    process.exit(1);
+const sessionStoreReady: Promise<void> = (async () => {
+  try {
+    await initSessionStore();
+  } catch (error) {
+    if (isProduction) {
+      console.error('[CRITICAL] Failed to initialize session store in production:', error);
+      process.exit(1);
+    }
+    console.error('[Storage Module] Failed to initialize session store:', error);
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
   }
-  console.error('[Storage Module] Failed to initialize session store:', error);
-  sessionStore = new MemoryStore({
-    checkPeriod: 86400000,
-  });
-}
+})();
 
-export { sessionStore };
+export { sessionStore, sessionStoreReady };

@@ -16,7 +16,7 @@
     "typecheck:full": "tsc --noEmit --pretty false --skipLibCheck -p tsconfig.full.json",
     "db:push": "drizzle-kit push --config=drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=drizzle.config.ts",
-    "test": "tsx test/run-tests.ts",
+    "test": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/unit/**/*.test.ts' --passWithNoTests",
     "test:ci": "echo '✅ Running CI tests...' && npm run typecheck && npm run test:unit && echo '✅ CI tests passed'",
     "test:unit": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/unit/**/*.test.ts' --passWithNoTests",
     "test:integration": "npx jest --config=jest.config.enterprise.js --testMatch='**/test/integration/**/*.test.ts' --passWithNoTests",

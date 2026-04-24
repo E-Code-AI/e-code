@@ -118,32 +118,38 @@ export default defineConfig({
     // Primary: Chrome (most common enterprise browser)
     {
       name: 'chromium',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         // Fortune 500-Grade: Slow motion for debugging complex flows
         launchOptions: {
           slowMo: process.env.SLOWMO ? parseInt(process.env.SLOWMO) : 0,
-          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+            ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+            : {}),
         },
       },
     },
     // Mobile: iPhone (responsive testing)
     {
       name: 'mobile-chrome',
-      use: { 
+      use: {
         ...devices['Pixel 5'],
         launchOptions: {
-          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+            ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+            : {}),
         },
       },
     },
     // Tablet: iPad (enterprise dashboard testing)
     {
       name: 'tablet',
-      use: { 
+      use: {
         ...devices['iPad Pro 11'],
         launchOptions: {
-          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+          ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+            ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
+            : {}),
         },
       },
     },
@@ -153,8 +159,9 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5000',
-    // Reuse existing server in development for faster iteration
-    reuseExistingServer: !process.env.CI,
+    // Reuse an already-running server (CI pre-starts it in a separate step)
+    // and start one otherwise for local iteration.
+    reuseExistingServer: true,
     // Fortune 500-Grade: Extended timeout for cold start + Vite bundling
     timeout: parseInt(process.env.SERVER_TIMEOUT || String(TIMEOUT_TIERS.SERVER_STARTUP)),
     // Stdout/stderr handling
