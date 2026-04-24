@@ -61,3 +61,22 @@ coverage/
 # Tmp
 tmp/
 temp/
+
+# Replit internal / agent caches (massive — cause security scan timeouts)
+.checkpoints/
+.git.backup.*
+.local/
+.cache/
+.pythonlibs/
+.config/
+.npm/
+.upm/
+.executions/
+.exports/
+.ecode/
+.pgdata/
+.replitdb/
+.semgrepignore
+attached_assets/
+previews/
+generated-icon.png
