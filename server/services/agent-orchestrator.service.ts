@@ -10,7 +10,7 @@ import {
   type AgentSession,
   type InsertAgentSession
 } from '@shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, desc } from 'drizzle-orm';
 import { agentFileOperations } from './agent-file-operations.service';
 import { agentCommandExecution } from './agent-command-execution.service';
 import { agentToolFramework } from './agent-tool-framework.service';
@@ -2074,6 +2074,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           eq(aiConversations.projectId, projectIdNum),
           eq(aiConversations.userId, userIdNum)
         ))
+        .orderBy(desc(aiConversations.updatedAt), desc(aiConversations.createdAt))
         .limit(1);
       
       let conversationId: number;
@@ -2116,6 +2117,30 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           ...( metadata?.estimatedTime && { estimatedTime: metadata.estimatedTime })
         }
       });
+
+      const conversationSnapshot = Array.isArray(existingConversation?.messages)
+        ? existingConversation.messages
+        : [];
+      await db.update(aiConversations)
+        .set({
+          messages: [
+            ...conversationSnapshot,
+            {
+              id: `workspace-${sessionId}-${Date.now()}`,
+              role: 'assistant',
+              content,
+              timestamp: new Date(),
+              metadata: {
+                sessionId,
+                workspaceStatus: metadata?.workspaceStatus,
+                taskCount: metadata?.taskCount,
+                estimatedTime: metadata?.estimatedTime,
+              }
+            }
+          ] as any,
+          updatedAt: new Date(),
+        })
+        .where(eq(aiConversations.id, conversationId));
       
       logger.debug(`[Autonomous] Saved workspace message to conversation ${conversationId}`, { sessionId, content: content.substring(0, 50) });
       

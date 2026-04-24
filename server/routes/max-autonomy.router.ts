@@ -348,6 +348,52 @@ router.get('/sessions', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/autonomy/projects/:projectId/session
+ * Get the latest session for a project, preferring active/paused sessions.
+ */
+router.get('/projects/:projectId/session', async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const projectId = parseInt(req.params.projectId, 10);
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ error: 'Invalid projectId' });
+    }
+
+    const sessions = await db.select()
+      .from(maxAutonomySessions)
+      .where(and(
+        eq(maxAutonomySessions.userId, userId),
+        eq(maxAutonomySessions.projectId, projectId)
+      ))
+      .orderBy(desc(maxAutonomySessions.updatedAt), desc(maxAutonomySessions.createdAt))
+      .limit(10);
+
+    const preferredSession = sessions.find((session) => ['pending', 'active', 'running', 'paused'].includes(session.status))
+      || sessions[0];
+
+    if (!preferredSession) {
+      return res.status(404).json({ error: 'No autonomy session found for project' });
+    }
+
+    res.json({
+      success: true,
+      session: {
+        id: preferredSession.id,
+        status: preferredSession.status,
+        goal: preferredSession.goal,
+        projectId: preferredSession.projectId,
+        createdAt: preferredSession.createdAt,
+        updatedAt: preferredSession.updatedAt,
+      }
+    });
+  } catch (error: any) {
+    logger.error('Error getting project autonomy session:', error);
+    res.status(500).json({ error: error.message || 'Failed to get project autonomy session' });
+  }
+});
+
+/**
  * GET /api/autonomy/health
  * Health check for max autonomy service
  */

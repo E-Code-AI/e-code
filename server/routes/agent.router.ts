@@ -257,7 +257,7 @@ router.get('/conversation', async (req, res) => {
           eq(aiConversations.projectId, projectId),
           eq(aiConversations.userId, userId)
         ))
-        .orderBy(desc(aiConversations.createdAt))
+        .orderBy(desc(aiConversations.updatedAt), desc(aiConversations.createdAt))
         .limit(1);
 
       if (!conversation) {
@@ -384,7 +384,7 @@ router.post('/conversation', async (req, res) => {
           eq(aiConversations.projectId, projectId),
           eq(aiConversations.userId, userId)
         ))
-        .orderBy(desc(aiConversations.createdAt))
+        .orderBy(desc(aiConversations.updatedAt), desc(aiConversations.createdAt))
         .limit(1);
 
       if (existingConversation && !forceNew) {
@@ -429,7 +429,7 @@ router.post('/conversation', async (req, res) => {
           eq(aiConversations.projectId, projectId),
           eq(aiConversations.userId, userId)
         ))
-        .orderBy(desc(aiConversations.createdAt))
+        .orderBy(desc(aiConversations.updatedAt), desc(aiConversations.createdAt))
         .limit(1);
 
       if (existingConversation && !forceNew) {
@@ -470,6 +470,45 @@ router.post('/conversation', async (req, res) => {
   } catch (error: any) {
     logger.error('[AgentRouter] Error creating conversation:', error);
     res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
+// GET /api/agent/conversation/:id - Get a specific conversation
+router.get('/conversation/:id', async (req, res) => {
+  try {
+    const conversationId = parseInt(req.params.id, 10);
+    const userId = req.user!.id;
+
+    if (isNaN(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation ID' });
+    }
+
+    const { aiConversations } = await import('@shared/schema');
+    const { eq, and } = await import('drizzle-orm');
+
+    const [conversation] = await db
+      .select()
+      .from(aiConversations)
+      .where(and(
+        eq(aiConversations.id, conversationId),
+        eq(aiConversations.userId, userId)
+      ))
+      .limit(1);
+
+    if (!conversation) {
+      return res.status(404).json({ error: 'Conversation not found or access denied' });
+    }
+
+    res.json({
+      conversationId: conversation.id,
+      projectId: conversation.projectId,
+      agentMode: conversation.agentMode,
+      createdAt: conversation.createdAt,
+      updatedAt: conversation.updatedAt,
+    });
+  } catch (error: any) {
+    logger.error('[AgentRouter] Error fetching conversation by id:', error);
+    res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
 
@@ -781,6 +820,27 @@ router.post('/conversation/:id/messages', async (req, res) => {
           model: metadata?.model || null,
         })
         .returning();
+
+      const snapshotMessage = {
+        id: savedMessage.id,
+        role,
+        content,
+        timestamp: savedMessage.createdAt,
+        metadata: metadata || undefined,
+        extendedThinking: extendedThinking || undefined,
+      };
+
+      const conversationMessages = Array.isArray(conversation.messages)
+        ? conversation.messages
+        : [];
+
+      await db
+        .update(aiConversations)
+        .set({
+          messages: [...conversationMessages, snapshotMessage],
+          updatedAt: new Date(),
+        })
+        .where(eq(aiConversations.id, conversationId));
 
       logger.info('[AgentRouter] Message persisted:', {
         id: savedMessage.id,

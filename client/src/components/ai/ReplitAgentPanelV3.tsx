@@ -390,6 +390,7 @@ export function ReplitAgentPanelV3({
 }: ReplitAgentPanelV3Props) {
   // Convert projectId to number early for consistent usage throughout component
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
+  const conversationStorageKey = projectIdNum ? `agent-current-conversation:${projectIdNum}` : null;
   
   // Toast notifications - must be declared early before any callbacks that use it
   const { toast } = useToast();
@@ -671,10 +672,40 @@ export function ReplitAgentPanelV3({
     const bootstrapConversation = async () => {
       try {
         devLog('[ReplitAgentPanelV3] Starting conversation bootstrap for projectId:', projectId);
-        
-        const response = await apiRequest('POST', '/api/agent/conversation', {
-          projectId: projectId.toString()
-        }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+
+        let response: { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+        const preferredConversationId = conversationStorageKey
+          ? parseInt(localStorage.getItem(conversationStorageKey) || '', 10)
+          : NaN;
+
+        if (Number.isInteger(preferredConversationId) && preferredConversationId > 0) {
+          try {
+            const preferredConversation = await fetch(`/api/agent/conversation/${preferredConversationId}`, {
+              credentials: 'include'
+            }).then(async (res) => {
+              if (!res.ok) throw new Error('Preferred conversation unavailable');
+              return res.json();
+            });
+
+            if (preferredConversation?.projectId === projectIdNum) {
+              response = {
+                conversationId: preferredConversation.conversationId,
+                agentMode: preferredConversation.agentMode,
+                existing: true,
+              };
+            } else {
+              throw new Error('Preferred conversation belongs to another project');
+            }
+          } catch {
+            response = await apiRequest('POST', '/api/agent/conversation', {
+              projectId: projectId.toString()
+            }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+          }
+        } else {
+          response = await apiRequest('POST', '/api/agent/conversation', {
+            projectId: projectId.toString()
+          }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+        }
 
         if (!isMounted) return;
         
@@ -691,6 +722,9 @@ export function ReplitAgentPanelV3({
 
         setConversationId(realConversationId);
         setAgentMode(response.agentMode);
+        if (conversationStorageKey) {
+          localStorage.setItem(conversationStorageKey, String(realConversationId));
+        }
         bootstrapCompleted = true;
         
         clearBootstrapTimers();
@@ -736,7 +770,13 @@ export function ReplitAgentPanelV3({
       isMounted = false;
       // Note: We DON'T clear the global timer here - it survives remounts intentionally
     };
-  }, [projectId, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut]);
+  }, [projectId, projectIdNum, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut, conversationStorageKey]);
+
+  useEffect(() => {
+    if (conversationId && conversationStorageKey) {
+      localStorage.setItem(conversationStorageKey, String(conversationId));
+    }
+  }, [conversationId, conversationStorageKey]);
 
   // ✅ FIX (Jan 2026): React to bootstrap timeout and seed fallback message
   // When the global timer fires, we need to:
@@ -783,6 +823,26 @@ export function ReplitAgentPanelV3({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
     enabled: !!conversationId,
   });
+
+  const { data: restoredAutonomySession } = useQuery<{ success: boolean; session: { id: string; status: string } }>({
+    queryKey: ['/api/autonomy/projects', projectIdNum, 'session'],
+    queryFn: async () => {
+      const res = await fetch(`/api/autonomy/projects/${projectIdNum}/session`, { credentials: 'include' });
+      if (!res.ok) {
+        throw new Error('No autonomy session');
+      }
+      return res.json();
+    },
+    enabled: projectIdNum > 0 && !autonomySessionId,
+    retry: false,
+    staleTime: 30000,
+  });
+
+  useEffect(() => {
+    if (!autonomySessionId && restoredAutonomySession?.session?.id) {
+      setAutonomySessionId(restoredAutonomySession.session.id);
+    }
+  }, [autonomySessionId, restoredAutonomySession]);
 
   // Fetch decomposed tasks for autonomy session
   const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
@@ -3186,6 +3246,9 @@ export function ReplitAgentPanelV3({
           currentConversationId={conversationId}
           onSelectConversation={(nextConversationId) => {
             setConversationId(nextConversationId);
+            if (conversationStorageKey) {
+              localStorage.setItem(conversationStorageKey, String(nextConversationId));
+            }
             setHistoryModalOpen(false);
           }}
         />
