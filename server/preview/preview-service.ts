@@ -160,10 +160,90 @@ export class PreviewService {
   private readonly MAX_CONCURRENT_PREVIEWS = 80;
   // Kill idle previews after 30 minutes of no activity
   private readonly IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+  private pendingSyncs: Map<string, NodeJS.Timeout> = new Map();
 
   constructor() {
     this.startHealthChecks();
     this.startIdleCleanup();
+    this.startLiveWorkspaceSync();
+  }
+
+  private startLiveWorkspaceSync() {
+    previewEvents.on('preview:file-change', (data: { projectId?: number | string }) => {
+      if (data?.projectId == null) return;
+      this.scheduleWorkspaceSync(String(data.projectId));
+    });
+  }
+
+  private scheduleWorkspaceSync(projectId: string) {
+    const preview = this.previews.get(projectId);
+    if (!preview || (preview.status !== 'running' && preview.status !== 'starting')) {
+      return;
+    }
+
+    const existing = this.pendingSyncs.get(projectId);
+    if (existing) {
+      clearTimeout(existing);
+    }
+
+    const timer = setTimeout(() => {
+      this.pendingSyncs.delete(projectId);
+      this.syncPreviewWorkspace(projectId).catch((error: any) => {
+        logger.warn(`Live preview sync failed for project ${projectId}: ${error?.message || error}`);
+      });
+    }, 150);
+
+    this.pendingSyncs.set(projectId, timer);
+  }
+
+  private async syncPreviewWorkspace(projectId: string, files?: any[]): Promise<void> {
+    const previewPath = path.join('/tmp', `preview-${projectId}`);
+    const projectFiles = files ?? await storage.getFilesByProject(projectId);
+
+    await fs.mkdir(previewPath, { recursive: true });
+
+    let projectCache = fileHashCache.get(projectId);
+    if (!projectCache) {
+      projectCache = new Map<string, string>();
+      fileHashCache.set(projectId, projectCache);
+    }
+
+    const currentPaths = new Set<string>();
+    const toWrite: Array<{ relPath: string; content: string; hash: string }> = [];
+
+    for (const file of projectFiles) {
+      if (file.isDirectory || file.isFolder) continue;
+      const relPath = file.path || file.name;
+      currentPaths.add(relPath);
+      const content = file.content || '';
+      const hash = contentHash(content);
+
+      if (projectCache.get(relPath) !== hash) {
+        toWrite.push({ relPath, content, hash });
+      }
+    }
+
+    for (const cachedPath of [...projectCache.keys()]) {
+      if (!currentPaths.has(cachedPath)) {
+        const fullPath = path.join(previewPath, cachedPath);
+        try {
+          await fs.rm(fullPath, { recursive: true, force: true });
+        } catch {}
+        projectCache.delete(cachedPath);
+      }
+    }
+
+    for (const { relPath, content, hash } of toWrite) {
+      const filePath = path.join(previewPath, relPath);
+      const dir = path.dirname(filePath);
+      const stat = await fs.stat(filePath).catch(() => null);
+      if (stat?.isDirectory()) {
+        await fs.rm(filePath, { recursive: true, force: true });
+      }
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(filePath, content, 'utf-8');
+      projectCache.set(relPath, hash);
+    }
   }
 
   private hashProjectId(projectId: string): number {
@@ -459,78 +539,22 @@ export class PreviewService {
       return errInstance;
     }
 
-    const previewPath = path.join('/tmp', `preview-${projectId}`);
     try {
       const syncStart = Date.now();
-      await fs.mkdir(previewPath, { recursive: true });
-
-      let projectCache = fileHashCache.get(projectId);
-      if (!projectCache) {
-        projectCache = new Map<string, string>();
-        fileHashCache.set(projectId, projectCache);
-      }
-
-      const currentPaths = new Set<string>();
-      const toWrite: Array<{ relPath: string; content: string; hash: string }> = [];
-      let skipped = 0;
-
-      for (const file of files) {
-        if (file.isDirectory || file.isFolder) continue;
+      const previewPath = path.join('/tmp', `preview-${projectId}`);
+      const nonDirectoryFiles = files.filter((file) => !file.isDirectory && !file.isFolder);
+      const projectCache = fileHashCache.get(projectId) ?? new Map<string, string>();
+      const beforeCount = projectCache.size;
+      const skipped = nonDirectoryFiles.filter((file) => {
         const relPath = file.path || file.name;
-        currentPaths.add(relPath);
-        const content = file.content || '';
-        const hash = contentHash(content);
+        return projectCache.get(relPath) === contentHash(file.content || '');
+      }).length;
 
-        if (projectCache.get(relPath) === hash) {
-          skipped++;
-        } else {
-          toWrite.push({ relPath, content, hash });
-        }
-      }
+      await this.syncPreviewWorkspace(projectId, files);
 
-      let removed = 0;
-      if (projectCache.size > 0) {
-        for (const cachedPath of [...projectCache.keys()]) {
-          if (!currentPaths.has(cachedPath)) {
-            const fullPath = path.join(previewPath, cachedPath);
-            try { await fs.unlink(fullPath); } catch {}
-            projectCache.delete(cachedPath);
-            removed++;
-          }
-        }
-      } else {
-        const walkDir = async (dir: string, base: string) => {
-          let entries: import('fs').Dirent[];
-          try { entries = await fs.readdir(dir, { withFileTypes: true }); } catch { return; }
-          for (const entry of entries) {
-            const rel = path.join(base, entry.name);
-            if (entry.isDirectory()) {
-              await walkDir(path.join(dir, entry.name), rel);
-            } else if (!currentPaths.has(rel)) {
-              try { await fs.unlink(path.join(dir, entry.name)); } catch {}
-              removed++;
-            }
-          }
-        };
-        await walkDir(previewPath, '');
-      }
-
-      for (const { relPath, content, hash } of toWrite) {
-        const filePath = path.join(previewPath, relPath);
-        const dir = path.dirname(filePath);
-        try {
-          const stat = await fs.stat(filePath).catch(() => null);
-          if (stat && stat.isDirectory()) {
-            await fs.rm(filePath, { recursive: true, force: true });
-          }
-        } catch {}
-        await fs.mkdir(dir, { recursive: true });
-        await fs.writeFile(filePath, content, 'utf-8');
-        projectCache.set(relPath, hash);
-      }
-
-      const written = toWrite.length;
-
+      const afterCache = fileHashCache.get(projectId) ?? new Map<string, string>();
+      const written = Math.max(nonDirectoryFiles.length - skipped, 0);
+      const removed = Math.max(beforeCount - afterCache.size, 0);
       const syncMs = Date.now() - syncStart;
       logger.info(`[preview-sync] project=${projectId} written=${written} skipped=${skipped} removed=${removed} total=${files.length} syncMs=${syncMs}`);
     } catch (err: any) {
@@ -542,6 +566,7 @@ export class PreviewService {
 
     // Allocate a port and create the preview instance
     const port = this.allocatePort(projectId);
+    const previewPath = path.join('/tmp', `preview-${projectId}`);
 
     const preview: PreviewInstance = {
       projectId,
@@ -609,6 +634,11 @@ export class PreviewService {
 
   async stopPreview(projectId: string): Promise<void> {
     const preview = this.previews.get(projectId);
+    const pendingSync = this.pendingSyncs.get(projectId);
+    if (pendingSync) {
+      clearTimeout(pendingSync);
+      this.pendingSyncs.delete(projectId);
+    }
     if (preview) {
       preview.status = 'stopped';
       for (const [port, proc] of preview.processes) {
