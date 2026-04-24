@@ -60,6 +60,7 @@ interface SearchResult {
   date?: string;
   links?: { npm?: string };
   homepage?: string;
+  score?: number;
 }
 
 interface Vulnerability {
@@ -253,38 +254,24 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
   });
 
   const { data: searchResults, isLoading: isSearching } = useQuery<SearchResult[]>({
-    queryKey: ['package-search', searchQuery, searchLanguage],
+    queryKey: ['package-search', projectId, searchQuery, searchLanguage],
     queryFn: async () => {
-      if (!searchQuery || searchQuery.length < 2) return [];
-      
-      if (searchLanguage === 'pypi') {
-        const response = await fetch(
-          `https://pypi.org/pypi/${encodeURIComponent(searchQuery)}/json`
-        );
-        if (!response.ok) return [];
-        const data = await response.json();
-        return [{
-          name: data.info.name,
-          version: data.info.version,
-          description: data.info.summary || '',
-          homepage: data.info.home_page || data.info.project_url
-        }];
-      } else {
-        const response = await fetch(
-          `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(searchQuery)}&size=10`
-        );
-        if (!response.ok) return [];
-        const data = await response.json();
-        return data.objects?.map((obj: any) => ({
-          name: obj.package.name,
-          version: obj.package.version,
-          description: obj.package.description || '',
-          date: obj.package.date,
-          links: obj.package.links
-        })) || [];
+      if (!projectId || !searchQuery || searchQuery.length < 2) return [];
+
+      const registryLanguage = searchLanguage === 'pypi' ? 'python' : 'nodejs';
+      const response = await fetch(
+        `/api/packages/${projectId}/search?q=${encodeURIComponent(searchQuery)}&language=${registryLanguage}`,
+        { credentials: 'include' }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to search packages');
       }
+
+      const data = await response.json();
+      return data.packages || [];
     },
-    enabled: searchQuery.length >= 2,
+    enabled: !!projectId && searchQuery.length >= 2,
     staleTime: 60000,
   });
 

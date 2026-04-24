@@ -19,6 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useDebounce } from 'use-debounce';
 
 interface PackageInfo {
   name: string;
@@ -31,6 +32,18 @@ interface PackageInfo {
   weekly?: number;
   isInstalled?: boolean;
   hasUpdate?: boolean;
+}
+
+interface PackageSearchResponse {
+  success: boolean;
+  packages: PackageInfo[];
+  query: string;
+  language: string;
+}
+
+interface InstalledPackagesResponse {
+  packages: PackageInfo[];
+  language?: 'javascript' | 'python';
 }
 
 interface MobilePackagesPanelProps {
@@ -88,8 +101,9 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<'installed' | 'search'>('installed');
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 250);
 
-  const { data, isLoading, error, refetch } = useQuery<{ packages: PackageInfo[] }>({
+  const { data, isLoading, error, refetch } = useQuery<InstalledPackagesResponse>({
     queryKey: ['/api/packages/installed', projectId],
     queryFn: async () => {
       const response = await fetch(`/api/packages/installed?projectId=${projectId}`, {
@@ -105,30 +119,39 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
     ...pkg,
     isInstalled: true
   }));
+  const projectLanguage = data?.language === 'python' ? 'python' : 'nodejs';
 
-  const searchResults: PackageInfo[] = [
-    {
-      name: 'axios',
-      version: '1.6.5',
-      description: 'Promise based HTTP client',
-      size: '456 KB',
-      weekly: 8901234
+  const {
+    data: searchData,
+    isLoading: isSearching,
+    error: searchError,
+  } = useQuery<PackageSearchResponse>({
+    queryKey: ['/api/packages', projectId, 'search', debouncedSearchQuery, projectLanguage],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/packages/${projectId}/search?q=${encodeURIComponent(debouncedSearchQuery)}&language=${projectLanguage}`,
+        {
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to search packages');
+      }
+
+      return response.json();
     },
-    {
-      name: 'lodash',
-      version: '4.17.21',
-      description: 'Lodash modular utilities',
-      size: '1.4 MB',
-      weekly: 12345678
-    },
-    {
-      name: 'date-fns',
-      version: '3.2.0',
-      description: 'Modern JavaScript date utility library',
-      size: '678 KB',
-      weekly: 3456789
-    }
-  ];
+    enabled: !!projectId && activeTab === 'search' && debouncedSearchQuery.trim().length >= 2,
+    staleTime: 60000,
+  });
+
+  const installedPackageNames = new Set(installedPackages.map((pkg) => pkg.name));
+  const searchResults: PackageInfo[] = (searchData?.packages || [])
+    .filter((pkg) => !installedPackageNames.has(pkg.name))
+    .map((pkg) => ({
+      ...pkg,
+      isInstalled: false,
+    }));
 
   const togglePackageExpansion = (packageName: string) => {
     const newExpanded = new Set(expandedPackages);
@@ -166,7 +189,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
   const uninstallMutation = useMutation({
     mutationFn: async (packageName: string) => {
       return apiRequest('POST', `/api/packages/${projectId}/uninstall`, {
-        name: packageName
+        package: packageName
       });
     },
     onSuccess: (data: any) => {
@@ -461,7 +484,8 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
           )}
 
           {activeTab === 'installed' && !isLoading && !error && installedPackages.map(renderPackageCard)}
-          {activeTab === 'search' && searchResults.map(renderPackageCard)}
+          {activeTab === 'search' && isSearching && <LoadingSkeleton />}
+          {activeTab === 'search' && !isSearching && searchResults.map(renderPackageCard)}
           
           {activeTab === 'installed' && !isLoading && !error && installedPackages.length === 0 && (
             <EmptyState 
@@ -471,7 +495,21 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
             />
           )}
 
-          {activeTab === 'search' && searchResults.length === 0 && (
+          {activeTab === 'search' && !isSearching && searchQuery.trim().length < 2 && (
+            <EmptyState 
+              title="Search packages"
+              description="Type at least 2 characters to search the real registry for this project."
+            />
+          )}
+
+          {activeTab === 'search' && !isSearching && !!searchError && searchQuery.trim().length >= 2 && (
+            <EmptyState 
+              title="Search failed"
+              description={(searchError as Error).message}
+            />
+          )}
+
+          {activeTab === 'search' && !isSearching && searchQuery.trim().length >= 2 && searchResults.length === 0 && (
             <EmptyState 
               title="No packages found"
               description="Try searching for a different package name."

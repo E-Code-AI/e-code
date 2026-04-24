@@ -17,6 +17,7 @@ import { spawn } from 'child_process';
 import path from 'path';
 import fs from 'fs/promises';
 import { safePath } from '../utils/safe-path';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const router = Router();
 
@@ -74,25 +75,20 @@ async function resolveProjectDirectory(projectId: string): Promise<string | null
   if (!isValidProjectId(projectId)) {
     return null;
   }
-  
-  const projectsDir = path.join(process.cwd(), 'projects');
-  const candidateNames = [projectId, `project-${projectId}`];
 
-  for (const candidate of candidateNames) {
-    const projectDir = safePath(projectsDir, candidate);
-    if (!projectDir) {
-      continue;
-    }
+  const projectDir = getProjectWorkspacePath(projectId);
+  const containedDir = safePath('/tmp/projects', projectId);
 
-    try {
-      await fs.access(projectDir);
-      return projectDir;
-    } catch {
-      continue;
-    }
+  if (!containedDir || containedDir !== projectDir) {
+    return null;
   }
 
-  return null;
+  try {
+    await fs.access(projectDir);
+    return projectDir;
+  } catch {
+    return null;
+  }
 }
 
 /**
