@@ -274,7 +274,7 @@ function initializeShellWebSocket() {
       // Create .bashrc with custom prompt
       const bashrcContent = `
 # E-Code Shell Configuration
-export PS1='\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ '
+export PS1='Workspace: '
 export TERM=xterm-256color
 export LANG=en_US.UTF-8
 

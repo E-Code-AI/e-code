@@ -150,7 +150,7 @@ function buildShellEnv(workDir: string, userId: string, shellBinary: string): Re
     SHELL: shellBinary,
     USER: `user-${userId.slice(0, 8)}`,
     LOGNAME: `user-${userId.slice(0, 8)}`,
-    PS1: '\\[\\033[1;34m\\]\\w\\[\\033[0m\\]$ ',
+    PS1: 'Workspace: ',
     LANG: 'en_US.UTF-8',
     LC_ALL: 'en_US.UTF-8',
     PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',

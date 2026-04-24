@@ -65,7 +65,7 @@ function buildShellEnv(workDir: string, projectId: string, shell: string): Recor
     SHELL: shell,
     USER: `user-${projectId.slice(0, 8)}`,
     LOGNAME: `user-${projectId.slice(0, 8)}`,
-    PS1: 'user@e-code:\\w$ ',
+    PS1: 'Workspace: ',
     LANG: 'en_US.UTF-8',
     LC_ALL: 'en_US.UTF-8',
     PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
@@ -519,7 +519,7 @@ export class PTYTerminalService {
         // Environment
         '-e', 'TERM=xterm-256color',
         '-e', 'HOME=/workspace',
-        '-e', 'PS1=user@e-code:\\w$ ',
+        '-e', 'PS1=Workspace: ',
         // Working directory is the project
         '-w', '/workspace',
         // Image
