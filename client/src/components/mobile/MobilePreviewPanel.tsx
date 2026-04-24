@@ -17,6 +17,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { SplashScreenSequence } from '@/components/ide/SplashScreenSequence';
 
 interface MobilePreviewPanelProps {
   projectId: string | number;
@@ -127,6 +129,7 @@ export function MobilePreviewPanel({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const hasAttemptedAutoStart = useRef(false);
   const { toast } = useToast();
+  const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress, currentTask } = useAutonomousBuildStore();
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
@@ -186,10 +189,23 @@ export function MobilePreviewPanel({
     }
   }, [previewStatus?.status, projectId]);
 
+  useEffect(() => {
+    if (
+      buildPhase === 'complete' &&
+      previewStatus?.status === 'stopped' &&
+      !startPreviewMutation.isPending
+    ) {
+      startPreviewMutation.mutate(undefined);
+    }
+  }, [buildPhase, previewStatus?.status, startPreviewMutation]);
+
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
   const isPreviewError = previewStatus?.status === 'error';
   const noRunnableFiles = previewStatus?.status === 'no_runnable_files';
+  const showBuildSplash =
+    (isBuildActive && buildPhase !== 'error' && buildPhase !== 'complete') ||
+    (buildPhase === 'complete' && !isPreviewRunning && !isPreviewError);
 
   const handleRetry = () => {
     hasAttemptedAutoStart.current = false;
@@ -458,6 +474,13 @@ export function MobilePreviewPanel({
           <div className="flex items-center justify-center h-full bg-background">
             <Loader2 className="w-8 h-8 text-muted-foreground animate-spin" />
           </div>
+        ) : showBuildSplash ? (
+          <SplashScreenSequence
+            phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
+            progress={buildProgress || (buildPhase === 'complete' ? 95 : 10)}
+            currentTask={currentTask || (buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
+            loopUntilComplete
+          />
         ) : isPreviewError ? (
           <ErrorState message={previewStatus?.message} onRetry={handleRetry} isRetrying={startPreviewMutation.isPending} />
         ) : !isPreviewRunning && !isPreviewStarting ? (
