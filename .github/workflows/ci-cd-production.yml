@@ -249,6 +249,11 @@ jobs:
         env:
           NODE_ENV: production
 
+      - name: Run database migrations
+        run: npm run db:push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/ecode_test
+
       - name: Start application
         run: npx tsx server/index.ts &
         env:
