@@ -5809,7 +5809,9 @@ function getSessionDatabaseUrl(): string | null {
 
 const MemoryStore = createMemoryStore(session);
 
-let sessionStore: any;
+let sessionStore: any = new MemoryStore({
+  checkPeriod: 86400000,
+});
 const isProduction = process.env.NODE_ENV === 'production';
 
 async function initSessionStore() {
@@ -5926,17 +5928,19 @@ async function initSessionStore() {
   console.log('[Session Store] Using PostgreSQL store for production (Redis unavailable)');
 }
 
-try {
-  await initSessionStore();
-} catch (error) {
-  if (isProduction) {
-    console.error('[CRITICAL] Failed to initialize session store in production:', error);
-    process.exit(1);
+const sessionStoreReady: Promise<void> = (async () => {
+  try {
+    await initSessionStore();
+  } catch (error) {
+    if (isProduction) {
+      console.error('[CRITICAL] Failed to initialize session store in production:', error);
+      process.exit(1);
+    }
+    console.error('[Storage Module] Failed to initialize session store:', error);
+    sessionStore = new MemoryStore({
+      checkPeriod: 86400000,
+    });
   }
-  console.error('[Storage Module] Failed to initialize session store:', error);
-  sessionStore = new MemoryStore({
-    checkPeriod: 86400000,
-  });
-}
+})();
 
-export { sessionStore };
+export { sessionStore, sessionStoreReady };
