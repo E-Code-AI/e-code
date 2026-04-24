@@ -85,6 +85,38 @@ async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
 
 let csrfToken: string | null = null;
 
+function getBootstrapToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('bootstrap');
+    return token && token.length > 0 ? token : null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldAttachBootstrap(url: string): boolean {
+  return url.startsWith('/api/');
+}
+
+function withBootstrapHeaders(url: string, headers?: HeadersInit): HeadersInit {
+  if (!shouldAttachBootstrap(url)) {
+    return headers || {};
+  }
+
+  const bootstrapToken = getBootstrapToken();
+  if (!bootstrapToken) {
+    return headers || {};
+  }
+
+  const normalized = new Headers(headers || {});
+  if (!normalized.has('X-Bootstrap-Token')) {
+    normalized.set('X-Bootstrap-Token', bootstrapToken);
+  }
+  return normalized;
+}
+
 // Reset CSRF token (call after login to ensure fresh token for new session)
 export function resetCSRFToken(): void {
   csrfToken = null;
@@ -167,7 +199,7 @@ export async function apiRequest<T = any>(
     // Only set Content-Type for JSON bodies, let browser set it for FormData
     ...(body && !isFormData && { "Content-Type": "application/json" }),
     ...(needsCsrf && csrfToken && { "X-CSRF-Token": csrfToken }),
-    ...options?.headers,
+    ...withBootstrapHeaders(url, options?.headers),
   };
 
   const res = await fetch(url, {
@@ -244,6 +276,7 @@ export const getQueryFn: <T>(options: {
     const url = queryKey[0] as string;
     const res = await fetch(url, {
       credentials: "include",
+      headers: withBootstrapHeaders(url),
     });
 
     if (res.status === 401) {

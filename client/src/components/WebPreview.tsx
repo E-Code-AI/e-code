@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { 
   RefreshCw, 
   ExternalLink, 
@@ -55,11 +55,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   
   const { data: previewData } = useQuery<{ previewUrl: string; status?: string }>({
     queryKey: ['/api/preview/url', projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/preview/url?projectId=${projectId}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch preview URL');
-      return res.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId && projectId > 0
   });
 

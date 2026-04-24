@@ -927,14 +927,11 @@ export function useAutonomousChatIntegration({
               queryClient.invalidateQueries({ queryKey: ['/api/preview/url', String(projectId)] });
               
               try {
-                const res = await fetch(`/api/preview/url?projectId=${projectId}`, { credentials: 'include' });
-                if (res.ok) {
-                  const data = await res.json();
-                  if (data.previewUrl && (data.status === 'running' || data.status === 'static')) {
-                    clearInterval(timer);
-                    previewPollTimerRef.current = null;
-                    return;
-                  }
+                const data = await apiRequest<{ previewUrl?: string | null; status?: string }>('GET', `/api/preview/url?projectId=${projectId}`);
+                if (data.previewUrl && (data.status === 'running' || data.status === 'static')) {
+                  clearInterval(timer);
+                  previewPollTimerRef.current = null;
+                  return;
                 }
               } catch {
                 // Transient fetch error — continue polling

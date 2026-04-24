@@ -87,16 +87,7 @@ export function ResponsiveWebPreview({
     refetch: refetchPreview 
   } = useQuery<{ previewUrl: string | null; status?: string; message?: string }>({
     queryKey: ['/api/preview/url', projectId],
-    queryFn: async () => {
-      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Preview error: ${response.status}`);
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId && (typeof projectId === 'string' ? projectId.length > 0 : projectId > 0) && isOnline,
     staleTime: 2000,
     retry: 3,

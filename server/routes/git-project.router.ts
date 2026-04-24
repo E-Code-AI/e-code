@@ -2,13 +2,63 @@ import { Router, Request, Response } from 'express';
 import { execa } from 'execa';
 import path from 'path';
 import fs from 'fs/promises';
-import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
 import { githubOAuth } from '../services/github-oauth';
+import jwt from 'jsonwebtoken';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const logger = createLogger('git-project-router');
 const router = Router();
+
+async function ensureGitProjectAccess(req: Request, res: Response, next: any) {
+  const projectId = String(req.params.projectId || '').trim();
+  const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+  const sessionUserId = (req as any).user?.id;
+
+  if (!projectId) {
+    return res.status(400).json({ error: 'Project ID is required' });
+  }
+
+  const project = await storage.getProject(projectId);
+  if (!project) {
+    return res.status(404).json({ error: 'Project not found' });
+  }
+
+  if (bootstrapToken) {
+    try {
+      const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as { projectId: string | number; userId?: number };
+      if (String(decoded.projectId) !== String(project.id)) {
+        return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
+      }
+      (req as any).bootstrapAuth = decoded;
+      req.params.projectId = String(project.id);
+      return next();
+    } catch (error: any) {
+      return res.status(401).json({ error: error?.message || 'Invalid or expired bootstrap token' });
+    }
+  }
+
+  if (!sessionUserId) {
+    return res.status(401).json({ error: 'Authentication required', code: 'AUTH_REQUIRED' });
+  }
+
+  if (project.ownerId === sessionUserId) {
+    req.params.projectId = String(project.id);
+    return next();
+  }
+
+  const collaborators = await storage.getProjectCollaborators(String(project.id));
+  const isCollaborator = collaborators.some((c: any) => c.userId === sessionUserId);
+  if (!isCollaborator) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  req.params.projectId = String(project.id);
+  return next();
+}
+
+router.use('/:projectId', ensureGitProjectAccess);
 
 async function getAuthenticatedRemoteUrl(remoteUrl: string, userId: number): Promise<string> {
   try {
@@ -131,7 +181,7 @@ function parseStatusOutput(stdout: string) {
 }
 
 // GET /:projectId/status
-router.get('/:projectId/status', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/status', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -162,7 +212,7 @@ router.get('/:projectId/status', ensureAuthenticated, async (req: Request, res: 
 });
 
 // GET /:projectId/branches
-router.get('/:projectId/branches', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/branches', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -207,7 +257,7 @@ router.get('/:projectId/branches', ensureAuthenticated, async (req: Request, res
 });
 
 // GET /:projectId/commits
-router.get('/:projectId/commits', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/commits', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -227,7 +277,7 @@ router.get('/:projectId/commits', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/init
-router.post('/:projectId/init', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/init', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -244,7 +294,7 @@ router.post('/:projectId/init', ensureAuthenticated, async (req: Request, res: R
 });
 
 // POST /:projectId/stage
-router.post('/:projectId/stage', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/stage', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { paths, files } = req.body;
   const filesToStage: string[] = paths || files || ['.'];
@@ -259,7 +309,7 @@ router.post('/:projectId/stage', ensureAuthenticated, async (req: Request, res: 
 });
 
 // POST /:projectId/unstage
-router.post('/:projectId/unstage', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/unstage', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { paths, files } = req.body;
   const filesToUnstage: string[] = paths || files || [];
@@ -276,7 +326,7 @@ router.post('/:projectId/unstage', ensureAuthenticated, async (req: Request, res
 });
 
 // POST /:projectId/commit
-router.post('/:projectId/commit', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/commit', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { message, files } = req.body;
   if (!message) {
@@ -302,9 +352,9 @@ router.post('/:projectId/commit', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/push
-router.post('/:projectId/push', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/push', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const userId = (req as any).user?.id;
+  const userId = (req as any).user?.id ?? (req as any).bootstrapAuth?.userId;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
@@ -340,9 +390,9 @@ router.post('/:projectId/push', ensureAuthenticated, async (req: Request, res: R
 });
 
 // POST /:projectId/pull
-router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/pull', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const userId = (req as any).user?.id;
+  const userId = (req as any).user?.id ?? (req as any).bootstrapAuth?.userId;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
@@ -394,9 +444,9 @@ router.post('/:projectId/pull', ensureAuthenticated, async (req: Request, res: R
 });
 
 // POST /:projectId/fetch
-router.post('/:projectId/fetch', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/fetch', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const userId = (req as any).user?.id;
+  const userId = (req as any).user?.id ?? (req as any).bootstrapAuth?.userId;
   try {
     const projectDir = await getProjectDir(projectId);
     await ensureGitInitialized(projectDir);
@@ -410,7 +460,7 @@ router.post('/:projectId/fetch', ensureAuthenticated, async (req: Request, res: 
 });
 
 // GET /:projectId/remotes
-router.get('/:projectId/remotes', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/remotes', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -436,7 +486,7 @@ router.get('/:projectId/remotes', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/remotes
-router.post('/:projectId/remotes', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/remotes', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { name = 'origin', url } = req.body;
   if (!url) {
@@ -461,7 +511,7 @@ router.post('/:projectId/remotes', ensureAuthenticated, async (req: Request, res
 });
 
 // POST /:projectId/clone
-router.post('/:projectId/clone', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/clone', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { url } = req.body;
   if (!url) {
@@ -479,7 +529,7 @@ router.post('/:projectId/clone', ensureAuthenticated, async (req: Request, res: 
 });
 
 // POST /:projectId/branch (create branch)
-router.post('/:projectId/branch', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/branch', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { name, startPoint } = req.body;
   if (!name) {
@@ -497,7 +547,7 @@ router.post('/:projectId/branch', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/checkout
-router.post('/:projectId/checkout', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/checkout', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { branch } = req.body;
   if (!branch) {
@@ -514,7 +564,7 @@ router.post('/:projectId/checkout', ensureAuthenticated, async (req: Request, re
 });
 
 // GET /:projectId/diff/:filePath
-router.get('/:projectId/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/diff/:filePath(*)', async (req: Request, res: Response) => {
   const { projectId, filePath } = req.params;
   const { staged } = req.query;
   try {
@@ -535,7 +585,7 @@ router.get('/:projectId/diff/:filePath(*)', ensureAuthenticated, async (req: Req
 // =====================================
 
 // POST /:projectId/resolve-conflict
-router.post('/:projectId/resolve-conflict', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/resolve-conflict', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { path: filePath, resolvedContent } = req.body;
   
@@ -559,7 +609,7 @@ router.post('/:projectId/resolve-conflict', ensureAuthenticated, async (req: Req
 });
 
 // POST /:projectId/complete-merge
-router.post('/:projectId/complete-merge', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/complete-merge', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -573,7 +623,7 @@ router.post('/:projectId/complete-merge', ensureAuthenticated, async (req: Reque
 });
 
 // POST /:projectId/abort-merge
-router.post('/:projectId/abort-merge', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/abort-merge', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -590,7 +640,7 @@ router.post('/:projectId/abort-merge', ensureAuthenticated, async (req: Request,
 // =====================================
 
 // GET /:projectId/backup-status
-router.get('/:projectId/backup-status', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/backup-status', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -633,7 +683,7 @@ router.get('/:projectId/backup-status', ensureAuthenticated, async (req: Request
 });
 
 // GET /:projectId/backups
-router.get('/:projectId/backups', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/:projectId/backups', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -658,7 +708,7 @@ router.get('/:projectId/backups', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/backup
-router.post('/:projectId/backup', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/backup', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   try {
     const projectDir = await getProjectDir(projectId);
@@ -671,7 +721,7 @@ router.post('/:projectId/backup', ensureAuthenticated, async (req: Request, res:
 });
 
 // POST /:projectId/backup/restore
-router.post('/:projectId/backup/restore', ensureAuthenticated, async (req: Request, res: Response) => {
+router.post('/:projectId/backup/restore', async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const { version } = req.body; // or id
   try {
