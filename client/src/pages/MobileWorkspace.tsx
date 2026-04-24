@@ -126,19 +126,7 @@ export default function MobileWorkspace() {
 
     const normalizedTabId = tabId.toLowerCase();
     if (normalizedTabId === 'preview') return 'Preview';
-    if (normalizedTabId === 'deploy') return 'Deploy';
-    if (normalizedTabId === 'files' || normalizedTabId === 'code') return 'Files';
-
-    const gatedTabs = new Set([
-      'terminal',
-      'git',
-      'database',
-      'auth',
-      'integrations',
-      'developer',
-    ]);
-
-    return gatedTabs.has(normalizedTabId) ? 'Files' : null;
+    return null;
   };
 
   const renderBootstrapPlaceholder = (tabId?: string | null) => {
@@ -173,7 +161,7 @@ export default function MobileWorkspace() {
         );
 
       case 'files':
-        return renderBootstrapPlaceholder('files');
+        return <div className="flex-1 bg-background" />;
 
       case 'code':
         if (renderBootstrapPlaceholder('code')) return renderBootstrapPlaceholder('code');

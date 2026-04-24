@@ -773,58 +773,7 @@ function UnifiedIDELayout({
     const normalizedTabId = tabId.toLowerCase();
 
     if (normalizedTabId === 'preview' || normalizedTabId === 'webpreview') return 'Preview';
-    if (normalizedTabId === 'deploy' || normalizedTabId === 'deployment') return 'Deploy';
-    if (normalizedTabId === 'files') return 'Files';
-
-    const gatedTabs = new Set([
-      'git',
-      'packages',
-      'secrets',
-      'env',
-      'env-vars',
-      'database',
-      'auth',
-      'shell',
-      'storage',
-      'terminal',
-      'history',
-      'rewind',
-      'themes',
-      'multiplayers',
-      'checkpoints',
-      'settings',
-      'extensions',
-      'workflows',
-      'mcp-suite',
-      'debug',
-      'debugger',
-      'testing',
-      'test-runner',
-      'security',
-      'collaboration',
-      'multiplayer',
-      'search',
-      'global-search',
-      'logs',
-      'resources',
-      'screenshots',
-      'visual-editor',
-      'mcp',
-      'monitoring',
-      'networking',
-      'publishing',
-      'skills',
-      'ssh',
-      'automations',
-      'backup',
-      'config',
-      'feedback',
-      'github',
-      'integrations',
-      'merge-conflicts',
-    ]);
-
-    return gatedTabs.has(normalizedTabId) ? 'Files' : null;
+    return null;
   };
 
   const renderBootstrapPlaceholder = (tabId?: string | null) => {
