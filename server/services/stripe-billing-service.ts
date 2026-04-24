@@ -27,14 +27,25 @@ const isUsageSnapshot = (value: unknown): value is UsageSnapshot => {
 
 
 export class StripeBillingService {
-  private stripe: Stripe;
+  private stripe: Stripe | null = null;
   private priceIds: Map<string, string> = new Map();
   
   constructor() {
-    this.stripe = getStripe();
+    if (process.env.STRIPE_SECRET_KEY) {
+      this.stripe = getStripe();
+    } else {
+      logger.warn('STRIPE_SECRET_KEY not found - Stripe billing service running in disabled mode');
+    }
     
     // Initialize price IDs for metered billing
     this.initializePriceIds();
+  }
+
+  private requireStripe(): Stripe {
+    if (!this.stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    return this.stripe;
   }
   
   private initializePriceIds() {
@@ -49,7 +60,8 @@ export class StripeBillingService {
   
   async createCustomer(userId: number, email: string, username: string): Promise<string> {
     try {
-      const customer = await this.stripe.customers.create({
+      const stripe = this.requireStripe();
+      const customer = await stripe.customers.create({
         email,
         name: username,
         metadata: {
@@ -71,6 +83,7 @@ export class StripeBillingService {
   
   async createSubscription(userId: number, planId: string): Promise<Stripe.Subscription> {
     try {
+      const stripe = this.requireStripe();
       const user = await storage.getUser(String(userId));
       if (!user) throw new Error('User not found');
       
@@ -83,7 +96,7 @@ export class StripeBillingService {
       const basePriceId = this.getBasePriceId(planId);
       
       // Create subscription with base plan and metered prices
-      const subscription = await this.stripe.subscriptions.create({
+      const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [
           { price: basePriceId }, // Base subscription price
@@ -135,6 +148,7 @@ export class StripeBillingService {
   
   async reportUsage(userId: number, metricType: string, quantity: number): Promise<void> {
     try {
+      const stripe = this.requireStripe();
       const user = await storage.getUser(String(userId));
       if (!user?.stripeSubscriptionId) {
         logger.warn(`User ${userId} has no active subscription`);
@@ -152,7 +166,7 @@ export class StripeBillingService {
         return;
       }
 
-      const meterEvent = await this.stripe.billing.meterEvents.create({
+      const meterEvent = await stripe.billing.meterEvents.create({
         event_name: metricType,
         payload: {
           stripe_customer_id: user.stripeCustomerId,
@@ -204,7 +218,8 @@ export class StripeBillingService {
   }
   
   private async getBillingPeriodStart(subscriptionId: string): Promise<Date> {
-    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId, {
+    const stripe = this.requireStripe();
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
       expand: ['items']
     });
 
@@ -226,7 +241,8 @@ export class StripeBillingService {
       let plan = 'starter';
       if (user.stripeSubscriptionId) {
         try {
-          const subscription = await this.stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+          const stripe = this.requireStripe();
+          const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
             expand: ['items.data.price']
           });
           // Get plan from subscription price lookup_key or product metadata
@@ -310,13 +326,14 @@ export class StripeBillingService {
         if (!user?.stripeCustomerId) {
           throw new Error('User has no Stripe customer ID');
         }
+        const stripe = this.requireStripe();
         
         // #136 FIXED: Get currency from customer once (outside loop)
-        const stripeCustomer = await this.stripe.customers.retrieve(user.stripeCustomerId) as Stripe.Customer;
+        const stripeCustomer = await stripe.customers.retrieve(user.stripeCustomerId) as Stripe.Customer;
         const customerCurrency = stripeCustomer.currency || 'usd';
         
         // Create an invoice with usage details
-        const invoice = await this.stripe.invoices.create({
+        const invoice = await stripe.invoices.create({
           customer: user.stripeCustomerId,
           auto_advance: false, // Don't automatically finalize
           description: 'E-Code Platform Usage',
@@ -342,7 +359,7 @@ export class StripeBillingService {
               continue;
             }
 
-            await this.stripe.invoiceItems.create({
+            await stripe.invoiceItems.create({
               customer: user.stripeCustomerId,
               invoice: invoice.id,
               description: `${metricType.replace(/_/g, ' ')} usage: ${used}${unit ? ` ${unit}` : ''}`,
@@ -360,7 +377,7 @@ export class StripeBillingService {
         }
 
         // Finalize the invoice
-        const finalizedInvoice = await this.stripe.invoices.finalizeInvoice(invoiceId);
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoiceId);
         
         logger.info(`Generated invoice ${finalizedInvoice.id} for user ${userId}`);
         return finalizedInvoice.hosted_invoice_url || '';
