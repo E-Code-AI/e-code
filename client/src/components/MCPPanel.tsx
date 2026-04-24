@@ -61,7 +61,10 @@ function ServerLogsPanel({ projectId, serverId }: { projectId: string; serverId:
     es.onmessage = (event) => {
       if (closed) return;
       try {
-        const line = JSON.parse(event.data) as string;
+        const parsed = JSON.parse(event.data) as string | { message?: string; timestamp?: string; type?: string };
+        const line = typeof parsed === 'string'
+          ? parsed
+          : `[${parsed.timestamp || new Date().toISOString()}] ${parsed.message || ''}`.trim();
         setLogs((prev) => {
           const next = [...prev, line];
           return next.length > 200 ? next.slice(-200) : next;
@@ -130,8 +133,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
 
   const initBuiltInMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/init-builtin`);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/mcp/init-builtin`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -145,8 +147,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
 
   const addServerMutation = useMutation({
     mutationFn: async (data: { name: string; command: string; args: string[]; env?: Record<string, string> }) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers`, data);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/mcp/servers`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -170,12 +171,14 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "tools"] });
       toast({ title: "MCP server removed" });
     },
+    onError: (err: any) => {
+      toast({ title: "Failed to remove server", description: err.message, variant: "destructive" });
+    },
   });
 
   const editServerMutation = useMutation({
     mutationFn: async ({ serverId, data }: { serverId: string; data: { name?: string; command?: string; args?: string[]; env?: Record<string, string> } }) => {
-      const res = await apiRequest("PUT", `/api/projects/${projectId}/mcp/servers/${serverId}`, data);
-      return res.json();
+      return apiRequest("PUT", `/api/projects/${projectId}/mcp/servers/${serverId}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -189,8 +192,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
 
   const startServerMutation = useMutation({
     mutationFn: async (serverId: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/start`);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/start`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -204,19 +206,20 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
 
   const stopServerMutation = useMutation({
     mutationFn: async (serverId: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/stop`);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/stop`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
       toast({ title: "Server stopped" });
     },
+    onError: (err: any) => {
+      toast({ title: "Failed to stop server", description: err.message, variant: "destructive" });
+    },
   });
 
   const restartServerMutation = useMutation({
     mutationFn: async (serverId: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/restart`);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/mcp/servers/${serverId}/restart`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "mcp", "servers"] });
@@ -385,7 +388,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
                           </div>
                         </div>
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                          {server.status === "running" ? (
+                          {(server.status === "running" || server.status === "connected") ? (
                             <>
                               <button
                                 className="p-1 text-[var(--ide-text-muted)] hover:text-[#0079F2]"
@@ -552,7 +555,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
                         <div className="rounded-md bg-[var(--ide-bg)] border border-[var(--ide-border)] p-2">
                           {serverTools.length === 0 ? (
                             <p className="text-[9px] text-[var(--ide-text-muted)] text-center py-1">
-                              {server.status === "running" ? "No tools discovered" : "Start the server to discover tools"}
+                              {(server.status === "running" || server.status === "connected") ? "No tools discovered" : "Start the server to discover tools"}
                             </p>
                           ) : (
                             <div className="space-y-1.5">

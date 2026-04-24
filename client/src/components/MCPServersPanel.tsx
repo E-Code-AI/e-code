@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
+import MCPPanel from '@/components/MCPPanel';
 import { PostgreSQLMCPPanel } from '@/components/mcp/PostgreSQLMCPPanel';
 import { GitHubMCPPanel } from '@/components/mcp/GitHubMCPPanel';
 import { MemoryMCPPanel } from '@/components/mcp/MemoryMCPPanel';
@@ -14,8 +15,6 @@ import {
   Database,
   Brain,
   Server,
-  FileText,
-  Code,
   CheckCircle,
   AlertCircle,
   Clock,
@@ -46,6 +45,12 @@ interface ServersResponse {
     status: ServerStatus;
     endpoints: string[];
   }>;
+}
+
+interface ProjectMcpServer {
+  id: string;
+  name: string;
+  status: string;
 }
 
 const staticServers: Omit<MCPServerDescriptor, 'status'>[] = [
@@ -109,48 +114,24 @@ const staticServers: Omit<MCPServerDescriptor, 'status'>[] = [
     ],
   },
   {
-    id: 'core',
-    name: 'Core MCP Server',
-    description: 'Filesystem, shell, and runtime tools exposed via the core MCP server',
+    id: 'project',
+    name: 'Project MCP',
+    description: 'Manage project-scoped MCP servers, built-ins, tools, and logs for this workspace',
     icon: <Server className="w-5 h-5" />,
     category: 'Core',
     tools: [
-      { name: 'fs_read', description: 'Read files' },
-      { name: 'fs_write', description: 'Write files' },
-      { name: 'exec_command', description: 'Execute shell commands' },
-      { name: 'ai_complete', description: 'Invoke AI completion' },
+      { name: 'filesystem', description: 'Workspace file operations' },
+      { name: 'web_fetch', description: 'Fetch external resources' },
+      { name: 'db_query', description: 'Query data sources' },
+      { name: 'custom_servers', description: 'Custom MCP server processes' },
     ],
-    endpoints: ['/mcp/connect', '/mcp/message', '/mcp/disconnect'],
-  },
-  {
-    id: 'filesystem',
-    name: 'Filesystem MCP',
-    description: 'File and directory operations with watch capabilities',
-    icon: <FileText className="w-5 h-5" />,
-    category: 'Core',
-    tools: [
-      { name: 'fs_list', description: 'List directories' },
-      { name: 'fs_search', description: 'Find files' },
-      { name: 'fs_watch', description: 'Watch for changes' },
-    ],
-    endpoints: ['/api/mcp/tools'],
-  },
-  {
-    id: 'execution',
-    name: 'Execution MCP',
-    description: 'Command execution and process management',
-    icon: <Code className="w-5 h-5" />,
-    category: 'Core',
-    tools: [
-      { name: 'exec_spawn', description: 'Spawn processes' },
-      { name: 'process_kill', description: 'Kill processes' },
-    ],
-    endpoints: ['/api/mcp/tools'],
+    endpoints: ['/api/projects/:projectId/mcp/servers', '/api/projects/:projectId/mcp/tools'],
   },
 ];
 
 type SelectedDetail =
   | { kind: 'panel'; id: 'github' | 'postgres' | 'memory' }
+  | { kind: 'project' }
   | { kind: 'info'; server: MCPServerDescriptor }
   | null;
 
@@ -163,17 +144,35 @@ export function MCPServersPanel({ projectId }: { projectId?: number } = {}) {
     queryFn: () => apiRequest<ServersResponse>('GET', '/api/mcp/servers'),
     staleTime: 30_000,
   });
+  const { data: projectServers = [] } = useQuery<ProjectMcpServer[]>({
+    queryKey: ['/api/projects', projectId, 'mcp', 'servers'],
+    queryFn: () => apiRequest<ProjectMcpServer[]>('GET', `/api/projects/${projectId}/mcp/servers`),
+    enabled: !!projectId,
+    staleTime: 10_000,
+  });
 
   const remoteStatusById = new Map<string, ServerStatus>();
   for (const s of remote?.servers ?? []) {
     remoteStatusById.set(s.id, s.status);
   }
 
+  const hasRunningProjectServer = projectServers.some(
+    (server) => server.status === 'running' || server.status === 'connected'
+  );
+  const hasProjectServerError = projectServers.some((server) => server.status === 'error');
+
   const servers: MCPServerDescriptor[] = staticServers.map((server) => {
-    const status = remoteStatusById.get(server.id);
+    const status =
+      server.id === 'project'
+        ? hasProjectServerError
+          ? 'error'
+          : hasRunningProjectServer
+            ? 'active'
+            : 'inactive'
+        : remoteStatusById.get(server.id);
     return {
       ...server,
-      status: status ?? (server.category === 'Core' ? 'active' : 'inactive'),
+      status: status ?? 'inactive',
     };
   });
 
@@ -185,6 +184,8 @@ export function MCPServersPanel({ projectId }: { projectId?: number } = {}) {
   const openServer = (server: MCPServerDescriptor) => {
     if (server.id === 'github' || server.id === 'postgres' || server.id === 'memory') {
       setSelected({ kind: 'panel', id: server.id });
+    } else if (server.id === 'project') {
+      setSelected({ kind: 'project' });
     } else {
       setSelected({ kind: 'info', server });
     }
@@ -200,6 +201,11 @@ export function MCPServersPanel({ projectId }: { projectId?: number } = {}) {
         await apiRequest('GET', '/api/mcp/github/repositories');
       } else if (server.id === 'memory') {
         await apiRequest('POST', '/api/mcp/memory/search', { query: 'health-check', limit: 1 });
+      } else if (server.id === 'project') {
+        if (!projectId) {
+          throw new Error('Project MCP is unavailable without an active project');
+        }
+        await apiRequest('GET', `/api/projects/${projectId}/mcp/servers`);
       } else {
         await apiRequest('GET', '/api/mcp/servers');
       }
@@ -245,6 +251,30 @@ export function MCPServersPanel({ projectId }: { projectId?: number } = {}) {
         {selected.id === 'github' && <GitHubMCPPanel projectId={projectId} />}
         {selected.id === 'postgres' && <PostgreSQLMCPPanel projectId={projectId} />}
         {selected.id === 'memory' && <MemoryMCPPanel projectId={projectId} />}
+      </div>
+    );
+  }
+
+  if (selected?.kind === 'project') {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
+            ← Back to MCP Servers
+          </Button>
+        </div>
+        {projectId ? (
+          <MCPPanel projectId={String(projectId)} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Project MCP unavailable</CardTitle>
+              <CardDescription>
+                Open the MCP Suite from a project workspace to manage project-scoped MCP servers.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
       </div>
     );
   }
