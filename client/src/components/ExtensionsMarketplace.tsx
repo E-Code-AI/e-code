@@ -10,7 +10,6 @@ import {
   Package,
   Search,
   Download,
-  Star,
   TrendingUp,
   Code,
   Palette,
@@ -18,7 +17,6 @@ import {
   Zap,
   Shield,
   Globe,
-  Settings,
   Check,
   ExternalLink,
   User,
@@ -26,6 +24,8 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Power,
+  Trash2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -39,6 +39,7 @@ interface MarketplaceExtension {
   version: string;
   category: string;
   icon: string;
+  homepage?: string;
 }
 
 interface InstalledExtension {
@@ -84,6 +85,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<'browse' | 'installed'>('browse');
 
   const { data: marketplaceData, isLoading: isLoadingMarketplace, error: marketplaceError, refetch: refetchMarketplace } = useQuery<MarketplaceResponse>({
     queryKey: ['/api/extensions/marketplace'],
@@ -167,7 +169,32 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
     },
   });
 
+  const toggleMutation = useMutation({
+    mutationFn: async ({ extensionId, enabled }: { extensionId: string; enabled: boolean }) => {
+      if (!projectId) throw new Error('Project ID required');
+      const response = await apiRequest('PATCH', `/api/extensions/${projectId}/${extensionId}`, {
+        enabled,
+      });
+      return response.json();
+    },
+    onSuccess: (updated) => {
+      toast({
+        title: updated.enabled ? 'Extension enabled' : 'Extension disabled',
+        description: `${updated.name} has been ${updated.enabled ? 'enabled' : 'disabled'} for this project`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/extensions', projectId, 'installed'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Update failed',
+        description: error.message || 'Failed to update extension state',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const installedExtensionIds = new Set(installedExtensions.map(ext => ext.extensionId));
+  const installedExtensionById = new Map(installedExtensions.map(ext => [ext.extensionId, ext]));
 
   const extensions = marketplaceData?.extensions || [];
   const categories = [
@@ -178,6 +205,12 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const filteredExtensions = extensions.filter((ext) => {
     const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ext.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || ext.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+  const filteredInstalledExtensions = installedExtensions.filter((ext) => {
+    const matchesSearch = ext.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (ext.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesCategory = selectedCategory === 'all' || ext.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -192,7 +225,6 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   };
 
   const isLoading = isLoadingMarketplace || isLoadingInstalled;
-  const isMutating = installMutation.isPending || uninstallMutation.isPending;
 
   if (!projectId) {
     return (
@@ -238,6 +270,25 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
             />
           </div>
 
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant={activeTab === 'browse' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('browse')}
+              data-testid="button-tab-browse-extensions"
+            >
+              Browse
+            </Button>
+            <Button
+              size="sm"
+              variant={activeTab === 'installed' ? 'default' : 'outline'}
+              onClick={() => setActiveTab('installed')}
+              data-testid="button-tab-installed-extensions"
+            >
+              Installed ({installedExtensions.length})
+            </Button>
+          </div>
+
           <div className="flex gap-2 overflow-x-auto pb-2">
             {categories.map((category) => {
               const Icon = categoryIcons[category.id] || Package;
@@ -278,19 +329,28 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                   Try again
                 </Button>
               </div>
-            ) : filteredExtensions.length === 0 ? (
+            ) : activeTab === 'browse' && filteredExtensions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="marketplace-empty">
                 <Package className="h-12 w-12 mb-3 text-muted-foreground opacity-40" />
                 <p className="text-muted-foreground">
                   {searchQuery ? `No extensions found matching "${searchQuery}"` : 'No extensions available'}
                 </p>
               </div>
-            ) : (
+            ) : activeTab === 'installed' && filteredInstalledExtensions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center" data-testid="installed-extensions-empty">
+                <Package className="h-12 w-12 mb-3 text-muted-foreground opacity-40" />
+                <p className="text-muted-foreground">
+                  {searchQuery ? `No installed extensions found matching "${searchQuery}"` : 'No extensions installed for this project'}
+                </p>
+              </div>
+            ) : activeTab === 'browse' ? (
               <div className="space-y-3">
                 {filteredExtensions.map((extension) => {
-                  const isInstalled = installedExtensionIds.has(extension.extensionId);
+                  const installedExtension = installedExtensionById.get(extension.extensionId);
+                  const isInstalled = !!installedExtension;
                   const isPending = (installMutation.isPending && installMutation.variables?.extensionId === extension.extensionId) ||
-                    (uninstallMutation.isPending && uninstallMutation.variables === extension.extensionId);
+                    (uninstallMutation.isPending && uninstallMutation.variables === extension.extensionId) ||
+                    (toggleMutation.isPending && toggleMutation.variables?.extensionId === extension.extensionId);
 
                   return (
                     <div
@@ -317,6 +377,11 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                                   Installed
                                 </Badge>
                               )}
+                              {installedExtension && !installedExtension.enabled && (
+                                <Badge variant="outline" className="text-[11px]">
+                                  Disabled
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-[11px] text-muted-foreground">
                               {extension.description}
@@ -338,7 +403,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                             size="sm"
                             variant={isInstalled ? 'outline' : 'default'}
                             onClick={() => handleInstallToggle(extension)}
-                            disabled={isMutating}
+                            disabled={isPending}
                             data-testid={`button-install-${extension.extensionId}`}
                           >
                             {isPending ? (
@@ -355,12 +420,92 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
                               </>
                             )}
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost"
-                            data-testid={`button-details-${extension.extensionId}`}
+                          {isInstalled && installedExtension && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => toggleMutation.mutate({ extensionId: extension.extensionId, enabled: !installedExtension.enabled })}
+                              disabled={isPending}
+                              data-testid={`button-toggle-${extension.extensionId}`}
+                            >
+                              <Power className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {extension.homepage && (
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              asChild
+                              data-testid={`button-details-${extension.extensionId}`}
+                            >
+                              <a href={extension.homepage} target="_blank" rel="noreferrer">
+                                <ExternalLink className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredInstalledExtensions.map((extension) => {
+                  const isPending =
+                    (uninstallMutation.isPending && uninstallMutation.variables === extension.extensionId) ||
+                    (toggleMutation.isPending && toggleMutation.variables?.extensionId === extension.extensionId);
+
+                  return (
+                    <div
+                      key={extension.extensionId}
+                      className="p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                      data-testid={`installed-extension-card-${extension.extensionId}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-[13px] font-medium">{extension.name}</h4>
+                            <Badge variant={extension.enabled ? 'secondary' : 'outline'} className="text-[11px]">
+                              {extension.enabled ? 'Enabled' : 'Disabled'}
+                            </Badge>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">
+                            {extension.description || 'Installed project extension'}
+                          </p>
+                          <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                            {extension.author && (
+                              <div className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {extension.author}
+                              </div>
+                            )}
+                            {extension.version && (
+                              <div className="flex items-center gap-1">
+                                <Tag className="h-3 w-3" />
+                                v{extension.version}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => toggleMutation.mutate({ extensionId: extension.extensionId, enabled: !extension.enabled })}
+                            disabled={isPending}
+                            data-testid={`button-installed-toggle-${extension.extensionId}`}
                           >
-                            <ExternalLink className="h-4 w-4" />
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => uninstallMutation.mutate(extension.extensionId)}
+                            disabled={isPending}
+                            data-testid={`button-installed-uninstall-${extension.extensionId}`}
+                          >
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                           </Button>
                         </div>
                       </div>
@@ -371,7 +516,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
             )}
           </ScrollArea>
 
-          {!isLoading && !marketplaceError && extensions.length > 0 && (
+          {!isLoading && !marketplaceError && activeTab === 'browse' && extensions.length > 0 && (
             <div className="mt-4">
               <h3 className="text-[13px] font-medium mb-3 flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />

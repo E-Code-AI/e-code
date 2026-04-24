@@ -6,6 +6,9 @@ import { projectExtensions, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
+import fs from 'fs/promises';
+import path from 'path';
 
 const router = Router();
 const logger = createLogger('extensions');
@@ -13,21 +16,48 @@ const logger = createLogger('extensions');
 const EXTENSION_CATEGORIES = ['themes', 'languages', 'tools', 'formatters', 'linters', 'snippets'] as const;
 
 const MARKETPLACE_EXTENSIONS = [
-  { extensionId: 'theme-dark-plus', name: 'Dark+ Theme', description: 'Visual Studio Code dark theme', author: 'Microsoft', version: '1.0.0', category: 'themes', icon: 'palette' },
-  { extensionId: 'theme-monokai', name: 'Monokai Theme', description: 'Classic Monokai color theme', author: 'Monokai', version: '1.0.0', category: 'themes', icon: 'palette' },
-  { extensionId: 'theme-solarized', name: 'Solarized Theme', description: 'Precision colors for machines and people', author: 'Ethan Schoonover', version: '1.0.0', category: 'themes', icon: 'palette' },
-  { extensionId: 'lang-python', name: 'Python Language Support', description: 'Rich Python language support with IntelliSense', author: 'E-Code', version: '2.0.0', category: 'languages', icon: 'code' },
-  { extensionId: 'lang-typescript', name: 'TypeScript Language Support', description: 'TypeScript/JavaScript language features', author: 'E-Code', version: '2.0.0', category: 'languages', icon: 'code' },
-  { extensionId: 'lang-rust', name: 'Rust Language Support', description: 'Rust language support with rust-analyzer', author: 'E-Code', version: '1.5.0', category: 'languages', icon: 'code' },
-  { extensionId: 'tool-git', name: 'Git Integration', description: 'Source control with Git', author: 'E-Code', version: '1.0.0', category: 'tools', icon: 'git-branch' },
-  { extensionId: 'tool-docker', name: 'Docker Integration', description: 'Build, manage, and deploy containers', author: 'E-Code', version: '1.0.0', category: 'tools', icon: 'box' },
-  { extensionId: 'formatter-prettier', name: 'Prettier', description: 'Code formatter using Prettier', author: 'Prettier', version: '3.0.0', category: 'formatters', icon: 'wand' },
-  { extensionId: 'formatter-black', name: 'Black Formatter', description: 'Python code formatter', author: 'Python Software Foundation', version: '24.0.0', category: 'formatters', icon: 'wand' },
-  { extensionId: 'linter-eslint', name: 'ESLint', description: 'JavaScript and TypeScript linter', author: 'ESLint', version: '9.0.0', category: 'linters', icon: 'check-circle' },
-  { extensionId: 'linter-pylint', name: 'Pylint', description: 'Python static code analysis', author: 'Python Software Foundation', version: '3.0.0', category: 'linters', icon: 'check-circle' },
-  { extensionId: 'snippets-react', name: 'React Snippets', description: 'React code snippets', author: 'E-Code', version: '1.0.0', category: 'snippets', icon: 'file-code' },
-  { extensionId: 'snippets-python', name: 'Python Snippets', description: 'Python code snippets', author: 'E-Code', version: '1.0.0', category: 'snippets', icon: 'file-code' },
+  { extensionId: 'theme-dark-plus', name: 'Dark+ Theme', description: 'Visual Studio Code dark theme', author: 'Microsoft', version: '1.0.0', category: 'themes', icon: 'palette', homepage: 'https://code.visualstudio.com' },
+  { extensionId: 'theme-monokai', name: 'Monokai Theme', description: 'Classic Monokai color theme', author: 'Monokai', version: '1.0.0', category: 'themes', icon: 'palette', homepage: 'https://monokai.pro' },
+  { extensionId: 'theme-solarized', name: 'Solarized Theme', description: 'Precision colors for machines and people', author: 'Ethan Schoonover', version: '1.0.0', category: 'themes', icon: 'palette', homepage: 'https://ethanschoonover.com/solarized/' },
+  { extensionId: 'lang-python', name: 'Python Language Support', description: 'Rich Python language support with IntelliSense', author: 'E-Code', version: '2.0.0', category: 'languages', icon: 'code', homepage: 'https://www.python.org/' },
+  { extensionId: 'lang-typescript', name: 'TypeScript Language Support', description: 'TypeScript/JavaScript language features', author: 'E-Code', version: '2.0.0', category: 'languages', icon: 'code', homepage: 'https://www.typescriptlang.org/' },
+  { extensionId: 'lang-rust', name: 'Rust Language Support', description: 'Rust language support with rust-analyzer', author: 'E-Code', version: '1.5.0', category: 'languages', icon: 'code', homepage: 'https://www.rust-lang.org/' },
+  { extensionId: 'tool-git', name: 'Git Integration', description: 'Source control with Git', author: 'E-Code', version: '1.0.0', category: 'tools', icon: 'git-branch', homepage: 'https://git-scm.com/' },
+  { extensionId: 'tool-docker', name: 'Docker Integration', description: 'Build, manage, and deploy containers', author: 'E-Code', version: '1.0.0', category: 'tools', icon: 'box', homepage: 'https://www.docker.com/' },
+  { extensionId: 'formatter-prettier', name: 'Prettier', description: 'Code formatter using Prettier', author: 'Prettier', version: '3.0.0', category: 'formatters', icon: 'wand', homepage: 'https://prettier.io/' },
+  { extensionId: 'formatter-black', name: 'Black Formatter', description: 'Python code formatter', author: 'Python Software Foundation', version: '24.0.0', category: 'formatters', icon: 'wand', homepage: 'https://black.readthedocs.io/' },
+  { extensionId: 'linter-eslint', name: 'ESLint', description: 'JavaScript and TypeScript linter', author: 'ESLint', version: '9.0.0', category: 'linters', icon: 'check-circle', homepage: 'https://eslint.org/' },
+  { extensionId: 'linter-pylint', name: 'Pylint', description: 'Python static code analysis', author: 'Python Software Foundation', version: '3.0.0', category: 'linters', icon: 'check-circle', homepage: 'https://pylint.pycqa.org/' },
+  { extensionId: 'snippets-react', name: 'React Snippets', description: 'React code snippets', author: 'E-Code', version: '1.0.0', category: 'snippets', icon: 'file-code', homepage: 'https://react.dev/' },
+  { extensionId: 'snippets-python', name: 'Python Snippets', description: 'Python code snippets', author: 'E-Code', version: '1.0.0', category: 'snippets', icon: 'file-code', homepage: 'https://www.python.org/' },
 ];
+
+async function syncProjectExtensionManifest(projectId: number): Promise<void> {
+  const installed = await db.query.projectExtensions.findMany({
+    where: eq(projectExtensions.projectId, projectId),
+  });
+
+  const projectDir = await ensureProjectDirectory(projectId);
+  const vscodeDir = path.join(projectDir, '.vscode');
+  const manifestPath = path.join(vscodeDir, 'extensions.json');
+
+  const enabled = installed.filter((ext) => ext.enabled).map((ext) => ext.extensionId);
+  const disabled = installed.filter((ext) => !ext.enabled).map((ext) => ext.extensionId);
+
+  await fs.mkdir(vscodeDir, { recursive: true });
+  await fs.writeFile(
+    manifestPath,
+    JSON.stringify(
+      {
+        recommendations: enabled,
+        unwantedRecommendations: disabled,
+      },
+      null,
+      2
+    ) + '\n',
+    'utf8'
+  );
+}
 
 async function verifyProjectOwnership(userId: number | string, projectId: number | string): Promise<boolean> {
   try {
@@ -101,7 +131,7 @@ router.get('/:projectId/installed', ensureAuthenticated, async (req, res) => {
       where: eq(projectExtensions.projectId, projectIdNum)
     });
 
-    res.json(installed);
+    res.json(installed.sort((a, b) => a.name.localeCompare(b.name)));
   } catch (error: any) {
     logger.error('Failed to get installed extensions:', error);
     res.status(500).json({ error: error.message });
@@ -148,6 +178,8 @@ router.post('/:projectId/install', ensureAuthenticated, csrfProtection, async (r
       enabled: true,
     }).returning();
 
+    await syncProjectExtensionManifest(projectIdNum);
+
     logger.info('Extension installed', { projectId: projectIdNum, extensionId: data.extensionId });
     res.status(201).json(created);
   } catch (error: any) {
@@ -192,6 +224,8 @@ router.delete('/:projectId/:extensionId', ensureAuthenticated, csrfProtection, a
         eq(projectExtensions.extensionId, extensionId)
       )
     );
+
+    await syncProjectExtensionManifest(projectIdNum);
 
     logger.info('Extension uninstalled', { projectId: projectIdNum, extensionId });
     res.json({ success: true });
@@ -238,6 +272,8 @@ router.patch('/:projectId/:extensionId', ensureAuthenticated, csrfProtection, as
         )
       )
       .returning();
+
+    await syncProjectExtensionManifest(projectIdNum);
 
     logger.info('Extension toggled', { projectId: projectIdNum, extensionId, enabled: data.enabled });
     res.json(updated);
