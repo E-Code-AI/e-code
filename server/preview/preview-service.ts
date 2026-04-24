@@ -2,7 +2,7 @@
 import express from 'express';
 import * as path from 'path';
 import { storage } from '../storage';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { createProxyMiddleware, responseInterceptor } from 'http-proxy-middleware';
 import * as fs from 'fs/promises';
 import { spawn } from 'child_process';
 import { createHash } from 'crypto';
@@ -37,6 +37,80 @@ function hasRunnableFiles(files: any[]): boolean {
       fileName.endsWith('.py')
     );
   });
+}
+
+function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number, apiPort?: number | null): string {
+  const primaryBase = `/preview/${projectId}/${primaryPort}`;
+  const apiBase = apiPort ? `/preview/${projectId}/${apiPort}` : primaryBase;
+
+  return `
+    <script data-preview-fetch-interceptor="true">
+      (function() {
+        var primaryBase = ${JSON.stringify(primaryBase)};
+        var apiBase = ${JSON.stringify(apiBase)};
+
+        function rewriteUrl(url) {
+          if (typeof url !== 'string') return url;
+          if (url.startsWith('/preview/')) return url;
+          if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+          if (url.startsWith('/api')) return apiBase + url;
+          if (url.startsWith('/')) return primaryBase + url;
+          return url;
+        }
+
+        var origFetch = window.fetch;
+        window.fetch = function(input, init) {
+          if (typeof input === 'string') {
+            input = rewriteUrl(input);
+          } else if (input instanceof Request) {
+            var relativeUrl = input.url.replace(window.location.origin, '');
+            var newUrl = rewriteUrl(relativeUrl);
+            if (newUrl !== relativeUrl) {
+              input = new Request(newUrl, {
+                method: input.method,
+                headers: input.headers,
+                body: input.method !== 'GET' && input.method !== 'HEAD' ? input.body : undefined,
+                mode: input.mode,
+                credentials: input.credentials,
+                cache: input.cache,
+                redirect: input.redirect,
+                referrer: input.referrer,
+                referrerPolicy: input.referrerPolicy,
+                integrity: input.integrity,
+                keepalive: input.keepalive,
+                signal: input.signal
+              });
+            }
+          }
+          return origFetch.call(this, input, init);
+        };
+
+        var origOpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url) {
+          arguments[1] = rewriteUrl(url);
+          return origOpen.apply(this, arguments);
+        };
+      })();
+    </script>`;
+}
+
+function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null): string {
+  const html = buffer.toString('utf8');
+  if (html.includes('data-preview-fetch-interceptor="true"')) {
+    return html;
+  }
+
+  const script = getPreviewFetchInterceptorScript(projectId, primaryPort, apiPort);
+
+  if (/<head>/i.test(html)) {
+    return html.replace(/<head>/i, `<head>\n${script}`);
+  }
+
+  if (/<html/i.test(html)) {
+    return html.replace(/<html([^>]*)>/i, `<html$1>\n<head>\n${script}\n</head>`);
+  }
+
+  return `${script}\n${html}`;
 }
 
 /**
@@ -423,15 +497,25 @@ export class PreviewService {
 
       // Update idle timestamp so this preview isn't swept by the idle cleanup
       preview.lastHealthCheck = new Date();
+      const apiService = preview.exposedServices.find((service) => service.path === '/api');
       
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${port}`,
         changeOrigin: true,
         ws: true,
+        selfHandleResponse: true,
         pathRewrite: {
           [`^/preview/${projectId}/${port}`]: ''
         },
         on: {
+          proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
+            const contentType = String(proxyRes.headers['content-type'] || '');
+            if (!contentType.includes('text/html')) {
+              return responseBuffer;
+            }
+
+            return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null);
+          }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
             if (res && typeof res.status === 'function') {
@@ -454,15 +538,25 @@ export class PreviewService {
 
       // Update idle timestamp so this preview isn't swept by the idle cleanup
       preview.lastHealthCheck = new Date();
+      const apiService = preview.exposedServices.find((service) => service.path === '/api');
       
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${preview.primaryPort}`,
         changeOrigin: true,
         ws: true,
+        selfHandleResponse: true,
         pathRewrite: {
           [`^/preview/${projectId}`]: ''
         },
         on: {
+          proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
+            const contentType = String(proxyRes.headers['content-type'] || '');
+            if (!contentType.includes('text/html')) {
+              return responseBuffer;
+            }
+
+            return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null);
+          }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId}:`, err);
             if (res && typeof res.status === 'function') {
@@ -903,9 +997,19 @@ export class PreviewService {
       description: `Main ${frameworkInfo.type} application`
     });
 
-    if (frameworkInfo.packageJson.scripts?.api || frameworkInfo.packageJson.scripts?.server) {
+    if (
+      frameworkInfo.packageJson.scripts?.api ||
+      frameworkInfo.packageJson.scripts?.server ||
+      frameworkInfo.packageJson.scripts?.['dev:server']
+    ) {
       const apiPort = port + 1000;
-      const apiProcess = spawn('npm', ['run', frameworkInfo.packageJson.scripts?.api ? 'api' : 'server'], {
+      const apiScript = frameworkInfo.packageJson.scripts?.api
+        ? 'api'
+        : frameworkInfo.packageJson.scripts?.server
+          ? 'server'
+          : 'dev:server';
+
+      const apiProcess = spawn('npm', ['run', apiScript], {
         cwd: previewPath,
         env: createSafeEnv({ ...projectEnvVars, PORT: apiPort.toString() })
       });
