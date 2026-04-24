@@ -234,6 +234,7 @@ export class ProjectsRouter {
     this.router.get("/", this.ensureAuthenticated, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
+        const currentOwner = sanitizeOwner(req.user as User);
         
         // Parse pagination params with defaults and max limit
         const requestedLimit = parseInt(req.query.limit as string) || 50;
@@ -248,8 +249,8 @@ export class ProjectsRouter {
           const allProjects = await this.storage.getProjectsByUserId(String(userId));
           const filtered = allProjects.filter(p => {
             const matchesSearch = !search || (
-              p.name.toLowerCase().includes(search.toLowerCase()) || 
-              (p.description?.toLowerCase().includes(search.toLowerCase()))
+              (p.name || '').toLowerCase().includes(search.toLowerCase()) || 
+              ((p.description || '').toLowerCase().includes(search.toLowerCase()))
             );
             const matchesLanguage = !language || p.language === language;
             const matchesVisibility = !visibility || p.visibility === visibility;
@@ -263,9 +264,9 @@ export class ProjectsRouter {
           total = result.total;
         }
         
-        const enrichedProjects = await Promise.all(projects.map(async (project) => {
-          const owner = await this.storage.getUser(String(project.ownerId));
-          return { ...project, owner: sanitizeOwner(owner) };
+        const enrichedProjects = projects.map((project) => ({
+          ...project,
+          owner: currentOwner,
         }));
         
         res.json({
