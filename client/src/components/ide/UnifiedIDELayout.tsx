@@ -114,6 +114,8 @@ const ReplitDebuggerPanel = instrumentedLazy(() => import('@/components/editor/R
 const ReplitTestingPanel = instrumentedLazy(() => import('@/components/editor/ReplitTestingPanel').then(mod => ({ default: mod.ReplitTestingPanel })), 'ReplitTestingPanel');
 const ReplitSecretsPanel = instrumentedLazy(() => import('@/components/editor/ReplitSecretsPanel').then(mod => ({ default: mod.ReplitSecretsPanel })), 'ReplitSecretsPanel');
 const ReplitHistoryPanel = instrumentedLazy(() => import('@/components/editor/ReplitHistoryPanel').then(mod => ({ default: mod.ReplitHistoryPanel })), 'ReplitHistoryPanel');
+const ReplitProblemsPanel = instrumentedLazy(() => import('@/components/editor/ReplitProblemsPanel').then(mod => ({ default: mod.ReplitProblemsPanel })), 'ReplitProblemsPanel');
+const ReplitOutputPanel = instrumentedLazy(() => import('@/components/editor/ReplitOutputPanel').then(mod => ({ default: mod.ReplitOutputPanel })), 'ReplitOutputPanel');
 const UnifiedCheckpointsPanel = instrumentedLazy(() => import('@/components/UnifiedCheckpointsPanel').then(mod => ({ default: mod.UnifiedCheckpointsPanel })), 'UnifiedCheckpointsPanel');
 const ReplitSettingsPanel = instrumentedLazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })), 'ReplitSettingsPanel');
 const ReplitThemesPanel = instrumentedLazy(() => import('@/components/editor/ReplitThemesPanel').then(mod => ({ default: mod.ReplitThemesPanel })), 'ReplitThemesPanel');
@@ -124,9 +126,13 @@ const VisualEditorPanel = instrumentedLazy(() => import('@/components/ide/Visual
 const ShellPanel = instrumentedLazy(() => import('@/components/editor/ShellPanel').then(mod => ({ default: mod.ShellPanel })), 'ShellPanel');
 const AppStoragePanel = instrumentedLazy(() => import('@/components/editor/AppStoragePanel').then(mod => ({ default: mod.AppStoragePanel })), 'AppStoragePanel');
 const ReplitConsolePanel = instrumentedLazy(() => import('@/components/ide/ReplitConsolePanel').then(mod => ({ default: mod.ReplitConsolePanel })), 'ReplitConsolePanel');
+const ProgressPanel = instrumentedLazy(() => import('@/components/ai/ProgressPanel').then(mod => ({ default: mod.ProgressPanel })), 'ProgressPanel');
 const ResourcesPanel = instrumentedLazy(() => import('@/components/ide/ResourcesPanel').then(mod => ({ default: mod.ResourcesPanel })), 'ResourcesPanel');
 const LogsViewerPanel = instrumentedLazy(() => import('@/components/ide/LogsViewerPanel').then(mod => ({ default: mod.LogsViewerPanel })), 'LogsViewerPanel');
 const ScreenshotsPanel = instrumentedLazy(() => import('@/components/ScreenshotsPanel').then(mod => ({ default: mod.ScreenshotsPanel })), 'ScreenshotsPanel');
+const BillingSystem = instrumentedLazy(() => import('@/components/BillingSystem').then(mod => ({ default: mod.BillingSystem })), 'BillingSystem');
+const ImportExport = instrumentedLazy(() => import('@/components/ImportExport').then(mod => ({ default: mod.ImportExport })), 'ImportExport');
+const SessionRecording = instrumentedLazy(() => import('@/components/agent/SessionRecording').then(mod => ({ default: mod.SessionRecording })), 'SessionRecording');
 
 import { ShortcutHint, ShortcutTester } from '@/components/utilities';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
@@ -235,6 +241,7 @@ function UnifiedIDELayout({
     setShowKeyboardShortcuts,
     agentToolsSettings,
     setAgentToolsSettings,
+    agentSessionId,
     gitBranch,
     gitChangesCount,
     cursorPosition,
@@ -1363,10 +1370,7 @@ function UnifiedIDELayout({
       if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Tests..." /></div>}>
-          <div className="h-full overflow-auto p-4">
-            <h2 className="text-[15px] font-semibold mb-4">Test Runner</h2>
-            <p className="text-muted-foreground">Run and manage your tests here.</p>
-          </div>
+          <ReplitTestingPanel projectId={projectId} className="h-full" />
         </Suspense>
       );
     }
@@ -1374,20 +1378,29 @@ function UnifiedIDELayout({
     // Problems panel - inline
     if (currentTab.id === 'problems') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Problems</h2>
-          <p className="text-muted-foreground">View errors and warnings in your code.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Problems..." /></div>}>
+          <ReplitProblemsPanel
+            projectId={projectId}
+            onFileNavigate={(filePath) => {
+              const matchingFile = files.find((file) => {
+                const candidatePath = String((file as any).path || file.name || '');
+                return candidatePath === filePath || candidatePath.endsWith(filePath) || file.name === filePath;
+              });
+              if (matchingFile) {
+                handleFileSelect({ id: matchingFile.id, name: matchingFile.name });
+              }
+            }}
+          />
+        </Suspense>
       );
     }
 
     // Output panel - inline
     if (currentTab.id === 'output') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Output</h2>
-          <p className="text-muted-foreground">View build and runtime output here.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Output..." /></div>}>
+          <ReplitOutputPanel projectId={projectId} />
+        </Suspense>
       );
     }
 
@@ -1448,40 +1461,50 @@ function UnifiedIDELayout({
     // Progress panel - inline
     if (currentTab.id === 'progress') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Progress</h2>
-          <p className="text-muted-foreground">View task progress and status.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Progress..." /></div>}>
+          <ProgressPanel projectId={projectId} sessionId={agentSessionId || undefined} />
+        </Suspense>
       );
     }
 
     // Video replay - inline
     if (currentTab.id === 'video-replay') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Video Replay</h2>
-          <p className="text-muted-foreground">Review recorded sessions.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Recordings..." /></div>}>
+          {agentSessionId ? (
+            <SessionRecording sessionId={agentSessionId} projectId={projectId} className="h-full" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              No active agent session is available for recordings yet.
+            </div>
+          )}
+        </Suspense>
       );
     }
 
     // Billing - inline
     if (currentTab.id === 'billing') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Billing</h2>
-          <p className="text-muted-foreground">Manage your subscription and usage.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Billing..." /></div>}>
+          {user?.id ? (
+            <BillingSystem userId={user.id} className="h-full border-0 rounded-none shadow-none" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              Please log in to access billing.
+            </div>
+          )}
+        </Suspense>
       );
     }
 
     // Import/Export - inline
     if (currentTab.id === 'import-export') {
       return (
-        <div className="h-full overflow-auto p-4">
-          <h2 className="text-[15px] font-semibold mb-4">Import / Export</h2>
-          <p className="text-muted-foreground">Import or export project files.</p>
-        </div>
+        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Import / Export..." /></div>}>
+          <div className="h-full overflow-auto p-4">
+            <ImportExport projectId={Number(projectId)} />
+          </div>
+        </Suspense>
       );
     }
 

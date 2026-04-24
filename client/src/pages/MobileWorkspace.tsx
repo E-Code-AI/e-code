@@ -7,13 +7,16 @@ import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
 import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
-import { MobileSecretsPanel } from '@/components/mobile/MobileSecretsPanel';
-import { MobilePackagesPanel } from '@/components/mobile/MobilePackagesPanel';
 import { MobileDeployPanel } from '@/components/mobile/MobileDeployPanel';
+import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
 import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
 import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
 import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
+import { AppStoragePanel } from '@/components/editor/AppStoragePanel';
+import { ReplitConsolePanel } from '@/components/ide/ReplitConsolePanel';
+import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
+import IntegrationsPanel from '@/components/IntegrationsPanel';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
@@ -96,6 +99,25 @@ export default function MobileWorkspace() {
   };
 
   const handleToolSelect = (toolId: string) => {
+    if (toolId === 'files') {
+      setToolsSheetOpen(false);
+      setActiveTool(null);
+      setActiveTab('files');
+      setIsFilesOpen(true);
+      return;
+    }
+    if (toolId === 'agent' || toolId === 'assistant') {
+      setToolsSheetOpen(false);
+      setActiveTool(null);
+      setActiveTab('agent');
+      return;
+    }
+    if (toolId === 'preview') {
+      setToolsSheetOpen(false);
+      setActiveTool(null);
+      setActiveTab('preview');
+      return;
+    }
     setActiveTool(toolId);
     setToolsSheetOpen(false);
   };
@@ -324,16 +346,20 @@ export default function MobileWorkspace() {
             <SheetTitle className="capitalize">{activeTool}</SheetTitle>
           </SheetHeader>
           {activeTool === 'database' && (renderBootstrapPlaceholder('database') || <MobileDatabasePanel projectId={projectId} />)}
-          {activeTool === 'auth' && (renderBootstrapPlaceholder('auth') || <MobileSecretsPanel projectId={projectId} />)}
-          {activeTool === 'integrations' && (renderBootstrapPlaceholder('integrations') || <MobilePackagesPanel projectId={projectId} />)}
+          {activeTool === 'auth' && (renderBootstrapPlaceholder('auth') || <ReplitAuthPanel projectId={projectId} />)}
+          {activeTool === 'integrations' && (renderBootstrapPlaceholder('integrations') || <IntegrationsPanel projectId={projectId} onClose={() => setActiveTool(null)} />)}
           {activeTool === 'git' && (renderBootstrapPlaceholder('git') || <ReplitGitPanel projectId={projectId} className="h-full" mode="mobile" />)}
           {activeTool === 'developer' && (renderBootstrapPlaceholder('developer') || <MobileDebugPanel projectId={projectId} />)}
-          {!['database', 'auth', 'integrations', 'git', 'developer'].includes(activeTool || '') && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground text-[13px]">
-                {activeTool} panel — Coming soon
-              </p>
-            </div>
+          {activeTool === 'app-storage' && (renderBootstrapPlaceholder('app-storage') || <AppStoragePanel projectId={projectId} className="h-full" />)}
+          {activeTool === 'console' && (renderBootstrapPlaceholder('console') || <ReplitConsolePanel projectId={projectId} isRunning={false} />)}
+          {activeTool === 'publishing' && (renderBootstrapPlaceholder('publishing') || <MobileDeployPanel projectId={projectId} className="h-full" />)}
+          {activeTool === 'multiplayer' && (
+            <MobileCollaborationPanel
+              projectId={Number(projectId)}
+              projectName={`Project ${projectId}`}
+              isOpen={true}
+              onClose={() => setActiveTool(null)}
+            />
           )}
         </SheetContent>
       </Sheet>
