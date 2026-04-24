@@ -1,12 +1,11 @@
 import { useState, useCallback, memo, forwardRef, useMemo } from 'react';
 import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { 
-  Sparkles, 
+  Sparkles,
   Copy, 
   Check, 
   RotateCcw, 
@@ -14,8 +13,6 @@ import {
   ChevronUp,
   AlertCircle,
   Loader2,
-  Bot,
-  User,
   Terminal,
   FileCode,
   Search,
@@ -379,28 +376,14 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
       animate="visible"
       exit="exit"
       className={cn(
-        "flex gap-2 sm:gap-3 group",
+        "flex group",
         isUser && "flex-row-reverse"
       )}
       data-testid={`enhanced-message-${message.id}`}
       data-message-role={message.role}
     >
-      {isUser ? (
-        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ring-1 ring-offset-1 ring-offset-background ring-muted-foreground/20 shadow-sm">
-          <AvatarFallback className="bg-muted text-muted-foreground">
-            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </AvatarFallback>
-        </Avatar>
-      ) : (
-        <Avatar className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-offset-background ring-primary/30 shadow-md">
-          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          </AvatarFallback>
-        </Avatar>
-      )}
-
       <div className={cn(
-        "flex-1 min-w-0 space-y-2 max-w-[95%] sm:max-w-[85%] md:max-w-[80%] overflow-hidden",
+        "flex-1 min-w-0 space-y-2 max-w-full overflow-hidden",
         isUser && "flex flex-col items-end"
       )}>
         {hasThinking && (
@@ -982,17 +965,15 @@ export const StreamingSkeleton = memo(function StreamingSkeleton() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="flex gap-2 sm:gap-3"
+      className="flex"
       data-testid="streaming-skeleton"
     >
-      <Avatar className="h-7 w-7 sm:h-8 sm:w-8 ring-1 sm:ring-2 ring-offset-1 sm:ring-offset-2 ring-offset-background ring-primary/30 shadow-md">
-        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-          <Loader2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" />
-        </AvatarFallback>
-      </Avatar>
-      
-      <div className="flex-1 space-y-2 sm:space-y-3 max-w-[95%] sm:max-w-[85%] md:max-w-[80%]">
+      <div className="flex-1 space-y-2 sm:space-y-3 max-w-full">
         <div className="bg-muted/80 rounded-xl sm:rounded-2xl rounded-bl-md px-3 py-3 sm:px-4 sm:py-4 shadow-md border border-border/50">
+          <div className="mb-2 flex items-center gap-2 text-[11px] text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Working
+          </div>
           <div className="space-y-1.5 sm:space-y-2">
             <LazyMotionDiv 
               className="h-2.5 sm:h-3 bg-muted-foreground/20 rounded-full w-3/4"
@@ -1022,15 +1003,9 @@ export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="flex gap-3"
+      className="flex"
       data-testid="typing-indicator"
     >
-      <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg">
-        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary">
-          <Sparkles className="h-4 w-4 animate-pulse" />
-        </AvatarFallback>
-      </Avatar>
-      
       <div className="bg-muted/80 rounded-2xl rounded-bl-md px-4 py-3 shadow-md border border-border/50 flex items-center gap-2">
         <span className="text-[13px] text-muted-foreground">{text}</span>
         <div className="flex gap-1">
