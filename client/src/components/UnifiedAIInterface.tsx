@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getCSRFToken, withBootstrapHeaders } from "@/lib/queryClient";
 import {
   Bot,
   Send,
@@ -115,11 +116,13 @@ export function UnifiedAIInterface({
     setIsLoading(true);
 
     try {
+      const csrfToken = await getCSRFToken();
       const response = await fetch("/api/agent/chat/stream", {
         method: "POST",
-        headers: {
+        headers: withBootstrapHeaders("/api/agent/chat/stream", {
           "Content-Type": "application/json",
-        },
+          "X-CSRF-Token": csrfToken,
+        }),
         credentials: "include",
         body: JSON.stringify({
           message: userMessage.content,

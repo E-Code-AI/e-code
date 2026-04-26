@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useToast } from '@/hooks/use-toast';
@@ -92,10 +92,14 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
     setCurrentStreamMessage('');
 
     try {
+      const csrfToken = await getCSRFToken();
       const response = await fetch('/api/agent/chat/stream', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withBootstrapHeaders('/api/agent/chat/stream', {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        }),
         body: JSON.stringify({
           message: userMessage.content,
           projectId,
