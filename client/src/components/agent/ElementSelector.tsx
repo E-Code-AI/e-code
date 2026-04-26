@@ -41,7 +41,8 @@ import {
   Save,
   X,
   Layers,
-  Wand2
+  Wand2,
+  Play
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
@@ -179,6 +180,24 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
       toast({
         title: 'Sync Failed',
         description: error.message || 'Failed to sync changes to source code',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const startPreviewMutation = useMutation({
+    mutationFn: async () => apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}),
+    onSuccess: async () => {
+      await refetchPreview();
+      toast({
+        title: 'Preview starting',
+        description: 'Live element picking will connect as soon as the preview is ready.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to start preview',
+        description: error.message || 'Could not start the preview.',
         variant: 'destructive',
       });
     },
@@ -478,6 +497,12 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
   const livePreviewUrl = previewStatus?.previewUrl || previewUrl;
 
+  useEffect(() => {
+    if (livePreviewUrl && livePreviewUrl !== pageUrl) {
+      setPageUrl(livePreviewUrl);
+    }
+  }, [livePreviewUrl, pageUrl]);
+
   return (
     <div className={cn("flex flex-col h-full", className)}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
@@ -553,11 +578,24 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-center p-4">
-                  <div>
+                  <div className="space-y-3">
                     <Eye className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                     <p className="text-[13px] text-muted-foreground">
                       Preview not available. Start the preview to use live element picking.
                     </p>
+                    <Button
+                      onClick={() => startPreviewMutation.mutate()}
+                      disabled={startPreviewMutation.isPending}
+                      className="min-h-[44px] gap-2"
+                      data-testid="button-start-live-preview"
+                    >
+                      {startPreviewMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Play className="h-4 w-4" />
+                      )}
+                      {startPreviewMutation.isPending ? 'Starting...' : 'Start Preview'}
+                    </Button>
                   </div>
                 </div>
               )}
