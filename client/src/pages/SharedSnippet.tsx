@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { Copy, ExternalLink, Code2, User, Calendar, Eye, FileCode, Home } from "lucide-react";
 import { LightSyntaxHighlighter, darkStyle } from "@/components/ui/LightSyntaxHighlighter";
 
@@ -50,24 +51,18 @@ export default function SharedSnippet() {
 
   const fetchSnippet = async () => {
     try {
-      const response = await fetch(`/api/snippets/${shareId}`, { credentials: 'include' });
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError("This snippet could not be found.");
-        } else if (response.status === 410) {
-          setError("This snippet has expired.");
-        } else {
-          setError("Failed to load snippet.");
-        }
-        return;
-      }
-
-      const data = await response.json();
+      const data = await apiRequest<CodeSnippet>(`GET`, `/api/snippets/${shareId}`);
       setSnippet(data);
     } catch (err) {
+      const status = typeof err === 'object' && err && 'status' in err ? Number((err as any).status) : null;
+      if (status === 404) {
+        setError("This snippet could not be found.");
+      } else if (status === 410) {
+        setError("This snippet has expired.");
+      } else {
+        setError("Failed to load snippet.");
+      }
       console.error("Error fetching snippet:", err);
-      setError("Failed to load snippet.");
     } finally {
       setLoading(false);
     }

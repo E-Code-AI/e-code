@@ -208,13 +208,7 @@ export default function Community() {
       if (searchQuery) params.set('search', searchQuery);
       params.set('page', page.toString());
       params.set('pageSize', '20');
-      const res = await fetch(`/api/community/posts?${params.toString()}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error(`Failed to fetch community posts (${res.status})`);
-      }
-      return res.json();
+      return apiRequest('GET', `/api/community/posts?${params.toString()}`);
     },
     getNextPageParam: (lastPage) =>
       lastPage?.pagination?.hasMore ? lastPage.pagination.page + 1 : undefined,

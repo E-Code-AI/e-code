@@ -152,9 +152,7 @@ export default function ThreadsPage() {
       if (searchQuery) {
         params.set('search', searchQuery);
       }
-      const response = await fetch(`/api/community/posts?${params.toString()}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch posts');
-      return response.json();
+      return apiRequest('GET', `/api/community/posts?${params.toString()}`);
     },
   });
 

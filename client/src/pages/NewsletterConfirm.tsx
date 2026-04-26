@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
@@ -24,20 +25,9 @@ export default function NewsletterConfirm() {
       }
 
       try {
-        const response = await fetch(`/api/newsletter/confirm?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}&format=json`, {
-          headers: {
-            Accept: 'application/json',
-          },
-        });
+        const data = await apiRequest<any>('GET', `/api/newsletter/confirm?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}&format=json`);
 
-        let data: any = null;
-        try {
-          data = await response.json();
-        } catch (_) {
-          data = null;
-        }
-
-        if (response.ok && data?.success) {
+        if (data?.success) {
           setStatus('success');
           setMessage(data.message || 'Email confirmed successfully!');
         } else {
