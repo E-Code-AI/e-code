@@ -140,8 +140,8 @@ export default function Support() {
         setTicketEmail('');
     } catch (error) {
       toast({
-        title: 'Network error',
-        description: 'Failed to submit support ticket. Please check your connection and try again.',
+        title: 'Support ticket failed',
+        description: error instanceof Error ? error.message : 'Failed to submit support ticket. Please check your connection and try again.',
         variant: 'destructive',
       });
     } finally {
