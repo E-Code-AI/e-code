@@ -82,9 +82,11 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   const scansQuery = useQuery<Scan[]>({
     queryKey: ["/api/workspace/projects", projectId, "security-scans"],
     queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/security-scans`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<Scan[]>("GET", `/api/workspace/projects/${projectId}/security-scans`);
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -101,9 +103,11 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
     queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"],
     queryFn: async () => {
       if (!selectedScanId) return [];
-      const res = await fetch(`/api/workspace/security-scans/${selectedScanId}/vulnerabilities`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<Finding[]>("GET", `/api/workspace/security-scans/${selectedScanId}/vulnerabilities`);
+      } catch {
+        return [];
+      }
     },
     enabled: !!selectedScanId,
   });

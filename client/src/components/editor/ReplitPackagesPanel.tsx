@@ -201,11 +201,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
     queryKey: ['/api/packages/installed', projectId],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/packages/installed?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      return response.json();
+      return apiRequest<PackagesResponse>('GET', `/api/packages/installed?projectId=${projectId}`);
     },
     enabled: !!projectId,
     staleTime: 30000,
@@ -215,11 +211,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
     queryKey: ['/api/packages', projectId, 'audit'],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/packages/${projectId}/audit`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to run security audit');
-      return response.json();
+      return apiRequest<AuditResponse>('GET', `/api/packages/${projectId}/audit`);
     },
     enabled: !!projectId,
     staleTime: 60000,
@@ -229,11 +221,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
     queryKey: ['/api/packages', projectId, 'outdated'],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/packages/${projectId}/outdated`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to check outdated packages');
-      return response.json();
+      return apiRequest<OutdatedResponse>('GET', `/api/packages/${projectId}/outdated`);
     },
     enabled: !!projectId,
     staleTime: 60000,
@@ -243,11 +231,7 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
     queryKey: ['/api/packages', projectId, 'dependencies'],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/packages/${projectId}/dependencies`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to load dependencies');
-      return response.json();
+      return apiRequest<DependencyResponse>('GET', `/api/packages/${projectId}/dependencies`);
     },
     enabled: !!projectId,
     staleTime: 60000,
@@ -259,16 +243,10 @@ export function ReplitPackagesPanel({ projectId }: { projectId?: string | number
       if (!projectId || !searchQuery || searchQuery.length < 2) return [];
 
       const registryLanguage = searchLanguage === 'pypi' ? 'python' : 'nodejs';
-      const response = await fetch(
-        `/api/packages/${projectId}/search?q=${encodeURIComponent(searchQuery)}&language=${registryLanguage}`,
-        { credentials: 'include' }
+      const data = await apiRequest<{ packages?: SearchResult[] }>(
+        'GET',
+        `/api/packages/${projectId}/search?q=${encodeURIComponent(searchQuery)}&language=${registryLanguage}`
       );
-
-      if (!response.ok) {
-        throw new Error('Failed to search packages');
-      }
-
-      const data = await response.json();
       return data.packages || [];
     },
     enabled: !!projectId && searchQuery.length >= 2,

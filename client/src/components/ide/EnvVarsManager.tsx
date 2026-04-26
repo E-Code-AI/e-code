@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, Eye, EyeOff, Download, Lock, Edit, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, withBootstrapHeaders } from '@/lib/queryClient';
 import { Badge } from '@/components/ui/badge';
 
 interface EnvVar {
@@ -40,9 +40,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const { data, isLoading } = useQuery({
     queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/env-vars/${projectId}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch environment variables');
-      return response.json() as Promise<{ variables: EnvVar[] }>;
+      return apiRequest<{ variables: EnvVar[] }>('GET', `/api/env-vars/${projectId}`);
     }
   });
 
@@ -135,7 +133,11 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
 
   const handleExport = async () => {
     try {
-      const response = await fetch(`/api/env-vars/${projectId}/export`, { credentials: 'include' });
+      const exportUrl = `/api/env-vars/${projectId}/export`;
+      const response = await fetch(exportUrl, {
+        credentials: 'include',
+        headers: withBootstrapHeaders(exportUrl),
+      });
       if (!response.ok) throw new Error('Export failed');
 
       const blob = await response.blob();
