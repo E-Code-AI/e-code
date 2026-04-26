@@ -1,78 +1,65 @@
-import { useState, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardFooter,CardHeader,CardTitle } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  MessageSquare,
-  Plus,
-  Search,
-  Filter,
-  SortAsc,
-  Clock,
-  Eye,
-  Heart,
-  MessageCircle,
-  MoreVertical,
-  Pin,
-  Lock,
-  Unlock,
-  Flag,
-  Share2,
-  Bookmark,
-  BookmarkCheck,
-  Code,
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Link,
-  Image,
-  AtSign,
-  Hash,
-  TrendingUp,
-  Users,
-  CheckCircle,
-  XCircle,
-  Edit,
-  Trash2,
-  Reply,
-  ChevronRight,
-  ChevronDown,
-  Star,
-  ThumbsUp,
-  ThumbsDown,
-  Loader2,
-} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import {
+AtSign,
+Bold,
+Bookmark,
+BookmarkCheck,
+ChevronRight,
+Clock,
+Code,
+Edit,
+Eye,
+Flag,
+Hash,
+Heart,
+Image,
+Italic,
+Link,
+List,
+ListOrdered,
+MessageCircle,
+MessageSquare,
+MoreVertical,
+Plus,
+Search,
+Share2,
+SortAsc,
+Star,
+Trash2,
+TrendingUp,
+Users
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
 
 interface ThreadAuthor {
   id: string;

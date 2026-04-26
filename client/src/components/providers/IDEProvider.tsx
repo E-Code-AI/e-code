@@ -3,21 +3,21 @@
  * Global provider that wraps the mobile IDE with design system and features
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
 import {
-  ToastProvider,
-  CommandPalette,
-  useCommandPalette,
-  KeyboardShortcuts,
-  useKeyboardShortcuts,
-  Settings,
-  defaultIDEShortcuts,
-  useDesignSystem,
-  useToast,
-  type Command,
-  type SettingsSection,
-  type Shortcut,
+CommandPalette,
+KeyboardShortcuts,
+Settings,
+ToastProvider,
+defaultIDEShortcuts,
+useCommandPalette,
+useDesignSystem,
+useKeyboardShortcuts,
+useToast,
+type Command,
+type SettingsSection,
+type Shortcut,
 } from '@/design-system';
+import React,{ useCallback,useEffect,useState } from 'react';
 
 // ============================================================================
 // TYPES

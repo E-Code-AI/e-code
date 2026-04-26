@@ -1,29 +1,42 @@
-import React, { useState } from 'react';
-import {
-  RotateCcw, History, Package, Database, Settings, AlertTriangle,
-  CheckCircle, XCircle, Clock, Download, Upload, Eye, ChevronRight,
-  GitBranch, Save, Loader2, Info, Shield, FileText, Diff,
-  ArrowLeft, ArrowRight, Calendar, User, Tag, HardDrive
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { LazyMotionDiv } from '@/lib/motion';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
+import { LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+AlertTriangle,
+CheckCircle,
+ChevronRight,
+Clock,
+Diff,
+FileText,
+GitBranch,
+HardDrive,
+History,
+Loader2,
+Package,
+RotateCcw,
+Save,
+Shield,
+Tag,
+Upload,
+User,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface RollbackManagerProps {
   deploymentId: string;

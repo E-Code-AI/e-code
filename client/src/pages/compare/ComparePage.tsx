@@ -1,16 +1,35 @@
-import { useRoute, Link } from 'wouter';
-import { useState } from 'react';
 import { MarketingLayout } from '@/components/layout/MarketingLayout';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  CheckCircle2, ShieldCheck, Clock3, ServerCog, Sparkles, Play, 
-  ArrowRight, Zap, Users, Globe2, Lock, BarChart3, Code2, 
-  Building2, ChevronDown, ChevronUp, Star, Quote, Check, X,
-  Monitor, Tablet, Smartphone, Laptop, TrendingUp, Award
-} from 'lucide-react';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { BRAND } from '@/constants/brand';
+import {
+ArrowRight,
+BarChart3,
+Building2,
+Check,
+CheckCircle2,
+ChevronDown,ChevronUp,
+Clock3,
+Code2,
+Globe2,
+Laptop,
+Lock,
+Monitor,
+Play,
+Quote,
+ServerCog,
+ShieldCheck,
+Smartphone,
+Sparkles,
+Star,
+Tablet,
+TrendingUp,
+Users,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link,useRoute } from 'wouter';
 
 const comparisonContent: Record<string, {
   heroTitle: string;

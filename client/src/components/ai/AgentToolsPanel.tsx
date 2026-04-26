@@ -1,33 +1,30 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Zap,
-  TestTube2,
-  Video,
-  ChevronDown,
-  Settings2,
-  Clock,
-  PlayCircle,
-  Brain,
-  Sparkles,
-  Globe,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { useAgentTools,type AgentToolsSettings } from '@/hooks/useAgentTools';
 import { cn } from '@/lib/utils';
-import { useAgentTools, type AgentToolsSettings } from '@/hooks/useAgentTools';
+import {
+Brain,
+ChevronDown,
+Clock,
+Globe,
+Loader2,
+PlayCircle,
+Settings2,
+Sparkles,
+TestTube2,
+Video,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface AgentToolsPanelProps {
   projectId?: number;

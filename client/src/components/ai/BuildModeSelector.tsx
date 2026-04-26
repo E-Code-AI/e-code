@@ -6,21 +6,26 @@
  * Identical to Replit's build mode selection interface
  */
 
-import { useState, useEffect } from 'react';
-import { 
-  Paintbrush, Hammer, ChevronRight, Sparkles, 
-  Clock, Layers, Code, FileCode
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import {
+ChevronRight,
+Clock,
+Code,
+Hammer,
+Layers,
+Paintbrush,
+Sparkles
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 export type BuildMode = 'design-first' | 'full-app' | 'continue-planning';
 

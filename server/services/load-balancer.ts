@@ -4,10 +4,9 @@
  * Fortune 500-grade traffic distribution
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { createLogger } from '../utils/logger';
-import { scalabilityOrchestrator } from './scalability-orchestrator';
+import { NextFunction,Request,Response } from 'express';
 import httpProxy from 'http-proxy-middleware';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('load-balancer');
 

@@ -1,14 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { projects } from '@shared/schema';
+import { and,eq } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
 import multer from 'multer';
 import path from 'path';
-import { z } from 'zod';
-import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { storageService } from '../services/storage.service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { storageService } from '../services/storage.service';
+import { createLogger } from '../utils/logger';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('storage-router');

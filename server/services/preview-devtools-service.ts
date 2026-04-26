@@ -1,5 +1,5 @@
-import { WebSocket } from 'ws';
 import { EventEmitter } from 'events';
+import { WebSocket } from 'ws';
 const logger = {
   error: (message: string, error?: any) => {
     console.error(`[preview-devtools] ERROR: ${message}`, error);

@@ -5,10 +5,8 @@
  * Based on request type and performance requirements
  */
 
-import { Request, Response } from 'express';
-import fetch from 'node-fetch';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import WebSocket from 'ws';
+import fetch from 'node-fetch';
 
 interface ServiceEndpoint {
   host: string;

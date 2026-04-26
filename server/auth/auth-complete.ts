@@ -4,15 +4,13 @@
  * Implements session management, account lockout, and 2FA preparation
  */
 
-import { Request, Response, NextFunction } from 'express';
-import passport from 'passport';
-import { Strategy as LocalStrategy } from 'passport-local';
-import { db } from '../db';
-import { users, authAttempts, userSessions } from '@shared/schema';
-import { eq, and, gte, sql } from 'drizzle-orm';
-import { passwordSecurity, tokenSecurity, sessionSecurity, twoFactorAuth, emailValidation } from '../utils/security';
-import { createLogger } from '../utils/logger';
+import { authAttempts,users,userSessions } from '@shared/schema';
 import crypto from 'crypto';
+import { eq } from 'drizzle-orm';
+import { NextFunction,Request,Response } from 'express';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
+import { emailValidation,passwordSecurity,sessionSecurity,tokenSecurity,twoFactorAuth } from '../utils/security';
 
 const logger = createLogger('auth-complete');
 

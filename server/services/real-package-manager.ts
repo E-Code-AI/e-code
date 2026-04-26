@@ -4,12 +4,9 @@
  * Provides actual package installation and management via npm, pip, etc.
  */
 
-import { spawn } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import { createLogger } from '../utils/logger';
-import { storage } from '../storage';
 import { dockerExecutor } from '../execution/docker-executor';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('real-package-manager');
 

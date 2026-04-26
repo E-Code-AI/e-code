@@ -1,70 +1,64 @@
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
+ContextMenu,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Folder,
-  FolderOpen,
-  File,
-  FileText,
-  FileCode,
-  FileImage,
-  FileVideo,
-  FileAudio,
-  FileMinus,
-  Plus,
-  MoreHorizontal,
-  Search,
-  RefreshCw,
-  Upload,
-  Download,
-  Trash2,
-  Edit,
-  Copy,
-  Move,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  GitBranch,
-  Star,
-  ChevronRight,
-  ChevronDown,
-  AlertTriangle,
-} from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+ChevronDown,
+ChevronRight,
+Copy,
+Download,
+Edit,
+EyeOff,
+File,
+FileAudio,
+FileCode,
+FileImage,
+FileMinus,
+FileText,
+FileVideo,
+Folder,
+FolderOpen,
+Lock,
+MoreHorizontal,
+Move,
+Plus,
+RefreshCw,
+Search,
+Star,
+Trash2,
+Upload
+} from "lucide-react";
+import { useState } from "react";
 
 interface FileNode {
   id: number;

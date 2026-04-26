@@ -2,7 +2,6 @@
 import { Router } from 'express';
 import passport from 'passport';
 import { DatabaseStorage } from '../storage';
-import jwt from 'jsonwebtoken';
 
 export interface OAuthProvider {
   id: string;

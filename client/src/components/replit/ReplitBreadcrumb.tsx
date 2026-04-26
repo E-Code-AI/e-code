@@ -1,18 +1,17 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { 
-  ChevronRight, 
-  ChevronDown, 
-  Home, 
-  Folder, 
-  FolderOpen,
-  FileText,
-  Code,
-  Settings,
-  MoreHorizontal
-} from 'lucide-react';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import {
+ChevronDown,
+ChevronRight,
+Code,
+FileText,
+Folder,
+Home,
+MoreHorizontal,
+Settings
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface BreadcrumbItem {
   id: string;

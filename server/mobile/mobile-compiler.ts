@@ -1,9 +1,8 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
+import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as crypto from 'crypto';
-import { storage } from '../storage';
+import { promisify } from 'util';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const execAsync = promisify(exec);

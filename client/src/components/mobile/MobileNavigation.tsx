@@ -1,8 +1,8 @@
-import { Link, useLocation } from 'wouter';
-import { Home, Folder, Plus, Bell, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useState, useEffect, useRef } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
+import { Bell,Folder,Home,Plus,User } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 interface NavItem {
   icon: React.ElementType;

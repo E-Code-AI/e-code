@@ -1,33 +1,27 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Package,
-  Search,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  ExternalLink,
-  TrendingUp,
-  Download,
-  Loader2,
-  ChevronRight,
-  ChevronDown,
-  AlertCircle,
-  Maximize2,
-  Minimize2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertTriangle,
+CheckCircle,
+Download,
+Loader2,
+Maximize2,
+Minimize2,
+Package,
+Plus,
+Search,
+Trash2
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 interface PackageInfo {
   name: string;

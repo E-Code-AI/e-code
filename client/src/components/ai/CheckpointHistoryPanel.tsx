@@ -1,39 +1,38 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import {
-  History,
-  RotateCcw,
-  Clock,
-  Bot,
-  User,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  ChevronRight,
-  Sparkles,
-  FileCode,
-  RefreshCw,
-} from 'lucide-react';
-import { formatDistanceToNow, format } from 'date-fns';
 import type { AutoCheckpoint } from '@shared/schema';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { format,formatDistanceToNow } from 'date-fns';
+import {
+AlertCircle,
+Bot,
+CheckCircle,
+Clock,
+FileCode,
+History,
+Loader2,
+RefreshCw,
+RotateCcw,
+Sparkles,
+User
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface CheckpointHistoryPanelProps {
   projectId: number | string;

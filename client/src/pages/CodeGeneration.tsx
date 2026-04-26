@@ -1,23 +1,22 @@
+import { CodeGenerationPanel } from '@/components/CodeGenerationPanel';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { LazyMotionDiv } from '@/lib/motion';
+import {
+ArrowRight,
+Clock,
+Code2,
+Sparkles,
+Star,
+TrendingUp,
+Users,
+Wand2,
+Zap
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CodeGenerationPanel } from '@/components/CodeGenerationPanel';
-import { 
-  Wand2, 
-  Sparkles, 
-  Code2, 
-  Zap, 
-  ArrowRight, 
-  CheckCircle,
-  Clock,
-  Users,
-  TrendingUp,
-  Star
-} from 'lucide-react';
-import { LazyMotionDiv } from '@/lib/motion';
 
 const FEATURED_EXAMPLES = [
   {

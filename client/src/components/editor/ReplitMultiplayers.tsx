@@ -1,52 +1,52 @@
 // @ts-nocheck - circular useCallback references between connectWebSocket and handleWebSocketMessage
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
-import { apiRequest, queryClient } from '@/lib/queryClient';
 import {
-  Copy,
-  Check,
-  MoreVertical,
-  Loader2,
-  Trash2,
-  Shield,
-  Eye,
-  Edit3,
-  Users,
-  Activity,
-  Clock,
-  Send,
-  Wifi,
-  WifiOff,
-  FileCode,
-  UserPlus,
-  UserMinus,
-  MousePointer2,
-  Circle
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue
 } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { io, Socket } from 'socket.io-client';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Activity,
+Check,
+Circle,
+Clock,
+Copy,
+Edit3,
+Eye,
+FileCode,
+Loader2,
+MoreVertical,
+MousePointer2,
+Send,
+Shield,
+Trash2,
+UserMinus,
+UserPlus,
+Users,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
+import { io,Socket } from 'socket.io-client';
 
 interface Collaborator {
   id: string;

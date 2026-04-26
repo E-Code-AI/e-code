@@ -4,27 +4,34 @@
  * Matches Replit's mobile Files tab behavior
  */
 
-import { useState, useCallback } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyMotionSpan, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Folder, FolderOpen, File, FileText, FileCode, Image, 
-  ChevronRight, ChevronDown, Plus, FolderPlus, FilePlus,
-  MoreVertical, Search, RefreshCw
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SPRING_CONFIG,getReducedMotionTransition,useReducedMotion } from '@/hooks/use-reduced-motion';
+import { LazyMotionButton,LazyMotionDiv,LazyMotionSpan } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
+ChevronRight,
+FileCode,
+FilePlus,
+FileText,
+Folder,FolderOpen,
+FolderPlus,
+Image,
+Plus,
+RefreshCw,
+Search
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
 
 interface FileItem {
   id: number;

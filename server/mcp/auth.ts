@@ -4,8 +4,8 @@
  * Provides OAuth and API key authentication for external clients like Claude.ai
  */
 
-import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
+import { NextFunction,Request,Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 // Extend Express Request type

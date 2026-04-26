@@ -1,23 +1,34 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { ECodeLogo } from '@/components/ECodeLogo';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Loader2, Code, AlertCircle, ArrowRight, Eye, EyeOff,
-  Mail, Lock, User, Github, Chrome, Twitter, CheckCircle2,
-  X, Shield, Sparkles, ChevronLeft, Zap, CheckCircle
+import {
+AlertCircle,ArrowRight,
+CheckCircle,
+CheckCircle2,
+ChevronLeft,
+Chrome,
+Code,
+Eye,EyeOff,
+Github,
+Loader2,
+Lock,
+Mail,
+Shield,Sparkles,
+Twitter,
+User,
+X,
+Zap
 } from 'lucide-react';
-import { Link } from 'wouter';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ECodeLogo } from '@/components/ECodeLogo';
+import { useEffect,useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 const codingWorkspaceImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 

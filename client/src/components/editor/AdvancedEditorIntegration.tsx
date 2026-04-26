@@ -1,8 +1,8 @@
-import React, { useState, Suspense } from "react";
-import { ReplitFileExplorer } from "../files/ReplitFileExplorer";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
-import { Loader2 } from "lucide-react";
+import { ResizableHandle,ResizablePanel,ResizablePanelGroup } from "@/components/ui/resizable";
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { Loader2 } from "lucide-react";
+import { Suspense,useState } from "react";
+import { ReplitFileExplorer } from "../files/ReplitFileExplorer";
 
 const ReplitMonacoEditor = instrumentedLazy(() => 
   import("./ReplitMonacoEditor").then(module => ({ default: module.ReplitMonacoEditor })), 'ReplitMonacoEditor'

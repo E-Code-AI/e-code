@@ -4,27 +4,27 @@
  * Displays and manages the multi-language backend services
  */
 
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  Activity, 
-  Code, 
-  Brain,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Gauge,
-  Server,
-  BarChart3,
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Activity,
+AlertTriangle,
+BarChart3,
+Brain,
+CheckCircle,
+Code,
+Gauge,
+Server,
+XCircle,
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ServiceHealth {
   service: string;

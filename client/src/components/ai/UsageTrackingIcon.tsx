@@ -1,32 +1,31 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import {
-  Coins,
-  TrendingUp,
-  CreditCard,
-  ExternalLink,
-  Clock,
-  Zap,
-  Brain,
-  MessageSquare,
-  Loader2,
-} from 'lucide-react';
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+Brain,
+Coins,
+CreditCard,
+ExternalLink,
+Loader2,
+MessageSquare,
+TrendingUp,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 
 interface UsageData {

@@ -8,28 +8,34 @@
  * - Bulk operations support
  */
 
-import { useState, useEffect } from 'react';
-import { 
-  CheckCircle, XCircle, Clock, Shield, AlertTriangle, 
-  FileCode, Folder, Package, Code, ChevronRight, Loader2
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { apiRequest } from '@/lib/queryClient';
+import {
+AlertTriangle,
+CheckCircle,
+Clock,
+Code,
+FileCode,Folder,
+Loader2,
+Package,
+Shield,
+XCircle
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface PendingAction {
   id: string;

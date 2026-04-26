@@ -1,25 +1,32 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Bot, Send, Sparkles, Code, FileText, HelpCircle,
-  Lightbulb, Zap, RefreshCw, Copy, ThumbsUp, ThumbsDown,
-  ChevronDown, ChevronUp, Terminal, History, Settings,
-  X, Minimize2, Maximize2, MessageSquare, Wand2, BookTemplate
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { CustomPromptsModal } from './CustomPromptsModal';
-import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+Bot,
+Copy,
+HelpCircle,
+History,
+Lightbulb,
+Maximize2,MessageSquare,
+Minimize2,
+RefreshCw,
+Send,Sparkles,
+Terminal,
+ThumbsDown,
+ThumbsUp,
+Wand2,
+X,
+Zap
+} from 'lucide-react';
+import React,{ useCallback,useEffect,useRef,useState } from 'react';
+import { CustomPromptsModal } from './CustomPromptsModal';
 
 interface AIAssistantProps {
   projectId: number;

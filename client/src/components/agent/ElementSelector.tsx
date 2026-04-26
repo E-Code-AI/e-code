@@ -1,52 +1,51 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import {
-  MousePointer2,
-  Code,
-  Copy,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Hash,
-  FileCode,
-  AlertCircle,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  ExternalLink,
-  Palette,
-  Type,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Bold,
-  Italic,
-  Save,
-  X,
-  Layers,
-  Wand2,
-  Play
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+AlignCenter,
+AlignLeft,
+AlignRight,
+Bold,
+ChevronDown,
+ChevronUp,
+Code,
+Copy,
+ExternalLink,
+Eye,
+FileCode,
+Hash,
+Italic,
+Layers,
+Loader2,
+MousePointer2,
+Palette,
+Play,
+RefreshCw,
+Save,
+Type,
+Wand2,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ElementSelectorData {
   id: string;

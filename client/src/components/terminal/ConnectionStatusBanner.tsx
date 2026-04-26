@@ -3,14 +3,17 @@
  * Shows reconnection state with countdown and retry options
  */
 
-import { memo, useCallback } from 'react';
-import { 
-  Wifi, WifiOff, RefreshCw, AlertTriangle, CheckCircle2, Loader2 
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useRetryCountdown } from '@/hooks/use-resilient-websocket';
 import { cn } from '@/lib/utils';
 import { ConnectionState } from '@/lib/websocket-resilience';
-import { useRetryCountdown } from '@/hooks/use-resilient-websocket';
-import { Button } from '@/components/ui/button';
+import {
+AlertTriangle,
+Loader2,
+RefreshCw,
+Wifi,WifiOff
+} from 'lucide-react';
+import { memo,useCallback } from 'react';
 
 interface ConnectionStatusBannerProps {
   state: ConnectionState;

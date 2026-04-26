@@ -1,15 +1,13 @@
-import { useState } from "react";
-import { useParams, Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Calendar, Clock, User, Eye, Hash } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ReplitLayout,ReplitLayoutLoading } from "@/components/layout/ReplitLayout";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ECodeLoading } from "@/components/ECodeLoading";
+import { useQuery } from "@tanstack/react-query";
+import { Calendar,ChevronLeft,Clock,Eye,Hash,User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { ReplitLayout, ReplitLayoutLoading } from "@/components/layout/ReplitLayout";
+import { Link,useLocation,useParams } from "wouter";
 
 export default function BlogDetail() {
   const params = useParams() as { slug: string };

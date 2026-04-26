@@ -7,8 +7,8 @@
  * verification always fails.
  */
 
-import { Request, Response, NextFunction } from 'express';
 import * as crypto from 'crypto';
+import { NextFunction,Request,Response } from 'express';
 
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];

@@ -1,36 +1,26 @@
-import { useMemo, useState } from "react";
-import { Project, File } from "@shared/schema";
-import { useAuth } from "@/hooks/use-auth";
-import { Link, useLocation } from "wouter";
-import {
-  Play,
-  Square,
-  MoreVertical,
-  ChevronDown,
-  Globe,
-  Terminal,
-  Search,
-  Bell,
-  Plus
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import { WorkspaceSettings } from "@/components/WorkspaceSettings";
+import { useAuth } from "@/hooks/use-auth";
+import { File,Project } from "@shared/schema";
+import {
+MoreVertical,
+Play,
+Square
+} from "lucide-react";
+import { useState } from "react";
 
 interface TopNavbarProps {
   project: Project | undefined;

@@ -5,33 +5,38 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  RefreshCw, Search, Loader2, MessageSquare, User, Bot,
-  Wrench, Settings, ChevronRight, Clock, Cpu
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+import type { ConversationMessageRow,ConversationsGridResponse } from '@shared/types/agent-grid.types';
+import { useQuery } from '@tanstack/react-query';
+import type { GridApi,GridReadyEvent } from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import { AgGridReact } from 'ag-grid-react';
 import { format } from 'date-fns';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import { defaultGridOptions, conversationGridColDefs } from './ag-grid-config';
-import { gridCellRenderers } from './GridCellRenderers';
-import type { ConversationMessageRow, ConversationsGridResponse } from '@shared/types/agent-grid.types';
-import type { GridReadyEvent, GridApi } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
+Bot,
+ChevronRight,Clock,Cpu,
+Loader2,MessageSquare,
+RefreshCw,Search,
+Settings,
+User,
+Wrench
+} from 'lucide-react';
+import { useCallback,useMemo,useState } from 'react';
+import { conversationGridColDefs,defaultGridOptions } from './ag-grid-config';
 import './ag-grid-theme.css';
+import { gridCellRenderers } from './GridCellRenderers';
 
 interface ConversationHistoryGridProps {
   sessionId?: string;

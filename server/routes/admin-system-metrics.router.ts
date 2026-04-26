@@ -4,15 +4,15 @@
  * Comprehensive system monitoring dashboard endpoints
  */
 
+import { projects,users } from '@shared/schema';
+import { gte,sql } from 'drizzle-orm';
 import { Router } from 'express';
-import { db } from '../db';
-import { projects, users, files, conversations } from '@shared/schema';
-import { sql, gte, count } from 'drizzle-orm';
-import { ensureAuthenticated } from '../middleware/auth';
-import { ensureAdmin } from '../middleware/admin-auth';
-import { dbPool } from '../db/index';
 import os from 'os';
+import { db } from '../db';
+import { dbPool } from '../db/index';
 import { getStorageGrowthRate } from '../jobs/storage-metrics-collector';
+import { ensureAdmin } from '../middleware/admin-auth';
+import { ensureAuthenticated } from '../middleware/auth';
 
 const router = Router();
 

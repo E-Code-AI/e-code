@@ -4,35 +4,32 @@
  * Part of the Background Auto-Testing System
  */
 
-import { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import {
+TestEvent,
+TestJob,
+useBackgroundTesting
+} from '@/hooks/useBackgroundTesting';
 import { cn } from '@/lib/utils';
 import {
-  CheckCircle,
-  XCircle,
-  Clock,
-  Play,
-  Trash2,
-  RefreshCw,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Loader2,
-  Wifi,
-  WifiOff,
-  FileCode,
-  Terminal
+AlertTriangle,
+CheckCircle,
+ChevronDown,
+ChevronRight,
+Clock,
+FileCode,
+Loader2,
+Play,
+RefreshCw,
+Terminal,
+Trash2,
+XCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  useBackgroundTesting, 
-  TestJob, 
-  TestFailure, 
-  TestEvent 
-} from '@/hooks/useBackgroundTesting';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect,useState } from 'react';
 
 interface TestResultsPanelProps {
   projectId: number;

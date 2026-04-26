@@ -1,54 +1,73 @@
-import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardHeader,CardTitle } from "@/components/ui/card";
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
 } from "@/components/ui/table";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Search, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ExternalLink,
-  Edit, Eye, RefreshCw, Download, Image, FileText, Globe, BarChart3,
-  Target, Zap, Sparkles, ArrowUpRight, ArrowDownRight, Activity,
-  PieChart, LineChart, Award, Shield, Clock, Users, MousePointer,
-  Gauge, Brain, Lightbulb, ChevronRight, Copy, Check, Loader2
-} from "lucide-react";
-import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
-import { AdminLayout } from "./AdminLayout";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import {
+Activity,
+AlertTriangle,
+ArrowDownRight,
+ArrowUpRight,
+BarChart3,
+Brain,
+Check,
+CheckCircle,
+ChevronRight,Copy,
+Download,
+Edit,
+ExternalLink,
+Eye,
+FileText,Globe,
+Image,
+Lightbulb,
+LineChart,
+Loader2,
+MousePointer,
+Search,
+Shield,
+Sparkles,
+Target,
+TrendingDown,
+TrendingUp
+} from "lucide-react";
+import { useMemo,useState } from "react";
+import { AdminLayout } from "./AdminLayout";
 
 // Types
 interface PageSEO {

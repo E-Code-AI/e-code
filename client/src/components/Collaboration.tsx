@@ -1,14 +1,14 @@
 // @ts-nocheck
-import React, { useEffect, useState, useRef } from 'react';
-import { User } from '@shared/schema';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, MessageSquare, Users } from 'lucide-react';
-import { cn, getInitials, getRandomColor } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { cn,getInitials,getRandomColor } from '@/lib/utils';
+import { User } from '@shared/schema';
+import { ChevronLeft,MessageSquare,Users } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 // Types for collaboration
 export type CollaboratorInfo = {

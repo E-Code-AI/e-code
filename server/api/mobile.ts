@@ -1,18 +1,17 @@
 // @ts-nocheck
-import { Router, Request, Response, NextFunction } from 'express';
-import { storage } from '../storage';
-import { db } from '../db';
-import { projects, files, deviceTokens } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { aiService } from '../ai/ai-service';
-import { aiProviderManager } from '../ai/ai-provider-manager';
-import { mobileContainerService } from '../services/mobile-container-service';
-import bcrypt from '../utils/bcrypt-compat';
-import * as jwt from 'jsonwebtoken';
+import { deviceTokens,files,projects } from '@shared/schema';
 import crypto from 'crypto';
-import { getJwtSecret, getJwtRefreshSecret } from '../utils/secrets-manager';
-import { createLogger } from '../utils/logger';
+import { and,desc,eq } from 'drizzle-orm';
+import { NextFunction,Request,Response,Router } from 'express';
+import * as jwt from 'jsonwebtoken';
+import { aiProviderManager } from '../ai/ai-provider-manager';
+import { db } from '../db';
 import { mobileOAuthRateLimiter } from '../middleware/custom-rate-limiter';
+import { mobileContainerService } from '../services/mobile-container-service';
+import { storage } from '../storage';
+import bcrypt from '../utils/bcrypt-compat';
+import { createLogger } from '../utils/logger';
+import { getJwtRefreshSecret,getJwtSecret } from '../utils/secrets-manager';
 import { mobileAppService } from './mobile-app-service';
 
 const logger = createLogger('mobile-api');

@@ -1,12 +1,12 @@
 import {
-  CompletionContext,
-  CompletionResult,
-  Completion,
-  autocompletion,
-  CompletionSource,
+autocompletion,
+Completion,
+CompletionContext,
+CompletionResult,
+CompletionSource,
 } from '@codemirror/autocomplete';
-import { Extension, StateEffect, StateField } from '@codemirror/state';
-import { EditorView, Decoration, DecorationSet } from '@codemirror/view';
+import { Extension,StateEffect,StateField } from '@codemirror/state';
+import { Decoration,EditorView } from '@codemirror/view';
 
 export interface AICompletionOptions {
   projectId?: string;
@@ -518,4 +518,4 @@ export function isAICompletionLoading(view: EditorView): boolean {
   return view.state.field(aiLoadingField, false) || false;
 }
 
-export { aiLoadingField, setAILoadingEffect };
+export { aiLoadingField,setAILoadingEffect };

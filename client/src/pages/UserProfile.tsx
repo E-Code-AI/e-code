@@ -1,27 +1,35 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useParams, useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  User, Shield, Code, Clock, Star, GitBranch, 
-  Package, Trophy, Users, Eye, Settings, Edit,
-  Calendar, MapPin, Link as LinkIcon, Twitter,
-  Github, Globe, MessageSquare, Heart, Share2,
-  ChevronRight, TrendingUp, Activity, Zap, Rocket
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Link } from 'wouter';
 import { ECodeLoading } from '@/components/ECodeLoading';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Calendar,
+ChevronRight,
+Code,
+GitBranch,
+Github,Globe,
+Link as LinkIcon,
+MapPin,
+MessageSquare,
+Package,
+Rocket,
+Settings,
+Share2,
+Star,
+Trophy,
+Twitter,
+User,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link,useLocation,useParams } from 'wouter';
 
 interface UserProfile {
   id: number;

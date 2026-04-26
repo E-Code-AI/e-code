@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileCode, Code, Terminal as TerminalIcon, Globe, Play, RotateCcw, Bot, MoreHorizontal, GitBranch, Bug, AlertCircle, Settings as SettingsIcon, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet,SheetContent,SheetHeader,SheetTitle,SheetTrigger } from '@/components/ui/sheet';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { AlertCircle,Bot,Bug,Code,FileCode,GitBranch,Globe,MoreHorizontal,Play,RotateCcw,Settings as SettingsIcon,Share2,Terminal as TerminalIcon } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface MobileEditorTabsProps {
   fileExplorer: React.ReactNode;

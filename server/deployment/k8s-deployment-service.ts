@@ -1,11 +1,10 @@
 // @ts-nocheck
 import * as k8s from '@kubernetes/client-node';
 import * as crypto from 'crypto';
-import * as path from 'path';
-import { storage } from '../storage';
-import { containerBuilder } from './container-builder';
 import { isKubernetesEnabled } from '../config/deployment-mode';
+import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { containerBuilder } from './container-builder';
 
 const logger = createLogger('k8s-deployment-service');
 

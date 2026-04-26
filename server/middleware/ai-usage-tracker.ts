@@ -16,10 +16,10 @@
  * 5. Rate limits per tier (Issue #38)
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction,Request,Response } from 'express';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { aiMeteringService } from '../services/ai-metering-service';
 import { createLogger } from '../utils/logger';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
 
 const logger = createLogger('ai-usage-tracker');
 

@@ -7,7 +7,7 @@
  * - Database monitoring and metrics
  */
 
-import { exec, execSync } from 'child_process';
+import { exec,execSync } from 'child_process';
 
 export interface DatabaseInstance {
   id: string;

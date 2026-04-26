@@ -1,21 +1,28 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicFooter } from '@/components/layout/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import {
-  Code, Building2, Users, Mail, Globe, MessageSquare,
-  ChevronRight, Check, Calendar, Clock, Shield, Sparkles, ArrowRight
+ArrowRight,
+Building2,
+Calendar,
+Check,
+Clock,
+Globe,
+Mail,
+Shield,
+Users
 } from 'lucide-react';
 import { useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
-import { PublicFooter } from '@/components/layout/PublicFooter';
-import { apiRequest } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
 
 export default function ContactSales() {
   const [, navigate] = useLocation();

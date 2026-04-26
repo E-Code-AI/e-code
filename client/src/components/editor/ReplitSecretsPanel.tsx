@@ -1,64 +1,63 @@
-import { useState, useCallback, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { LazyMotionDiv } from '@/lib/motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Shield,
-  Plus,
-  Eye,
-  EyeOff,
-  Edit,
-  Trash2,
-  Copy,
-  Lock,
-  Key,
-  AlertCircle,
-  Check,
-  Search,
-  RefreshCw,
-  Loader2,
-  Save,
-  X,
-  Upload,
-  Download,
-  Clock,
-  AlertTriangle,
-  FileText
-} from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { cn } from '@/lib/utils';
-import { apiRequest, queryClient, withBootstrapHeaders } from '@/lib/queryClient';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient,withBootstrapHeaders } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+AlertTriangle,
+Check,
+Clock,
+Copy,
+Download,
+Edit,
+Eye,
+EyeOff,
+FileText,
+Key,
+Loader2,
+Lock,
+Plus,
+RefreshCw,
+Save,
+Search,
+Shield,
+Trash2,
+Upload
+} from 'lucide-react';
+import { useCallback,useRef,useState } from 'react';
 
 interface EnvVar {
   id: string;

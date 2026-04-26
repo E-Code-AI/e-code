@@ -1,6 +1,5 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('extension-manager');

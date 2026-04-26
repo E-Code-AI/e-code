@@ -1,18 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  Terminal, 
-  X, 
-  Maximize2, 
-  Minimize2, 
-  Copy, 
-  Trash2,
-  Download,
-  Search
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import {
+Copy,
+Download,
+Maximize2,
+Minimize2,
+Search,
+Terminal,
+Trash2,
+X
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 interface ExecutionConsoleProps {
   projectId: number;

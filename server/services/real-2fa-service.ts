@@ -4,15 +4,15 @@
  * Provides actual 2FA implementation with TOTP
  */
 
-import * as speakeasy from 'speakeasy';
-import * as QRCode from 'qrcode';
-import { createLogger } from '../utils/logger';
-import { storage } from '../storage';
-import { realEmailService } from './real-email-service';
-import * as crypto from 'crypto';
-import { db } from '../db';
 import { users } from '@shared/schema';
+import * as crypto from 'crypto';
 import { eq } from 'drizzle-orm';
+import * as QRCode from 'qrcode';
+import * as speakeasy from 'speakeasy';
+import { db } from '../db';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
+import { realEmailService } from './real-email-service';
 
 const logger = createLogger('real-2fa-service');
 

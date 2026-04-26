@@ -1,59 +1,47 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useLocation } from 'wouter';
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
+CommandDialog,
+CommandEmpty,
+CommandGroup,
+CommandInput,
+CommandItem,
+CommandList,
+CommandSeparator,
 } from '@/components/ui/command';
-import {
-  FileText,
-  Search,
-  Plus,
-  Home,
-  Folder,
-  Settings,
-  Terminal,
-  Code,
-  Database,
-  Users,
-  Bot,
-  Globe,
-  Package,
-  Key,
-  BarChart3,
-  BookOpen,
-  HelpCircle,
-  LogOut,
-  User,
-  Zap,
-  History,
-  Play,
-  Upload,
-  FileCode2,
-  Layers,
-  Shield,
-  GitBranch,
-  Network,
-  HardDrive,
-  Eye,
-  AlertTriangle,
-  Lock,
-  Wifi,
-  MessageSquare,
-  Monitor,
-  FileSearch,
-  ShieldAlert,
-  CloudUpload,
-} from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import { getProjectUrl } from '@/lib/utils';
 import type { Project } from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertTriangle,
+BookOpen,
+Bot,
+CloudUpload,
+Code,
+Database,
+Eye,
+FileSearch,
+FileText,
+GitBranch,
+Globe,
+HardDrive,
+Key,
+Layers,
+Lock,
+LogOut,
+MessageSquare,
+Monitor,
+Network,
+Package,
+Plus,
+Search,
+Settings,
+ShieldAlert,
+Terminal,
+Wifi,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface SpotlightSearchProps {
   open?: boolean;

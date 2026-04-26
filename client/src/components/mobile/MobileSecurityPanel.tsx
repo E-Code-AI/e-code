@@ -1,25 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { createSecurityWebSocket, type ResilientWebSocket, type ConnectionState } from '@/lib/websocket-resilience';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import {
-  ShieldCheck,
-  ShieldAlert,
-  Settings,
-  Loader2,
-  X,
-  ChevronDown,
-  ChevronUp,
-  Package,
-  WifiOff,
-} from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import type { SecurityScan, Vulnerability, SecurityScanSettings } from '@shared/schema';
+import { createSecurityWebSocket,type ConnectionState,type ResilientWebSocket } from '@/lib/websocket-resilience';
+import type { SecurityScan,SecurityScanSettings,Vulnerability } from '@shared/schema';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+ChevronDown,
+ChevronUp,
+Loader2,
+Package,
+Settings,
+ShieldAlert,
+ShieldCheck,
+X
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface MobileSecurityPanelProps {
   projectId: string;

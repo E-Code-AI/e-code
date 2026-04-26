@@ -1,8 +1,8 @@
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { CheckCircle2, Users, Zap, Shield, Globe, Code2, GitBranch, MessageSquare } from "lucide-react";
-import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2,GitBranch,Globe,MessageSquare,Shield,Users,Zap } from "lucide-react";
+import { Link } from "wouter";
 
 export default function PublicTeamPage() {
   return (

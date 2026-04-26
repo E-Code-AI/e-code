@@ -3,25 +3,27 @@
  * Integrates with AgentTools backend to fetch and display test recordings
  */
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  X, Play, Clock, CheckCircle2, XCircle, AlertCircle, 
-  Video, ChevronRight, Loader2
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import { VideoReplayPlayer } from './VideoReplayPlayer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import {
+ChevronRight,
+Clock,
+Loader2,
+Play,
+Video
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { VideoReplayPlayer } from './VideoReplayPlayer';
 
 interface VideoReplay {
   id: string;

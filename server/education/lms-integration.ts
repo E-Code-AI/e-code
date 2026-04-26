@@ -4,10 +4,9 @@
  * Integrates with Canvas, Blackboard, and Google Classroom
  */
 
-import * as crypto from 'crypto';
-import { db } from '../db';
-import { users, assignments, submissions, projects } from '@shared/schema';
+import { assignments,submissions } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import { db } from '../db';
 
 interface LMSConfig {
   platform: 'canvas' | 'blackboard' | 'google_classroom';

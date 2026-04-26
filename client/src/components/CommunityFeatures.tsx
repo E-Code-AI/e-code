@@ -1,45 +1,38 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  MessageSquare, 
-  Heart, 
-  Reply, 
-  Star, 
-  Trophy,
-  Users,
-  TrendingUp,
-  Eye,
-  Code,
-  Play,
-  Share,
-  Bookmark,
-  Flag,
-  Award,
-  Crown,
-  Filter,
-  Search,
-  Plus,
-  Image,
-  FileText,
-  Calendar,
-  MapPin,
-  Globe,
-  Github,
-  Twitter,
-  ExternalLink,
-  Clock
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Bookmark,
+Calendar,
+Clock,
+Code,
+Crown,
+Eye,
+FileText,
+Filter,
+Flag,
+Globe,
+Heart,
+MessageSquare,
+Play,
+Plus,
+Reply,
+Search,
+Share,
+Star,
+TrendingUp,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface CommunityPost {
   id: string;

@@ -1,13 +1,12 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { AdminLayout } from './admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table';
+import { useQuery } from '@tanstack/react-query';
+import { Edit,Eye,FileText,Globe,Loader2,Plus,Search,Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { FileText, Plus, Search, Loader2, Globe, Edit, Trash2, Eye } from 'lucide-react';
-import { queryClient } from '@/lib/queryClient';
+import { AdminLayout } from './admin/AdminLayout';
 
 interface CmsPage {
   id: number;

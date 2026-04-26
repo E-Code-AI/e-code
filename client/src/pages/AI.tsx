@@ -1,38 +1,37 @@
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { Badge } from '@/components/ui/badge';
-import { LazyMotionDiv } from '@/lib/motion';
-import { 
-  Sparkles, 
-  Zap, 
-  Code2, 
-  Globe, 
-  Brain, 
-  Languages,
-  Rocket,
-  Shield,
-  Users,
-  CheckCircle,
-  ArrowRight,
-  MessageSquare,
-  FileCode,
-  Package,
-  Wrench,
-  Eye,
-  Search,
-  Activity,
-  FileSearch,
-  Play,
-  Pause
-} from 'lucide-react';
-import { Link } from 'wouter';
-import { useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import type { LucideIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import type { LucideIcon } from 'lucide-react';
+import {
+Activity,
+ArrowRight,
+Brain,
+CheckCircle,
+Code2,
+Eye,
+FileSearch,
+Globe,
+Languages,
+MessageSquare,
+Package,
+Pause,
+Play,
+Rocket,
+Search,
+Shield,
+Sparkles,
+Users,
+Wrench,
+Zap
+} from 'lucide-react';
+import { useRef,useState } from 'react';
+import { Link } from 'wouter';
 
 type FeatureKey = 'autonomous' | 'multilingual' | 'intelligent' | 'realtime';
 

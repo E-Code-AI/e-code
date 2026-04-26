@@ -1,8 +1,8 @@
 // @ts-nocheck
+import { scalingPolicies } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import { db } from '../db';
-import { scalingPolicies, deploymentMetrics } from '@shared/schema';
-import { eq, desc, gte, and } from 'drizzle-orm';
 import { deploymentMetricsService } from './deployment-metrics';
 
 export interface ScalingPolicy {

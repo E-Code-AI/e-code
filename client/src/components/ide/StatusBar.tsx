@@ -1,28 +1,26 @@
 import { Button } from '@/components/ui/button';
-import { 
-  Command, 
-  Circle, 
-  GitBranch, 
-  Wifi, 
-  WifiOff,
-  Bell,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  Cpu,
-  HardDrive,
-  Clock,
-  Rocket,
-  Globe,
-  XCircle,
-} from 'lucide-react';
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+AlertCircle,
+Bell,
+CheckCircle,
+Circle,
+Command,
+Cpu,
+GitBranch,
+Globe,
+HardDrive,
+Loader2,
+Wifi,
+WifiOff,
+XCircle
+} from 'lucide-react';
 
 export type DeploymentStatus = 'idle' | 'deploying' | 'live' | 'failed';
 

@@ -1,20 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
-import { LazyMotionDiv } from '@/lib/motion';
-import { 
-  Sparkles, Send, X, Copy, Check, ChevronDown, ChevronUp,
-  Code, FileText, HelpCircle, Zap, RefreshCw, Play,
-  Terminal, Bug, TestTube, FileCode, MessageSquare,
-  Loader2, AlertCircle, CheckCircle
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { LightSyntaxHighlighter,darkStyle } from '@/components/ui/LightSyntaxHighlighter';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+Bug,
+Check,
+Copy,
+HelpCircle,
+Loader2,
+MessageSquare,
+Play,
+RefreshCw,
+Send,
+Sparkles,
+TestTube
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 
 interface ReplitAssistantProps {
   projectId: number;

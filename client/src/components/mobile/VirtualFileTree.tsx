@@ -1,9 +1,16 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Folder, File, ChevronRight, ChevronDown,
-  FileText, FileCode, Image, Film, Music, Archive, Database
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+Archive,
+ChevronRight,
+Database,
+FileCode,
+FileText,
+Film,
+Folder,
+Image,
+Music
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface FileItem {
   id: number;

@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events';
 import * as os from 'os';
-import { createLogger } from '../utils/logger';
 import { ClusterManager } from '../distributed/cluster-manager';
 import { ContainerOrchestrator } from '../orchestration/container-orchestrator';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('edge-manager');
 

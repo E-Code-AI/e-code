@@ -1,25 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { PreviewDevTools } from '@/components/PreviewDevTools';
-import { useParams } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardHeader,CardTitle } from '@/components/ui/card';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Globe, 
-  Smartphone, 
-  Tablet, 
-  Monitor,
-  Code,
-  Terminal,
-  RefreshCw,
-  ExternalLink,
-  Share2
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+ExternalLink,
+Globe,
+Monitor,
+RefreshCw,
+Share2,
+Smartphone,
+Tablet,
+Terminal
 } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useParams } from 'wouter';
 
 interface DevicePreset {
   name: string;

@@ -1,52 +1,40 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { File } from '@shared/schema';
-import { cn } from '@/lib/utils';
-import { 
-  ChevronRight, 
-  ChevronDown, 
-  FileText, 
-  Folder, 
-  FolderOpen,
-  Plus,
-  Trash,
-  Edit,
-  RefreshCw,
-  FilePlus,
-  FolderPlus,
-  MoreVertical
-} from 'lucide-react';
-import { 
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger
-} from '@/components/ui/context-menu';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
 import { ECodeSpinner } from '@/components/ECodeLoading';
+import { Button } from '@/components/ui/button';
+import {
+ContextMenu,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuTrigger
+} from '@/components/ui/context-menu';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { File } from '@shared/schema';
+import {
+ChevronDown,
+ChevronRight,
+FilePlus,
+FileText,
+Folder,
+FolderOpen,
+FolderPlus,
+Plus,
+RefreshCw
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface FileExplorerProps {
   files: File[];

@@ -1,22 +1,21 @@
-import { 
-  IDatabaseProvider, 
-  DatabaseProvider, 
-  ProvisioningOptions, 
-  ProvisionedDatabase,
-  DatabaseCredentials,
-  DatabaseMetrics,
-  BackupOptions,
-  BackupInfo,
-  PLAN_LIMITS,
-  PlanType
-} from './database-provider.interface';
-import { createLogger } from '../../utils/logger';
 import crypto from 'crypto';
-import { db } from '../../db';
 import { sql } from 'drizzle-orm';
-import { execSync } from 'child_process';
 import * as fsSync from 'fs';
 import * as pathModule from 'path';
+import { db } from '../../db';
+import { createLogger } from '../../utils/logger';
+import {
+BackupInfo,
+BackupOptions,
+DatabaseCredentials,
+DatabaseMetrics,
+DatabaseProvider,
+IDatabaseProvider,
+PLAN_LIMITS,
+PlanType,
+ProvisionedDatabase,
+ProvisioningOptions
+} from './database-provider.interface';
 
 const logger = createLogger('LocalProvider');
 

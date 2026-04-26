@@ -1,47 +1,44 @@
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
-import { cn } from '@/lib/utils';
-import {
-  Play,
-  Pause,
-  Square,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Clock,
-  Monitor,
-  Smartphone,
-  Tablet,
-  Image,
-  Video,
-  FileText,
-  Loader2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+CheckCircle2,
+ChevronDown,
+ChevronUp,
+Clock,
+FileText,
+Image,
+Loader2,
+Monitor,
+Play,
+Smartphone,
+Video,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TestExecutionResult {
   id: string;

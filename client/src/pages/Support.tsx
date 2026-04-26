@@ -1,20 +1,33 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  HelpCircle, MessageSquare, Book, Mail, 
-  ChevronRight, Search, Clock, CheckCircle,
-  AlertCircle, Phone, Video, Globe, Users,
-  Zap, Code, Shield, CreditCard, Server,
-  ChevronDown, ChevronUp, ExternalLink
+import {
+AlertCircle,
+Book,
+CheckCircle,
+ChevronDown,ChevronUp,
+Clock,
+Code,
+CreditCard,
+ExternalLink,
+Globe,
+HelpCircle,
+Mail,
+MessageSquare,
+Search,
+Server,
+Shield,
+Users,
+Video,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Support() {
   const { toast } = useToast();

@@ -1,16 +1,15 @@
 // @ts-nocheck
-import { Router, Request, Response, NextFunction } from "express";
 import { insertFileSchema } from "@shared/schema";
-import { type IStorage } from "../storage";
+import { NextFunction,Request,Response,Router } from "express";
+import jwt from 'jsonwebtoken';
+import path from 'path';
+import { z } from 'zod';
 import { ensureAuthenticated } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
-import type { User } from "@shared/schema";
-import path from 'path';
 import { previewEvents } from '../preview/preview-websocket';
-import { withScopedTransaction, TenantScopedQueries } from '../services/persistence-engine';
-import { z } from 'zod';
-import { syncFileToDisc, removeFileFromDisk } from '../utils/project-fs-sync';
-import jwt from 'jsonwebtoken';
+import { withScopedTransaction } from '../services/persistence-engine';
+import { type IStorage } from "../storage";
+import { removeFileFromDisk,syncFileToDisc } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
 
 const projectIdSchema = z.coerce.number().int().positive();

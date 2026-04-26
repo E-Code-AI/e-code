@@ -1,23 +1,21 @@
-import { useState, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Search, 
-  Replace, 
-  FileText, 
-  Code2,
-  CaseSensitive,
-  Regex,
-  FileSearch,
-  X
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import {
+CaseSensitive,
+FileSearch,
+FileText,
+Regex,
+Replace,
+Search
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
 
 interface SearchResult {
   fileId: number;

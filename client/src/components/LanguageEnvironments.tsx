@@ -3,13 +3,14 @@
  * Displays available language environments and their status
  */
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
 import { normalizeRuntimeDependencies } from '@/lib/runtimeDependencies';
+import { useQuery } from '@tanstack/react-query';
+import { Loader2 } from 'lucide-react';
+import { FaJava } from 'react-icons/fa';
 // Define types locally to avoid circular dependencies
 // Full 29-language support for Fortune 500 production parity with Replit
 export type Language = 
@@ -261,40 +262,37 @@ export const languageConfigs: Record<Language, LanguageConfig> = {
     runCommand: 'zig run main.zig'
   }
 };
-import { Loader2 } from 'lucide-react';
-import { FaJava } from 'react-icons/fa';
 
 // Importing language icons - using simpler set of icons that are guaranteed to exist
 import {
-  SiPython,
-  SiNodedotjs,
-  SiJavascript,
-  SiTypescript,
-  SiGo,
-  SiRuby,
-  SiRust,
-  SiPhp,
-  SiC,
-  SiCplusplus,
-  SiDotnet, // Using as C# icon
-  SiSwift,
-  SiKotlin,
-  SiDart,
-  SiLinux, // Using as Bash icon
-  SiHtml5,
-  SiNixos,
-  SiDeno,
-  SiLua,
-  SiPerl,
-  SiR,
-  SiHaskell,
-  SiScala,
-  SiClojure,
-  SiElixir,
-  SiJulia,
-  SiOcaml,
-  SiFortran,
-  SiZig
+SiC,
+SiClojure,
+SiCplusplus,
+SiDart,
+SiDeno,
+SiDotnet,
+SiElixir,
+SiFortran,
+SiGo,
+SiHaskell, // Using as Bash icon
+SiHtml5,
+SiJulia,
+SiKotlin,
+SiLinux,
+SiLua,
+SiNixos,
+SiNodedotjs,
+SiOcaml,
+SiPerl,
+SiPhp,
+SiPython,
+SiR,
+SiRuby,
+SiRust,
+SiScala, // Using as C# icon
+SiSwift,
+SiTypescript,
+SiZig
 } from 'react-icons/si';
 
 // Map of language icons - Full 29-language support

@@ -1,6 +1,6 @@
+import { agentPlans,type AgentPlan,type InsertAgentPlan } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { agentPlans, type AgentPlan, type InsertAgentPlan } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('AgentPlanStore');

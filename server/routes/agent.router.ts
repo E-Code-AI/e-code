@@ -1,23 +1,23 @@
 // @ts-nocheck
+import { agentSessions,agentWorkflows,AI_MODELS,commandExecutions,fileOperations,toolExecutions } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { Router } from 'express';
-import { ensureAuthenticated } from '../middleware/auth';
+import { db } from '../db';
 import { ensureAdmin } from '../middleware/admin-auth';
-import { agentOrchestrator } from '../services/agent-orchestrator.service';
-import { agentFileOperations } from '../services/agent-file-operations.service';
+import { ensureAuthenticated } from '../middleware/auth';
+import { createSecureUpload,sanitizeFilename,validateUpload } from '../middleware/upload-validation';
 import { agentCommandExecution } from '../services/agent-command-execution.service';
+import { agentFileOperations } from '../services/agent-file-operations.service';
+import { agentOrchestrator } from '../services/agent-orchestrator.service';
+import { AgentPreferencesService } from '../services/agent-preferences.service';
 import { agentToolFramework } from '../services/agent-tool-framework.service';
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
-import { AgentPreferencesService } from '../services/agent-preferences.service';
-import { schemaWarming } from '../services/schema-warming.service';
 import { withScopedTransaction } from '../services/persistence-engine';
-import { db } from '../db';
-import { agentSessions, fileOperations, commandExecutions, toolExecutions, agentWorkflows, AI_MODELS } from '@shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { schemaWarming } from '../services/schema-warming.service';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
-import { validateAndSetSSEHeaders } from '../utils/sse-headers';
-import { createSecureUpload, validateUpload, sanitizeFilename } from '../middleware/upload-validation';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('agent-router');
 const router = Router();

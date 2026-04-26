@@ -1,44 +1,39 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { 
-  Folder, 
-  Users, 
-  Settings, 
-  Plus, 
-  Mail, 
-  Calendar,
-  Activity,
-  Code,
-  Globe,
-  Lock,
-  UserPlus,
-  UserMinus,
-  Crown,
-  Shield,
-  User,
-  Eye,
-  ExternalLink,
-  Trash2,
-  Download,
-  Upload,
-  GitBranch,
-  Package,
-  Zap
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Activity,
+Calendar,
+Code,
+Crown,
+Eye,
+Folder,
+GitBranch,
+Globe,
+Lock,
+Package,
+Plus,
+Settings,
+Shield,
+User,
+UserMinus,
+UserPlus,
+Users,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation,useParams } from 'wouter';
 
 interface TeamMember {
   id: number;

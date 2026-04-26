@@ -1,9 +1,9 @@
-import { Router, Request, Response } from 'express';
-import { z } from 'zod';
-import { db, pool } from '../db';
 import * as schema from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
+import { z } from 'zod';
+import { db,pool } from '../db';
 import { ensureAdmin } from '../middleware/admin-auth';
-import { eq, sql } from 'drizzle-orm';
 import { projectDatabaseService } from '../services/project-database-provisioning.service';
 
 const databaseRouter = Router();

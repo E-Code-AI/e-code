@@ -1,28 +1,36 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import NewsletterComposer from '@/components/admin/NewsletterComposer';
+import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
+import { ProjectManagement } from '@/components/admin/ProjectManagement';
+import UserManagement from '@/components/admin/UserManagement';
+import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { 
-  Settings, Users, Shield, Database, Activity, 
-  FileText, Cpu, GitBranch, Package, Globe,
-  Lock, BarChart3, CheckCircle, XCircle,
-  DollarSign, TrendingUp, Palette, Zap, Heart,
-  Presentation
-} from 'lucide-react';
-import { Link } from 'wouter';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import PerformanceMonitor from '@/pages/admin/PerformanceMonitor';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
-import NewsletterComposer from '@/components/admin/NewsletterComposer';
-import UserManagement from '@/components/admin/UserManagement';
-import { ProjectManagement } from '@/components/admin/ProjectManagement';
-import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
+import {
+Activity,
+CheckCircle,
+DollarSign,
+FileText,
+Globe,
+Heart,
+Palette,
+Presentation,
+Settings,
+Shield,
+TrendingUp,
+Users,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'wouter';
 
 interface SystemStatus {
   status?: string;

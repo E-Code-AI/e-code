@@ -1,32 +1,28 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Package, 
-  Search, 
-  RefreshCw, 
-  Plus,
-  Trash2,
-  ExternalLink,
-  Info,
-  AlertCircle,
-  CheckCircle,
-  Download,
-  Loader2,
-  Code2,
-  FileText,
-  GitBranch,
-  Calendar,
-  User
-} from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Calendar,
+Code2,
+Download,
+ExternalLink,
+FileText,
+GitBranch,
+Loader2,
+Package,
+Plus,
+RefreshCw,
+Search,
+Trash2
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface PackageInfo {
   name: string;

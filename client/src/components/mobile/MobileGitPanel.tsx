@@ -1,38 +1,38 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import {
-  GitBranch,
-  GitCommit,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  Settings,
-  RefreshCw,
-  ExternalLink,
-  Search,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  Loader2,
-  User,
-  Plus,
-  Minus,
-  FileText,
-  FilePlus,
-  FileEdit,
-  ChevronRight,
-  LogOut,
-} from 'lucide-react';
-import { SiGithub, SiBitbucket, SiGitlab } from 'react-icons/si';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+ArrowDown,
+ArrowUp,
+Check,
+ChevronDown,
+ChevronLeft,
+ChevronRight,
+ChevronUp,
+ExternalLink,
+FileEdit,
+FilePlus,
+FileText,
+GitBranch,
+GitCommit,
+Loader2,
+LogOut,
+Minus,
+Plus,
+RefreshCw,
+Search,
+Settings,
+User,
+} from 'lucide-react';
+import { useState } from 'react';
+import { SiBitbucket,SiGithub,SiGitlab } from 'react-icons/si';
 
 interface GitHubStatus {
   connected: boolean;

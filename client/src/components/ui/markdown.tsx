@@ -1,8 +1,8 @@
 // @ts-nocheck
-import ReactMarkdown from 'react-markdown';
-import { LightSyntaxHighlighter, darkStyle } from './LightSyntaxHighlighter';
-import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { LightSyntaxHighlighter,darkStyle } from './LightSyntaxHighlighter';
 
 interface MarkdownProps {
   children: string;

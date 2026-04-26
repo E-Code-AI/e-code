@@ -1,13 +1,20 @@
-import { memo, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  AreaChart, Area, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
-import { usePrefersReducedMotion } from '@/lib/performance';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePrefersReducedMotion } from '@/lib/performance';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import { memo,useMemo } from 'react';
+import {
+Area,
+AreaChart,
+CartesianGrid,
+Cell,
+Pie,
+PieChart,
+ResponsiveContainer,
+Tooltip,
+XAxis,YAxis
+} from 'recharts';
 
 interface ActivityData {
   day: string;

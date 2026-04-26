@@ -7,11 +7,19 @@
  * to prevent access to host filesystem and secrets.
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import { Server, IncomingMessage } from 'http';
+import { ChildProcess,spawn } from 'child_process';
+import { parse as parseCookie } from 'cookie';
+import * as fs from 'fs';
+import { IncomingMessage,Server } from 'http';
+import jwt from 'jsonwebtoken';
 import { Socket } from 'net';
+import * as path from 'path';
 import type { Duplex } from 'stream';
-import * as os from 'os';
+import { WebSocket,WebSocketServer } from 'ws';
+import { sessionStore,storage } from '../storage';
+import { createLogger } from '../utils/logger';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { redisSessionManager } from './redis-session-manager';
 
 // Lazy-load node-pty to avoid crashes in production where it's not available
 let ptyModule: typeof import('node-pty') | null = null;
@@ -26,16 +34,6 @@ async function getPty(): Promise<typeof import('node-pty')> {
   }
   return ptyModule;
 }
-import * as path from 'path';
-import * as fs from 'fs';
-import { spawn, ChildProcess } from 'child_process';
-import { createLogger } from '../utils/logger';
-import { storage, sessionStore } from '../storage';
-import { markSocketAsHandled } from '../websocket/upgrade-guard';
-import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
-import { redisSessionManager } from './redis-session-manager';
-import jwt from 'jsonwebtoken';
-import { parse as parseCookie } from 'cookie';
 
 function getInteractiveShellArgs(shellPath: string): string[] {
   if (process.platform === 'win32') {

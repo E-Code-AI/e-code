@@ -1,36 +1,33 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { 
-  Settings, 
-  Shield, 
-  CreditCard, 
-  Trash2, 
-  AlertTriangle, 
-  Globe, 
-  Lock,
-  Zap,
-  Bell,
-  Key,
-  Users,
-  ChevronLeft,
-  Download,
-  Archive
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertTriangle,
+Archive,
+ChevronLeft,
+CreditCard,
+Download,
+Globe,
+Key,
+Lock,
+Shield,
+Trash2,
+Zap
 } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation,useParams } from 'wouter';
 
 interface Team {
   id: number;

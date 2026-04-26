@@ -1,21 +1,31 @@
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import {
-  Zap, Database, Globe, Users, Shield, Activity, TrendingUp,
-  AlertTriangle, Check, X, Info, Clock, Cpu, HardDrive, BarChart3
-} from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ECodeLoading } from "@/components/ECodeLoading";
-import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
-import { useAuth } from "@/hooks/use-auth";
 import { AIUsageDashboard } from "@/components/AIUsageDashboard";
-import { PageHeader, PageShell } from "@/components/layout/PageShell";
+import { ECodeLoading } from "@/components/ECodeLoading";
+import { PageHeader,PageShell } from "@/components/layout/PageShell";
+import { Alert,AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import {
+Activity,
+AlertTriangle,
+BarChart3,
+Check,
+Clock,Cpu,
+Database,Globe,
+HardDrive,
+Info,
+Shield,
+TrendingUp,
+Users,
+Zap
+} from "lucide-react";
+import { useState } from "react";
+import { Bar,BarChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
+import { useLocation } from "wouter";
 
 export default function Usage() {
   const [, navigate] = useLocation();

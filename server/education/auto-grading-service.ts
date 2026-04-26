@@ -3,12 +3,12 @@
  * Provides automated assignment grading and test execution for education
  */
 
-import { db } from '../db';
-import { assignments, submissions, projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { DockerExecutor } from '../execution/docker-executor';
-import * as path from 'path';
+import { assignments,projects,submissions } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
+import * as path from 'path';
+import { db } from '../db';
+import { DockerExecutor } from '../execution/docker-executor';
 
 interface FileItem {
   name: string;

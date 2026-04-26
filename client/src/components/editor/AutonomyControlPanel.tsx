@@ -1,45 +1,45 @@
-import { useState, useCallback, useMemo } from 'react';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  Zap, 
-  Clock, 
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  RotateCcw,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Target,
-  Shield,
-  TestTube,
-  Save,
-  ArrowLeft
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  useMaxAutonomy, 
-  type RiskThreshold, 
-  type SessionStatus, 
-  type TaskStatus,
-  type TaskPriority,
-  type MaxAutonomyTask
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
+import {
+useMaxAutonomy,
+type MaxAutonomyTask,
+type RiskThreshold,
+type SessionStatus,
+type TaskPriority,
+type TaskStatus
 } from '@/hooks/useMaxAutonomy';
 import { cn } from '@/lib/utils';
+import {
+AlertTriangle,
+ArrowLeft,
+CheckCircle2,
+ChevronDown,
+ChevronUp,
+Clock,
+Loader2,
+Pause,
+Play,
+RotateCcw,
+Save,
+Settings,
+Shield,
+Square,
+Target,
+TestTube,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useCallback,useMemo,useState } from 'react';
 
 interface AutonomyControlPanelProps {
   projectId: number;

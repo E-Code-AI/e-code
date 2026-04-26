@@ -1,14 +1,20 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Users, MousePointer, Eye, Edit3, Code, 
-  Cursor, Activity, Clock, Zap
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { ResilientWebSocket } from '@/lib/websocket-resilience';
+import {
+Activity,Clock,
+Code,
+Cursor,
+Edit3,
+Eye,
+MousePointer,
+Users,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface UserCursor {
   id: string;

@@ -1,56 +1,48 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+TooltipProvider
 } from "@/components/ui/tooltip";
-import {
-  Users,
-  MessageSquare,
-  Phone,
-  Video,
-  Mic,
-  MicOff,
-  VideoOff,
-  Share2,
-  Copy,
-  Check,
-  X,
-  Send,
-  Smile,
-  Paperclip,
-  MoreVertical,
-  UserPlus,
-  Circle,
-  Eye,
-  Edit3,
-  MousePointer,
-} from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { getCursorColor, getCursorStyle, CURSOR_COLORS } from '@/lib/cursor-colors';
+import { CURSOR_COLORS,getCursorColor,getCursorStyle } from '@/lib/cursor-colors';
 import { apiRequest } from '@/lib/queryClient';
-import * as Y from 'yjs';
+import { EditorView } from '@codemirror/view';
+import {
+Check,
+Circle,
+Copy,
+Edit3,
+Eye,
+MessageSquare,
+Mic,
+MicOff,
+MousePointer,
+Phone,
+Send,
+UserPlus,
+Users,
+Video,
+VideoOff
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
+import { yCollab } from 'y-codemirror.next';
 import { WebrtcProvider } from 'y-webrtc';
 import { WebsocketProvider } from 'y-websocket';
-import { yCollab } from 'y-codemirror.next';
-import { EditorView } from '@codemirror/view';
+import * as Y from 'yjs';
 
 interface Collaborator {
   id: string;

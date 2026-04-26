@@ -1,35 +1,35 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Search, Filter, Grid3x3, List, TrendingUp, Star, Download,
-  Code2, Sparkles, Rocket, ChevronDown, X, Plus, Upload,
-  GitBranch, Clock, Award, Users, Package, Globe
-} from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-import { TemplateSearch } from '@/components/marketplace/TemplateSearch';
-import { TemplateFilters } from '@/components/marketplace/TemplateFilters';
-import { TemplateCard } from '@/components/marketplace/TemplateCard';
-import { TemplatePreview } from '@/components/marketplace/TemplatePreview';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { CommunityHub } from '@/components/marketplace/CommunityHub';
+import { TemplateCard } from '@/components/marketplace/TemplateCard';
+import { TemplateFilters } from '@/components/marketplace/TemplateFilters';
+import { TemplatePreview } from '@/components/marketplace/TemplatePreview';
+import { TemplateSearch } from '@/components/marketplace/TemplateSearch';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader } from '@/components/ui/card';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Filter,Grid3x3,List,
+Star,
+TrendingUp,
+Upload
+} from 'lucide-react';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
 
 export default function TemplateMarketplace() {

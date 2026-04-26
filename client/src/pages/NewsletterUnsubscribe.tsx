@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicFooter } from '@/components/layout/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserX, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
-import { PublicFooter } from '@/components/layout/PublicFooter';
 import { apiRequest } from '@/lib/queryClient';
+import { ArrowLeft,UserX } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 
 export default function NewsletterUnsubscribe() {
   const [, navigate] = useLocation();

@@ -1,38 +1,44 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useDebounce } from '@/hooks/use-debounce';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { 
-  Search, Code, Users, FileText, Package, Folder,
-  Clock, Star, TrendingUp, Filter, X, ChevronDown,
-  Calendar, Tag, GitBranch, Globe, Lock, Eye
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+ChevronDown,
+Clock,
+Code,
+Eye,
+FileText,
+Filter,
+Folder,
+Globe,Lock,
+Package,
+Search,
+Star,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import { useLocation } from 'wouter';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface SearchResult {
   id: string;

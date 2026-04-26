@@ -1,44 +1,43 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
-import {
-  GitBranch,
-  GitCommit,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  Settings,
-  RefreshCw,
-  ExternalLink,
-  Search,
-  ArrowDown,
-  ArrowUp,
-  Check,
-  X,
-  Loader2,
-  User,
-  Plus,
-  Minus,
-  FileCode,
-  LogOut,
-  Eye,
-} from 'lucide-react';
-import { SiGithub, SiBitbucket, SiGitlab } from 'react-icons/si';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+ArrowDown,
+ArrowUp,
+Check,
+ChevronDown,
+ChevronLeft,
+ChevronUp,
+ExternalLink,
+Eye,
+FileCode,
+GitBranch,
+GitCommit,
+Loader2,
+LogOut,
+Minus,
+Plus,
+RefreshCw,
+Search,
+Settings,
+User
+} from 'lucide-react';
+import { useState } from 'react';
+import { SiBitbucket,SiGithub,SiGitlab } from 'react-icons/si';
+import { useParams } from 'wouter';
 
 interface GitHubStatus {
   connected: boolean;

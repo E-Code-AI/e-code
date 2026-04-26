@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "wouter";
-import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { LightSyntaxHighlighter,darkStyle } from "@/components/ui/LightSyntaxHighlighter";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { Copy, ExternalLink, Code2, User, Calendar, Eye, FileCode, Home } from "lucide-react";
-import { LightSyntaxHighlighter, darkStyle } from "@/components/ui/LightSyntaxHighlighter";
+import { Calendar,Code2,Copy,Eye,FileCode,Home,User } from "lucide-react";
+import { useEffect,useState } from "react";
+import { Link,useParams } from "wouter";
 
 interface CodeSnippet {
   id: number;

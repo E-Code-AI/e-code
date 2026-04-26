@@ -4,17 +4,33 @@
  * Enhanced Nov 2025 - Phase 1 UX improvements
  */
 
-import { useState, useMemo } from 'react';
-import { 
-  CheckCircle2, XCircle, Loader2, FileEdit, Terminal, Search, Database, Globe,
-  ChevronDown, ChevronRight, Filter, FileText, FolderOpen, Package, AlertTriangle,
-  Clock, Trash2, Eye, FilePlus, FileCode, Command
-} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Card,CardContent,CardHeader } from '@/components/ui/card';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import {
+AlertTriangle,
+CheckCircle2,
+ChevronDown,ChevronRight,
+Clock,
+Command,
+Database,
+Eye,
+FileEdit,
+FilePlus,
+FileText,
+Filter,
+FolderOpen,
+Globe,
+Loader2,
+Package,
+Search,
+Terminal,
+Trash2,
+XCircle
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
 
 export interface ToolExecutionProps {
   id: string;

@@ -1,22 +1,21 @@
-import { sql } from 'drizzle-orm';
-import {
-  index,
-  uniqueIndex,
-  jsonb,
-  pgTable,
-  timestamp,
-  varchar,
-  integer,
-  text,
-  boolean,
-  pgEnum,
-  decimal,
-  serial,
-  primaryKey,
-  unique,
-  real
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+boolean,
+decimal,
+index,
+integer,
+jsonb,
+pgEnum,
+pgTable,
+primaryKey,
+real,
+serial,
+text,
+timestamp,
+unique,
+uniqueIndex,
+varchar
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -2059,8 +2058,8 @@ export const AI_MODELS = [
 export type AiModel = typeof AI_MODELS[number];
 
 // Import tables from separate schema files
-export { projectImports, importTemplates } from './schema/imports';
-export type { ProjectImport, InsertProjectImport, ImportTemplate, InsertImportTemplate } from './schema/imports';
+export { importTemplates,projectImports } from './schema/imports';
+export type { ImportTemplate,InsertImportTemplate,InsertProjectImport,ProjectImport } from './schema/imports';
 
 // Voice/Video Sessions
 export const voiceVideoSessions = pgTable("voice_video_sessions", {

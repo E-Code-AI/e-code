@@ -1,34 +1,32 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Play, 
-  Square,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  Clock,
-  FileText,
-  Search,
-  Filter,
-  ChevronRight,
-  ChevronDown,
-  Terminal,
-  Beaker,
-  TrendingUp,
-  Bug
-} from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Beaker,
+CheckCircle,
+ChevronDown,
+ChevronRight,
+Clock,
+FileText,
+Play,
+RefreshCw,
+Search,
+Square,
+Terminal,
+TrendingUp,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TestResult {
   id: string;

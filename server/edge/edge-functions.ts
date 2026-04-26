@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('edge-functions');

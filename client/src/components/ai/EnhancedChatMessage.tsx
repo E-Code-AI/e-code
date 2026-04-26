@@ -1,64 +1,63 @@
-import { useState, useCallback, memo, forwardRef, useMemo } from 'react';
-import { LazyMotionDiv, LazyMotionSpan, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import { 
-  Sparkles,
-  Copy, 
-  Check, 
-  RotateCcw, 
-  ChevronDown, 
-  ChevronUp,
-  AlertCircle,
-  Loader2,
-  Terminal,
-  FileCode,
-  Search,
-  Wrench,
-  Clock3,
-  MessageSquareText,
-  Receipt,
-  PanelsTopLeft
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
-import { ToolExecutionList } from './ToolExecutionDisplay';
-import { MessageMetadataFooter } from './MessageMetadataFooter';
-import { 
-  TaskMessage, 
-  ActionMessage, 
-  RichMessageContent,
-  type Task,
-  type Action
-} from '@/components/agent/messages';
-import { extractAndFormatTasks, containsPlanOrTasks } from '@/lib/task-extractor';
 import {
-  InlineWorkingIndicator,
-  InlineSearchIndicator,
-  InlineAppType,
-  InlinePlanCard,
-  InlineBuildOptions,
-  InlineBuildProgressCard,
-  InlineCompleteIndicator,
-  InlineErrorIndicator,
-  InlineFileOperation,
-  InlineTerminalOutput,
-  InlineCodeBlock,
-  InlineThinkingStep,
-  InlineAgentAction,
-  InlineDependencyInstall,
-  InlineProgressTimeline,
-  InlineCheckpoint,
-  InlineTaskListEnhanced,
-  InlinePreviewWindow,
-  type BuildMode,
-  type FileOperationType,
-  type ProgressEvent
-} from './InlineBuildProgress';
-import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
+ActionMessage,
+RichMessageContent,
+TaskMessage,
+type Action,
+type Task
+} from '@/components/agent/messages';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv,LazyMotionSpan } from '@/lib/motion';
+import { containsPlanOrTasks,extractAndFormatTasks } from '@/lib/task-extractor';
+import { cn } from '@/lib/utils';
+import type { AutonomousBuildMode,Message } from '@/stores/agentConversationStore';
+import { formatDistanceToNow } from 'date-fns';
+import {
+AlertCircle,
+Check,
+ChevronDown,
+ChevronUp,
+Clock3,
+Copy,
+FileCode,
+Loader2,
+MessageSquareText,
+PanelsTopLeft,
+Receipt,
+RotateCcw,
+Search,
+Sparkles,
+Terminal,
+Wrench
+} from 'lucide-react';
+import { forwardRef,memo,useCallback,useMemo,useState } from 'react';
 import { CheckpointCard } from './CheckpointCard';
+import {
+InlineAgentAction,
+InlineAppType,
+InlineBuildOptions,
+InlineBuildProgressCard,
+InlineCheckpoint,
+InlineCodeBlock,
+InlineCompleteIndicator,
+InlineDependencyInstall,
+InlineErrorIndicator,
+InlineFileOperation,
+InlinePlanCard,
+InlinePreviewWindow,
+InlineProgressTimeline,
+InlineSearchIndicator,
+InlineTaskListEnhanced,
+InlineTerminalOutput,
+InlineThinkingStep,
+InlineWorkingIndicator,
+type BuildMode,
+type FileOperationType
+} from './InlineBuildProgress';
+import { MessageMetadataFooter } from './MessageMetadataFooter';
+import { ThinkingDisplay,ThinkingDisplayCompact } from './ThinkingDisplay';
+import { ToolExecutionList } from './ToolExecutionDisplay';
 
 interface EnhancedChatMessageProps {
   message: Message;

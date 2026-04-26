@@ -1,34 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Database, 
-  Table as TableIcon, 
-  Search, 
-  RefreshCw, 
-  Download, 
-  Upload,
-  Plus,
-  Trash2,
-  Edit,
-  Save,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Filter,
-  Settings,
-  Key
-} from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+ChevronLeft,
+ChevronRight,
+Database,
+Download,
+Edit,
+Key,
+Plus,
+RefreshCw,
+Search,
+Settings,
+Table as TableIcon,
+Trash2
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TableSchema {
   name: string;

@@ -1,16 +1,26 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Bug, Play, Square, Pause, SkipForward, StepForward,
-  RotateCcw, Target, Layers, Monitor, Cpu, 
-  MemoryStick, Gauge, Activity, AlertTriangle
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+Activity,AlertTriangle,
+Bug,
+Cpu,
+Gauge,
+Layers,
+MemoryStick,
+Monitor,
+Play,
+RotateCcw,
+SkipForward,
+Square,
+StepForward,
+Target
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface Breakpoint {
   id: string;

@@ -1,14 +1,10 @@
 // @ts-nocheck
 import { exec } from 'child_process';
-import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { aiCodeReviewService } from './ai-code-review';
-import { codeAnalysisEngine } from './code-analysis-engine';
+import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
-import { db } from '../db';
-import { codeReviews, reviewIssues } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { aiCodeReviewService } from './ai-code-review';
 
 const logger = createLogger('git-review-integration');
 const execAsync = promisify(exec);

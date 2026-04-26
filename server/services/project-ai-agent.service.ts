@@ -1,10 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { aiProviderManager,type AIModel } from '../ai/ai-provider-manager';
 import { type IStorage } from '../storage';
-import type { File, Project } from '@shared/schema';
-import { aiSecurityService, type ValidatedAction } from './ai-security.service';
-import { aiApprovalQueue } from './ai-approval-queue.service';
-import { aiProviderManager, type AIModel } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
+import { aiApprovalQueue } from './ai-approval-queue.service';
+import { aiSecurityService,type ValidatedAction } from './ai-security.service';
 
 const logger = createLogger('project-ai-agent-service');
 

@@ -1,29 +1,43 @@
 // @ts-nocheck
-import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { Project } from '@shared/schema';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  ChevronRight, CheckCircle2, Clock, Code2,
-  Sparkles, Plus, Github, BookMarked, FileText,
-  Loader2, Sun, Moon, Sunrise, Coffee, Search, Edit, Play, ArrowLeft,
-  Zap, Calendar
-} from 'lucide-react';
-import { SiSlack, SiTelegram } from 'react-icons/si';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { ECodeLoading } from '@/components/ECodeLoading';
-import { getProjectUrl, cn } from '@/lib/utils';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { useDebounce } from '@/hooks/use-debounce';
-import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
-import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
-import { BuildModeSelector, BuildMode } from '@/components/ai/BuildModeSelector';
+import { BuildMode,BuildModeSelector } from '@/components/ai/BuildModeSelector';
+import { ECodeLoading } from '@/components/ECodeLoading';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/hooks/use-auth';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { getProjectUrl } from '@/lib/utils';
+import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
+import { Project } from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
+import {
+BookMarked,
+Calendar,
+CheckCircle2,
+ChevronRight,
+Clock,Code2,
+Coffee,
+Edit,
+FileText,
+Github,
+Loader2,
+Moon,
+Play,
+Plus,
+Search,
+Sparkles,
+Sun,
+Sunrise,
+Zap
+} from 'lucide-react';
+import React,{ useEffect,useMemo,useRef,useState } from 'react';
+import { SiSlack,SiTelegram } from 'react-icons/si';
+import { useLocation } from 'wouter';
 
 // Get personalized greeting based on time of day
 function getGreeting() {

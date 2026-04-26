@@ -4,11 +4,10 @@
  * Enables MCP server to work over HTTP instead of STDIO
  */
 
-import { Express, Request, Response } from "express";
 import { Server as MCPServer } from "@modelcontextprotocol/sdk/server/index.js";
-import { EventEmitter } from "events";
 import * as crypto from "crypto";
-import { Readable, Writable } from "stream";
+import { Express,Request,Response } from "express";
+import { Readable,Writable } from "stream";
 import { validateAndSetSSEHeaders } from "../utils/sse-headers";
 
 const uuidv4 = () => crypto.randomUUID();

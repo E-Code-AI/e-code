@@ -1,30 +1,30 @@
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect,useState } from "react";
+import { useForm } from "react-hook-form";
+import { useLocation } from "wouter";
+import { z } from "zod";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+Card,
+CardContent,
+CardDescription,
+CardFooter,
+CardHeader,
+CardTitle,
+} from "@/components/ui/card";
+import {
+Form,
+FormControl,
+FormField,
+FormItem,
+FormLabel,
+FormMessage,
 } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Code2, Users, Zap, Sparkles, Shield, Github } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { Code2,Github,Loader2,Shield,Sparkles,Users,Zap } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email address"),

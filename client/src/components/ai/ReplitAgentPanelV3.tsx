@@ -1,109 +1,88 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { flushSync } from 'react-dom';
 
-import { useQuery } from '@tanstack/react-query';
-import { devLog } from '@/lib/dev-logger';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ECodeLogo } from '@/components/ECodeLogo';
+import {
+type Action
+} from '@/components/agent/messages';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { useAgentConversationStore, type Message } from '@/stores/agentConversationStore';
-import { useAutonomousChatIntegration } from '@/hooks/use-autonomous-chat-integration';
-import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { Button } from '@/components/ui/button';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useAgentAudioNotifications } from '@/hooks/use-agent-audio-notifications';
 import { useAgentDockNotifications } from '@/hooks/use-agent-dock-notifications';
 import { useAgentFavicon } from '@/hooks/use-agent-favicon';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import {
-  Send,
-  Sparkles,
-  Plus,
-  Loader2,
-  Settings,
-  Brain,
-  Zap,
-  MoreHorizontal,
-  Copy,
-  RefreshCw,
-  Pause,
-  Play,
-  AlertCircle,
-  Paperclip,
-  Mic
-} from 'lucide-react';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ThinkingDisplay, ThinkingDisplayCompact, ThinkingStep } from './ThinkingDisplay';
-import { ToolExecutionList, ToolExecutionProps } from './ToolExecutionDisplay';
-import { MessageMetadataFooter } from './MessageMetadataFooter';
-import { 
-  TaskMessage, 
-  ActionMessage, 
-  RichMessageContent,
-  type Task,
-  type Action,
-  type FileDiff
-} from '@/components/agent/messages';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
-import { useWorkflowManager } from '@/hooks/use-workflow-manager';
 import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
-import { AgentWorkflowSelector } from './AgentWorkflowSelector';
-import { DesignPrototypeViewer } from './DesignPrototypeViewer';
-import { MVPCompletionDialog } from './MVPCompletionDialog';
-import { ModeSelector, type AgentMode } from './ModeSelector';
-import { AIModelSelector } from './AIModelSelector';
-import { CurrentModelChip } from './CurrentModelChip';
-import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
-import { AgentConversationHistoryModal } from './AgentConversationHistoryModal';
-import { MaxAutonomyProgress, MaxAutonomyStartForm } from './MaxAutonomyProgress';
+import { useAutonomousChatIntegration } from '@/hooks/use-autonomous-chat-integration';
+import { useToast } from '@/hooks/use-toast';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
-import { AgentToolsPanel, type AgentToolsSettings } from './AgentToolsPanel';
-import { ElementEditor, type ElementSelection } from './ElementEditor';
-import { ChatToolbar, ChatToolbarMobile } from './ChatToolbar';
+import { devLog } from '@/lib/dev-logger';
+import { apiRequest,getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
+import { handleSSEWarning,type SSEWarningData } from '@/lib/sse-warning-handler';
+import { cn } from '@/lib/utils';
+import { useAgentConversationStore,type Message } from '@/stores/agentConversationStore';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Loader2,
+Mic,
+Paperclip,
+Pause,
+Play,
+Plus,
+RefreshCw,
+Send,
+Settings,
+Sparkles,
+Zap
+} from 'lucide-react';
+import { AIModelSelector } from './AIModelSelector';
+import { AgentConversationHistoryModal } from './AgentConversationHistoryModal';
+import { AgentToolsPanel,type AgentToolsSettings } from './AgentToolsPanel';
+import { ChatToolbar,ChatToolbarMobile } from './ChatToolbar';
+import { CurrentModelChip } from './CurrentModelChip';
+import { ElementEditor,type ElementSelection } from './ElementEditor';
+import { MaxAutonomyProgress } from './MaxAutonomyProgress';
+import { ModeSelector,type AgentMode } from './ModeSelector';
+import { useRAGStats } from './RAGControls';
+import { ThinkingDisplay,ThinkingDisplayCompact,ThinkingStep } from './ThinkingDisplay';
 import { UsageTrackingIcon } from './UsageTrackingIcon';
 import { VideoReplayViewer } from './VideoReplayViewer';
-import { ECodeLogo } from '@/components/ECodeLogo';
-import { RAGToggle, RAGStatsDisplay, RetrievedContextPanel, useRAGStats } from './RAGControls';
-import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 // ✅ Memory Bank is 100% TRANSPARENT (like Replit) - no UI, works invisibly in background
 // Context is auto-injected into AI prompts via server/api/ai-streaming.ts
-import { EffortPricingDisplay } from '@/components/EffortPricingDisplay';
-import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
-import { InlineCheckpointMarker, CheckpointDivider } from './InlineCheckpointMarker';
-import { TaskDecompositionDisplay, type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
-import { SlashCommandMenu, useSlashCommand, DEFAULT_MCP_SERVERS, type MCPServer } from './SlashCommandMenu';
-import { AIModelIndicator, AIModelBadge, type DelegationInfo } from '@/components/agent/AIModelIndicator';
-import { OrchestratorProgress, MiniProgressIndicator, type SessionProgressData } from '@/components/agent/OrchestratorProgress';
+import { AIModelIndicator,type DelegationInfo } from '@/components/agent/AIModelIndicator';
+import { MessageQueue,type QueuedMessage } from '@/components/agent/MessageQueue';
+import { MiniProgressIndicator,OrchestratorProgress,type SessionProgressData } from '@/components/agent/OrchestratorProgress';
 import { ProviderHealthBadge } from '@/components/agent/ProviderHealthIndicator';
-import { MessageQueue, type QueuedMessage } from '@/components/agent/MessageQueue';
-import { History, X, MousePointer2, Coins, Database, Volume2, VolumeX, DollarSign, RotateCcw } from 'lucide-react';
+import { TaskDecompositionDisplay,type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
+import { LazyAnimatePresence,LazyMotionDiv,LazyMotionSpan } from '@/lib/motion';
+import { CheckCircle2,Hammer,History,Package,Smartphone,Volume2,VolumeX,X,XCircle } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
-import { LazyMotionDiv, LazyMotionSpan, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  EnhancedChatMessage, 
-  StreamingSkeleton, 
-  ConversationSyncIndicator,
-  EmptyConversation
+import {
+ConversationSyncIndicator,
+EmptyConversation,
+EnhancedChatMessage,
+StreamingSkeleton
 } from './EnhancedChatMessage';
-import { VirtualizedMessageList, useOptimisticMessages, useDebouncedStreamingContent, StreamingText } from './VirtualizedMessageList';
-import { Progress } from '@/components/ui/progress';
-import { Package, Hammer, Smartphone, CheckCircle2, XCircle } from 'lucide-react';
+import { CheckpointDivider } from './InlineCheckpointMarker';
+import { DEFAULT_MCP_SERVERS,SlashCommandMenu,useSlashCommand,type MCPServer } from './SlashCommandMenu';
+import { StreamingText,VirtualizedMessageList,useOptimisticMessages } from './VirtualizedMessageList';
 
 interface ToolExecution {
   id: string;

@@ -1,24 +1,24 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog,DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { 
-  Search, 
-  FileCode, 
-  Terminal, 
-  Settings, 
-  GitBranch, 
-  Bug, 
-  Database,
-  Package,
-  History,
-  Key,
-  Bot,
-  TestTube,
-  FolderOpen
-} from 'lucide-react';
 import { File } from '@shared/schema';
+import {
+Bot,
+Bug,
+Database,
+FileCode,
+FolderOpen,
+GitBranch,
+History,
+Key,
+Package,
+Search,
+Settings,
+Terminal,
+TestTube
+} from 'lucide-react';
+import { useEffect,useMemo,useState } from 'react';
 
 export interface Command {
   id: string;

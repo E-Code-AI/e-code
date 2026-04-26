@@ -1,13 +1,13 @@
-import React, { useEffect, useCallback, useState } from 'react';
-import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import useSplitsStore from '@/stores/splits-store';
-import { LayoutNode, Split, PaneGroup, isSplit, isPaneGroup } from '@/types/splits';
+import { LayoutNode,isPaneGroup,isSplit } from '@/types/splits';
+import { DndContext,DragOverlay,MouseSensor,TouchSensor,useSensor,useSensors } from '@dnd-kit/core';
+import React,{ useCallback,useEffect,useState } from 'react';
+import { DragOverlayContent } from './DragOverlayContent';
+import { FloatingPane } from './FloatingPane';
 import { SplitsPane } from './SplitsPane';
 import { SplitsResizeHandle } from './SplitsResizeHandle';
-import { FloatingPane } from './FloatingPane';
-import { DragOverlayContent } from './DragOverlayContent';
 
 interface SplitsLayoutProps {
   className?: string;

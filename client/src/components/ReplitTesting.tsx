@@ -1,17 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TestTube, Play, CheckCircle, XCircle, AlertCircle,
-  Clock, Target, FileText, BarChart3, Settings,
-  Plus, RefreshCw, Eye, Filter, TrendingUp
-} from 'lucide-react';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+AlertCircle,
+BarChart3,
+CheckCircle,
+Clock,
+Eye,
+FileText,
+Play,
+Plus,RefreshCw,
+Target,
+TestTube,
+XCircle
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface TestSuite {
   id: string;

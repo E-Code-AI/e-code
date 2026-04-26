@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { randomBytes, createHash } from 'crypto';
+import { apiKeys,apiUsage } from '@shared/schema';
+import { createHash,randomBytes } from 'crypto';
+import { and,count,desc,eq,sql } from 'drizzle-orm';
 import { db } from '../db';
-import { apiKeys, apiUsage, users } from '@shared/schema';
-import { eq, and, desc, count, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('sdk-service');

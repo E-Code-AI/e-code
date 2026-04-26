@@ -1,59 +1,53 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { ReplitDatabase } from '@/components/ReplitDatabase';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-  Database,
-  Table,
-  Play,
-  Download,
-  Upload,
-  Settings,
-  RefreshCw,
-  Search,
-  Plus,
-  Trash2,
-  Copy,
-  Check,
-  ChevronRight,
-  ChevronDown,
-  Code,
-  FileJson,
-  Layers,
-  Key,
-  Hash,
-  Type,
-  Calendar,
-  ToggleLeft,
-  List,
-  Braces,
-  Link,
-  Server,
-  BarChart3,
-  Activity,
-  Shield,
-  Zap,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+BarChart3,
+Braces,
+Calendar,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Code,
+Copy,
+Database,
+Download,
+Hash,
+Key,
+Layers,
+Link,
+List,
+Play,
+Plus,
+RefreshCw,
+Search,
+Server,
+Settings,
+Table,
+ToggleLeft,
+Trash2,
+Type,
+Upload,
+XCircle
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface TableSchema {
   name: string;

@@ -1,17 +1,17 @@
-import { 
-  IDatabaseProvider, 
-  DatabaseProvider, 
-  ProvisioningOptions, 
-  ProvisionedDatabase,
-  DatabaseCredentials,
-  DatabaseMetrics,
-  BackupOptions,
-  BackupInfo,
-  PLAN_LIMITS,
-  PlanType
-} from './database-provider.interface';
-import { createLogger } from '../../utils/logger';
 import crypto from 'crypto';
+import { createLogger } from '../../utils/logger';
+import {
+BackupInfo,
+BackupOptions,
+DatabaseCredentials,
+DatabaseMetrics,
+DatabaseProvider,
+IDatabaseProvider,
+PLAN_LIMITS,
+PlanType,
+ProvisionedDatabase,
+ProvisioningOptions
+} from './database-provider.interface';
 
 const logger = createLogger('CloudNativePGProvider');
 

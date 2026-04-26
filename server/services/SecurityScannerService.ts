@@ -1,11 +1,11 @@
 // @ts-nocheck
-import type { Server as HTTPServer, IncomingMessage } from 'http';
+import type { SecurityScan,Vulnerability } from '@shared/schema';
+import type { Server as HTTPServer,IncomingMessage } from 'http';
 import WebSocket from 'ws';
+import { ipRateLimiter,wsRateLimiter } from '../middleware/websocket-rate-limiter';
 import type { IStorage } from '../storage';
-import type { SecurityScan, Vulnerability } from '@shared/schema';
-import { isOriginAllowed } from '../utils/origin-validation';
 import { getClientIp } from '../utils/ip-extraction';
-import { ipRateLimiter, wsRateLimiter } from '../middleware/websocket-rate-limiter';
+import { isOriginAllowed } from '../utils/origin-validation';
 
 interface SecurityScannerClient {
   ws: WebSocket;

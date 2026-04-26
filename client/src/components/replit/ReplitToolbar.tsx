@@ -1,31 +1,29 @@
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { 
-  Play, 
-  Square, 
-  RotateCcw,
-  Save,
-  Download,
-  Upload,
-  Share2,
-  Settings,
-  Bug,
-  Zap,
-  Package,
-  GitBranch,
-  Terminal,
-  Globe,
-  Users,
-  Star,
-  Eye,
-  EyeOff,
-  Maximize2,
-  Minimize2,
-  MoreHorizontal
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+Bug,
+Download,
+Eye,
+EyeOff,
+GitBranch,
+Globe,
+Maximize2,
+Minimize2,
+MoreHorizontal,
+Package,
+Play,
+RotateCcw,
+Save,
+Share2,
+Square,
+Star,
+Terminal,
+Upload,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ToolbarAction {
   id: string;

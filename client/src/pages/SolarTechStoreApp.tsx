@@ -1,32 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  ShoppingCart, 
-  Search, 
-  Star, 
-  Heart,
-  Filter,
-  Grid,
-  List,
-  Plus,
-  Minus,
-  Zap,
-  Sun,
-  Battery,
-  Wrench,
-  Truck,
-  Check,
-  Info,
-  ArrowRight,
-  DollarSign
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+Battery,
+Check,
+Filter,
+Grid,
+Heart,
+Info,
+List,
+Minus,
+Plus,
+Search,
+ShoppingCart,
+Star,
+Sun,
+Wrench,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Product {
   id: string;

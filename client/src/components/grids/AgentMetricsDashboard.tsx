@@ -4,17 +4,22 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Activity, Clock, Cpu, DollarSign, FileCode, 
-  AlertTriangle, CheckCircle2, TrendingUp, BarChart3, Loader2
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import type { MetricsDashboardResponse } from '@shared/types/agent-grid.types';
+import { useQuery } from '@tanstack/react-query';
+import {
+Activity,
+AlertTriangle,
+BarChart3,
+CheckCircle2,
+Clock,Cpu,DollarSign,FileCode,
+Loader2,
+TrendingUp
+} from 'lucide-react';
+import { useMemo } from 'react';
 
 interface AgentMetricsDashboardProps {
   projectId?: number;

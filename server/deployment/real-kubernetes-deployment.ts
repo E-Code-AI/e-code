@@ -4,12 +4,10 @@
  * Provides actual Kubernetes orchestration for deployments
  */
 
-import { KubeConfig, CoreV1Api, AppsV1Api, NetworkingV1Api } from '@kubernetes/client-node';
+import { AppsV1Api,CoreV1Api,KubeConfig,NetworkingV1Api } from '@kubernetes/client-node';
 import * as crypto from 'crypto';
-import { createLogger } from '../utils/logger';
-import { containerBuilder } from './container-builder';
-import { storage } from '../storage';
 import { isKubernetesEnabled } from '../config/deployment-mode';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('real-kubernetes-deployment');
 

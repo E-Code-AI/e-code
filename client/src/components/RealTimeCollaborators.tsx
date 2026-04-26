@@ -11,34 +11,30 @@
  * - Mobile-responsive design
  */
 
-import { useState, useEffect, useRef, memo } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { 
-  Users, 
-  UserPlus, 
-  MessageSquare,
-  MousePointer,
-  Eye,
-  Code2,
-  Terminal,
-  Send,
-  Circle,
-  X,
-  ChevronDown,
-  Video,
-  Phone
-} from 'lucide-react';
+import { Sheet,SheetContent,SheetHeader,SheetTitle,SheetTrigger } from '@/components/ui/sheet';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
+import { ChatMessage,Collaborator,useRealTimeCollaboration } from '@/hooks/useRealTimeCollaboration';
 import { cn } from '@/lib/utils';
-import { useRealTimeCollaboration, Collaborator, ChatMessage } from '@/hooks/useRealTimeCollaboration';
 import { formatDistanceToNow } from 'date-fns';
+import {
+ChevronDown,
+Code2,
+Eye,
+MessageSquare,
+MousePointer,
+Send,
+Terminal,
+UserPlus,
+Users
+} from 'lucide-react';
+import { memo,useEffect,useRef,useState } from 'react';
 
 interface RealTimeCollaboratorsProps {
   projectId: number;

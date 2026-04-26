@@ -1,60 +1,59 @@
-import { useState, useCallback } from 'react';
-import { useLocation } from 'wouter';
-import { useMutation } from '@tanstack/react-query';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import {
+Accordion,
+AccordionContent,
+AccordionItem,
+AccordionTrigger,
+} from '@/components/ui/accordion';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
-  Users,
-  Plus,
-  Upload,
-  Globe,
-  Lock,
-  Crown,
-  Zap,
-  Building2,
-  Mail,
-  X,
-  Check,
-  CreditCard,
-  Shield,
-  ArrowLeft,
-  ArrowRight,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Image as ImageIcon,
-  UserPlus,
-  Sparkles,
-  Rocket,
-  Star,
-  HelpCircle,
-} from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
+import {
+AlertCircle,
+ArrowLeft,
+ArrowRight,
+Building2,
+Check,
+CheckCircle2,
+CreditCard,
+Crown,
+Globe,
+HelpCircle,
+Image as ImageIcon,
+Loader2,
+Lock,
+Mail,
+Plus,
+Rocket,
+Shield,
+Sparkles,
+Star,
+Upload,
+UserPlus,
+Users,
+X,
+Zap,
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface TeamFormData {
   name: string;

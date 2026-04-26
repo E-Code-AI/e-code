@@ -3,20 +3,20 @@
  * Shows commit info and author for each line using CM6 Decorations
  */
 
-import { useEffect, useRef, useState, useMemo } from 'react';
-import {
-  EditorView,
-  Decoration,
-  DecorationSet,
-  WidgetType,
-  ViewPlugin,
-  ViewUpdate,
-  gutter,
-  GutterMarker,
-} from '@codemirror/view';
-import { StateField, StateEffect, Extension, RangeSetBuilder } from '@codemirror/state';
-import { formatDistanceToNow } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
+import { Extension,RangeSetBuilder,StateEffect,StateField } from '@codemirror/state';
+import {
+Decoration,
+DecorationSet,
+EditorView,
+gutter,
+GutterMarker,
+ViewPlugin,
+ViewUpdate,
+WidgetType,
+} from '@codemirror/view';
+import { formatDistanceToNow } from 'date-fns';
+import { useEffect,useMemo,useRef,useState } from 'react';
 
 interface BlameInfo {
   line: number;

@@ -1,33 +1,31 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle,DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Crown, 
-  UserPlus, 
-  Settings,
-  MoreHorizontal,
-  Shield,
-  Eye,
-  Lock,
-  Globe,
-  Calendar,
-  Mail,
-  ExternalLink
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Calendar,
+Crown,
+ExternalLink,
+Globe,
+Lock,
+Mail,
+MoreHorizontal,
+Plus,
+Search,
+Settings,
+Shield,
+UserPlus,
+Users
 } from "lucide-react";
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
 
 interface Team {
   id: number;

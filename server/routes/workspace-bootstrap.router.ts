@@ -17,30 +17,30 @@
  * Status: Production-ready - Orchestrates existing Fortune 500-grade services
  */
 
-import { Router, Request, Response } from 'express';
+import { agentSessions,projects,users,type User } from '@shared/schema';
+import { exec,spawn } from 'child_process';
+import crypto from 'crypto';
+import { eq } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
+import * as fs from 'fs';
+import * as http from 'http';
+import jwt from 'jsonwebtoken';
+import * as path from 'path';
+import { promisify } from 'util';
 import { z } from 'zod';
+import { aiProviderManager } from '../ai/ai-provider-manager';
+import { db } from '../db';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
-import { db } from '../db';
-import { projects, agentSessions, users, insertProjectSchema, type User } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 import { agentOrchestrator } from '../services/agent-orchestrator.service';
-import { aiProviderManager } from '../ai/ai-provider-manager';
-import { createLogger } from '../utils/logger';
-import { getJwtSecret } from '../utils/secrets-manager';
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+import { fastBootstrap } from '../services/fast-bootstrap.service';
+import { memoryBankService } from '../services/memory-bank.service';
 import { redisIdempotency } from '../services/redis-idempotency.service';
 import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { ViewportValidationService } from '../services/viewport-validation.service';
-import { memoryBankService } from '../services/memory-bank.service';
-import { fastBootstrap } from '../services/fast-bootstrap.service';
-import { getProjectWorkspacePath, ensureProjectDirectory } from '../utils/project-fs-sync';
-import * as path from 'path';
-import { exec, spawn } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as http from 'http';
+import { createLogger } from '../utils/logger';
+import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const execAsync = promisify(exec);
 

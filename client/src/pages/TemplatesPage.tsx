@@ -1,23 +1,33 @@
 // @ts-nocheck
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+ArrowRight,
+Bot,
+Code2,
+Database,
+Eye,
+Filter,
+Gamepad2,
+GitFork,
+Globe,
+Search,
+Server,Smartphone,
+Sparkles,
+Star,
+Users
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { LazyMotionDiv } from '@/lib/motion';
-import { useDebounce } from '@/hooks/use-debounce';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Search, Code2, Sparkles, Globe, Database, Gamepad2, Bot,
-  Star, GitFork, Users, ArrowRight, Server, Smartphone,
-  Play, Eye, Download, Heart, Filter, Cpu
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
 
 interface Template {
   id: number;

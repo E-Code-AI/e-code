@@ -1,26 +1,34 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LazyMotionDiv } from '@/lib/motion';
-import {
-  Globe, RefreshCw, Shield, AlertTriangle, Rocket, Terminal,
-  ExternalLink, Clock, Server, Activity, Download, Plus, Settings,
-  CheckCircle2, XCircle, AlertCircle, ChevronRight
-} from 'lucide-react';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams, useLocation } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import type { Deployment } from '@shared/schema';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import type { Deployment } from '@shared/schema';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import {
+Activity,
+AlertCircle,
+AlertTriangle,
+CheckCircle2,
+Clock,
+ExternalLink,
+Globe,
+Plus,
+Rocket,
+Server,
+Settings,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
+import { useParams } from 'wouter';
 
 export default function Deployments() {
   const [selectedTab, setSelectedTab] = useState('active');

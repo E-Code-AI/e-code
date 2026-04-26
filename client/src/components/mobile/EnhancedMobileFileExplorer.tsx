@@ -10,41 +10,50 @@
  * - ✅ Full parity with Replit mobile file explorer
  */
 
-import { useState, useCallback, useEffect } from 'react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Folder, File, FileText, FileCode, Image, MoreVertical,
-  Edit2, Copy, Trash2, FolderPlus, FilePlus, X, Loader2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Copy,
+Edit2,
+FileCode,
+FilePlus,
+FileText,
+Folder,
+FolderPlus,
+Image,
+Loader2,
+MoreVertical,
+Trash2
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
 
 interface FileItem {
   id: number;

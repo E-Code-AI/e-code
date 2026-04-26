@@ -8,20 +8,18 @@
  */
 
 import crypto from 'crypto';
-import { storage } from '../storage';
+import { and,eq } from 'drizzle-orm';
+import { payAsYouGoQueue,usageEvents,usageLedger,users } from '../../shared/schema';
 import { db } from '../db';
-import { users, usageEvents, usageLedger, payAsYouGoQueue } from '../../shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
 import {
-  METERED_PRICES,
-  PLANS,
-  getPlanByTier,
-  exceedsAllowance,
-  calculateComputeCost,
-  calculateStorageCost,
-  calculateBandwidthCost,
+PLANS,
+calculateBandwidthCost,
+calculateComputeCost,
+calculateStorageCost,
+getPlanByTier
 } from '../payments/pricing-constants';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('credits-service');
 

@@ -1,62 +1,56 @@
-import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+ContextMenu,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuTrigger
+} from "@/components/ui/context-menu";
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from "@/components/ui/context-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  FileText,
-  Folder,
-  FolderOpen,
-  Plus,
-  Search,
-  X,
-  Download,
-  Upload,
-  Edit2,
-  Trash2,
-  Copy,
-  Scissors,
-  Clipboard,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  FileCode,
-  FileJson,
-  FileImage,
-  FileVideo,
-  FileArchive,
-  ChevronRight,
-  ChevronDown,
-  MoreVertical,
-  FolderPlus,
-  FilePlus,
-} from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from "@/lib/queryClient";
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+ChevronDown,
+ChevronRight,
+Clipboard,
+Copy,
+Edit2,
+Eye,
+EyeOff,
+FileArchive,
+FileCode,
+FileImage,
+FileJson,
+FilePlus,
+FileText,
+FileVideo,
+Folder,
+FolderOpen,
+FolderPlus,
+RefreshCw,
+Scissors,
+Search,
+Trash2,
+Upload,
+X
+} from "lucide-react";
+import { useRef,useState } from "react";
 
 interface FileNode {
   id: number;

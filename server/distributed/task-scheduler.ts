@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { EventEmitter } from 'events';
-import { clusterManager, DistributedTask } from './cluster-manager';
 import { createLogger } from '../utils/logger';
+import { clusterManager,DistributedTask } from './cluster-manager';
 
 const logger = createLogger('task-scheduler');
 

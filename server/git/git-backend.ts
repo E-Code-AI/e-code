@@ -1,8 +1,7 @@
 import { exec } from 'child_process';
-import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as crypto from 'crypto';
+import { promisify } from 'util';
 import { storage } from '../storage';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
 

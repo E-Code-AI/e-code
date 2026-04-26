@@ -1,11 +1,10 @@
+import { projects } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { aiProviderManager } from '../ai/ai-provider-manager';
 import { db } from '../db';
-import { projects, files, checkpoints, checkpointFiles, checkpointDatabase } from '@shared/schema';
-import { eq, desc } from 'drizzle-orm';
+import { agentUsageTrackingService } from './agent-usage-tracking-service';
 import { checkpointService } from './checkpoint-service';
 import { effortPricingService } from './effort-pricing-service';
-import { autonomousBuilder } from '../ai/autonomous-builder';
-import { agentUsageTrackingService } from './agent-usage-tracking-service';
-import { aiProviderManager } from '../ai/ai-provider-manager';
 
 export interface AgentV2Task {
   projectId: number;

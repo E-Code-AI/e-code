@@ -1,13 +1,12 @@
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Card } from '@/components/ui/card';
-import { Search, Replace, X, FileText, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { ChevronDown,ChevronRight,FileText,Loader2,Replace,Search } from 'lucide-react';
+import { useState } from 'react';
 
 interface SearchResult {
   filePath: string;

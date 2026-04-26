@@ -1,33 +1,26 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Globe, 
-  Shield, 
-  Zap, 
-  Clock, 
-  Server,
-  Activity,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  TrendingUp,
-  Calendar,
-  DollarSign,
-  Database,
-  Lock
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Activity,
+AlertCircle,
+CheckCircle,
+Clock,
+Globe,
+Lock,
+TrendingUp
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface AdvancedDeployment {
   id: number;

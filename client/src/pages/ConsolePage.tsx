@@ -1,60 +1,57 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuSub,
+DropdownMenuSubContent,
+DropdownMenuSubTrigger,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import {
+Activity,
+AlertCircle,
+CheckCircle2,
+ChevronRight,
+Clock,
+Command,
+Copy,
+Cpu,
+Download,
+FileText,
+HardDrive,
+History,
+Info,
+Maximize2,
+MemoryStick,
+Minimize2,
+Palette,
+Play,
+Plus,
+RefreshCw,
+Search,
+Settings,
+Terminal,
+Trash2,
+Wifi,
+X,
+ZoomIn,
+ZoomOut
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Terminal,
-  Plus,
-  X,
-  Maximize2,
-  Minimize2,
-  Settings,
-  Search,
-  History,
-  Download,
-  Copy,
-  Trash2,
-  Play,
-  Square,
-  RefreshCw,
-  ZoomIn,
-  ZoomOut,
-  Palette,
-  Command,
-  Clock,
-  FileText,
-  ChevronRight,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  Activity,
-  Cpu,
-  MemoryStick,
-  HardDrive,
-  Wifi,
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 interface TerminalSession {
   id: string;

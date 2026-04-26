@@ -1,17 +1,26 @@
-import { useState } from "react";
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowRight, Search, BookOpen, MessageCircle, Mail,
-  ChevronDown, ChevronRight, HelpCircle, Rocket, Users,
-  CreditCard, Shield, Settings, Code, Zap
-} from "lucide-react";
-import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/config/seo.config";
+import {
+BookOpen,
+ChevronDown,ChevronRight,
+Code,
+CreditCard,
+HelpCircle,
+Mail,
+MessageCircle,
+Rocket,
+Search,
+Shield,
+Users,
+Zap
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "wouter";
 
 const seo = getSEOConfig('help-center');
 

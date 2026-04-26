@@ -5,18 +5,18 @@
  * which handles all responsive layouts (desktop/tablet/mobile).
  */
 
-import { useCallback, Suspense, useState, useEffect, useRef } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ECodeLoading } from '@/components/ECodeLoading';
+import ErrorBoundary from '@/components/ErrorBoundary';
+import { Button } from '@/components/ui/button';
+import { Toaster } from '@/components/ui/toaster';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Project } from '@shared/schema';
-import { ECodeLoading } from '@/components/ECodeLoading';
-import { Button } from '@/components/ui/button';
-import ErrorBoundary from '@/components/ErrorBoundary';
-import { Toaster } from '@/components/ui/toaster';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { apiRequest } from '@/lib/queryClient';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { Project } from '@shared/schema';
+import { useQuery,useQueryClient } from '@tanstack/react-query';
+import { Suspense,useCallback,useEffect,useRef,useState } from 'react';
+import { useLocation,useParams } from 'wouter';
 
 const UnifiedIDELayout = instrumentedLazy(
   () => import('@/components/ide/UnifiedIDELayout'),

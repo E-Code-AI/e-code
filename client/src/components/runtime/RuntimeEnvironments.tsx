@@ -1,50 +1,40 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/ui/select";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+TooltipProvider
 } from "@/components/ui/tooltip";
-import {
-  Play,
-  Square,
-  RefreshCw,
-  Settings,
-  Download,
-  Upload,
-  Terminal,
-  Code,
-  Cpu,
-  HardDrive,
-  Activity,
-  Package,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Zap,
-  Globe,
-  FileCode,
-  Bug,
-  BarChart3,
-  Layers,
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Activity,
+AlertCircle,
+BarChart3,
+Bug,
+CheckCircle,
+Code,
+Cpu,
+Download,
+HardDrive,
+Layers,
+Package,
+Play,
+RefreshCw,
+Square
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 // Supported languages with their configurations
 const SUPPORTED_LANGUAGES = {

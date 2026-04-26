@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, Mail, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { AlertTriangle,Loader2,Mail,X } from "lucide-react";
+import { useState } from "react";
 
 export function EmailVerificationBanner() {
   const { user } = useAuth();

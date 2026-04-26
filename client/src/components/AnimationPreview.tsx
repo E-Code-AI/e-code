@@ -1,14 +1,17 @@
-import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Download, Loader2, Film,
-} from "lucide-react";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+Dialog,DialogContent,
+DialogDescription,
+DialogHeader,DialogTitle,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { getCSRFToken, withBootstrapHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { getCSRFToken,withBootstrapHeaders } from "@/lib/queryClient";
+import {
+Film,
+Loader2
+} from "lucide-react";
+import { useCallback,useEffect,useState } from "react";
 
 interface AnimationPreviewProps {
   projectId: string;

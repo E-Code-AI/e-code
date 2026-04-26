@@ -1,9 +1,7 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import type { User } from '@shared/schema';
+import { NextFunction,Request,Response,Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import { getStorage } from '../storage';
-import { eq } from 'drizzle-orm';
-import * as schema from '@shared/schema';
-import type { User } from '@shared/schema';
 
 const projectDataRouter = Router();
 

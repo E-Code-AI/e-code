@@ -1,9 +1,7 @@
-import { EventEmitter } from 'events';
-import http from 'http';
-import https from 'https';
-import { IStorage } from '../storage';
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { EventEmitter } from 'events';
+import OpenAI from 'openai';
+import { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('load-testing-service');

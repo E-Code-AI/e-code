@@ -1,45 +1,43 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import {
-  Terminal as TerminalIcon,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useMediaQuery, useIsDesktop } from '@/hooks/use-media-query';
-import { ReplitMultiplayers } from './ReplitMultiplayers';
-import { ReplitToolDock } from './ReplitToolDock';
-import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
-import { ReplitFileSidebar } from './ReplitFileSidebar';
-import { ReplitSearchPanel } from './ReplitSearchPanel';
-import { ReplitGitPanel } from './ReplitGitPanel';
-import { ReplitDatabasePanel } from './ReplitDatabasePanel';
-import { ReplitPackagesPanel } from './ReplitPackagesPanel';
-import { ReplitSettingsPanel } from './ReplitSettingsPanel';
-import { ReplitSecretsPanel } from './ReplitSecretsPanel';
-import { ReplitThemesPanel } from './ReplitThemesPanel';
-import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
-import { ReplitTestingPanel } from './ReplitTestingPanel';
-import { ReplitHistoryPanel } from './ReplitHistoryPanel';
-import { ShellPanel } from './ShellPanel';
-import { AppStoragePanel } from './AppStoragePanel';
-import { ResponsiveWebPreview } from './ResponsiveWebPreview';
-import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
-import { ReplitProblemsPanel } from './ReplitProblemsPanel';
-import { ReplitOutputPanel } from './ReplitOutputPanel';
-import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
-import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
 import { AutomationsPanel } from '@/components/AutomationsPanel';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
+import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
 import { MCPServersPanel } from '@/components/MCPServersPanel';
-import { MobileSecurityPanel } from '@/components/mobile/MobileSecurityPanel';
 import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
+import { MobileSecurityPanel } from '@/components/mobile/MobileSecurityPanel';
+import { ResizableHandle,ResizablePanel,ResizablePanelGroup } from '@/components/ui/resizable';
+import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
+import { useIsDesktop,useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import {
+ChevronDown,
+ChevronLeft,
+ChevronRight,
+ChevronUp,
+Loader2,
+Terminal as TerminalIcon,
+X
+} from 'lucide-react';
+import React,{ Suspense,useEffect,useState } from 'react';
+import { ReplitAgentPanelV3 } from '../ai/ReplitAgentPanelV3';
+import { AppStoragePanel } from './AppStoragePanel';
+import { ReplitDatabasePanel } from './ReplitDatabasePanel';
+import { ReplitDebuggerPanel } from './ReplitDebuggerPanel';
+import { ReplitFileSidebar } from './ReplitFileSidebar';
+import { ReplitGitPanel } from './ReplitGitPanel';
+import { ReplitHistoryPanel } from './ReplitHistoryPanel';
+import { ReplitMultiplayers } from './ReplitMultiplayers';
+import { ReplitOutputPanel } from './ReplitOutputPanel';
+import { ReplitPackagesPanel } from './ReplitPackagesPanel';
+import { ReplitProblemsPanel } from './ReplitProblemsPanel';
+import { ReplitSearchPanel } from './ReplitSearchPanel';
+import { ReplitSecretsPanel } from './ReplitSecretsPanel';
+import { ReplitSettingsPanel } from './ReplitSettingsPanel';
+import { ReplitTestingPanel } from './ReplitTestingPanel';
+import { ReplitThemesPanel } from './ReplitThemesPanel';
+import { ReplitToolDock } from './ReplitToolDock';
+import { ResponsiveWebPreview } from './ResponsiveWebPreview';
+import { ShellPanel } from './ShellPanel';
 
 const ReplitTerminalPanel = instrumentedLazy(() => 
   import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel'

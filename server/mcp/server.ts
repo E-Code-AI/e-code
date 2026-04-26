@@ -7,31 +7,28 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListResourcesRequestSchema,
-  ListToolsRequestSchema,
-  McpError,
-  ReadResourceRequestSchema,
+CallToolRequestSchema,
+ErrorCode,
+ListResourcesRequestSchema,
+ListToolsRequestSchema,
+McpError,
+ReadResourceRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs/promises";
-import * as path from "path";
-import { exec, spawn } from "child_process";
-import { promisify } from "util";
-import { glob } from "glob";
+import { exec } from "child_process";
 import * as chokidar from "chokidar";
-import { db, client } from "../db";
-import { z } from "zod";
+import * as fs from "fs/promises";
 import * as http from "http";
 import * as https from "https";
 import * as os from "os";
-import * as crypto from "crypto";
-import { githubMCP } from './servers/github-mcp';
-import { postgresMCP } from './servers/postgres-mcp';
-import { memoryMCP } from './servers/memory-mcp';
-import { slackMCP } from './servers/slack-mcp';
+import { promisify } from "util";
+import { z } from "zod";
+import { OPENSOURCE_MODELS,openSourceModelsProvider } from '../ai/opensource-models-provider';
+import { client } from "../db";
 import { figmaMCP } from './servers/figma-mcp';
-import { openSourceModelsProvider, OPENSOURCE_MODELS } from '../ai/opensource-models-provider';
+import { githubMCP } from './servers/github-mcp';
+import { memoryMCP } from './servers/memory-mcp';
+import { postgresMCP } from './servers/postgres-mcp';
+import { slackMCP } from './servers/slack-mcp';
 
 const execAsync = promisify(exec);
 

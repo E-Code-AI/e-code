@@ -1,29 +1,39 @@
-import { useState } from 'react';
-import { 
-  Star, GitBranch, Download, Eye, Code2, ExternalLink, 
-  MoreVertical, Heart, Share2, Flag, Copy, Check,
-  Clock, Users, TrendingUp, Sparkles
-} from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import {
+Check,
+Clock,
+Code2,
+Copy,
+Download,Eye,
+Flag,
+GitBranch,
+Heart,
+MoreVertical,
+Share2,
+Sparkles,
+Star,
+TrendingUp
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TemplateCardProps {
   template: any;

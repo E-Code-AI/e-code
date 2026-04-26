@@ -15,15 +15,15 @@
  * @since December 2025
  */
 
-import { db } from '../db';
 import {
-  agentStepCache,
-  type AgentStepCache,
-  type InsertAgentStepCache
+agentStepCache,
+type AgentStepCache,
+type InsertAgentStepCache
 } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
 import * as crypto from 'crypto';
+import { and,desc,eq } from 'drizzle-orm';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('AgentStepCache');
 

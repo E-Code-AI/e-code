@@ -1,22 +1,30 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Package, Settings, Cpu, HardDrive, Network, Shield, 
-  AlertCircle, CheckCircle, RefreshCw, FileText, Plus,
-  Trash2, Edit, Save, X, Search, Copy
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+CheckCircle,
+Copy,
+Edit,
+Network,
+Package,
+Plus,
+Save,
+Search,
+Shield,
+Trash2,
+X
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface NixPackage {
   name: string;

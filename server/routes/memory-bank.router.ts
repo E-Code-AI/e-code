@@ -3,13 +3,12 @@
  * CRUD operations for project memory bank files
  */
 
-import { Router, Request, Response } from 'express';
-import { memoryBankService } from '../services/memory-bank.service';
+import { Request,Response,Router } from 'express';
 import { z } from 'zod';
-import path from 'path';
-import { createLogger } from '../utils/logger';
 import { ensureAuthenticated } from '../middleware/auth';
+import { memoryBankService } from '../services/memory-bank.service';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('memory-bank-router');

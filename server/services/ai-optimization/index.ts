@@ -4,13 +4,13 @@
  * Main entry point for optimized AI operations
  */
 
-import { tokenUsageLogger, type TokenUsageMetrics } from './token-usage-logger.service';
-import { taskClassifier, type ClassificationResult } from './task-classifier.service';
-import { mcpRouter, type McpExecutionResult } from './mcp-router.service';
-import { circuitBreaker, type ProviderHealthStatus } from './circuit-breaker.service';
-import { priorityQueue, type QueuedRequest, type QueuePriority } from './priority-queue.service';
-import { requestDebouncer } from './request-debouncer.service';
+import { circuitBreaker,type ProviderHealthStatus } from './circuit-breaker.service';
+import { mcpRouter } from './mcp-router.service';
 import { planCache } from './plan-cache.service';
+import { priorityQueue,type QueuePriority } from './priority-queue.service';
+import { requestDebouncer } from './request-debouncer.service';
+import { taskClassifier,type ClassificationResult } from './task-classifier.service';
+import { tokenUsageLogger,type TokenUsageMetrics } from './token-usage-logger.service';
 
 export interface OptimizedExecutionParams {
   userId?: string;
@@ -294,13 +294,8 @@ export const aiOptimizer = new AiOptimizationOrchestrator();
 
 // Export individual services
 export {
-  tokenUsageLogger,
-  taskClassifier,
-  mcpRouter,
-  circuitBreaker,
-  priorityQueue,
-  requestDebouncer,
-  planCache,
+circuitBreaker,mcpRouter,planCache,priorityQueue,
+requestDebouncer,taskClassifier,tokenUsageLogger
 };
 
 // Export all services as single object for convenience

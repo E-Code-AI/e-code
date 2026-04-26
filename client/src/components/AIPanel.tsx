@@ -1,29 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useAI } from '@/hooks/useAI';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, Sparkles, MessageSquare, Code, GitCompare, FileText, TestTube } from 'lucide-react';
-import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
+import { LightSyntaxHighlighter,darkStyle } from '@/components/ui/LightSyntaxHighlighter';
 import { Markdown } from '@/components/ui/markdown';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue
+} from '@/components/ui/select';
+import {
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger
+} from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useAI } from '@/hooks/useAI';
+import { Code,FileText,GitCompare,Loader2,MessageSquare,Sparkles,TestTube } from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface AIToolProps {
   projectId: number;

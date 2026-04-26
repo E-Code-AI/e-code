@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'wouter';
+import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { createShellWebSocket,type ConnectionState,type ResilientWebSocket } from '@/lib/websocket-resilience';
+import {
+Copy,
+Loader2,
+Maximize2,
+Minimize2,
+Plus,
+RotateCcw,
+Terminal,
+Wifi,
+WifiOff,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
+import { useParams } from 'wouter';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
-import {
-  Terminal,
-  X,
-  RotateCcw,
-  Copy,
-  Maximize2,
-  Minimize2,
-  Plus,
-  Wifi,
-  WifiOff,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
-import { useToast } from '@/hooks/use-toast';
-import { LazyMotionDiv } from '@/lib/motion';
-import { createShellWebSocket, type ConnectionState, type ResilientWebSocket } from '@/lib/websocket-resilience';
-import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitTerminalPanelProps {
   projectId?: string | number;

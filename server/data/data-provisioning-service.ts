@@ -1,12 +1,11 @@
 // @ts-nocheck
-import { db } from '../db';
-import { storage } from '../storage';
+import { faker } from '@faker-js/faker';
+import * as csv from 'csv-parse';
+import { sql } from 'drizzle-orm';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as csv from 'csv-parse';
-import { faker } from '@faker-js/faker';
-import { sql } from 'drizzle-orm';
-import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { db } from '../db';
+import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 export interface DataProvisioningConfig {
   projectId: number;

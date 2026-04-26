@@ -1,13 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Settings, Save, RotateCcw, Plus, X, Loader2, Globe, Terminal,
-  Play, Box, Eye, EyeOff, ChevronDown, ChevronRight, Package
-} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import {
+Box,
+ChevronDown,ChevronRight,
+EyeOff,
+Globe,
+Loader2,
+Package,
+Play,
+Plus,
+RotateCcw,
+Save,
+Settings,
+Terminal,
+X
+} from "lucide-react";
+import React,{ useEffect,useState } from "react";
 
 interface ConfigPanelProps {
   projectId: string;

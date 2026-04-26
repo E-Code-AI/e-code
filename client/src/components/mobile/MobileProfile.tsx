@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { User, Settings, Moon, Sun, LogOut, ChevronRight, Code, Users, Flame, Edit2, Shield, Bell, CreditCard, HelpCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import { Card } from "@/components/ui/card";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useTheme } from "next-themes";
-import { useToast } from "@/hooks/use-toast";
+import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { Bell,ChevronRight,Code,CreditCard,Edit2,Flame,HelpCircle,LogOut,Moon,Settings,Shield,Sun,Users } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState } from "react";
 
 interface ProfileStat {
   label: string;

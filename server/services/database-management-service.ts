@@ -1,5 +1,4 @@
-import { db, pool } from '../db';
-import { sql } from 'drizzle-orm';
+import { pool } from '../db';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('database-management');

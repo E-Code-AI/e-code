@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
 
 interface AiResponse {
   completion?: string;

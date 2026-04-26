@@ -1,46 +1,46 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import {
-  Play,
-  ExternalLink,
-  Copy,
-  RefreshCw,
-  StopCircle,
-  Loader2,
-  Globe,
-  CheckCircle,
-  AlertCircle,
-  Rocket,
-  Share2,
-  Eye,
-  EyeOff,
-  Smartphone,
-  Monitor,
-  Tablet,
-  Server,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+CheckCircle,
+Copy,
+ExternalLink,
+Eye,
+EyeOff,
+Globe,
+Loader2,
+Monitor,
+Play,
+RefreshCw,
+Rocket,
+Server,
+Share2,
+Smartphone,
+StopCircle,
+Tablet,
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface PreviewDeploymentPanelProps {
   projectId: string | number;

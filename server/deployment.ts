@@ -1,13 +1,13 @@
 // @ts-nocheck
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { storage } from './storage';
+import { cdnService } from './edge/cdn-service';
+import { edgeManager } from './edge/edge-manager';
 import { CodeExecutor } from './execution/executor';
+import { storage } from './storage';
 
 const codeExecutor = new CodeExecutor();
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import { edgeManager } from './edge/edge-manager';
-import { cdnService } from './edge/cdn-service';
 
 export interface DeploymentConfig {
   projectId: number;

@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import { Check, RotateCcw, Code2, Eye, ChevronDown, ChevronUp, Clock, FileCode, GitCommit } from 'lucide-react';
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { LazyMotionDiv } from '@/lib/motion';
+import { Check,ChevronDown,ChevronUp,Clock,Code2,Eye,FileCode,GitCommit,RotateCcw } from 'lucide-react';
+import { useState } from 'react';
 
 interface CheckpointStats {
   timeWorked?: string;

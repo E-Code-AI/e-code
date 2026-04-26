@@ -1,13 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { useAnimationControls } from '@/lib/native-motion';
-import { Bell, Heart, UserPlus, MessageCircle, Code, AlertCircle, Check, X, ChevronLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatDistanceToNow } from "date-fns";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { AlertCircle,Bell,ChevronLeft,Code,Heart,MessageCircle,UserPlus,X } from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 
 type NotificationType = 'mention' | 'like' | 'follow' | 'comment' | 'deploy' | 'system';
 

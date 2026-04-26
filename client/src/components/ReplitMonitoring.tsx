@@ -1,15 +1,25 @@
-import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Activity, AlertTriangle, CheckCircle, TrendingUp, TrendingDown,
-  Server, Database, Network, Users, Clock, Zap, 
-  MemoryStick, Cpu, HardDrive, Globe, Shield
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+Activity,AlertTriangle,CheckCircle,
+Clock,
+Cpu,
+Database,
+Globe,
+HardDrive,
+MemoryStick,
+Network,
+Server,
+Shield,
+TrendingDown,
+TrendingUp,
+Zap
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface SystemMetrics {
   cpu: {

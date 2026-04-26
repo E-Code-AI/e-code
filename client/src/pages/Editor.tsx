@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useState, useRef, Suspense } from "react";
-import { useParams } from "wouter";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
-import { Project, File } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
-import TopNavbar from "@/components/TopNavbar";
+import { AgentPanelErrorBoundary } from "@/components/ai/AgentPanelErrorBoundary";
+import { ReplitAgentPanelV3 } from "@/components/ai/ReplitAgentPanelV3";
 import { ReplitEditorLayout } from "@/components/editor/ReplitEditorLayout";
 import { ReplitFileSidebar } from "@/components/editor/ReplitFileSidebar";
-import { ReplitAgentPanelV3 } from "@/components/ai/ReplitAgentPanelV3";
-import { AgentPanelErrorBoundary } from "@/components/ai/AgentPanelErrorBoundary";
-import { WebPreview } from "@/components/WebPreview";
 import { ConsolePanel } from "@/components/ide/ConsolePanel";
-import { ReplitDB } from "@/components/ReplitDB";
-import { PackageManager } from "@/components/PackageManager";
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts";
-import { ShortcutHint, ShortcutTester } from "@/components/utilities";
-import { Bot, Database, Globe, Package, Loader2 } from "lucide-react";
+import { PackageManager } from "@/components/PackageManager";
+import { ReplitDB } from "@/components/ReplitDB";
+import TopNavbar from "@/components/TopNavbar";
+import { ShortcutHint,ShortcutTester } from "@/components/utilities";
+import { WebPreview } from "@/components/WebPreview";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { instrumentedLazy } from "@/utils/instrumented-lazy";
+import { File,Project } from "@shared/schema";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import { Bot,Database,Globe,Loader2,Package } from "lucide-react";
+import { Suspense,useEffect,useMemo,useRef,useState } from "react";
+import { useParams } from "wouter";
 
 const ReplitCodeEditor = instrumentedLazy(() => 
   import("@/components/editor/ReplitCodeEditor").then(module => ({ default: module.ReplitCodeEditor })),

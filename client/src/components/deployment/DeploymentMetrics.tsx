@@ -1,30 +1,43 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import {
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, RadialBarChart, RadialBar,
-  PieChart, Pie, Cell
-} from 'recharts';
-import {
-  Activity, Cpu, HardDrive, Network, AlertCircle,
-  TrendingUp, TrendingDown, Clock, Zap, Server,
-  AlertTriangle, CheckCircle, Info, RefreshCw,
-  Download, Calendar, Filter, ChevronUp, ChevronDown
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { LazyMotionDiv } from '@/lib/motion';
-import { useQuery } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+AlertTriangle,CheckCircle,
+Clock,
+Cpu,
+Download,
+HardDrive,
+Info,RefreshCw,
+TrendingDown,
+TrendingUp
+} from 'lucide-react';
+import { useState } from 'react';
+import {
+Area,
+AreaChart,
+Bar,
+BarChart,
+CartesianGrid,
+Legend,
+Line,
+LineChart,
+RadialBar,
+RadialBarChart,
+ResponsiveContainer,
+Tooltip,
+XAxis,YAxis
+} from 'recharts';
 
 interface DeploymentMetricsProps {
   deploymentId: string;

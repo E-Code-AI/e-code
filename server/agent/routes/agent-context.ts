@@ -3,9 +3,9 @@
  * Provides repository overview and context information to the AI agent
  */
 
+import type { RepoAnalysisResult } from '@shared/agent/repo-overview';
 import { Router } from 'express';
 import { repoOverviewService } from '../repo-overview-service';
-import type { RepoAnalysisResult } from '@shared/agent/repo-overview';
 
 const router = Router();
 

@@ -1,12 +1,9 @@
-import { db } from '../db';
-import { projects, users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
-import { Pool } from 'pg';
-import crypto from 'crypto';
-import * as os from 'os';
 import { execSync } from 'child_process';
+import crypto from 'crypto';
 import * as fsSync from 'fs';
+import * as os from 'os';
 import * as pathModule from 'path';
+import { Pool } from 'pg';
 
 // SQL identifier escaping to prevent SQL injection in DDL statements
 function escapeIdentifier(str: string): string {

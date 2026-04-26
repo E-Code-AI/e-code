@@ -1,43 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CM6Editor } from '@/components/editor/CM6Editor';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  FileJson,
-  Copy,
-  Download,
-  Upload,
-  Check,
-  X,
-  AlertCircle,
-  Braces,
-  Eye,
-  Code,
-  FileText,
-  Search,
-  Plus,
-  Trash2,
-  Edit2,
-  ChevronRight,
-  ChevronDown,
-  Save,
-  RefreshCw,
-} from 'lucide-react';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { CM6Editor } from '@/components/editor/CM6Editor';
+import {
+AlertCircle,
+Braces,
+Check,
+ChevronDown,
+ChevronRight,
+Code,
+Copy,
+Download,
+Edit2,
+Eye,
+FileJson,
+FileText,
+Save,
+Upload,
+X
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface JSONNode {
   key: string;

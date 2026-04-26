@@ -4,12 +4,12 @@
  * Collects and stores system metrics hourly for trend analysis
  */
 
+import { files,projects,storageMetricsHistory,users } from '@shared/schema';
+import { sql } from 'drizzle-orm';
+import os from 'os';
 import { db } from '../db';
-import { storageMetricsHistory, projects, users, files } from '@shared/schema';
-import { sql, count } from 'drizzle-orm';
 import { dbPool } from '../db/index';
 import { createLogger } from '../utils/logger';
-import os from 'os';
 
 const logger = createLogger('storage-metrics-collector');
 

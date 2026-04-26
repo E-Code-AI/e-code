@@ -1,39 +1,38 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams } from 'wouter';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import {
+Copy,
+FolderOpen,
+Loader2,
+Maximize2,
+Minimize2,
+Plus,
+RotateCcw,
+Settings,
+Terminal,
+Trash2,
+Wifi,
+WifiOff,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
+import { io,Socket } from 'socket.io-client';
+import { useParams } from 'wouter';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
-import {
-  Terminal,
-  X,
-  RotateCcw,
-  Copy,
-  Trash2,
-  Plus,
-  Wifi,
-  WifiOff,
-  Loader2,
-  Settings,
-  FolderOpen,
-  ChevronDown,
-  Maximize2,
-  Minimize2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { io, Socket } from 'socket.io-client';
 
 interface ShellPanelProps {
   projectId: string | number;

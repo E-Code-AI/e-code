@@ -1,28 +1,49 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { 
-  Globe, ExternalLink, RefreshCw, Shield, Rocket, 
-  Monitor, Smartphone, Tablet, Tv, Watch,
-  ChevronLeft, ChevronRight, Home, Lock,
-  Camera, Video, Code2, RotateCcw, ZoomIn, ZoomOut,
-  Maximize2, Minimize2, Settings, Wifi, WifiOff,
-  Sun, Moon, Bug, Layers, Ruler, Play, Square,
-  Download, Share2, Copy, Check, X, Terminal
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import {
+Bug,
+Camera,
+Check,
+ChevronLeft,ChevronRight,
+Copy,
+ExternalLink,
+Globe,
+Home,
+Layers,
+Lock,
+Maximize2,Minimize2,
+Monitor,
+Moon,
+Play,
+RefreshCw,
+RotateCcw,
+Ruler,
+Settings,
+Smartphone,
+Square,
+Sun,
+Tablet,
+Terminal,
+Tv,
+Video,
+Watch,
+Wifi,WifiOff,
+ZoomIn,ZoomOut
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface DevicePreset {
   name: string;

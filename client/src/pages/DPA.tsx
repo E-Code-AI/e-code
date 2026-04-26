@@ -1,8 +1,8 @@
-import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FileText, Download, Mail } from "lucide-react";
+import { Download,Mail } from "lucide-react";
 
 export default function DPA() {
   return (

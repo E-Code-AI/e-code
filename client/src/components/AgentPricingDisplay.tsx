@@ -1,17 +1,16 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { 
-  DollarSign, 
-  FileText, 
-  Code, 
-  Clock, 
-  Activity,
-  Zap,
-  TrendingUp,
-  Brain
+import {
+Activity,
+Brain,
+Clock,
+Code,
+DollarSign,
+FileText,
+Zap
 } from 'lucide-react';
+import React from 'react';
 
 interface AgentPricingDisplayProps {
   pricing?: {

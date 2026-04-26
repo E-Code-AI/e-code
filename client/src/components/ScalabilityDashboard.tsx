@@ -1,18 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { 
-  Server, Database, Cloud, Activity, Cpu, HardDrive, 
-  Zap, Shield, Globe, BarChart3, RefreshCw, Settings,
-  CheckCircle2, AlertCircle, XCircle
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Activity,
+AlertCircle,
+CheckCircle2,
+Cpu,
+Database,
+Globe,
+HardDrive,
+RefreshCw,
+Server,
+Shield,
+XCircle,
+Zap
 } from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface ClusterStatus {
   status: string;

@@ -1,14 +1,25 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Plus, Trash2, Play, Pause, Square, ChevronLeft, ChevronRight,
-  Type, Image, Layers, Music, Settings, Loader2, Film, X,
-  Copy, MoveHorizontal, Volume2, VolumeX, Clock, Maximize2, Download
-} from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { VideoScene, VideoElement, VideoAudioTrack } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import type { VideoAudioTrack,VideoElement,VideoScene } from "@shared/schema";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import {
+Copy,
+Download,
+Film,
+Image,Layers,
+Loader2,
+Music,
+Pause,
+Play,
+Plus,
+Settings,
+Square,
+Trash2,
+Type,
+X
+} from "lucide-react";
+import { useCallback,useEffect,useMemo,useRef,useState } from "react";
 
 function generateId() {
   return Math.random().toString(36).substring(2, 10);

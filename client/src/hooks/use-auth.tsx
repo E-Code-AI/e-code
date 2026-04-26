@@ -1,13 +1,13 @@
 
-import { createContext, useContext, useState } from "react";
-import type { ReactNode } from "react";
+import { InsertUser,User as SelectUser } from "@shared/schema";
 import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
+useMutation,
+UseMutationResult,
+useQuery,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
-import { getQueryFn, apiRequest, queryClient, resetCSRFToken } from "../lib/queryClient";
+import type { ReactNode } from "react";
+import { createContext,useContext } from "react";
+import { apiRequest,getQueryFn,queryClient,resetCSRFToken } from "../lib/queryClient";
 // CRITICAL FIX: Import toast function directly instead of useToast hook
 // useToast subscribes the component to ALL toast state changes, causing
 // AuthProvider (which wraps the entire app) to re-render on every toast.

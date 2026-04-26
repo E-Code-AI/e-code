@@ -1,5 +1,3 @@
-import { db } from '../db';
-import { sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('usage-tracking');

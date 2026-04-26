@@ -3,14 +3,12 @@
  * Provides actual mobile app building capabilities
  */
 
-import { spawn } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 import * as crypto from 'crypto';
-import { createLogger } from '../utils/logger';
+import * as path from 'path';
 import { dockerExecutor } from '../execution/docker-executor';
-import { storageService } from './storage.service';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
+import { storageService } from './storage.service';
 
 const logger = createLogger('real-mobile-compiler');
 

@@ -1,10 +1,10 @@
 // @ts-nocheck
-import { storage } from '../storage';
-import { EventEmitter } from 'events';
-import type { userCredits, budgetLimits, usageAlerts } from '@shared/schema';
 import sgMail from '@sendgrid/mail';
-import { billingEmailTemplates } from '../utils/billing-email-templates';
+import type { budgetLimits,usageAlerts,userCredits } from '@shared/schema';
 import { sql } from 'drizzle-orm';
+import { EventEmitter } from 'events';
+import { storage } from '../storage';
+import { billingEmailTemplates } from '../utils/billing-email-templates';
 
 // Initialize SendGrid
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';

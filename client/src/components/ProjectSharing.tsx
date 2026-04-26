@@ -1,35 +1,32 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Share2, 
-  Link, 
-  Copy, 
-  Mail,
-  Users,
-  Globe,
-  Lock,
-  Eye,
-  Edit3,
-  UserPlus,
-  X,
-  Check,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Copy,
+Edit3,
+Eye,
+Globe,
+Link,
+Loader2,
+Lock,
+Share2,
+UserPlus,
+Users,
+X
+} from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { z } from 'zod';
 
 const emailSchema = z.string().email('Please enter a valid email address');

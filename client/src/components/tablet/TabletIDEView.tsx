@@ -4,63 +4,56 @@
  * Supports iPad, Surface, and Android tablets with touch-first interactions
  */
 
-import React, { useState, useRef, useEffect, useCallback, Suspense } from 'react';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
-import { useQuery } from '@tanstack/react-query';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Code,
-  Terminal,
-  Monitor,
-  Search,
-  Settings,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Loader2,
-  Bot,
-  Rocket,
-  GitBranch,
-  Package,
-  Key,
-  Wifi,
-  WifiOff,
-  AlertCircle,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
-import { useTablet, useTabletLayout, useTabletOrientation } from '@/hooks/use-tablet';
-import {
-  useDrawerPersistence,
-  usePanelPersistence,
-  usePanelSizesPersistence,
-  useTabletFilePersistence,
-} from '@/hooks/use-tablet-persistence';
-import { TabletDrawerContent } from './TabletDrawerContent';
-import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
-import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
-import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
-import { useToast } from '@/hooks/use-toast';
-import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
-import { ShortcutHint, ShortcutTester } from '@/components/utilities';
-import { AgentToolsPanel } from '@/components/ai/AgentToolsPanel';
 import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
-import { RAGStatsDisplay, useRAGStats } from '@/components/ai/RAGControls';
-import { useAgentTools } from '@/hooks/useAgentTools';
+import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
+import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
+import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
+import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
+import { GitPanel } from '@/components/ide/GitPanel';
 import { ReplitDeploymentPanel } from '@/components/ide/ReplitDeploymentPanel';
 import { ReplitPublishButton } from '@/components/ide/ReplitPublishButton';
-import { GitPanel } from '@/components/ide/GitPanel';
-import { ReplitPackagesPanel } from '@/components/editor/ReplitPackagesPanel';
-import { ReplitSettingsPanel } from '@/components/editor/ReplitSettingsPanel';
-import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
-import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
+import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
+import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
+import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
+import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
+import { Button } from '@/components/ui/button';
+import { ResizableHandle,ResizablePanel,ResizablePanelGroup } from '@/components/ui/resizable';
+import { ShortcutHint,ShortcutTester } from '@/components/utilities';
+import { ToastProvider as DesignSystemToastProvider } from '@/design-system';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
+import { useTablet,useTabletLayout } from '@/hooks/use-tablet';
+import {
+useDrawerPersistence,
+usePanelPersistence,
+usePanelSizesPersistence,
+useTabletFilePersistence,
+} from '@/hooks/use-tablet-persistence';
+import { useToast } from '@/hooks/use-toast';
+import { useAgentTools } from '@/hooks/useAgentTools';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
-import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Bot,
+ChevronLeft,
+Code,
+GitBranch,
+Loader2,
+Monitor,
+PanelLeftClose,
+PanelLeftOpen,
+Search,
+Settings,
+Terminal,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import React,{ Suspense,useCallback,useEffect,useRef,useState } from 'react';
+import { TabletDrawerContent } from './TabletDrawerContent';
 
 const MobileTerminal = instrumentedLazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })), 'MobileTerminal'

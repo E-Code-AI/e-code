@@ -1,8 +1,8 @@
-import * as ts from 'typescript';
 import * as parser from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import * as sqlParser from 'node-sql-parser';
+import * as ts from 'typescript';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('code-analyzer');

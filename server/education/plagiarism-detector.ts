@@ -3,10 +3,10 @@
  * Detects code similarity and potential plagiarism using multiple algorithms
  */
 
+import { files,submissions } from '@shared/schema';
 import * as crypto from 'crypto';
+import { and,eq,ne } from 'drizzle-orm';
 import { db } from '../db';
-import { submissions, projects, files } from '@shared/schema';
-import { eq, and, ne } from 'drizzle-orm';
 
 interface SimilarityResult {
   submissionId1: number;

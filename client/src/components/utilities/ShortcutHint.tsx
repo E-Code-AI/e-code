@@ -1,5 +1,5 @@
-import { useState, useEffect, ReactNode } from "react";
-import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
+import { LazyAnimatePresence,LazyMotionDiv } from "@/lib/motion";
+import { useEffect,useState } from "react";
 
 export function ShortcutHint() {
   const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());

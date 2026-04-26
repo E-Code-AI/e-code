@@ -1,48 +1,45 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { File } from '@shared/schema';
-import { useMutation } from '@tanstack/react-query';
-import { 
-  RefreshCw, 
-  ExternalLink, 
-  Maximize2, 
-  Minimize2, 
-  Smartphone, 
-  Tablet, 
-  Monitor,
-  Bug,
-  Play,
-  Square,
-  AlertCircle,
-  Wifi,
-  WifiOff,
-  Server,
-  Globe,
-  Zap,
-  Copy,
-  Settings,
-  Loader2
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { apiRequest } from '@/lib/queryClient';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { File } from '@shared/schema';
+import { useMutation } from '@tanstack/react-query';
+import {
+AlertCircle,
+Bug,
+Copy,
+ExternalLink,
+Loader2,
+Maximize2,
+Minimize2,
+Monitor,
+Play,
+RefreshCw,
+Settings,
+Smartphone,
+Square,
+Tablet,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface PreviewProps {
   openFiles: File[];

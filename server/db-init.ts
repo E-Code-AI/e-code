@@ -1,13 +1,12 @@
-import { db, client } from "./db";
 import * as schema from "@shared/schema";
+import crypto,{ randomBytes,scrypt } from 'crypto';
 import { getTableName } from "drizzle-orm";
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { existsSync } from "fs";
 import { resolve } from "path";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { promisify } from "util";
+import { client,db } from "./db";
 import { createLogger } from './utils/logger';
-import crypto from 'crypto';
 
 const logger = createLogger('db-init');
 

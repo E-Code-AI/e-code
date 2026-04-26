@@ -1,49 +1,45 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Shield,
-  Key,
-  Users,
-  Globe,
-  Smartphone,
-  Lock,
-  Clock,
-  Palette,
-  Settings2,
-  Plus,
-  Check,
-  X,
-  Edit,
-  Trash2,
-  ExternalLink,
-  Copy,
-  RefreshCw,
-  AlertTriangle,
-  CheckCircle2,
-  XCircle,
-  Loader2,
+AlertTriangle,
+Building2,
+Check,
+CheckCircle2,
+Clock,
+Copy,
+Edit,
+Globe,
+Key,
+KeyRound,
+Loader2,
+Palette,
+Plus,
+RefreshCw,
+Settings2,
+Shield,
+ShieldCheck,
+Smartphone,
+Trash2,
+Users
 } from 'lucide-react';
-import { SiGoogle, SiGithub, SiApple } from 'react-icons/si';
-import { Building2, KeyRound, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { SiApple,SiGithub,SiGoogle } from 'react-icons/si';
+import { useLocation } from 'wouter';
 
 // Icon aliases for providers that don't have SI icons
 const SiMicrosoft = Building2;
 const SiOkta = KeyRound;
 const SiAuth0 = ShieldCheck;
-import { useToast } from '@/hooks/use-toast';
 
 interface SSOProvider {
   id: string;

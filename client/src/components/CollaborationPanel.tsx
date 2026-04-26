@@ -11,45 +11,42 @@
  * - Mobile-responsive design
  */
 
-import { useState, useEffect, useRef, memo, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Users,
-  UserPlus,
-  Circle,
-  Eye,
-  Edit,
-  MessageSquare,
-  Video,
-  Mic,
-  MicOff,
-  VideoOff,
-  Share2,
-  Copy,
-  Check,
-  MousePointer,
-  Activity,
-  Send,
-  Terminal,
-  Code2,
-  Phone,
-} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { ChatMessage,Collaborator,useRealTimeCollaboration } from '@/hooks/useRealTimeCollaboration';
 import { apiRequest } from '@/lib/queryClient';
-import { useRealTimeCollaboration, Collaborator, ChatMessage } from '@/hooks/useRealTimeCollaboration';
-import { formatDistanceToNow, format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import {
+Check,
+Circle,
+Code2,
+Copy,
+Eye,
+MessageSquare,
+Mic,
+MicOff,
+MousePointer,
+Send,
+Share2,
+Terminal,
+UserPlus,
+Users,
+Video,
+VideoOff
+} from 'lucide-react';
+import { memo,useCallback,useEffect,useRef,useState } from 'react';
 
 interface CollaborationPanelProps {
   projectId: number;

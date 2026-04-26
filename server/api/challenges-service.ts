@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { db } from '../db';
-import { challenges, challengeSubmissions, challengeLeaderboard, users } from '@shared/schema';
-import { eq, and, desc, count, avg, max } from 'drizzle-orm';
+import { challengeLeaderboard,challenges,challengeSubmissions,users } from '@shared/schema';
+import { and,count,desc,eq } from 'drizzle-orm';
 import { AIProviderFactory } from '../ai/ai-provider-factory';
+import { db } from '../db';
 
 export class ChallengesService {
   // Create a new challenge

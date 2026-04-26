@@ -12,7 +12,6 @@
 
 import Redis from 'ioredis';
 import { createLogger } from '../utils/logger';
-import { config } from '../config/environment';
 
 const logger = createLogger('redis-idempotency');
 

@@ -1,11 +1,11 @@
-import { EventEmitter } from 'events';
-import { db } from '../db';
-import { deploymentMetrics, scalingPolicies, deploymentSnapshots, deployments, performanceMetrics } from '@shared/schema';
-import { eq, desc, gte, and, or, sql } from 'drizzle-orm';
-import * as os from 'os';
-import * as fs from 'fs';
-import { promisify } from 'util';
+import { deploymentMetrics,deployments,performanceMetrics } from '@shared/schema';
 import { exec } from 'child_process';
+import { and,desc,eq,gte,or } from 'drizzle-orm';
+import { EventEmitter } from 'events';
+import * as fs from 'fs';
+import * as os from 'os';
+import { promisify } from 'util';
+import { db } from '../db';
 
 const execAsync = promisify(exec);
 

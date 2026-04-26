@@ -1,8 +1,8 @@
 // @ts-nocheck
-import fetch from 'node-fetch';
 import { JSDOM } from 'jsdom';
-import { createLogger } from '../utils/logger';
+import fetch from 'node-fetch';
 import { checkpointService } from '../services/checkpoint-service';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('WebImportService');
 

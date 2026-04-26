@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { getStripe } from '../lib/stripe-client';
-import { storage } from '../storage';
 import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
+import { storage } from '../storage';
 
 export interface SubscriptionPlan {
   id: string;

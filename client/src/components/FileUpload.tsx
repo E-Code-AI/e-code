@@ -1,12 +1,11 @@
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Upload, FileUp, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation } from '@tanstack/react-query';
+import { AlertCircle,CheckCircle,FileUp,Upload,X } from 'lucide-react';
+import { useCallback,useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 interface FileUploadProps {
   projectId: number;

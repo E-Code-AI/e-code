@@ -1,8 +1,8 @@
 // @ts-nocheck
 import { EventEmitter } from 'events';
+import { config } from '../config/environment';
 import { createLogger } from '../utils/logger';
 import { redisCache } from './redis-cache';
-import { config } from '../config/environment';
 
 const logger = createLogger('database-query-optimizer');
 

@@ -1,28 +1,20 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  CheckCircle, 
-  AlertCircle, 
-  XCircle,
-  Activity,
-  Server,
-  Database,
-  Globe,
-  Shield,
-  Clock,
-  TrendingUp,
-  AlertTriangle,
-  RefreshCw
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+Activity,
+AlertCircle,
+AlertTriangle,
+CheckCircle,
+RefreshCw,
+XCircle
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface ServiceStatus {
   id: string;

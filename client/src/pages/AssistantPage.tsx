@@ -1,38 +1,36 @@
 // @ts-nocheck
-import { useState, useMemo } from 'react';
-import { useLocation } from 'wouter';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { AIAssistant } from '@/components/AIAssistant';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Bot,
-  MessageSquare,
-  History,
-  Settings,
-  Trash2,
-  Plus,
-  Search,
-  Star,
-  StarOff,
-  ChevronRight,
-  Sparkles,
-  Zap,
-  Brain,
-  Clock,
-  Filter,
-} from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
-import { AIAssistant } from '@/components/AIAssistant';
+import {
+Bot,
+Brain,
+ChevronRight,
+Clock,
+History,
+MessageSquare,
+Plus,
+Search,
+Settings,
+Sparkles,
+Star,
+StarOff,
+Trash2,
+Zap
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface Conversation {
   id: string;

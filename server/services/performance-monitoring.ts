@@ -4,14 +4,14 @@
  * Fortune 500-grade performance tracking and analytics
  */
 
+import { alerts,performanceMetrics } from '@shared/schema';
+import { exec } from 'child_process';
+import { and,desc,eq,gte,lte } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import * as os from 'os';
-import { exec } from 'child_process';
 import { promisify } from 'util';
-import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { performanceMetrics, alerts, alertHistory } from '@shared/schema';
-import { and, gte, lte, eq, desc, sql } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 

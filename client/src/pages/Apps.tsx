@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
 import { AppsView } from "@/components/apps/AppsView";
 import { AuthProvider } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 export default function Apps() {
   const [, setLocation] = useLocation();

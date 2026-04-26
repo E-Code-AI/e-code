@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
-import { db } from '../db';
-import { files, projects, users } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { AgentToolFrameworkService } from '../services/agent-tool-framework.service';
-import { syncFileToDisc, getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { afterAll,beforeAll,beforeEach,describe,expect,it } from '@jest/globals';
+import { files,projects,users } from '@shared/schema';
+import { and,eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
+import { db } from '../db';
+import { AgentToolFrameworkService } from '../services/agent-tool-framework.service';
+import { getProjectWorkspacePath,syncFileToDisc } from '../utils/project-fs-sync';
 
 describe('Environment File Persistence - E2E Tests', () => {
   let service: AgentToolFrameworkService;

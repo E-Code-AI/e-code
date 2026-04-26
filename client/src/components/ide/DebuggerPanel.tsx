@@ -1,16 +1,24 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Play, Pause, SkipForward, CornerDownRight, CornerUpLeft, Square,
-  Circle, Eye, Trash2, Bug, Loader2
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Bug,
+Circle,
+CornerDownRight,CornerUpLeft,
+Eye,
+Loader2,
+Pause,
+Play,
+SkipForward,
+Square,
+Trash2
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Breakpoint {
   id: string;

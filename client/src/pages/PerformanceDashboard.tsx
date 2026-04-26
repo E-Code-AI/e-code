@@ -1,35 +1,38 @@
 // @ts-nocheck
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar
-} from 'recharts';
-import { 
-  Activity, AlertCircle, Clock, Cpu, HardDrive, Zap, Download, Maximize2,
-  RefreshCw, Settings, TrendingUp, TrendingDown, Wifi, Database, Server,
-  CheckCircle, XCircle, AlertTriangle, Info, Bell, BellOff, ChevronRight,
-  BarChart3, PieChartIcon, LineChartIcon, Grid3x3
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
-import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
-import { ResourceUsageChart } from '@/components/monitoring/ResourceUsageChart';
-import { ErrorRateChart } from '@/components/monitoring/ErrorRateChart';
-import { ThroughputChart } from '@/components/monitoring/ThroughputChart';
-import { CustomMetricChart } from '@/components/monitoring/CustomMetricChart';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { AlertManager } from '@/components/monitoring/AlertManager';
+import { CustomMetricChart } from '@/components/monitoring/CustomMetricChart';
+import { ErrorRateChart } from '@/components/monitoring/ErrorRateChart';
+import { ResourceUsageChart } from '@/components/monitoring/ResourceUsageChart';
+import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
+import { ThroughputChart } from '@/components/monitoring/ThroughputChart';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient,withBootstrapHeaders } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { SkeletonCard, SkeletonChart } from '@/components/ui/skeleton-loader';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+AlertTriangle,
+CheckCircle,
+Clock,Cpu,
+Database,
+Download,
+HardDrive,
+Info,
+Maximize2,
+RefreshCw,
+TrendingDown,
+TrendingUp,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useMemo,useState } from 'react';
 
 const CHART_COLORS = {
   primary: '#F26207', // E-Code orange

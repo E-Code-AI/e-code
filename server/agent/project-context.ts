@@ -4,9 +4,9 @@
  * Provides file tree, package.json, errors, git status
  */
 
+import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
-import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);

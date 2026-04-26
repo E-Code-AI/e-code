@@ -1,34 +1,29 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { 
-  Shield, 
-  Users, 
-  Key, 
-  Settings, 
-  Building,
-  CheckCircle,
-  AlertCircle,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Globe,
-  Lock,
-  UserCheck,
-  FileText
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Building,
+CheckCircle,
+Edit,
+Eye,
+EyeOff,
+Globe,
+Plus,
+Settings,
+Shield,
+UserCheck,
+Users
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface SSOProvider {
   id: string;

@@ -1,19 +1,18 @@
-import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  X, 
-  Plus, 
-  ChevronLeft, 
-  ChevronRight,
-  MoreHorizontal,
-  FileText,
-  Code,
-  Settings,
-  Terminal,
-  Globe
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+ChevronLeft,
+ChevronRight,
+Code,
+FileText,
+Globe,
+MoreHorizontal,
+Plus,
+Settings,
+Terminal,
+X
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface Tab {
   id: string;

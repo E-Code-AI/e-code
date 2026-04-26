@@ -3,16 +3,16 @@
  * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Migrated to Central Upgrade Dispatcher
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
+import { IncomingMessage,Server } from 'http';
+import jwt from 'jsonwebtoken';
+import type { Duplex } from 'stream';
+import { WebSocket,WebSocketServer } from 'ws';
 import * as Y from 'yjs';
 import { storage } from '../storage';
-import { Server, IncomingMessage } from 'http';
-import type { Duplex } from 'stream';
+import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
-import jwt from 'jsonwebtoken';
-import { createLogger } from '../utils/logger';
-import { wsMetrics, generateDeterministicColor } from '../websocket/ws-metrics';
+import { generateDeterministicColor,wsMetrics } from '../websocket/ws-metrics';
 
 const logger = createLogger('collaboration-server');
 

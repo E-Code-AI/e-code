@@ -1,16 +1,16 @@
 // @ts-nocheck
-import { db } from '../db';
-import { 
-  templates, templateCategories, templateTags, users,
-  templateCollections, collectionTemplates
+import {
+templateCategories,
+templates,
+templateTags,users
 } from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
-import * as path from 'path';
-import * as fs from 'fs/promises';
 import { exec } from 'child_process';
+import { eq,sql } from 'drizzle-orm';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 import { promisify } from 'util';
-import { createHash } from 'crypto';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 const logger = createLogger('template-submission');

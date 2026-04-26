@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card } from '@/components/ui/card';
-import { FileText, Download, Search, Filter, AlertCircle, Info, AlertTriangle, Bug, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { LazyMotionDiv } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
-import { apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,withBootstrapHeaders } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import { AlertCircle,AlertTriangle,Bug,Download,FileText,Info,Loader2,Search } from 'lucide-react';
+import { useState } from 'react';
 
 interface LogEntry {
   timestamp: string;

@@ -1,52 +1,41 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { LazyMotionDiv } from '@/lib/motion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Database,
-  Table,
-  Play,
-  RefreshCw,
-  Download,
-  ChevronRight,
-  ChevronDown,
-  Circle,
-  CheckCircle,
-  AlertCircle,
-  Search,
-  Copy,
-  Settings,
-  Plus,
-  Loader2,
-  Eye,
-  EyeOff,
-  Key,
-  Server,
-  HardDrive
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger,
 } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Copy,
+Database,
+Eye,
+EyeOff,
+HardDrive,
+Key,
+Loader2,
+Plus,
+RefreshCw,
+Server
+} from 'lucide-react';
+import { useState } from 'react';
+import { useParams } from 'wouter';
 
 interface DatabaseInfo {
   provisioned: boolean;

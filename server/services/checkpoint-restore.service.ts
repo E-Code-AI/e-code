@@ -6,16 +6,15 @@
  * to perform full project rollbacks.
  */
 
-import { db } from '../db';
-import { autoCheckpoints, autoCheckpointFiles, projects } from '../../shared/schema';
 import { eq } from 'drizzle-orm';
-import { checkpointService } from './checkpoint.service';
-import { workspaceSnapshotService, type FileSnapshot } from './workspace-snapshot.service';
 import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
-import * as path from 'path';
+import { projects } from '../../shared/schema';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { checkpointService } from './checkpoint.service';
+import { workspaceSnapshotService,type FileSnapshot } from './workspace-snapshot.service';
 
 const logger = createLogger('checkpoint-restore-service');
 

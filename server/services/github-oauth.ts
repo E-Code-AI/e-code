@@ -1,7 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction,Response } from 'express';
 import fetch from 'node-fetch';
 import { storage } from '../storage';
-import jwt from 'jsonwebtoken';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('github-oauth-service');

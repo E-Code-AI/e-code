@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { db } from '../db';
 
 const logger = createLogger('OrchestratorMetrics');
 

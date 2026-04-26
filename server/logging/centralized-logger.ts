@@ -10,10 +10,10 @@
  * - Log level management
  */
 
+import { EventEmitter } from 'events';
 import winston from 'winston';
 import 'winston-daily-rotate-file';
-import { getRequestContext, getRequestId, getCorrelationId } from './request-context';
-import { EventEmitter } from 'events';
+import { getRequestContext } from './request-context';
 
 const LOG_LEVELS = {
   fatal: 0,

@@ -3,8 +3,8 @@
  * Shows connection status, performance metrics, and system information
  */
 
-import React, { useState, useEffect } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv } from '@/lib/motion';
+import React,{ useEffect,useState } from 'react';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 
 // ============================================================================

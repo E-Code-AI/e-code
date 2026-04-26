@@ -1,9 +1,8 @@
 // @ts-nocheck
-import { Router, Request, Response, NextFunction } from "express";
-import { type IStorage } from "../storage";
+import { Request,Response,Router } from "express";
 import { ensureAuthenticated } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
-import type { User } from "@shared/schema";
+import { type IStorage } from "../storage";
 import bcrypt from "../utils/bcrypt-compat";
 
 export class UsersRouter {

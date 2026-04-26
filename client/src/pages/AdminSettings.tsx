@@ -1,8 +1,7 @@
-import { AdminLayout } from './admin/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Settings, Shield, Zap, Database, Globe, Mail, CreditCard, Bot } from 'lucide-react';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Bot,CreditCard,Database,Mail,Shield,Zap } from 'lucide-react';
+import { AdminLayout } from './admin/AdminLayout';
 
 const CONFIG_ITEMS = [
   { category: 'Security', icon: Shield, items: [

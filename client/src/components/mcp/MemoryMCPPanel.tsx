@@ -1,29 +1,28 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { 
-  Brain, 
-  Search,
-  Plus,
-  Loader2,
-  MessageSquare,
-  Clock,
-  Link,
-  FileText,
-  Tag,
-  History,
-  Sparkles,
-  ChevronRight
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Brain,
+Clock,
+FileText,
+History,
+Link,
+Loader2,
+MessageSquare,
+Plus,
+Search,
+Sparkles,
+Tag
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface MemoryNode {
   id: string;

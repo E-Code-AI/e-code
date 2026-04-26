@@ -1,23 +1,18 @@
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  GitBranch,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Users,
-  Cpu,
-  MemoryStick,
-  Wifi,
-  WifiOff,
-  Volume2,
-  VolumeX,
-  Settings,
-  Zap,
-  Activity
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+Activity,
+Cpu,
+GitBranch,
+MemoryStick,
+Settings,
+Users,
+Volume2,
+VolumeX,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface StatusBarItem {
   id: string;

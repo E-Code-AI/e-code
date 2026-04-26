@@ -1,13 +1,13 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { checkpointService } from '../services/checkpoint-service';
-import { rollbackService } from '../services/rollback-service';
+import { checkpoints,projects } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { NextFunction,Request,Response,Router } from 'express';
 import { z } from 'zod';
-import { createLogger } from '../utils/logger';
+import { db } from '../db';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
-import { db } from '../db';
-import { projects, checkpoints } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { checkpointService } from '../services/checkpoint-service';
+import { rollbackService } from '../services/rollback-service';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
 const logger = createLogger('checkpoints-router');
@@ -566,9 +566,8 @@ router.delete('/checkpoints/:id', csrfProtection, async (req: Request, res: Resp
 // Uses checkpoint.service.ts and autoCheckpoints table
 // ============================================================
 
-import { checkpointService as autoCheckpointService } from '../services/checkpoint.service';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
-import { autoCheckpoints } from '@shared/schema';
+import { checkpointService as autoCheckpointService } from '../services/checkpoint.service';
 
 /**
  * GET /api/projects/:projectId/auto-checkpoints

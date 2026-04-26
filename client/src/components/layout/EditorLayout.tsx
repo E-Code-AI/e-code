@@ -1,5 +1,5 @@
-import { ReactNode, useState } from "react";
-import { ResizablePanel, ResizablePanelGroup, ResizableHandle } from "@/components/ui/resizable";
+import { ResizableHandle,ResizablePanel,ResizablePanelGroup } from "@/components/ui/resizable";
+import { ReactNode,useState } from "react";
 
 interface EditorLayoutProps {
   editor: ReactNode;

@@ -1,28 +1,27 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Brain, 
-  Bug, 
-  TestTube, 
-  Wand2, 
-  FileText, 
-  MessageSquareCode,
-  Loader2,
-  AlertCircle,
-  CheckCircle,
-  Copy,
-  Sparkles
-} from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
+import {
+AlertCircle,
+Brain,
+Bug,
+CheckCircle,
+Copy,
+FileText,
+Loader2,
+MessageSquareCode,
+Sparkles,
+TestTube,
+Wand2
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface AdvancedAIPanelProps {
   projectId: string;

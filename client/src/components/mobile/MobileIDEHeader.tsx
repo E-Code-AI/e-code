@@ -1,27 +1,26 @@
-import { useState } from 'react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Play, 
-  Square, 
-  ChevronDown, 
-  Sparkles, 
-  Settings, 
-  Share2, 
-  Search,
-  MoreVertical,
-  Home,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition } from '@/hooks/use-reduced-motion';
+import { SPRING_CONFIG,getReducedMotionTransition,useReducedMotion } from '@/hooks/use-reduced-motion';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import {
+ChevronDown,
+Home,
+Loader2,
+MoreVertical,
+Play,
+Search,
+Settings,
+Share2,
+Sparkles
+} from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 
 interface MobileIDEHeaderProps {

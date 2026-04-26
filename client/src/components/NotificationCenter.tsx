@@ -1,37 +1,36 @@
-import React, { useState } from 'react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+Popover,
+PopoverContent,
+PopoverTrigger,
+} from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Bell,
-  Check,
-  CheckCheck,
-  MessageSquare,
-  GitPullRequest,
-  UserPlus,
-  Rocket,
-  AlertCircle,
-  Star,
-  Settings,
-  X,
-  Heart,
-  Code,
-  DollarSign,
-  TrendingUp,
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
-import { useLocation } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import {
+AlertCircle,
+Bell,
+Check,
+CheckCheck,
+Code,
+DollarSign,
+GitPullRequest,
+Heart,
+MessageSquare,
+Rocket,
+Settings,
+Star,
+TrendingUp,
+UserPlus,
+X,
+} from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 // Notification interface
 interface Notification {
   id: number;

@@ -1,18 +1,18 @@
-import WebSocket, { WebSocketServer } from 'ws';
-import { IncomingMessage } from 'http';
-import type { Server } from 'http';
-import jwt from 'jsonwebtoken';
-import { checkpointRestoreService } from '../services/checkpoint-restore.service';
-import { createLogger } from '../utils/logger';
-import { db } from '../db';
 import { projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { and,eq } from 'drizzle-orm';
+import type { Server } from 'http';
+import { IncomingMessage } from 'http';
+import jwt from 'jsonwebtoken';
+import WebSocket,{ WebSocketServer } from 'ws';
+import { db } from '../db';
+import { checkpointRestoreService } from '../services/checkpoint-restore.service';
 import { storage } from '../storage';
-import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
-import { markSocketAsHandled } from './upgrade-guard';
+import { createLogger } from '../utils/logger';
 import { getJwtSecret } from '../utils/secrets-manager';
-import { wsMetrics } from './ws-metrics';
+import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 import { registerShutdownHandler } from './graceful-shutdown';
+import { markSocketAsHandled } from './upgrade-guard';
+import { wsMetrics } from './ws-metrics';
 
 const logger = createLogger('checkpoint-ws');
 

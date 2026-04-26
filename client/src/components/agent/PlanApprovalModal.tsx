@@ -10,24 +10,24 @@
  * - Forced decision: Cannot dismiss without approval or rejection
  * - Auto-dismiss on decision
  */
+import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
+Sheet,
+SheetContent,
+SheetDescription,
+SheetHeader,
+SheetTitle,
 } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { PlanVisualizer } from './PlanVisualizer';
-import { CheckCircle2, XCircle, Sparkles } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { CheckCircle2,Sparkles,XCircle } from 'lucide-react';
+import { PlanVisualizer } from './PlanVisualizer';
 
 interface Task {
   id: string;

@@ -1,16 +1,16 @@
 // @ts-nocheck
+import { deploymentSnapshots } from '@shared/schema';
+import { exec } from 'child_process';
+import * as crypto from 'crypto';
+import { and,desc,eq,lte } from 'drizzle-orm';
 import { EventEmitter } from 'events';
-import { db } from '../db';
-import { deploymentSnapshots, deploymentMetrics } from '@shared/schema';
-import { eq, desc, and, lte } from 'drizzle-orm';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as crypto from 'crypto';
-import { exec } from 'child_process';
 import { promisify } from 'util';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
-import { deploymentWebSocketService } from './deployment-websocket-service';
 import { checkpointService } from './checkpoint.service';
+import { deploymentWebSocketService } from './deployment-websocket-service';
 
 const execAsync = promisify(exec);
 const logger = createLogger('deployment-rollback');

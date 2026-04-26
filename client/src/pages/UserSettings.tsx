@@ -1,19 +1,16 @@
-import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Moon, Monitor, Sun, Trash2, Upload, User } from "lucide-react";
-import { useLocation } from "wouter";
-import { PageHeader, PageShell, PageShellLoading } from "@/components/layout/PageShell";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { PageHeader,PageShell,PageShellLoading } from "@/components/layout/PageShell";
+import { useTheme } from "@/components/ThemeProvider";
+import { Alert,AlertDescription,AlertTitle } from "@/components/ui/alert";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { useTheme } from "@/components/ThemeProvider";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import { AlertCircle,Monitor,Moon,Sun,Trash2,User } from "lucide-react";
+import { useEffect,useState } from "react";
+import { useLocation } from "wouter";
 
 interface UserProfile {
   id: string;

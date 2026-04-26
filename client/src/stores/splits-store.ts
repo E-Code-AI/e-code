@@ -1,21 +1,21 @@
 // @ts-nocheck
+import {
+DEFAULT_LAYOUT,
+DragItem,
+DragState,
+DropTarget,
+DropZone,
+FloatingPane,
+isPaneGroup,
+isSplit,
+LayoutNode,
+PaneGroup,
+ResizeState,
+Split,
+TabInfo,
+} from '@/types/splits';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import {
-  LayoutNode,
-  Split,
-  PaneGroup,
-  FloatingPane,
-  TabInfo,
-  DragState,
-  ResizeState,
-  DropTarget,
-  DragItem,
-  isSplit,
-  isPaneGroup,
-  DEFAULT_LAYOUT,
-  DropZone,
-} from '@/types/splits';
 
 // Replit-style bottom panel constants (Fortune 500-grade absolute pixels)
 const MIN_BOTTOM_PANEL_PX = 216; // Minimum absolute height (216px @ 1080p = 20% viewport)

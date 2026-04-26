@@ -9,7 +9,9 @@
  * Fortune 500 Engineering Standards
  */
 
+import { eq } from 'drizzle-orm';
 import type { Page } from 'playwright';
+import { ElementSelector,elementSelectors } from '../../shared/schema';
 import { db } from '../db';
 
 let playwrightModule: typeof import('playwright') | null = null;
@@ -23,8 +25,6 @@ async function getPlaywright() {
   }
   return playwrightModule;
 }
-import { elementSelectors, ElementSelector, InsertElementSelector } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
 
 export interface SelectorContext {
   sessionId: string;

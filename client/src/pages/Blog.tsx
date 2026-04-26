@@ -1,20 +1,23 @@
 // @ts-nocheck
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { 
-  Code, Calendar, Clock, User, Tag, ChevronRight, 
-  ArrowRight, TrendingUp, Zap, Users, Globe
-} from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
 import { ECodeLoading } from '@/components/ECodeLoading';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+ArrowRight,
+Calendar,
+ChevronRight,
+Clock,User,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface BlogPost {
   id: string;

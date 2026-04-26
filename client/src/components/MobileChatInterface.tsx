@@ -1,16 +1,15 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { Alert,AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
-import { MessageSquare, Send, Paperclip, Mic, X, Bot, User, Image, FileText, Loader2, Sparkles, Info, Zap, Brain, Cpu, Timer, BarChart3, Globe, Coins } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { QUICK_SUGGESTIONS } from '@/constants/brand';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { simulateStreaming } from '@/lib/simulate-streaming';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BarChart3,Bot,Brain,Coins,Cpu,FileText,Globe,Image,Info,Loader2,MessageSquare,Mic,Paperclip,Send,Sparkles,Timer,User,X,Zap } from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { useLocation } from 'wouter';
-import { Badge } from '@/components/ui/badge';
 
 interface Message {
   id: string;

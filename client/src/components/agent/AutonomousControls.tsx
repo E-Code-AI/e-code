@@ -8,15 +8,14 @@
  * - Emergency stop button
  */
 
-import { useState, useEffect } from 'react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Play, Square, Shield, Zap } from 'lucide-react';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { AlertCircle,Play,Shield,Square,Zap } from 'lucide-react';
+import { useState } from 'react';
 
 interface AutonomousControlsProps {
   sessionId: string;

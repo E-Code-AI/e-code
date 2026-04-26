@@ -1,16 +1,30 @@
-import { useState } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
-import { 
-  X, Plus, Github, Upload, FileCode, Globe, Server, Bot,
-  Database, Gamepad2, BookOpen, Briefcase, ShoppingCart,
-  MessageSquare, Music, Film, Image as ImageIcon, Sparkles,
-  TrendingUp, Code2, Palette, Zap, Rocket, Search
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { BuildMode,BuildModeSelector } from '@/components/ai/BuildModeSelector';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BuildModeSelector, BuildMode } from '@/components/ai/BuildModeSelector';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv,type PanInfo } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import {
+BookOpen,
+Bot,
+Briefcase,
+Code2,
+Database,
+FileCode,
+Gamepad2,
+Github,
+Globe,
+Palette,
+Plus,
+Search,
+Server,
+ShoppingCart,
+Sparkles,
+Upload,
+X,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Template {
   id: string;

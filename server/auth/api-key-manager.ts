@@ -5,9 +5,9 @@
  */
 
 import crypto from 'crypto';
-import { db } from '../db';
+import { and,eq,gte } from 'drizzle-orm';
 import { apiKeys } from '../../shared/schema';
-import { and, eq, or, isNull, gte } from 'drizzle-orm';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('api-key-manager');

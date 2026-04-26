@@ -1,43 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { apiRequest } from '@/lib/queryClient';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import {
+ChevronDown,
+Clock,
+Copy,
+Maximize2,
+Minimize2,
+Plus,
+PowerOff,
+RotateCcw,
+Search,
+Settings,
+Square,
+Terminal as TerminalIcon,
+X,
+Zap
+} from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { WebLinksAddon } from "xterm-addon-web-links";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  Terminal as TerminalIcon,
-  Plus,
-  X,
-  Maximize2,
-  Minimize2,
-  Square,
-  RotateCcw,
-  Settings,
-  Copy,
-  Search,
-  ChevronDown,
-  Power,
-  PowerOff,
-  Zap,
-  Clock,
-} from "lucide-react";
-import { TerminalMetricsIndicator } from "./TerminalMetricsIndicator";
-import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
-import { apiRequest } from '@/lib/queryClient';
 import "xterm/css/xterm.css";
+import { TerminalMetricsIndicator } from "./TerminalMetricsIndicator";
 
 interface TerminalSession {
   id: string;

@@ -1,10 +1,8 @@
 // @ts-nocheck
 import { Router } from 'express';
-import { storage } from '../storage';
-import path from 'path';
-import fs from 'fs/promises';
 import { ensureAuthenticated } from '../middleware/auth';
-import { createSecureUpload, validateUpload, sanitizeFilename } from '../middleware/upload-validation';
+import { createSecureUpload,sanitizeFilename,validateUpload } from '../middleware/upload-validation';
+import { storage } from '../storage';
 
 const router = Router();
 

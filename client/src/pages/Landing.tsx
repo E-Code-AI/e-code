@@ -1,36 +1,59 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { LazyMotionDiv, CSSFade, CSSSlide, fadeVariants, staggerVariants } from '@/lib/motion';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { 
-  Zap, Globe, Users, Shield, Code, Terminal, GitBranch, 
-  Rocket, Package, Database, Cpu, Cloud, Lock, Star,
-  ChevronRight, ArrowRight, CheckCircle, PlayCircle,
-  Sparkles, Check, Loader2, MessageSquare, Bot, ShoppingCart,
-  Play, Pause, Volume2, VolumeX, Maximize, Globe2,
-  BookOpen, Store, Briefcase, ListTodo, CloudSun, PenTool,
-  Layers, BarChart3, Settings, Palette, Workflow, Brain,
-  TrendingUp, Users2, Building2, Award, Timer, Gauge,
-  FileCode2, Server, Smartphone, Monitor, Laptop
-} from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
-import { MarketingLayout } from '@/components/layout/MarketingLayout';
-import { useToast } from '@/hooks/use-toast';
-import { useQuery } from '@tanstack/react-query';
-import { Spinner } from '@/components/ui/spinner';
-import { getProjectUrl } from '@/lib/utils';
-import { apiRequest } from '@/lib/queryClient';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
-import { BuildModeSelector, BuildMode } from "@/components/ai/BuildModeSelector";
-import { 
-  SiPython, SiJavascript, SiHtml5, SiCss,
-  SiTypescript, SiGo, SiReact, SiNodedotjs, SiSpring,
-  SiRust, SiPhp, SiOpenjdk, SiDocker, SiKubernetes,
-  SiGoogle
+import { BuildMode,BuildModeSelector } from "@/components/ai/BuildModeSelector";
+import { MarketingLayout } from '@/components/layout/MarketingLayout';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+ArrowRight,
+Bot,
+Brain,
+Briefcase,
+Building2,
+CheckCircle,
+ChevronRight,
+FileCode2,
+Gauge,
+Globe,
+Globe2,
+ListTodo,
+Maximize,
+MessageSquare,
+Pause,
+Play,
+PlayCircle,
+Rocket,
+Shield,
+ShoppingCart,
+Sparkles,
+Star,
+TrendingUp,
+Users,
+Users2,
+Volume2,VolumeX
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
+import {
+SiDocker,
+SiGo,
+SiGoogle,
+SiJavascript,
+SiKubernetes,
+SiNodedotjs,
+SiOpenjdk,
+SiPhp,
+SiPython,
+SiReact,
+SiRust,
+SiSpring,
+SiTypescript
 } from 'react-icons/si';
+import { useLocation } from 'wouter';
 
 const cloudComputingImg = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
 const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';

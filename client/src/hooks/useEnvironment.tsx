@@ -1,12 +1,12 @@
-import { createContext, ReactNode, useContext } from "react";
 import {
-  useQuery,
-  useMutation,
-  UseMutationResult,
+useMutation,
+UseMutationResult,
+useQuery,
 } from "@tanstack/react-query";
+import { createContext,ReactNode,useContext } from "react";
 // EnvironmentVariable type definition
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from "../lib/queryClient";
 
 export type EnvironmentVariable = {
   id: number;

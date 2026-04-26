@@ -3,8 +3,8 @@
  * Beautiful settings interface with theme customization
  */
 
-import React, { useState, useCallback } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv } from '@/lib/motion';
+import React,{ useCallback,useState } from 'react';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 

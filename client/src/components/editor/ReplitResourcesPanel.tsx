@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useParams } from 'wouter';
-import { Activity, Cpu, HardDrive, Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ResourceMetric } from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
+import { Activity,Cpu,HardDrive,Network } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
+import { useParams } from 'wouter';
 
 interface ReplitResourcesPanelProps {
   projectId?: string;

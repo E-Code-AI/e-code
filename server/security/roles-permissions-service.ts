@@ -3,9 +3,9 @@
  * Provides enterprise-grade role-based access control (RBAC)
  */
 
+import { auditLogs,permissions,roles,userRoles,users } from '@shared/schema';
+import { and,eq } from 'drizzle-orm';
 import { db } from '../db';
-import { roles, userRoles, permissions, users, auditLogs } from '@shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
 
 export interface PermissionDefinition {
   resource: string;

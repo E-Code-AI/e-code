@@ -1,11 +1,35 @@
-import { memo, useCallback } from 'react';
-import { 
-  ArrowLeft, History, Plus, MoreVertical, Monitor, Globe, X,
-  FolderTree, Search, GitBranch, Package, Lock, Database, Terminal,
-  Settings, Puzzle, Workflow, Bug, Save, ShieldCheck, Users, Zap, Wrench,
-  Code, Rocket, HardDrive, Share2, Command, Radio
+import {
+ArrowLeft,
+Bug,
+Code,
+Command,
+Database,
+FolderTree,
+GitBranch,
+Globe,
+HardDrive,
+History,
+Lock,
+Monitor,
+MoreVertical,
+Package,
+Plus,
+Puzzle,
+Radio,
+Rocket,
+Save,
+Search,
+Settings,
+Share2,
+ShieldCheck,
+Terminal,
+Users,
+Workflow,
+Wrench,
+X,
+Zap
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { memo,useCallback } from 'react';
 import type { MobileTab } from './ReplitMobileNavigation';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (

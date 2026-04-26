@@ -1,34 +1,32 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  MessageSquare,
-  Reply,
-  Heart,
-  MoreVertical,
-  Check,
-  X,
-  Edit2,
-  Trash2,
-  Code,
-  AlertCircle,
-  Bug,
-  Lightbulb,
-  Zap,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+Bug,
+Check,
+Code,
+Edit2,
+Heart,
+Lightbulb,
+MessageSquare,
+MoreVertical,
+Reply,
+Trash2
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Comment {
   id: string;

@@ -1,56 +1,55 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Badge } from '@/components/ui/badge';
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogTitle,
 } from '@/components/ui/dialog';
-import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
+import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import Fuse from 'fuse.js';
 import {
-  FileIcon,
-  FolderIcon,
-  Settings,
-  User,
-  LogOut,
-  Home,
-  Code,
-  Terminal,
-  Package,
-  GitBranch,
-  Rocket,
-  Search,
-  Zap,
-  Users,
-  Book,
-  MessageCircle,
-  BarChart,
-  Shield,
-  Plus,
-  Play,
-  Save,
-  Copy,
-  Clipboard,
-  Eye,
-  FileCode,
-  Database,
-  Sparkles,
-  Bug,
-  TestTube,
-  Key,
-  Palette,
-  History,
-  Share2,
-  RefreshCw,
-  Command,
-  type LucideIcon,
+BarChart,
+Book,
+Bug,
+Clipboard,
+Command,
+Copy,
+Database,
+Eye,
+FileCode,
+FileIcon,
+FolderIcon,
+GitBranch,
+History,
+Home,
+Key,
+LogOut,
+MessageCircle,
+Package,
+Palette,
+Play,
+Plus,
+RefreshCw,
+Rocket,
+Save,
+Search,
+Settings,
+Share2,
+Shield,
+Sparkles,
+Terminal,
+TestTube,
+User,
+Users,
+Zap,
+type LucideIcon
 } from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import { useLocation } from 'wouter';
 
 const RECENT_COMMANDS_KEY = 'command-palette-recent';
 const MAX_RECENT_COMMANDS = 10;

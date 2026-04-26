@@ -4,12 +4,11 @@
  * This module provides health checks and monitoring for language runtimes
  */
 
+import { execSync } from 'child_process';
 import * as http from 'http';
 import * as os from 'os';
-import { execSync } from 'child_process';
 import { createLogger } from '../utils/logger';
 import * as containerManager from './container-manager';
-import * as nixManager from './nix-manager';
 
 const logger = createLogger('runtime-health');
 

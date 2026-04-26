@@ -1,10 +1,10 @@
+import { ChildProcess,spawn } from 'child_process';
 import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import { spawn, ChildProcess } from 'child_process';
-import { createLogger } from '../utils/logger';
 import { nixEnvironmentBuilder } from '../package-management/nix-environment-builder';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('container-runtime');
 

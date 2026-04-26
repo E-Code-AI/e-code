@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Cpu, HardDrive } from 'lucide-react';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Cpu } from 'lucide-react';
 import { useMemo } from 'react';
+import { Area,AreaChart,CartesianGrid,Legend,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 
 interface ResourceUsageChartProps {
   data?: any[];

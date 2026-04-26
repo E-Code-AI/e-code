@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
-import { LazyMotionDiv } from '@/lib/motion';
-import { Card, CardContent } from '@/components/ui/card';
+import { AnimatedValue } from '@/components/ui/animated-chart';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
 import { LazyImage } from '@/components/ui/lazy-image';
-import { AnimatedValue } from '@/components/ui/animated-chart';
-import { 
-  Star, Download, Eye, Heart, GitBranch, Clock, 
-  Code2, Users, Sparkles, ChevronRight 
-} from 'lucide-react';
+import { LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
+import {
+ChevronRight,
+Download,Eye,
+Sparkles,
+Star,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface AnimatedTemplateCardProps {
   template: any;

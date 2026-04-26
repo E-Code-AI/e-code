@@ -1,36 +1,32 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Bug, 
-  Play, 
-  Pause,
-  Square,
-  SkipForward,
-  StepForward,
-  ArrowDown,
-  ArrowUp,
-  RefreshCw,
-  Circle,
-  X,
-  ChevronRight,
-  ChevronDown,
-  AlertCircle,
-  Info,
-  Terminal,
-  FileText,
-  Variable,
-  Layers
-} from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useBreakpointStore, type Breakpoint } from '@/stores/breakpointStore';
+import { useBreakpointStore,type Breakpoint } from '@/stores/breakpointStore';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+ArrowDown,
+ArrowUp,
+Bug,
+ChevronDown,
+ChevronRight,
+Circle,
+Layers,
+Pause,
+Play,
+RefreshCw,
+SkipForward,
+Square,
+Terminal,
+Variable,
+X
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface StackFrame {
   id: string;

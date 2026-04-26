@@ -1,17 +1,32 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { 
-  Code, Terminal, Users, Shield, Rocket, Package, Database, 
-  Globe, GitBranch, Zap, Lock, Cloud, Cpu, HardDrive, Network,
-  FileCode, Bug, BarChart, Palette, Layers, Settings,
-  ChevronRight, ArrowRight, CheckCircle
-} from 'lucide-react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/hooks/use-auth';
+import {
+ArrowRight,
+BarChart,
+CheckCircle,
+ChevronRight,
+Cloud,
+Code,
+Cpu,
+Database,
+FileCode,
+GitBranch,
+Layers,
+Lock,
+Network,
+Package,
+Rocket,
+Settings,
+Shield,
+Terminal,Users,
+Zap
+} from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface Feature {
   icon: React.ReactNode;

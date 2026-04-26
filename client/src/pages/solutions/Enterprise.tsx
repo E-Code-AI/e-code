@@ -1,15 +1,23 @@
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { getSEOConfig } from "@/config/seo.config";
 import {
-  ArrowRight, Shield, Users, Lock, Building2,
-  CheckCircle, Globe, Zap, BarChart3, Settings,
-  HeadphonesIcon, FileText, Key, Server
+ArrowRight,
+Building2,
+CheckCircle,
+FileText,
+Globe,
+HeadphonesIcon,
+Key,
+Lock,
+Server,
+Settings,
+Shield,Users
 } from "lucide-react";
 import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/config/seo.config";
 
 const seo = getSEOConfig('solutions/enterprise');
 

@@ -1,29 +1,28 @@
 // @ts-nocheck
-import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
-import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
 import {
-  Home,
-  Code,
-  Globe,
-  Book,
-  User,
-  UserCircle,
-  Bell,
-  Users,
-  Terminal as TerminalIcon,
-  Palette,
-  HelpCircle,
-  LogOut,
-  ChevronRight,
-  ChevronDown,
-  Menu,
-  X
+Bell,
+Book,
+ChevronDown,
+ChevronRight,
+Code,
+Globe,
+HelpCircle,
+Home,
+LogOut,
+Palette,
+Terminal as TerminalIcon,
+User,
+UserCircle,
+Users,
+X
 } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { useTheme } from 'next-themes';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface ReplitSidebarMenuProps {
   isOpen: boolean;

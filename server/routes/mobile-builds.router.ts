@@ -3,11 +3,10 @@
  * Provides API endpoints for mobile app builds using EAS Build
  */
 
-import { Router, Request, Response } from 'express';
-import { z } from 'zod';
+import { mobileBuildRequestSchema,mobileBuilds } from '@shared/schema';
+import { and,desc,eq } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
 import { db } from '../db';
-import { mobileBuilds, mobileBuildRequestSchema, type MobileBuild } from '@shared/schema';
-import { eq, desc, and } from 'drizzle-orm';
 import { RealMobileCompiler } from '../services/real-mobile-compiler';
 import { createLogger } from '../utils/logger';
 

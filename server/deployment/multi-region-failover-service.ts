@@ -1,9 +1,7 @@
 // @ts-nocheck
 import { EventEmitter } from 'events';
-import axios from 'axios';
-import { db } from '../db';
-import { eq, and, inArray } from 'drizzle-orm';
 import { isKubernetesEnabled } from '../config/deployment-mode';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('multi-region-failover');

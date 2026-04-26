@@ -4,19 +4,18 @@
  * Production-grade component matching Replit's architecture
  */
 
-import { useState, useRef, useCallback } from 'react';
-import { Bot, User, DollarSign, Volume2, VolumeX, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { AgentMessage } from './types';
-import { ThinkingMessage } from './ThinkingMessage';
-import { TaskMessage } from './TaskMessage';
-import { ActionMessage } from './ActionMessage';
-import { RichMessageContent } from './RichMessageContent';
-import { VibingAnimation } from './VibingAnimation';
-import { MultiFileDiff } from './FileDiffViewer';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import { getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
+import { getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { Bot,DollarSign,Loader2,User,Volume2,VolumeX } from 'lucide-react';
+import { useCallback,useRef,useState } from 'react';
+import { ActionMessage } from './ActionMessage';
+import { MultiFileDiff } from './FileDiffViewer';
+import { RichMessageContent } from './RichMessageContent';
+import { TaskMessage } from './TaskMessage';
+import { ThinkingMessage } from './ThinkingMessage';
+import { AgentMessage } from './types';
 
 interface MessageRendererProps {
   message: AgentMessage;

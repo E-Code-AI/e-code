@@ -4,7 +4,7 @@
  */
 
 import { cn } from '@/lib/utils';
-import { Check, Loader2, XCircle } from 'lucide-react';
+import { Check,Loader2,XCircle } from 'lucide-react';
 
 interface ReplitProgressBarProps {
   value: number; // 0-100

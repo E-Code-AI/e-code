@@ -1,13 +1,12 @@
-import { useMemo, useEffect, useRef, useCallback } from 'react';
-import { 
-  detectPackagesInCode, 
-  detectMissingPackages,
-  generateInstallCommand, 
-  DetectedPackage,
-  PACKAGE_PATTERNS,
-  suggestPackageFromPattern
-} from '@/lib/package-detector';
 import { useToast } from '@/hooks/use-toast';
+import {
+detectMissingPackages,
+detectPackagesInCode,
+generateInstallCommand,
+PACKAGE_PATTERNS,
+suggestPackageFromPattern
+} from '@/lib/package-detector';
+import { useCallback,useEffect,useMemo,useRef } from 'react';
 
 interface UsePackageDetectorOptions {
   showNotifications?: boolean;

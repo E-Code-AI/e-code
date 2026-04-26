@@ -1,9 +1,9 @@
+import PublicLayout from "@/components/layout/PublicLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Gamepad2, Rocket, Sparkles, CheckCircle, Play, Code, Users } from "lucide-react";
+import { ArrowRight,CheckCircle,Code,Gamepad2,Play,Users } from "lucide-react";
 import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
 
 export default function GameBuilder() {
   return (

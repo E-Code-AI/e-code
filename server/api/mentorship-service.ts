@@ -1,6 +1,6 @@
+import { mentorProfiles,mentorshipSessions,users } from '@shared/schema';
+import { and,avg,count,desc,eq,gte,lte } from 'drizzle-orm';
 import { db } from '../db';
-import { mentorProfiles, mentorshipSessions, users } from '@shared/schema';
-import { eq, and, desc, gte, lte, count, avg } from 'drizzle-orm';
 import { zoomService } from '../integrations/zoom-service';
 
 export class MentorshipService {

@@ -1,46 +1,46 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
+Sheet,
+SheetContent,
+SheetDescription,
+SheetHeader,
+SheetTitle,
 } from '@/components/ui/sheet';
-import { 
-  Trash2, 
-  Copy, 
-  Download, 
-  Play,
-  Square,
-  CheckCircle, 
-  XCircle,
-  Loader2,
-  ChevronDown,
-  MoreVertical,
-  Sparkles,
-  Settings,
-  Terminal,
-  X,
-  Zap
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useRuntimeLogs, RuntimeLogEntry } from '@/hooks/useRuntimeLogs';
-import { useServerLogs, ServerLogEntry } from '@/hooks/useServerLogs';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { RuntimeLogEntry,useRuntimeLogs } from '@/hooks/useRuntimeLogs';
+import { ServerLogEntry,useServerLogs } from '@/hooks/useServerLogs';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+CheckCircle,
+ChevronDown,
+Copy,
+Download,
+Loader2,
+MoreVertical,
+Play,
+Settings,
+Sparkles,
+Square,
+Terminal,
+Trash2,
+X,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ConsoleLog {
   id: string;

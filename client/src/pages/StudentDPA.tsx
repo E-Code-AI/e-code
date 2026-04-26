@@ -1,29 +1,28 @@
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  GraduationCap, 
-  Shield, 
-  FileText,
-  CheckCircle,
-  Lock,
-  Users,
-  Building,
-  Globe,
-  BookOpen,
-  Info,
-  Download,
-  Mail,
-  Calendar,
-  ShieldCheck,
-  UserCheck,
-  Database,
-  Eye,
-  AlertCircle,
-  ScrollText
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+AlertCircle,
+BookOpen,
+Building,
+Calendar,
+CheckCircle,
+Database,
+Download,
+Eye,
+FileText,
+GraduationCap,
+Info,
+Lock,
+Mail,
+ScrollText,
+Shield,
+ShieldCheck,
+UserCheck,
+Users
 } from 'lucide-react';
 import { Link } from 'wouter';
 

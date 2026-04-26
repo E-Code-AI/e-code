@@ -1,25 +1,25 @@
 import { Badge } from "@/components/ui/badge";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Wifi,
-  WifiOff,
-  Zap,
-  Users,
-  GitBranch,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Cpu,
-  HardDrive,
-  Activity,
-} from "lucide-react";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import {
+Activity,
+AlertCircle,
+CheckCircle,
+Clock,
+Cpu,
+GitBranch,
+HardDrive,
+Users,
+Wifi,
+WifiOff,
+Zap,
+} from "lucide-react";
+import { useEffect,useState } from "react";
 
 interface SystemStatus {
   connection: "online" | "offline" | "connecting";

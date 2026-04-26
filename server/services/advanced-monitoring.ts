@@ -1,9 +1,9 @@
-import { EventEmitter } from 'events';
-import type { DatabaseStorage } from '../storage';
-import { db } from '../db';
 import { agentSessions } from '@shared/schema';
-import { and, eq, gte, sql } from 'drizzle-orm';
+import { and,eq,gte,sql } from 'drizzle-orm';
+import { EventEmitter } from 'events';
+import { db } from '../db';
 import { getRequestCountLastMinute } from '../middleware/request-counter';
+import type { DatabaseStorage } from '../storage';
 
 export interface MetricPoint {
   timestamp: Date;

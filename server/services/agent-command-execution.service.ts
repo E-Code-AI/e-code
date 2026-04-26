@@ -1,17 +1,16 @@
-import { spawn, ChildProcess, SpawnOptions } from 'child_process';
-import * as path from 'path';
-import { EventEmitter } from 'events';
-import { db } from '../db';
 import {
-  commandExecutions,
-  agentSessions,
-  agentAuditTrail,
-  type CommandExecution,
-  type InsertCommandExecution,
-  type AgentSession
+agentAuditTrail,
+agentSessions,
+commandExecutions,
+type AgentSession,
+type CommandExecution
 } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { ChildProcess,spawn,SpawnOptions } from 'child_process';
+import { and,eq } from 'drizzle-orm';
+import { EventEmitter } from 'events';
+import * as path from 'path';
 import kill from 'tree-kill';
+import { db } from '../db';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 // Command execution event for real-time streaming

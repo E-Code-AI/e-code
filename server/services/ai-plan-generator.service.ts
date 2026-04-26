@@ -1,12 +1,11 @@
+import crypto from 'crypto';
 import { aiProviderManager } from '../ai/ai-provider-manager';
-import { type IStorage, getStorage } from '../storage';
-import type { Project } from '@shared/schema';
+import { promptCacheManager } from '../ai/prompt-cache-manager';
+import { providerRacing,type ProviderRequest } from '../ai/provider-racing';
+import { getStorage,type IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
 import { redisCache } from './redis-cache';
-import { providerRacing, type ProviderRequest } from '../ai/provider-racing';
-import { promptCacheManager } from '../ai/prompt-cache-manager';
-import crypto from 'crypto';
 
 const logger = createLogger('AIPlanGenerator');
 

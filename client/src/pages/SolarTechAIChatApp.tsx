@@ -1,23 +1,22 @@
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Send, 
-  Bot, 
-  User, 
-  Settings, 
-  Plus, 
-  Search,
-  Sparkles,
-  MessageSquare,
-  Clock,
-  Star
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+Bot,
+Clock,
+Plus,
+Search,
+Send,
+Settings,
+Sparkles,
+Star,
+User
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface Message {
   id: string;

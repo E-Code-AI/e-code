@@ -8,33 +8,22 @@
  * - POST/PATCH/DELETE: Auth required + CSRF protection
  */
 
-import { Router, type NextFunction } from 'express';
+import {
+collectionTemplates,
+insertTemplateSchema,
+projects,
+templateCategories,
+templateCollections,
+templateForks,
+templateRatings,
+templates,
+templateTags,
+type TemplateTag
+} from '@shared/schema';
+import { and,asc,desc,eq,gte,ilike,lte,or,sql } from 'drizzle-orm';
+import { Router,type NextFunction } from 'express';
 import { db } from '../db';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
-import {
-  templates,
-  templateCategories,
-  templateRatings,
-  templateTags,
-  templateCollections,
-  collectionTemplates,
-  templateForks,
-  projects,
-  insertTemplateSchema,
-  insertTemplateCategorySchema,
-  insertTemplateRatingSchema,
-  insertTemplateTagSchema,
-  insertTemplateCollectionSchema,
-  insertCollectionTemplateSchema,
-  insertTemplateForkSchema,
-  type Template,
-  type TemplateCategory,
-  type TemplateRating,
-  type TemplateTag,
-  type TemplateFork
-} from '@shared/schema';
-import { eq, desc, sql, and, or, ilike, gte, lte, asc } from 'drizzle-orm';
-import { z } from 'zod';
 import { csrfProtection } from '../middleware/csrf';
 import { createLogger } from '../utils/logger';
 

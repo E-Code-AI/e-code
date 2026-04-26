@@ -1,25 +1,25 @@
 // @ts-nocheck
+import {
+agentAuditTrail,
+agentSessions,
+fileOperations,
+files,
+type AgentSession,
+type FileOperation,
+type InsertFileOperation
+} from '@shared/schema';
+import * as chokidar from 'chokidar';
+import * as crypto from 'crypto';
+import { diff_match_patch } from 'diff-match-patch';
+import { and,desc,eq,sql } from 'drizzle-orm';
+import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import { db } from '../db';
-import {
-  fileOperations,
-  agentSessions,
-  agentAuditTrail,
-  files,
-  type FileOperation,
-  type InsertFileOperation,
-  type AgentSession
-} from '@shared/schema';
-import { eq, and, desc, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('file-ops');
-import { diff_match_patch } from 'diff-match-patch';
-import * as chokidar from 'chokidar';
-import { EventEmitter } from 'events';
 
 // File operation events for real-time streaming
 export interface FileOperationEvent {

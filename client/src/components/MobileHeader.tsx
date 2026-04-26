@@ -1,10 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { Bell,Bookmark,HelpCircle,Menu,MoreVertical,Search,Share2,User,X } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Search, Bell, HelpCircle, User, Menu, X, Bookmark, Share2, MoreVertical } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useAuth } from "@/hooks/use-auth";
-import { cn } from "@/lib/utils";
 
 export function MobileHeader() {
   const [location, navigate] = useLocation();

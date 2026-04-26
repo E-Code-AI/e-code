@@ -1,34 +1,30 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { 
-  Bell, 
-  Settings, 
-  Check, 
-  X, 
-  Mail, 
-  Heart, 
-  MessageSquare, 
-  Users, 
-  GitBranch,
-  Shield,
-  AlertTriangle,
-  Info,
-  Zap,
-  Calendar,
-  Archive,
-  MoreHorizontal
-} from "lucide-react";
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
 import { ReplitLayout } from '@/components/layout/ReplitLayout';
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Bell,
+Calendar,
+Check,
+Heart,
+Info,
+Mail,
+MessageSquare,
+MoreHorizontal,
+Settings,
+Shield,
+Users,
+Zap
+} from "lucide-react";
+import { useState } from 'react';
 
 interface Notification {
   id: number;

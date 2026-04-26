@@ -1,13 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Activity, AlertTriangle, CheckCircle2, XCircle, TrendingUp, TrendingDown } from 'lucide-react';
-import { useTerminalHealth, useTerminalMetrics } from '@/hooks/use-terminal-metrics';
+import { useTerminalHealth,useTerminalMetrics } from '@/hooks/use-terminal-metrics';
 import { cn } from '@/lib/utils';
+import { Activity,AlertTriangle,CheckCircle2,TrendingDown,TrendingUp,XCircle } from 'lucide-react';
 
 interface TerminalMetricsIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;

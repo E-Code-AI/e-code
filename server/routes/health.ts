@@ -4,14 +4,14 @@
  * Comprehensive health monitoring endpoints for production
  */
 
-import { Express, Request, Response } from 'express';
-import { createLogger } from '../utils/logger';
-import { dbPool } from '../db/index';
-import { RedisCache } from '../services/redis-cache';
-import { getPrometheusExporter } from '../observability/opentelemetry';
-import os from 'os';
+import { Express,Request,Response } from 'express';
 import fs from 'fs';
+import os from 'os';
 import { promisify } from 'util';
+import { dbPool } from '../db/index';
+import { getPrometheusExporter } from '../observability/opentelemetry';
+import { RedisCache } from '../services/redis-cache';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('health-checks');
 const fsPromises = {

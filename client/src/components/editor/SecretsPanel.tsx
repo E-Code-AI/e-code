@@ -1,48 +1,47 @@
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams } from 'wouter';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Shield,
-  Plus,
-  Eye,
-  EyeOff,
-  Edit,
-  Trash2,
-  Copy,
-  Lock,
-  Key,
-  AlertCircle,
-  Check,
-  Search,
-  RefreshCw,
-  Loader2,
-  Save,
-  X
-} from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Check,
+Copy,
+Edit,
+Eye,
+EyeOff,
+Key,
+Loader2,
+Lock,
+Plus,
+RefreshCw,
+Save,
+Search,
+Shield,
+Trash2
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
+import { useParams } from 'wouter';
 
 interface Secret {
   id: string;

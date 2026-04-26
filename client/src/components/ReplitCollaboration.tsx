@@ -1,17 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Users, UserPlus, Crown, Settings, MessageCircle, 
-  Video, Mic, MicOff, VideoOff, Share2, Eye,
-  Clock, Activity, Lock, Unlock, Copy, Check
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+Activity,
+Check,
+Copy,
+Crown,
+Eye,
+Lock,
+Mic,MicOff,
+Settings,
+Share2,
+Unlock,
+UserPlus,
+Users,
+Video,
+VideoOff
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface Collaborator {
   id: string;

@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { createLogger } from '../utils/logger';
-import { eq, lt } from 'drizzle-orm';
+import { eq,lt } from 'drizzle-orm';
 import { revokedTokens } from '../../shared/schema';
-import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('token-revocation');
 

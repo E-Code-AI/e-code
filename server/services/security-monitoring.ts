@@ -4,12 +4,12 @@
  * Real-time threat detection and response system
  */
 
+import { alerts,auditLogs,securityEvents } from '@shared/schema';
+import crypto from 'crypto';
 import { EventEmitter } from 'events';
 import { Request } from 'express';
 import { db } from '../db';
-import { securityEvents, alerts, auditLogs } from '@shared/schema';
 import { createLogger } from '../utils/logger';
-import crypto from 'crypto';
 
 const logger = createLogger('security-monitoring');
 

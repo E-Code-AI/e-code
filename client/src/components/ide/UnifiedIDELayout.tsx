@@ -10,55 +10,56 @@
  * Uses useIDEWorkspace for centralized state management
  */
 
-import { useState, useCallback, Suspense, useRef, useEffect, useMemo } from 'react';
-import { cn } from '@/lib/utils';
-import { createPanHandlers, type PanInfo } from '@/lib/native-motion';
-import { useIDEWorkspace, availableTools } from '@/hooks';
-import { useDeviceType } from '@/hooks/use-media-query';
-import { useConnectionStatus } from '@/hooks/use-connection-status';
-import { useProblemsCount } from '@/hooks/use-problems-count';
-import { useToast } from '@/hooks/use-toast';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
-import { 
-  ResizableHandle, 
-  ResizablePanel, 
-  ResizablePanelGroup 
-} from '@/components/ui/resizable';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+ResizableHandle,
+ResizablePanel,
+ResizablePanelGroup
+} from '@/components/ui/resizable';
 import { Switch } from '@/components/ui/switch';
-import type { ProjectGuest } from '@shared/schema';
-import { 
-  Brain, 
-  Zap, 
-  X, 
-  Layers, 
-  Rocket, 
-  PanelLeftOpen, 
-  PanelLeftClose,
-  ChevronLeft,
-  Code,
-  Terminal,
-  Monitor,
-  Bot,
-  MoreHorizontal,
-  Check,
-  Copy,
-  ExternalLink,
-  Lock
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { availableTools,useIDEWorkspace } from '@/hooks';
+import { useConnectionStatus } from '@/hooks/use-connection-status';
+import { useDeviceType } from '@/hooks/use-media-query';
+import { useProblemsCount } from '@/hooks/use-problems-count';
+import { useToast } from '@/hooks/use-toast';
+import { createPanHandlers,type PanInfo } from '@/lib/native-motion';
+import { cn } from '@/lib/utils';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import {
+Brain,
+Check,
+ChevronLeft,
+Code,
+Copy,
+ExternalLink,
+Layers,
+Lock,
+MoreHorizontal,
+PanelLeftClose,
+PanelLeftOpen,
+Rocket,
+X,
+Zap
 } from 'lucide-react';
-import { ECodeLoading } from '@/components/ECodeLoading';
+import { Suspense,useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
-import { TopNavBar } from '@/components/ide/TopNavBar';
-import { StatusBar } from '@/components/ide/StatusBar';
-import { ReplitActivityBar, type ActivityItem } from '@/components/ide/ReplitActivityBar';
+import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
+import type { ExternalInputHandlers } from '@/components/ai/ReplitAgentPanelV3';
+import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
+import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
+import { ReplitActivityBar,type ActivityItem } from '@/components/ide/ReplitActivityBar';
 import { ReplitTabBar } from '@/components/ide/ReplitTabBar';
 import { ReplitToolsSheet } from '@/components/ide/ReplitToolsSheet';
-import { QuickFileSearch } from '@/components/ide/QuickFileSearch';
-import { KeyboardShortcutsOverlay } from '@/components/ide/KeyboardShortcutsOverlay';
+import { StatusBar } from '@/components/ide/StatusBar';
+import { TopNavBar } from '@/components/ide/TopNavBar';
+import { ReplitMobileHeader,ReplitMobileInputBar,ReplitMobileNavigation,type MobileTab } from '@/components/mobile';
+import { MobileTabSwitcher } from '@/components/mobile/MobileTabSwitcher';
+import { OptimizedErrorBoundary } from '@/components/OptimizedErrorBoundary';
 const LazyReplitFileExplorer = instrumentedLazy(() => import('@/components/editor/ReplitFileExplorer').then(mod => ({ default: mod.ReplitFileExplorer })), 'ReplitFileExplorer');
 function ReplitFileExplorer(props: any) {
   return (
@@ -75,12 +76,8 @@ function ReplitMonacoEditor(props: any) {
     </Suspense>
   );
 }
-import { ReplitMobileNavigation, ReplitMobileInputBar, ReplitMobileHeader, type MobileTab } from '@/components/mobile';
 const ReplitTerminalPanel = instrumentedLazy(() => import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })), 'ReplitTerminalPanel');
 const ReplitDeploymentPanel = instrumentedLazy(() => import('@/components/ide/ReplitDeploymentPanel').then(mod => ({ default: mod.ReplitDeploymentPanel })), 'ReplitDeploymentPanel');
-import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
-import { OptimizedErrorBoundary } from '@/components/OptimizedErrorBoundary';
-import type { ExternalInputHandlers } from '@/components/ai/ReplitAgentPanelV3';
 const LazyAgentPanel = instrumentedLazy(() => import('@/components/ai/ReplitAgentPanelV3').then(mod => ({ default: mod.ReplitAgentPanelV3 })), 'ReplitAgentPanelV3');
 function ReplitAgentPanelV3(props: any) {
   return (
@@ -99,7 +96,6 @@ const EnhancedMobileTerminal = instrumentedLazy(() => import('@/components/mobil
 const MobilePreviewPanel = instrumentedLazy(() => import('@/components/mobile/MobilePreviewPanel').then(mod => ({ default: mod.MobilePreviewPanel })), 'MobilePreviewPanel');
 const MobileMoreMenu = instrumentedLazy(() => import('@/components/mobile/MobileMoreMenu').then(mod => ({ default: mod.MobileMoreMenu })), 'MobileMoreMenu');
 const MobileSecurityPanel = instrumentedLazy(() => import('@/components/mobile/MobileSecurityPanel').then(mod => ({ default: mod.MobileSecurityPanel })), 'MobileSecurityPanel');
-import { MobileTabSwitcher } from '@/components/mobile/MobileTabSwitcher';
 
 const CommandPalette = instrumentedLazy(() => import('@/components/CommandPalette').then(mod => ({ default: mod.CommandPalette })), 'CommandPalette');
 const GlobalSearch = instrumentedLazy(() => import('@/components/GlobalSearch').then(mod => ({ default: mod.GlobalSearch })), 'GlobalSearch');
@@ -134,12 +130,12 @@ const BillingSystem = instrumentedLazy(() => import('@/components/BillingSystem'
 const ImportExport = instrumentedLazy(() => import('@/components/ImportExport').then(mod => ({ default: mod.ImportExport })), 'ImportExport');
 const SessionRecording = instrumentedLazy(() => import('@/components/agent/SessionRecording').then(mod => ({ default: mod.SessionRecording })), 'SessionRecording');
 
-import { ShortcutHint, ShortcutTester } from '@/components/utilities';
-import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
-import { AgentEventBus } from '@/lib/agentEvents';
-import { useElectronMenuEvents } from '@/hooks/useElectron';
-import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
+import { ShortcutHint,ShortcutTester } from '@/components/utilities';
+import { useElectronMenuEvents } from '@/hooks/useElectron';
+import { AgentEventBus } from '@/lib/agentEvents';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 
 // Specialized editors
 const SlideEditor = instrumentedLazy(() => import('@/components/SlideEditor').then(m => m.default ? m : { default: m.SlideEditor || m }), 'SlideEditor');

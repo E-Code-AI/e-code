@@ -4,13 +4,12 @@
  * Learns from execution history to optimize routing
  */
 
-import { db } from "../../db/drizzle";
-import {
-  aiTaskClassifications,
-  type InsertAiTaskClassification,
-  type AiTaskClassification,
-} from "../../../shared/schema";
 import { eq } from "drizzle-orm";
+import {
+aiTaskClassifications,
+type AiTaskClassification
+} from "../../../shared/schema";
+import { db } from "../../db/drizzle";
 
 export type TaskType =
   | 'build'

@@ -1,6 +1,5 @@
 // @ts-nocheck
 import nodemailer from 'nodemailer';
-import { z } from 'zod';
 
 // Email configuration - requires explicit SMTP config in production
 const emailConfig = {

@@ -7,25 +7,22 @@
  * Provides enterprise-grade real-time collaboration features
  */
 
-import { Server as SocketServer, Socket } from 'socket.io';
 import { Server as EngineServer } from 'engine.io';
-import { Server as HttpServer, IncomingMessage } from 'http';
-import type { Duplex } from 'stream';
-import * as Y from 'yjs';
-import { Awareness } from 'y-protocols/awareness';
-import * as encoding from 'lib0/encoding';
+import { Server as HttpServer,IncomingMessage } from 'http';
 import * as decoding from 'lib0/decoding';
-import * as syncProtocol from 'y-protocols/sync';
-import * as awarenessProtocol from 'y-protocols/awareness';
-import { WebSocketServer, WebSocket } from 'ws';
-import { storage } from '../storage';
-import { db } from '../db';
-import { collaborationSessions, sessionParticipants, projects, users } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import * as encoding from 'lib0/encoding';
 import { nanoid } from 'nanoid';
+import { Socket,Server as SocketServer } from 'socket.io';
+import type { Duplex } from 'stream';
+import { WebSocket,WebSocketServer } from 'ws';
+import * as awarenessProtocol from 'y-protocols/awareness';
+import { Awareness } from 'y-protocols/awareness';
+import * as syncProtocol from 'y-protocols/sync';
+import * as Y from 'yjs';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
-import { createLogger } from '../utils/logger';
 
 const logger = createLogger('unified-collaboration-service');
 

@@ -1,30 +1,29 @@
 // @ts-nocheck
-import { EventEmitter } from 'events';
-import { OpenAI } from 'openai';
-import { db } from '../db';
 import {
-  agentSessions,
-  agentAuditTrail,
-  agentMessages,
-  aiConversations,
-  type AgentSession,
-  type InsertAgentSession
+agentAuditTrail,
+agentMessages,
+agentSessions,
+aiConversations,
+type AgentSession
 } from '@shared/schema';
-import { eq, and, inArray, desc } from 'drizzle-orm';
-import { agentFileOperations } from './agent-file-operations.service';
+import { and,desc,eq,inArray } from 'drizzle-orm';
+import { EventEmitter } from 'events';
+import * as fs from 'fs/promises';
+import { OpenAI } from 'openai';
+import * as path from 'path';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { agentCommandExecution } from './agent-command-execution.service';
-import { agentToolFramework } from './agent-tool-framework.service';
-import { agentWorkflowEngine } from './agent-workflow-engine.service';
-import { aiPlanGenerator } from './ai-plan-generator.service';
+import { agentFileOperations } from './agent-file-operations.service';
 import { agentPlanStore } from './agent-plan-store.service';
+import { agentToolFramework } from './agent-tool-framework.service';
 import { agentWebSocketService } from './agent-websocket-service';
+import { agentWorkflowEngine } from './agent-workflow-engine.service';
 import { aiOptimization } from './ai-optimization';
 import { observability } from './ai-optimization/observability.service';
-import { createLogger } from '../utils/logger';
-import { redisCache, CacheKeys, CacheTTL } from './redis-cache.service';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { aiPlanGenerator } from './ai-plan-generator.service';
+import { CacheKeys,CacheTTL,redisCache } from './redis-cache.service';
 
 const logger = createLogger('AgentOrchestrator');
 

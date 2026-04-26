@@ -1,6 +1,6 @@
-import bcrypt from "./utils/bcrypt-compat";
 import crypto from "crypto";
 import { storage } from "./storage";
+import bcrypt from "./utils/bcrypt-compat";
 import { createLogger } from './utils/logger';
 
 const logger = createLogger('db-seed');

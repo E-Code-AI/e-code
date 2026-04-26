@@ -4,7 +4,7 @@
  * Supports 10,000+ items without lag
  */
 
-import { useEffect, useRef, useState, useMemo, useCallback, memo, ReactNode, UIEvent } from 'react';
+import { memo,ReactNode,UIEvent,useCallback,useMemo,useRef,useState } from 'react';
 
 interface VirtualScrollListProps<T> {
   items: T[];

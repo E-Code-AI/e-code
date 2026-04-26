@@ -1,17 +1,26 @@
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
 import { ECodeLogo } from '@/components/ECodeLogo';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Sheet,SheetContent } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/use-auth';
 import {
-  Menu, Home, Code, Globe, Users, Database, Book,
-  Settings, User, HelpCircle, Crown, Plus, Search,
-  Shield, LogOut,
-  ChevronRight, Zap, Briefcase, GraduationCap, Workflow, HardDrive
+Book,
+Briefcase,
+ChevronRight,
+Code,
+GraduationCap,
+HelpCircle,
+Home,
+LogOut,
+Menu,
+Plus,
+Settings,
+Shield,
+Users
 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface MobileMenuProps {
   onOpenSpotlight?: () => void;

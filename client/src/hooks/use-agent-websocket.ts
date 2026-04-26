@@ -5,15 +5,13 @@
  * Extended with unified activity event streaming for inline chat and Progress dock
  */
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import type { 
-  ActivityEvent, 
-  ActivityStreamMessage,
-  ThinkingStep,
-  ToolExecutionEvent,
-  FileChangeEvent,
-  AgentSessionState
+import type {
+ActivityEvent,
+FileChangeEvent,
+ThinkingStep,
+ToolExecutionEvent
 } from '@shared/types/agent-activity.types';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface AgentProgressUpdate {
   type: 'step' | 'summary' | 'error' | 'complete' | 'progress' | 'device_connected' | 'device_disconnected' | 'connected' | 'activity';
@@ -383,12 +381,8 @@ export function useAgentWebSocket({
 }
 
 // Export types for consumers
-export type { 
-  AgentProgressUpdate, 
-  ConnectedDevice, 
-  UseAgentWebSocketOptions,
-  ActivityEvent,
-  ThinkingStep,
-  ToolExecutionEvent,
-  FileChangeEvent,
+export type {
+ActivityEvent,AgentProgressUpdate,
+ConnectedDevice,FileChangeEvent,ThinkingStep,
+ToolExecutionEvent,UseAgentWebSocketOptions
 };

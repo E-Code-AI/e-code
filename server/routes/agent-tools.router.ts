@@ -1,20 +1,19 @@
-import { Router } from 'express';
-import { ensureAuthenticated } from '../middleware/auth';
-import { WebSearchService } from '../services/web-search-service';
-import { BackgroundTestingService } from '../services/background-testing-service';
-import { AgentPreferencesService } from '../services/agent-preferences.service';
-import { createLogger } from '../utils/logger';
-import { db } from '../db';
-import { 
-  testingSessionRecordings,
-  agentMessages,
-  aiConversations,
-  projects,
-  webSearchHistory
+import {
+agentMessages,
+projects,
+testingSessionRecordings,
+webSearchHistory
 } from '@shared/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
 import crypto from 'crypto';
+import { and,desc,eq,sql } from 'drizzle-orm';
+import { Router } from 'express';
+import { db } from '../db';
+import { ensureAuthenticated } from '../middleware/auth';
+import { AgentPreferencesService } from '../services/agent-preferences.service';
+import { BackgroundTestingService } from '../services/background-testing-service';
+import { WebSearchService } from '../services/web-search-service';
 import type { IStorage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('agent-tools');
 

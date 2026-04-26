@@ -1,28 +1,39 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { 
-  Code, Zap, Package, Globe, Database, Shield, 
-  Smartphone, Gamepad, FileCode, Terminal, Server,
-  Bot, BarChart, Palette, Music, Camera, Video,
-  Heart, Star, Users, TrendingUp, Clock, Filter,
-  Search, Grid, List, ChevronRight, ExternalLink,
-  GitBranch, CheckCircle
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Label } from '@/components/ui/label';
+import { ScrollArea,ScrollBar } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { getProjectUrl } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+BarChart,
+Bot,
+CheckCircle,
+Code,
+FileCode,
+Gamepad,
+GitBranch,
+Globe,
+Grid,List,
+Package,
+Search,
+Server,
+Shield,
+Smartphone,
+Star,
+Terminal,
+Users,
+Zap
+} from 'lucide-react';
+import React,{ useState } from 'react';
 import { useLocation } from 'wouter';
 
 interface Template {

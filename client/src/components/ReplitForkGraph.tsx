@@ -1,25 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  GitBranch, 
-  GitCommit, 
-  GitMerge, 
-  GitPullRequest,
-  Users,
-  Star,
-  Eye,
-  ChevronRight,
-  Maximize2,
-  Minimize2,
-  Download
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+ChevronRight,
+Eye,
+GitBranch,
+GitCommit,
+Maximize2,
+Minimize2,
+Star
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 interface Fork {
   id: string;

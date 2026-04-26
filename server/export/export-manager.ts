@@ -9,9 +9,8 @@
  * - Template export
  */
 
-import archiver, { Archiver } from 'archiver';
-import { createWriteStream } from 'fs';
-import { promises as fs } from 'fs';
+import archiver from 'archiver';
+import { createWriteStream,promises as fs } from 'fs';
 import path from 'path';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 

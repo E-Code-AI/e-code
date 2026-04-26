@@ -7,41 +7,39 @@
  * Features rich animated states: Working, Vibing, Thinking, Building, Styling
  */
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { LazyMotionDiv, LazyMotionSpan, LazyMotionLi, useReducedMotion } from '@/lib/motion';
-import { 
-  Sparkles, 
-  Loader2, 
-  CheckCircle2, 
-  FileCode, 
-  Search, 
-  ChevronDown, 
-  ChevronUp,
-  Hammer,
-  Paintbrush,
-  Clock,
-  ExternalLink,
-  Code,
-  Terminal,
-  Package,
-  Zap,
-  Brain,
-  Wand2,
-  Palette,
-  Rocket,
-  Music,
-  FolderOpen,
-  Settings,
-  Database,
-  Shield,
-  Globe,
-  FileText
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Card } from '@/components/ui/card';
+import { LazyMotionDiv,LazyMotionLi,LazyMotionSpan,useReducedMotion } from '@/lib/motion';
 import { cn } from '@/lib/utils';
+import {
+Brain,
+CheckCircle2,
+ChevronDown,
+ChevronUp,
+Clock,
+Code,
+ExternalLink,
+FileCode,
+FileText,
+FolderOpen,
+Globe,
+Hammer,
+Loader2,
+Music,
+Package,
+Paintbrush,
+Palette,
+Rocket,
+Search,
+Settings,
+Shield,
+Sparkles,
+Terminal,
+Wand2,
+Zap
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
 
 // =============================================================================
 // REPLIT-STYLE STATUS STATES

@@ -1,37 +1,33 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Rocket,
-  GitBranch,
-  Package,
-  Shield,
-  Globe,
-  Check,
-  X,
-  Loader2,
-  AlertCircle,
-  Clock,
-  Play,
-  Pause,
-  RotateCcw,
-  ChevronRight,
-  Terminal,
-  FileCode,
-  Server,
-  Maximize2,
-  Minimize2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Check,
+Clock,
+FileCode,
+GitBranch,
+Globe,
+Loader2,
+Maximize2,
+Minimize2,
+Package,
+Pause,
+Play,
+Rocket,
+RotateCcw,
+X
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface PipelineStage {
   id: string;

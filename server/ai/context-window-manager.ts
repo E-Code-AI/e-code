@@ -5,12 +5,12 @@
  * long-term storage, session persistence, smart summarization, and priority-based retention
  */
 
-import type { AIModel } from './ai-provider-manager';
-import { createLogger } from '../utils/logger';
-import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as crypto from 'crypto';
+import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
+import { createLogger } from '../utils/logger';
+import type { AIModel } from './ai-provider-manager';
 
 const logger = createLogger('context-window-manager');
 

@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
+import { Loader2,Sparkles } from 'lucide-react';
+import { useEffect,useState } from 'react';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { Loader2, Sparkles } from 'lucide-react';
 
 type WorkflowPhase = 
   | 'generating_features'

@@ -10,23 +10,23 @@
  * - Integration with checkpoint, testing, and rollback services
  */
 
+import {
+agentSessions,
+maxAutonomySessions,
+maxAutonomyTasks,
+type MaxAutonomySession,
+type MaxAutonomyTask,
+type RiskThreshold
+} from '@shared/schema';
+import crypto from 'crypto';
+import { and,asc,desc,eq,inArray } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import { db } from '../db';
-import {
-  maxAutonomySessions,
-  maxAutonomyTasks,
-  agentSessions,
-  type MaxAutonomySession,
-  type MaxAutonomyTask,
-  type RiskThreshold
-} from '@shared/schema';
-import { eq, and, asc, desc, inArray } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
-import { CheckpointService } from './checkpoint-service';
+import { AutonomyTaskExecutor,type TaskExecutionResult } from './autonomy-task-executor';
 import { BackgroundTestingService } from './background-testing-service';
-import { AutonomyTaskExecutor, type TaskExecutionResult } from './autonomy-task-executor';
-import { orchestratorMetrics, type TaskMetric } from './orchestrator-metrics.service';
-import crypto from 'crypto';
+import { CheckpointService } from './checkpoint-service';
+import { orchestratorMetrics } from './orchestrator-metrics.service';
 
 const logger = createLogger('MaxAutonomyService');
 

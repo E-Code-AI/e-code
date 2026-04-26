@@ -1,11 +1,11 @@
-import { Router, Request, Response } from "express";
-import { db } from "../db";
-import { mcpServers, DbMcpServer } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
-import { createLogger } from "../utils/logger";
-import { ensureAuthenticated } from "../middleware/auth";
+import { DbMcpServer,mcpServers } from "@shared/schema";
+import { and,eq } from "drizzle-orm";
 import { execa } from 'execa';
+import { Request,Response,Router } from "express";
+import { db } from "../db";
+import { ensureAuthenticated } from "../middleware/auth";
 import { storage } from '../storage';
+import { createLogger } from "../utils/logger";
 
 const logger = createLogger('mcp-servers-router');
 const router = Router();

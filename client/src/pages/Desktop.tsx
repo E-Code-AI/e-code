@@ -1,33 +1,29 @@
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { LazyMotionDiv } from '@/lib/motion';
-import { 
-  Monitor, 
-  Download, 
-  Apple, 
-  Chrome,
-  Zap,
-  Shield,
-  Globe,
-  Cpu,
-  HardDrive,
-  Wifi,
-  WifiOff,
-  Code2,
-  Terminal,
-  CheckCircle,
-  ArrowRight,
-  Sparkles,
-  Package,
-  Lock,
-  RefreshCw,
-  Command
+import {
+Apple,
+CheckCircle,
+Chrome,
+Code2,
+Cpu,
+Download,
+Globe,
+Lock,
+Monitor,
+Package,
+RefreshCw,
+Shield,
+Sparkles,
+Terminal,
+WifiOff,
+Zap
 } from 'lucide-react';
-import { Link } from 'wouter';
 import { useState } from 'react';
+import { Link } from 'wouter';
 
 interface OSInfo {
   name: string;

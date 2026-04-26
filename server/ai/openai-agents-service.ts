@@ -6,9 +6,8 @@
  */
 
 import OpenAI from 'openai';
-import { createLogger } from '../utils/logger';
 import { AIBillingService } from '../services/ai-billing-service';
-import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('openai-agents-service');
 const aiBillingService = new AIBillingService();

@@ -3,17 +3,23 @@
  * Displays detailed diagnostics about available runtime environments
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
 // Import Spinner from components/ui/spinner.tsx
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { 
-  InfoIcon, AlertCircle, CheckCircle2, XCircle, ServerIcon, 
-  Cpu, HardDrive, Boxes, TerminalIcon
+import {
+AlertCircle,
+Boxes,
+CheckCircle2,
+Cpu,HardDrive,
+InfoIcon,
+ServerIcon,
+TerminalIcon,
+XCircle
 } from 'lucide-react';
 
 export default function RuntimeDiagnosticsPage() {

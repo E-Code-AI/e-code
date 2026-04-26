@@ -8,7 +8,7 @@
  * - Security headers that don't impact performance
  */
 
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction,Request,Response } from 'express';
 
 interface CacheConfig {
   maxAge: number;

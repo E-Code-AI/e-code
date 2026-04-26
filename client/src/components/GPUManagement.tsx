@@ -1,5 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { XCircle } from 'lucide-react';
 
 interface GPUManagementProps {

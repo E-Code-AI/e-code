@@ -1,13 +1,13 @@
-import { Router } from 'express';
-import { z } from 'zod';
-import { randomBytes } from 'crypto';
-import { storage } from '../storage.js';
-import { hashPassword, comparePasswords } from '../auth.js';
-import { generateEmailVerificationToken, generatePasswordResetToken } from '../utils/auth-utils.js';
-import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email-utils.js';
-import { sendAdminAlertEmail } from '../utils/gandi-email.js';
-import { OAuth2Client } from 'google-auth-library';
 import { Octokit } from '@octokit/rest';
+import { randomBytes } from 'crypto';
+import { Router } from 'express';
+import { OAuth2Client } from 'google-auth-library';
+import { z } from 'zod';
+import { hashPassword } from '../auth.js';
+import { storage } from '../storage.js';
+import { generateEmailVerificationToken,generatePasswordResetToken } from '../utils/auth-utils.js';
+import { sendPasswordResetEmail,sendVerificationEmail } from '../utils/email-utils.js';
+import { sendAdminAlertEmail } from '../utils/gandi-email.js';
 
 const router = Router();
 

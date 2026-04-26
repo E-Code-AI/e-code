@@ -1,6 +1,6 @@
 // @ts-nocheck
-import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import nodemailer from 'nodemailer';
 
 // Gandi Email Service Configuration
 const GANDI_SMTP_HOST = process.env.GANDI_SMTP_HOST || 'mail.gandi.net';

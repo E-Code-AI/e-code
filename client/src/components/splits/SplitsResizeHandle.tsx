@@ -1,7 +1,7 @@
-import React, { useCallback, useState } from 'react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import useSplitsStore from '@/stores/splits-store';
+import React,{ useCallback,useState } from 'react';
 
 interface SplitsResizeHandleProps {
   splitId: string;

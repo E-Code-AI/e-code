@@ -1,37 +1,31 @@
 // @ts-nocheck
-import React, { useState, useRef, useMemo, useCallback, memo, Suspense } from 'react';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
-import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { Project } from '@shared/schema';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ECodeLoading } from '@/components/ECodeLoading';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { OptimizedImage } from '@/components/OptimizedImage';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { CreditBalance } from '@/components/CreditBalance';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { ECodeLoading } from '@/components/ECodeLoading';
-import { Progress } from '@/components/ui/progress';
-import { getProjectUrl, cn } from '@/lib/utils';
-import { PageHeader, PageShell } from '@/components/layout/PageShell';
-import { useDebounce, usePrefersReducedMotion } from '@/lib/performance';
-import { optimizedMemo, useStableCallback } from '@/lib/memoization-helpers';
-import { OptimizedImage } from '@/components/OptimizedImage';
+import { optimizedMemo,useStableCallback } from '@/lib/memoization-helpers';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { useDebounce,usePrefersReducedMotion } from '@/lib/performance';
 import { prefetchQuery } from '@/lib/queryClient';
+import { cn,getProjectUrl } from '@/lib/utils';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { Project } from '@shared/schema';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Clock, Eye, Users, Share2, Code2, Folder, GitBranch, Star, 
-  Grid3x3, List, Plus, Search, MoreHorizontal
+Eye,
+GitBranch,
+Grid3x3,List,
+MoreHorizontal,
+Plus,Search,
+Star
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import React,{ useCallback,useMemo,useState } from 'react';
+import { useLocation } from 'wouter';
 const analyticsImagePath = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
 
 // Lazy load heavy components

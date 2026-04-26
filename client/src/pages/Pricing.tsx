@@ -1,25 +1,33 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Check, X, Zap, Users, Shield, Rocket, Star, Info,
-  Code, Terminal, Globe, Database, Lock, Package,
-  ChevronRight, Sparkles, Building2, Crown, TrendingUp,
-  ArrowRight, Server, Cloud, Cpu, HardDrive, Gauge,
-  Phone, MessageSquare, Mail, Headphones,
-  CreditCard, Award, BarChart3, Users2, Briefcase,
-  Brain, Layers, GitBranch, Timer, CheckCircle2, PlayCircle
-} from 'lucide-react';
-import { useState, useEffect, useMemo, type ReactNode, Fragment } from 'react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/hooks/use-auth';
+import { LazyMotionDiv } from '@/lib/motion';
+import { useQuery } from '@tanstack/react-query';
+import {
+ArrowRight,
+Building2,
+Check,
+CheckCircle2,
+ChevronRight,
+Gauge,
+Info,
+Lock,
+Phone,
+PlayCircle,
+Rocket,
+Shield,
+Sparkles,
+Star,
+Users,
+X
+} from 'lucide-react';
+import { Fragment,useMemo,useState,type ReactNode } from 'react';
+import { useLocation } from 'wouter';
 const cloudComputingImg = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop';
 
 interface PricingTier {

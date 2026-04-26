@@ -1,31 +1,28 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from "@/lib/queryClient";
+import { useMutation,useQuery } from "@tanstack/react-query";
 import {
-  GitBranch,
-  GitCommit,
-  GitPullRequest,
-  Github,
-  RefreshCcw,
-  Plus,
-  ChevronRight,
-  AlertCircle,
-  Check,
-  X,
-  Loader2
+Check,
+ChevronRight,
+GitBranch,
+GitCommit,
+GitPullRequest,
+Github,
+Loader2,
+Plus,
+RefreshCcw
 } from "lucide-react";
+import React,{ useState } from 'react';
 
 interface GitPanelProps {
   projectId: number;

@@ -8,11 +8,11 @@
  */
 
 import * as crypto from 'crypto';
-import * as path from 'path';
 import * as fs from 'fs/promises';
-import { createLogger } from '../utils/logger';
+import * as path from 'path';
 import { Readable } from 'stream';
 import { storage as dbStorage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { billingService } from './billing-service';
 
 const logger = createLogger('real-object-storage');

@@ -1,48 +1,45 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Settings,
-  Shield,
-  Zap,
-  Bug,
-  Code,
-  Target,
-  FileText,
-  Brain,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  Sparkles,
-  RefreshCw,
-  Save,
-  Plus,
-  Trash2,
-  GitBranch,
-  Clock,
-  Database
-} from 'lucide-react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Brain,
+Bug,
+Clock,
+Code,
+Database,
+FileText,
+GitBranch,
+Info,
+Plus,
+RefreshCw,
+Save,
+Settings,
+Shield,
+Target,
+Trash2,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface ReviewSettings {
   enabledChecks: {

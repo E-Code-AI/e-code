@@ -1,15 +1,18 @@
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { getSEOConfig } from "@/config/seo.config";
 import {
-  ArrowRight, Rocket, Zap, Clock, DollarSign,
-  CheckCircle, TrendingUp, Users, Sparkles, Code,
-  Globe, Shield
+ArrowRight,
+CheckCircle,
+Clock,DollarSign,
+Rocket,
+Sparkles,
+TrendingUp
 } from "lucide-react";
 import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/config/seo.config";
 
 const seo = getSEOConfig('solutions/startups');
 

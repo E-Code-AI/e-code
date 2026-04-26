@@ -5,42 +5,34 @@
  * @version 3.0.0 - Migrated from Monaco to CodeMirror 6
  */
 
-import { useState } from 'react';
-import { EditorView } from '@codemirror/view';
-import { openSearchPanel } from '@codemirror/search';
-import { undo, redo, indentMore, indentLess } from '@codemirror/commands';
-import { foldAll, unfoldAll } from '@codemirror/language';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
-import {
-  Sparkles,
-  Search,
-  Replace,
-  FileEdit,
-  Navigation,
-  Code2,
-  Wand2,
-  X,
-  ArrowUpDown,
-  Braces,
-  Terminal,
-  ListTree,
-  Zap,
-  Undo,
-  Redo,
-  Copy,
-  Clipboard,
-  IndentIncrease,
-  IndentDecrease,
-  FoldVertical,
-  UnfoldVertical,
-  FileCode,
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import { indentLess,indentMore,redo,undo } from '@codemirror/commands';
+import { foldAll,unfoldAll } from '@codemirror/language';
+import { openSearchPanel } from '@codemirror/search';
+import { EditorView } from '@codemirror/view';
+import {
+Clipboard,
+Copy,
+FileCode,
+FoldVertical,
+IndentDecrease,
+IndentIncrease,
+Redo,
+Replace,
+Search,
+Sparkles,
+Undo,
+UnfoldVertical,
+X,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface MobileCodeActionsProps {
   editor: EditorView | null;

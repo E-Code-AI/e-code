@@ -1,33 +1,31 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Users, 
-  UserPlus, 
-  Search, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Calendar,
-  DollarSign,
-  TrendingUp,
-  Clock,
-  FileText,
-  Star,
-  Filter,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Building,
-  Zap
-} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import {
+Building,
+Calendar,
+DollarSign,
+Edit,
+FileText,
+Filter,
+Mail,
+MapPin,
+MoreHorizontal,
+Phone,
+Search,
+Star,
+TrendingUp,
+UserPlus,
+Users,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Customer {
   id: string;

@@ -1,39 +1,32 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Search,
-  Code,
-  FileText,
-  Filter,
-  Star,
-  StarOff,
-  Clock,
-  Trash2,
-  Copy,
-  ChevronRight,
-  File,
-  Folder,
-  Hash,
-  Regex,
-  MessageSquare,
-  X,
-  History,
-  Bookmark,
-  RefreshCw,
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
 import Fuse from 'fuse.js';
+import {
+Bookmark,
+Code,
+Copy,
+File,
+FileText,
+Filter,
+Folder,
+History,
+MessageSquare,
+RefreshCw,
+Regex,
+Search,
+Star,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useMemo,useState } from 'react';
 
 interface SearchResult {
   id: string;

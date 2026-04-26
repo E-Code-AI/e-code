@@ -1,15 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { 
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
-import { Activity, AlertCircle, Clock, Cpu, HardDrive, Zap } from 'lucide-react';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useQuery } from '@tanstack/react-query';
+import { Activity,AlertCircle,Clock,Cpu,Zap } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import {
+Bar,
+BarChart,
+CartesianGrid,
+Legend,ResponsiveContainer,
+Tooltip,
+XAxis,YAxis
+} from 'recharts';
 
 interface PerformanceMetrics {
   requestsPerMinute: number;

@@ -2,19 +2,17 @@
 // This is the core of the AI agent that can understand natural language and build full applications
 // Now powered by MCP (Model Context Protocol) for all operations
 
-import { storage } from '../storage';
-import { BuildAction } from './autonomous-builder';
-import { AIProviderFactory } from './ai-providers';
-import { checkpointService } from '../services/checkpoint-service';
-import { effortPricingService } from '../services/effort-pricing-service';
-import { createLogger } from '../utils/logger';
-import { AnthropicProvider } from './ai-providers';
-import { realPackageManager } from '../services/real-package-manager';
-import { agentWebSocketService } from '../services/agent-websocket-service';
 import { getMCPClient } from '../api/mcp';
 import { MCPClient } from '../mcp/client';
-import * as path from 'path';
+import { agentWebSocketService } from '../services/agent-websocket-service';
+import { checkpointService } from '../services/checkpoint-service';
+import { effortPricingService } from '../services/effort-pricing-service';
+import { realPackageManager } from '../services/real-package-manager';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
+import { AnthropicProvider } from './ai-providers';
+import { BuildAction } from './autonomous-builder';
 
 const logger = createLogger('EnhancedAutonomousAgent');
 

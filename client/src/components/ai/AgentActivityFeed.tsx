@@ -4,18 +4,28 @@
  * Phase 1 UX Enhancement - Nov 2025
  */
 
-import { useState, useMemo } from 'react';
-import { 
-  FileText, Terminal, Globe, AlertCircle, CheckCircle2, Clock, Loader2,
-  ChevronDown, ChevronUp, Filter, Trash2, FilePlus, FileEdit, Package,
-  Search, Database, Eye, FolderOpen, Activity, Zap, XCircle
-} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import {
+Activity,
+AlertCircle,CheckCircle2,
+ChevronDown,ChevronUp,
+Clock,
+Database,Eye,
+FileEdit,
+FilePlus,
+Loader2,
+Package,
+Search,
+Terminal,
+Trash2,
+XCircle
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
 
 export interface ActivityEvent {
   id: string;

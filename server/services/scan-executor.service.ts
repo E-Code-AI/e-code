@@ -3,14 +3,14 @@
  * Processes security scans asynchronously using the SecurityScanner
  */
 
-import type { IStorage } from '../storage';
-import type { SecurityScan, Vulnerability } from '@shared/schema';
-import { SecurityScanner, type SecurityIssue } from '../security/security-scanner';
-import { createLogger } from '../utils/logger';
-import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import type { SecurityScan,Vulnerability } from '@shared/schema';
+import { spawn } from 'child_process';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { spawn } from 'child_process';
+import { SecurityScanner } from '../security/security-scanner';
+import type { IStorage } from '../storage';
+import { createLogger } from '../utils/logger';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('scan-executor-service');
 

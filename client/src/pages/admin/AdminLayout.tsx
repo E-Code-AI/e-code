@@ -1,27 +1,26 @@
-import { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'wouter';
-import { 
-  LayoutDashboard,
-  Users,
-  Key,
-  FileText,
-  Ticket,
-  CreditCard,
-  Book,
-  Activity,
-  Settings,
-  Inbox,
-  LogOut,
-  Menu,
-  X,
-  Zap,
-  ChevronLeft,
-  HeartPulse,
-  ExternalLink
-} from 'lucide-react';
+import { ECodeLogo } from '@/components/ECodeLogo';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ECodeLogo } from '@/components/ECodeLogo';
+import {
+Activity,
+Book,
+ChevronLeft,
+CreditCard,
+FileText,
+HeartPulse,
+Inbox,
+Key,
+LayoutDashboard,
+LogOut,
+Menu,
+Settings,
+Ticket,
+Users,
+X,
+Zap
+} from 'lucide-react';
+import { ReactNode,useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 interface AdminLayoutProps {
   children: ReactNode;

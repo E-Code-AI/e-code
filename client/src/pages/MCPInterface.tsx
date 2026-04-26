@@ -1,21 +1,35 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  Terminal, FileText, Database, Globe, GitBranch, 
-  Play, Loader2, CheckCircle, AlertCircle, Code,
-  FolderOpen, FileCode, Command, Cpu, Hash, Shield,
-  Package, Cloud, Brain, Activity, Server, Zap
+import {
+Activity,
+AlertCircle,
+Brain,
+CheckCircle,
+Cloud,
+Code,
+Cpu,
+Database,
+FileText,
+FolderOpen,
+GitBranch,
+Globe,
+Loader2,
+Package,
+Play,
+Server,
+Shield,
+Terminal,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
 
 // Use Web Crypto API for generating UUIDs
 const crypto = window.crypto;

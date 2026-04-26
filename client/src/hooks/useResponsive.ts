@@ -3,15 +3,14 @@
  * React hook for responsive breakpoint detection with Replit parity
  */
 
-import { useState, useEffect } from 'react';
 import {
-  DeviceType,
-  DeviceCapabilities,
-  getDeviceType,
-  getDeviceCapabilities,
-  BREAKPOINTS,
-  MEDIA_QUERIES,
+DeviceCapabilities,
+DeviceType,
+getDeviceCapabilities,
+getDeviceType,
+MEDIA_QUERIES
 } from '@/../../shared/responsive-config';
+import { useEffect,useState } from 'react';
 
 export interface ResponsiveState {
   deviceType: DeviceType;

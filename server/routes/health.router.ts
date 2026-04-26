@@ -1,12 +1,11 @@
-import { Router, Request, Response } from "express";
-import { type IStorage } from "../storage";
-import os from 'os';
-import { execSync } from 'child_process';
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { db } from '../db';
 import { sql } from 'drizzle-orm';
+import { Request,Response,Router } from "express";
+import OpenAI from 'openai';
+import os from 'os';
+import { db } from '../db';
+import { type IStorage } from "../storage";
 
 export class HealthRouter {
   private router: Router;

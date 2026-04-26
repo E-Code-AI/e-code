@@ -1,11 +1,10 @@
+import { buildLogs,deployments } from '@shared/schema';
+import { and,desc,eq,gte,ilike,lte,sql } from 'drizzle-orm';
 import { Router } from 'express';
 import { z } from 'zod';
-import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { deployments, buildLogs, terminalLogs } from '@shared/schema';
-import { eq, desc, and, gte, lte, sql, like, inArray, or, ilike } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
-import { filterStream, transformStream, collectStream } from '../utils/db-streaming';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
 const logger = createLogger('logs-viewer');

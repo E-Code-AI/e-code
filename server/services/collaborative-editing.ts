@@ -1,11 +1,11 @@
 // @ts-nocheck
+import { collaborationSessions,sessionParticipants } from '@shared/schema';
+import * as crypto from 'crypto';
+import { and,eq } from 'drizzle-orm';
 import { WebSocket } from 'ws';
 import * as Y from 'yjs';
-import { applyUpdate, encodeStateAsUpdate } from 'yjs';
+import { applyUpdate,encodeStateAsUpdate } from 'yjs';
 import { db } from '../db';
-import { collaborationSessions, sessionParticipants } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 import { generateDeterministicColor } from '../websocket/ws-metrics';
 

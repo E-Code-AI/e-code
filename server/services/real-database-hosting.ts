@@ -1,10 +1,10 @@
 // @ts-nocheck
+import { ChildProcess,execSync,spawn } from 'child_process';
 import EventEmitter from 'events';
-import { createLogger } from '../utils/logger';
-import { spawn, execSync, ChildProcess } from 'child_process';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('real-database-hosting');
 

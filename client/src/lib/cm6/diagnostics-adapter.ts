@@ -1,16 +1,15 @@
-import { StateEffect, StateField, Extension, Text } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
 import {
-  Diagnostic as CM6Diagnostic,
-  setDiagnostics as cm6SetDiagnostics,
-  linter,
-  lintGutter,
-  lintKeymap,
-  openLintPanel,
-  closeLintPanel,
-  forceLinting,
+closeLintPanel,
+Diagnostic as CM6Diagnostic,
+setDiagnostics as cm6SetDiagnostics,
+forceLinting,
+linter,
+lintGutter,
+lintKeymap,
+openLintPanel,
 } from '@codemirror/lint';
-import { keymap } from '@codemirror/view';
+import { Extension,StateEffect,StateField,Text } from '@codemirror/state';
+import { EditorView,keymap } from '@codemirror/view';
 
 export type DiagnosticSeverity = 'error' | 'warning' | 'info' | 'hint';
 
@@ -578,7 +577,6 @@ export function createInfoDiagnostic(
 }
 
 export {
-  updateDiagnosticsEffect,
-  clearDiagnosticsEffect,
-  lintKeymap,
+clearDiagnosticsEffect,
+lintKeymap,updateDiagnosticsEffect
 };

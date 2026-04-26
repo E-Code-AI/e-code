@@ -1,44 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { useCollaboration } from './CollaborativeProvider';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
 } from '@/components/ui/card';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { 
-  Users, 
-  Eye, 
-  UserCheck, 
-  MoreVertical,
-  Circle,
-  Share2,
-  Copy,
-  Check,
-  Wifi,
-  WifiOff,
-  MousePointer2,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import {
+Check,
+Circle,
+Eye,
+MoreVertical,
+MousePointer2,
+Share2,
+UserCheck,
+Users,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useCollaboration } from './CollaborativeProvider';
 
 interface CollaboratorPresenceProps {
   className?: string;

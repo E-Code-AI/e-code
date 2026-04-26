@@ -1,19 +1,35 @@
-import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Plus, Trash2, Copy, ChevronUp, ChevronDown, Maximize2, Minimize2,
-  Type, AlignLeft, Image, Code2, List, Palette, Download, Play,
-  GripVertical, X, Loader2, ChevronLeft, ChevronRight, FileText,
-  Clock, StickyNote, FileDown
-} from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import type { SlideData, SlideContentBlock, SlideTheme } from "@shared/schema";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { SlideContentBlock,SlideData,SlideTheme } from "@shared/schema";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import {
+AlignLeft,
+ChevronDown,
+ChevronLeft,ChevronRight,
+ChevronUp,
+Clock,
+Code2,
+Copy,
+Download,
+FileDown,
+FileText,
+GripVertical,
+Image,
+List,
+Loader2,
+Palette,
+Play,
+Plus,
+StickyNote,
+Trash2,
+Type,
+X
+} from "lucide-react";
+import { useCallback,useEffect,useRef,useState } from "react";
 
 const PRESET_THEMES: SlideTheme[] = [
   { name: "Dark Modern", primaryColor: "#0079F2", secondaryColor: "#7C65CB", backgroundColor: "#1a1a2e", textColor: "#ffffff", fontFamily: "Inter, system-ui, sans-serif", accentColor: "#0CCE6B" },

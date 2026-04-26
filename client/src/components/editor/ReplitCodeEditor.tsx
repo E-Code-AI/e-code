@@ -1,51 +1,49 @@
-import { useState, useRef, useEffect } from 'react';
-import { EditorView } from '@codemirror/view';
-import { CM6Editor } from '@/components/editor/CM6Editor';
-import { Button } from '@/components/ui/button';
-import { X, ChevronDown, AlertCircle, RefreshCw, Sparkles, Settings } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { File } from '@shared/schema';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { SkeletonText } from '@/components/ui/skeleton-loader';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { useAIPreferences } from '@/hooks/use-ai-preferences';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+DropdownMenu,
+DropdownMenuCheckboxItem,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { MultiEditorManager } from './MultiEditorManager';
+import { useAIPreferences } from '@/hooks/use-ai-preferences';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+import { EditorView } from '@codemirror/view';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
+closestCenter,
+DndContext,
+DragEndEvent,
+KeyboardSensor,
+PointerSensor,
+useSensor,
+useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  horizontalListSortingStrategy,
+arrayMove,
+horizontalListSortingStrategy,
+SortableContext,
+sortableKeyboardCoordinates,
+useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { File } from '@shared/schema';
+import { AlertCircle,ChevronDown,RefreshCw,Settings,Sparkles,X } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
+import { MultiEditorManager } from './MultiEditorManager';
 
 interface EditorTab {
   fileId: number;

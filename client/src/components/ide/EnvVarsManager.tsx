@@ -1,16 +1,16 @@
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog,DialogContent,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, Eye, EyeOff, Download, Lock, Edit, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient, withBootstrapHeaders } from '@/lib/queryClient';
-import { Badge } from '@/components/ui/badge';
+import { apiRequest,queryClient,withBootstrapHeaders } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { Download,Eye,EyeOff,Lock,Plus,Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 interface EnvVar {
   id: string;  // UUID string from backend

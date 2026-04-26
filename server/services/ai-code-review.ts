@@ -1,13 +1,12 @@
 // @ts-nocheck
-import { aiProviderManager } from '../ai/ai-provider-manager';
-import { CodeAnalyzer } from '../ai/code-analyzer';
 import * as babel from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
 import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs/promises';
 import * as path from 'path';
+import { promisify } from 'util';
+import { aiProviderManager } from '../ai/ai-provider-manager';
+import { CodeAnalyzer } from '../ai/code-analyzer';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ai-code-review');

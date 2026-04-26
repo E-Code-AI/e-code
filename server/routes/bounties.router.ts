@@ -1,17 +1,14 @@
 // @ts-nocheck
-import { Router, Request, Response } from 'express';
-import { z } from 'zod';
-import { storage, type IStorage } from '../storage';
-import { bountyPaymentService } from '../services/bounty-payment-service';
-import { createLogger } from '../utils/logger';
-import { 
-  insertBountySchema, 
-  insertBountySubmissionSchema, 
-  insertBountyReviewSchema,
-  type Bounty,
-  type BountySubmission,
-  type BountyReview
+import {
+insertBountyReviewSchema,
+insertBountySchema,
+insertBountySubmissionSchema
 } from '@shared/schema';
+import { Request,Response,Router } from 'express';
+import { z } from 'zod';
+import { bountyPaymentService } from '../services/bounty-payment-service';
+import { storage,type IStorage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('bounties-router');
 

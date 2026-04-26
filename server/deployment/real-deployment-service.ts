@@ -1,15 +1,15 @@
 // @ts-nocheck
+import { exec } from 'child_process';
+import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exec, spawn } from 'child_process';
-import { promisify } from 'util';
-import * as crypto from 'crypto';
 import * as tar from 'tar';
-import { createLogger } from '../utils/logger';
+import { promisify } from 'util';
 import { containerOrchestrator } from '../containers/container-orchestrator';
-import { edgeManager } from '../edge/edge-manager';
 import { cdnService } from '../edge/cdn-service';
+import { edgeManager } from '../edge/edge-manager';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 const logger = createLogger('real-deployment');

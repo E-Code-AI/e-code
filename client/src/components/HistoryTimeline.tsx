@@ -1,32 +1,29 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  GitCommit,
-  GitBranch,
-  GitMerge,
-  GitPullRequest,
-  Clock,
-  RotateCcw,
-  Eye,
-  Code2,
-  FileText,
-  Plus,
-  Minus,
-  Edit,
-  ChevronRight,
-  ChevronDown,
-  Calendar,
-  User,
-  Tag,
-  Download,
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+ChevronDown,
+ChevronRight,
+Clock,
+Code2,
+Download,
+Eye,
+FileText,
+GitBranch,
+GitCommit,
+GitMerge,
+GitPullRequest,
+Minus,
+Plus,
+RotateCcw,
+Tag
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface HistoryEntry {
   id: string;

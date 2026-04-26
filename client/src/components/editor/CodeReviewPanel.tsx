@@ -1,58 +1,52 @@
-import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  CheckCircle2,
-  FileCode,
-  Download,
-  Filter,
-  RefreshCw,
-  ChevronRight,
-  Shield,
-  Zap,
-  Bug,
-  Code,
-  Target,
-  Settings,
-  MoreVertical,
-  TrendingUp,
-  TrendingDown,
-  Activity,
-  Clock,
-  GitBranch,
-  CheckSquare,
-  XCircle
-} from 'lucide-react';
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import {
+Activity,
+AlertCircle,
+AlertTriangle,
+Bug,
+CheckCircle2,
+CheckSquare,
+ChevronRight,
+Clock,
+Code,
+Download,
+FileCode,
+GitBranch,
+Info,
+RefreshCw,
+Shield,
+Target,
+TrendingUp,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
+import { CartesianGrid,Cell,Line,LineChart,Pie,PieChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 
 interface Review {
   id: number;

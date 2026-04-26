@@ -13,30 +13,30 @@
  * SECURITY: All errors are propagated to caller for proper 500 responses
  */
 
-import { db } from '../db';
-import { 
-  agentSessions, 
-  autonomousActions, 
-  fileOperations,
-  agentMessages,
-  aiConversations,
-  users,
-  projects
+import {
+agentMessages,
+agentSessions,
+aiConversations,
+autonomousActions,
+fileOperations,
+projects,
+users
 } from '@shared/schema';
-import { eq, and, gte, lte, desc, asc, count, sql, isNotNull } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
 import type {
-  AgentSessionRow,
-  AgentActionRow,
-  FileOperationRow,
-  ConversationMessageRow,
-  SessionsGridResponse,
-  ActionsGridResponse,
-  FileOperationsGridResponse,
-  ConversationsGridResponse,
-  MetricsDashboardResponse,
-  AgentDashboardMetrics,
+ActionsGridResponse,
+AgentActionRow,
+AgentDashboardMetrics,
+AgentSessionRow,
+ConversationMessageRow,
+ConversationsGridResponse,
+FileOperationRow,
+FileOperationsGridResponse,
+MetricsDashboardResponse,
+SessionsGridResponse,
 } from '@shared/types/agent-grid.types';
+import { and,asc,count,desc,eq,gte,isNotNull,lte,sql } from 'drizzle-orm';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('agent-grid-data-service');
 

@@ -1,18 +1,17 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
-import { Brain, Sparkles, Zap, Eye, Code, FileSearch } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import { Brain,Code,Eye,Sparkles,Zap } from 'lucide-react';
+import { useState } from 'react';
 
 interface OpenAIModel {
   id: string;

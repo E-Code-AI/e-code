@@ -1,39 +1,24 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { useLocation, useParams } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  GitBranch,
-  Star,
-  GitFork,
-  Clock,
-  MapPin,
-  Link as LinkIcon,
-  Mail,
-  Twitter,
-  Github,
-  Users,
-  Code2,
-  Zap,
-  Trophy,
-  Target,
-  TrendingUp,
-  Calendar as CalendarIcon,
-  BarChart3,
-  Activity,
-  Crown,
-  Shield,
-  Award,
-  Circle,
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
+import {
+Activity,
+Circle,
+GitFork,
+Github,
+Link as LinkIcon,
+MapPin,
+Shield,
+Star,
+Twitter
+} from 'lucide-react';
+import { useState } from 'react';
+import { useLocation,useParams } from 'wouter';
 
 export default function Profile() {
   const [, navigate] = useLocation();

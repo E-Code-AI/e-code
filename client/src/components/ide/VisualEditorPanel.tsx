@@ -1,25 +1,40 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import {
-  Globe, RefreshCw, ExternalLink, Play, Square, Loader2,
-  MousePointer2, Type, Palette, AlignLeft, AlignCenter, AlignRight,
-  Bold, Italic, Underline, Save, X, Move, Maximize2, Minimize2,
-  Image, Link, Code, Layers, Eye, EyeOff, Undo2, Redo2,
-  ZoomIn, ZoomOut, Smartphone, Tablet, Monitor, RotateCcw
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+AlignCenter,
+AlignLeft,
+AlignRight,
+Bold,
+Code,
+Globe,
+Italic,
+Layers,
+Loader2,
+Monitor,
+MousePointer2,
+Palette,
+Play,
+Redo2,
+RefreshCw,
+Save,
+Smartphone,Tablet,
+Type,
+Undo2,
+X,
+ZoomIn,ZoomOut
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ElementInfo {
   tagName: string;

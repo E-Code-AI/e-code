@@ -1,12 +1,12 @@
 // @ts-nocheck
 import * as k8s from '@kubernetes/client-node';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import { v4 as uuidv4 } from 'uuid';
+import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('DeploymentManager');
-import { v4 as uuidv4 } from 'uuid';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import { storage } from '../storage';
 
 const execAsync = promisify(exec);
 

@@ -1,11 +1,11 @@
 // @ts-nocheck
-import { useRef, useEffect, useCallback, useMemo, memo, forwardRef } from 'react';
-import { useVirtualizer } from '@tanstack/react-virtual';
-import { cn } from '@/lib/utils';
-import { EnhancedChatMessage, StreamingSkeleton } from './EnhancedChatMessage';
-import type { Message, AutonomousBuildMode } from '@/stores/agentConversationStore';
 import type { Action } from '@/components/agent/messages';
 import { LazyAnimatePresence } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import type { AutonomousBuildMode,Message } from '@/stores/agentConversationStore';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { forwardRef,memo,useCallback,useEffect,useMemo,useRef } from 'react';
+import { EnhancedChatMessage,StreamingSkeleton } from './EnhancedChatMessage';
 
 interface VirtualizedMessageListProps {
   messages: Message[];

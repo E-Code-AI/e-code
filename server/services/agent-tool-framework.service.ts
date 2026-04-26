@@ -1,27 +1,25 @@
-import { EventEmitter } from 'events';
-import { createLogger } from '../utils/logger';
-import { db } from '../db';
 import {
-  toolRegistry,
-  toolExecutions,
-  agentSessions,
-  agentAuditTrail,
-  files,
-  type ToolRegistry,
-  type ToolExecution,
-  type InsertToolRegistry,
-  type InsertToolExecution,
-  type AgentSession
+agentAuditTrail,
+agentSessions,
+files,
+toolExecutions,
+toolRegistry,
+type AgentSession,
+type ToolExecution,
+type ToolRegistry
 } from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { syncFileToDisc } from '../utils/project-fs-sync';
-import { z } from 'zod';
-import { agentFileOperations } from './agent-file-operations.service';
-import { agentCommandExecution } from './agent-command-execution.service';
-import { OpenAI } from 'openai';
+import { and,eq,sql } from 'drizzle-orm';
+import { EventEmitter } from 'events';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import fetch from 'node-fetch';
+import { OpenAI } from 'openai';
+import * as path from 'path';
+import { z } from 'zod';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
+import { syncFileToDisc } from '../utils/project-fs-sync';
+import { agentCommandExecution } from './agent-command-execution.service';
+import { agentFileOperations } from './agent-file-operations.service';
 
 const logger = createLogger('agent-tool-framework');
 

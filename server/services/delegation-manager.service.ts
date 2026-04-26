@@ -12,7 +12,6 @@
 
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { orchestratorMetrics } from './orchestrator-metrics.service';
 
 const logger = createLogger('DelegationManager');
 

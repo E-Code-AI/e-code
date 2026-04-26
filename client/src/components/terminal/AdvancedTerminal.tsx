@@ -1,49 +1,55 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useTheme } from '@/components/ThemeProvider';
+import { Button } from "@/components/ui/button";
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle
+} from "@/components/ui/dialog";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuSub,
+DropdownMenuSubContent,
+DropdownMenuSubTrigger,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import {
+Download,
+History,
+Maximize2,Minimize2,
+Palette,
+Plus,
+RotateCcw,
+Search,
+Settings,
+Split,
+Terminal as TerminalIcon,
+Trash2,
+X,
+ZoomIn,ZoomOut
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { 
-  Maximize2, Minimize2, X, RefreshCw, Plus,
-  Sun, Moon, Copy, ChevronDown, Search,
-  RotateCcw, RotateCw, ZoomIn, ZoomOut,
-  Terminal as TerminalIcon, History,
-  Download, Upload, Settings, Palette,
-  Save, Trash2, Split
-} from 'lucide-react';
-import { useTheme } from '@/components/ThemeProvider';
-import { useToast } from '@/hooks/use-toast';
-import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
-import { apiRequest } from '@/lib/queryClient';
 
 interface TerminalSession {
   id: string;

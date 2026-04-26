@@ -1,48 +1,31 @@
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { getCSRFToken, withBootstrapHeaders } from "@/lib/queryClient";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Bot,
-  Send,
-  Code,
-  FileText,
-  Terminal,
-  Zap,
-  Brain,
-  Sparkles,
-  Settings,
-  History,
-  Copy,
-  Download,
-  Share,
-  RotateCcw,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Check,
-  FileCode,
-  Play,
-  Square,
-  RefreshCw,
-  AlertCircle,
-} from "lucide-react";
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Tabs,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { getCSRFToken,withBootstrapHeaders } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
+import {
+Bot,
+Copy,
+FileCode,
+FileText,
+Loader2,
+RotateCcw,
+Send,
+Zap
+} from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 
 interface UnifiedAIInterfaceProps {
   projectId: number;

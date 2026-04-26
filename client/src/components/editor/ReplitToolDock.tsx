@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
+import { Tooltip,TooltipContent,TooltipProvider,TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import {
-  Folder,
-  Search,
-  Sparkles,
-  GitBranch,
-  Bug,
-  Database,
-  Package,
-  Lock,
-  Settings,
-  HelpCircle,
-  Grid,
-  Terminal,
-  HardDrive
+Bug,
+Database,
+Folder,
+GitBranch,
+Grid,
+HardDrive,
+Lock,
+Package,
+Search,
+Settings,
+Sparkles,
+Terminal
 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import React,{ useState } from 'react';
 
 interface Tool {
   id: string;

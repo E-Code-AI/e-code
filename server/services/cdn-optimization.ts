@@ -3,9 +3,9 @@
  * Optimized for Replit deployment with built-in CDN
  */
 
-import { Request, Response, NextFunction } from 'express';
-import { createLogger } from '../utils/logger';
+import { NextFunction,Request,Response } from 'express';
 import { config as appConfig } from '../config/environment';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('cdn-optimization');
 

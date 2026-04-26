@@ -1,29 +1,27 @@
 // @ts-nocheck
-import { useState } from "react";
-import { useParams, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ECodeLoading } from "@/components/ECodeLoading";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  ThumbsUp, 
-  MessageSquare, 
-  Bookmark, 
-  Share2, 
-  Eye,
-  Code2,
-  Send,
-  MoreVertical
+import { apiRequest,queryClient } from "@/lib/queryClient";
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+ArrowLeft,
+Bookmark,
+Code2,
+Eye,
+MessageSquare,
+MoreVertical,
+Send,
+Share2,
+ThumbsUp
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { ECodeLoading } from "@/components/ECodeLoading";
+import { useState } from "react";
+import { useLocation,useParams } from "wouter";
 
 interface Author {
   id: string;

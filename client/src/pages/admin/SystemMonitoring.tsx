@@ -1,28 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Database, 
-  HardDrive, 
-  Cpu, 
-  MemoryStick, 
-  AlertTriangle,
-  TrendingUp,
-  RefreshCw,
-  Server,
-  Clock,
-  Users,
-  FolderKanban,
-  Gauge,
-  CheckCircle,
-  XCircle,
-  Info
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertTriangle,
+CheckCircle,
+Clock,
+Cpu,
+Database,
+FolderKanban,
+Gauge,
+HardDrive,
+Info,
+MemoryStick,
+RefreshCw,
+TrendingUp,
+Users,
+XCircle
 } from 'lucide-react';
+import { useCallback,useEffect,useState } from 'react';
 import { AdminLayout } from './AdminLayout';
-import { queryClient } from '@/lib/queryClient';
 
 interface SystemOverview {
   timestamp: string;

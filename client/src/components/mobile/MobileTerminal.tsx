@@ -1,17 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
+import { Button } from '@/components/ui/button';
+import { useTerminalHistoryPersistence } from '@/hooks/use-mobile-persistence';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import {
+ArrowDown,ArrowLeft,ArrowRight,
+ArrowUp,
+Clipboard,
+Command,
+Copy,
+CornerDownLeft,Delete,
+Keyboard
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import { Terminal } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
-import { 
-  Copy, Clipboard, ArrowUp, ArrowDown, ArrowLeft, ArrowRight,
-  CornerDownLeft, Delete, X as Escape, Command, Keyboard
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useTerminalHistoryPersistence } from '@/hooks/use-mobile-persistence';
-import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
-import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
-import { apiRequest } from '@/lib/queryClient';
 import 'xterm/css/xterm.css';
 
 interface MobileTerminalProps {

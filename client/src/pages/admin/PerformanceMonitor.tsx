@@ -1,42 +1,40 @@
-import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
+Alert,
+AlertDescription,
+AlertTitle,
 } from '@/components/ui/alert';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Activity,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Server,
-  TrendingUp,
-  RefreshCw,
-  Zap,
-} from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
+import {
+Activity,
+AlertCircle,
+CheckCircle,
+Clock,
+RefreshCw,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import {
+Area,
+AreaChart,
+CartesianGrid,
+Line,
+LineChart,
+ResponsiveContainer,
+Tooltip,
+XAxis,
+YAxis,
+} from 'recharts';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

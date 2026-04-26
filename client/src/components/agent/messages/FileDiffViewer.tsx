@@ -3,11 +3,10 @@
  * Replit-style diff display with syntax highlighting
  */
 
-import { useState } from 'react';
-import { FileText, ChevronDown, ChevronRight, Plus, Minus } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { ChevronDown,ChevronRight,FileText,Minus,Plus } from 'lucide-react';
+import { useState } from 'react';
 
 interface FileDiff {
   path: string;

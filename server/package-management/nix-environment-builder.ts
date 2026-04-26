@@ -1,7 +1,5 @@
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { nixPackageManager } from './nix-package-manager';
 import { createLogger } from '../utils/logger';
+import { nixPackageManager } from './nix-package-manager';
 
 const logger = createLogger('nix-environment-builder');
 

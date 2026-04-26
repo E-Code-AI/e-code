@@ -4,32 +4,39 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useState, useCallback, Suspense } from 'react';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
-import { 
-  X, ChevronLeft, Activity, Table2, BarChart3, 
-  FileCode, MessageSquare, Maximize2, Minimize2
-} from 'lucide-react';
+import {
+GridFallback,
+LazyAgentActionsGrid,
+LazyAgentSessionsGrid,
+LazyConversationHistoryGrid,
+LazyFileOperationsGrid
+} from '@/components/lazy/LazyAgGrid';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { 
-  LazyAgentSessionsGrid, 
-  LazyAgentActionsGrid, 
-  LazyFileOperationsGrid, 
-  LazyConversationHistoryGrid,
-  GridFallback 
-} from '@/components/lazy/LazyAgGrid';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import type { AgentSessionRow } from '@shared/types/agent-grid.types';
+import {
+Activity,
+BarChart3,
+ChevronLeft,
+FileCode,
+Maximize2,
+MessageSquare,
+Minimize2,
+Table2,
+X
+} from 'lucide-react';
+import { Suspense,useCallback,useState } from 'react';
 
 const AgentMetricsDashboard = instrumentedLazy(() => import('./AgentMetricsDashboard').then(m => ({ default: m.AgentMetricsDashboard })), 'AgentMetricsDashboard');
 

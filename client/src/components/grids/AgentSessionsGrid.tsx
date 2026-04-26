@@ -4,42 +4,50 @@
  * Phase 2 - Agent Activity Dashboard
  */
 
-import { useState, useCallback, useMemo } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Download, RefreshCw, Filter, Search, Calendar, 
-  ChevronDown, Loader2, Table2, SlidersHorizontal,
-  Clock, Cpu, DollarSign, User, ChevronRight
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { withBootstrapHeaders } from '@/lib/queryClient';
+import { Card,CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+Popover,
+PopoverContent,
+PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useToast } from '@/hooks/use-toast';
-import { defaultGridOptions, sessionGridColDefs } from './ag-grid-config';
-import { gridCellRenderers } from './GridCellRenderers';
-import type { AgentSessionRow, SessionsGridResponse } from '@shared/types/agent-grid.types';
-import type { GridReadyEvent, GridApi } from 'ag-grid-community';
+import { withBootstrapHeaders } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import type { AgentSessionRow,SessionsGridResponse } from '@shared/types/agent-grid.types';
+import { useQuery } from '@tanstack/react-query';
+import type { GridApi,GridReadyEvent } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
+import { AgGridReact } from 'ag-grid-react';
+import { format } from 'date-fns';
+import {
+Calendar,
+ChevronDown,
+ChevronRight,
+Clock,Cpu,DollarSign,
+Download,
+Loader2,
+RefreshCw,
+Search,
+SlidersHorizontal,
+Table2,
+User
+} from 'lucide-react';
+import { useCallback,useMemo,useState } from 'react';
+import { defaultGridOptions,sessionGridColDefs } from './ag-grid-config';
 import './ag-grid-theme.css';
+import { gridCellRenderers } from './GridCellRenderers';
 
 interface AgentSessionsGridProps {
   projectId?: number;

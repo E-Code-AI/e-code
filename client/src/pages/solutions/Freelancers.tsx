@@ -1,15 +1,19 @@
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { getSEOConfig } from "@/config/seo.config";
 import {
-  ArrowRight, Briefcase, Clock, DollarSign, Star,
-  CheckCircle, Users, Sparkles, Code, Globe,
-  Laptop, Palette, Share2, Trophy
+ArrowRight,Briefcase,
+CheckCircle,
+Clock,DollarSign,
+Globe,
+Laptop,Palette,Share2,
+Star,
+Trophy
 } from "lucide-react";
 import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
-import { getSEOConfig } from "@/config/seo.config";
 
 const seo = getSEOConfig('solutions/freelancers');
 

@@ -8,7 +8,7 @@
  * 4. Disables background polling by default
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect,useState } from 'react';
 
 // Production vs development polling multipliers
 const PRODUCTION_MULTIPLIER = import.meta.env.PROD ? 3 : 1;

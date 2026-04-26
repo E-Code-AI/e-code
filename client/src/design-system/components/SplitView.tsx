@@ -3,9 +3,9 @@
  * Multi-pane editor for tablets and desktop
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
 import type { PanInfo } from '@/lib/motion';
-import { LazyMotionDiv, LazyMotionButton, LazyMotionSpan } from '@/lib/motion';
+import { LazyMotionButton,LazyMotionDiv,LazyMotionSpan } from '@/lib/motion';
+import React,{ useCallback,useRef,useState } from 'react';
 import { useDesignSystem } from '../hooks/useDesignSystem';
 import { triggerHaptic } from '../hooks/useGestures';
 

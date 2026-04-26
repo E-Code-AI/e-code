@@ -2,12 +2,10 @@
 import * as babel from '@babel/parser';
 import traverse from '@babel/traverse';
 import * as t from '@babel/types';
-import * as ts from 'typescript';
 import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import * as crypto from 'crypto';
+import * as path from 'path';
+import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('code-analysis-engine');

@@ -1,7 +1,6 @@
 // Test just vite import
 
 import express from "express";
-import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 const port = 5000;

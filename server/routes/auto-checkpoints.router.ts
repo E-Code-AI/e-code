@@ -3,25 +3,20 @@
  * Replit-style automatic checkpoint system with full CRUD operations
  */
 
-import { Router, Request, Response } from 'express';
+import {
+autoCheckpointFiles,
+autoCheckpoints,
+checkpointRestores
+} from '@shared/schema';
+import { and,desc,eq,sql } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
+import { Server as SocketIOServer } from 'socket.io';
 import { z } from 'zod';
 import { db } from '../db';
-import { eq, desc, and, sql } from 'drizzle-orm';
-import { 
-  autoCheckpoints, 
-  autoCheckpointFiles, 
-  checkpointRestores,
-  insertAutoCheckpointSchema,
-  insertAutoCheckpointFileSchema,
-  insertCheckpointRestoreSchema,
-  type AutoCheckpoint,
-  type AutoCheckpointFile
-} from '@shared/schema';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
-import { Server as SocketIOServer } from 'socket.io';
-import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('auto-checkpoints-router');
 const router = Router();

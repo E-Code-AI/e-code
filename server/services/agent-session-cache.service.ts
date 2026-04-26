@@ -18,11 +18,11 @@
  * @since Nov 21, 2025 - Fortune 500 WebSocket security fix
  */
 
-import { redisCache, CacheKeys, CacheTTL } from './redis-cache.service';
-import { db } from '../db';
 import { agentSessions } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
+import { CacheTTL,redisCache } from './redis-cache.service';
 
 const logger = createLogger('agent-session-cache');
 

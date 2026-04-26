@@ -1,11 +1,11 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Globe, RefreshCw, ExternalLink, Play, Square, Loader2, AlertCircle, Camera } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { AlertCircle,Camera,ExternalLink,Globe,Loader2,Play,RefreshCw,Square } from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { SplashScreenSequence } from './SplashScreenSequence';
 
 export type AutonomousBuildPhase = 'planning' | 'scaffolding' | 'building' | 'styling' | 'finalizing' | 'complete' | null;

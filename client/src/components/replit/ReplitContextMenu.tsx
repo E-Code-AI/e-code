@@ -1,37 +1,32 @@
 // @ts-nocheck
-import { 
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuShortcut,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuTrigger
+import {
+ContextMenu,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuShortcut,
+ContextMenuSub,
+ContextMenuSubContent,
+ContextMenuSubTrigger,
+ContextMenuTrigger
 } from '@/components/ui/context-menu';
-import { 
-  Copy,
-  Scissors,
-  FileText,
-  Folder,
-  FolderPlus,
-  Trash2,
-  Edit,
-  Eye,
-  Download,
-  Share2,
-  GitBranch,
-  Terminal,
-  Code,
-  Settings,
-  ArrowUp,
-  ArrowDown,
-  RefreshCw,
-  Star,
-  Archive,
-  Files,
-  RotateCw
+import {
+Archive,
+ArrowUp,
+Code,
+Copy,
+Download,
+Edit,
+Eye,
+Files,
+FileText,
+FolderPlus,
+RefreshCw,
+Scissors,
+Settings,
+Share2,
+Terminal,
+Trash2
 } from 'lucide-react';
 
 interface ContextMenuAction {

@@ -3,16 +3,15 @@
  * Replaces simple-executor.ts with proper container isolation
  */
 
-import { spawn, ChildProcess, execSync } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
-import type Docker from 'dockerode';
 import { File } from '@shared/schema';
-import { storage } from './storage';
-import { withTempDir } from './utils/temp-cleanup';
+import { ChildProcess,execSync,spawn } from 'child_process';
+import type Docker from 'dockerode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { resourceMonitor } from './services/resource-monitor';
+import { storage } from './storage';
 import { createLogger } from './utils/logger';
+import { withTempDir } from './utils/temp-cleanup';
 
 const logger = createLogger('docker-executor');
 

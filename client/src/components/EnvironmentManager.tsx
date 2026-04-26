@@ -1,66 +1,64 @@
-import { useState } from "react";
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+} from "@/components/ui/dialog";
+import {
+Form,
+FormControl,
+FormField,
+FormItem,
+FormLabel,
+FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Switch } from "@/components/ui/switch";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { 
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+Sheet,
+SheetContent,
+SheetDescription,
+SheetHeader,
+SheetTitle
 } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import {
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow
+} from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Project } from "@shared/schema";
+import {
+Copy,
+Eye,
+EyeOff,
+Info,
+KeyRound,
+Plus,
+Save,
+Settings2,
+Trash2
+} from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { 
-  KeyRound, 
-  Plus, 
-  Eye, 
-  EyeOff, 
-  Copy, 
-  Trash2, 
-  Save, 
-  Info, 
-  Settings2 
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Project } from "@shared/schema";
 
 interface EnvVariable {
   id: number;

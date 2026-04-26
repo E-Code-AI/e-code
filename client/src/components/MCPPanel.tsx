@@ -1,14 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
 import {
-  Server, Loader2, Plus, X, Play, Square, RefreshCw,
-  ChevronDown, ChevronRight, Wrench, CheckCircle2, XCircle, AlertCircle, Plug2,
-  Search, Globe, Database, Terminal, Pencil, FileText, Figma, ExternalLink, BookOpen,
+AlertCircle,
+BookOpen,
+CheckCircle2,
+ChevronDown,ChevronRight,
+Database,
+ExternalLink,
+Figma,
+FileText,
+Globe,
+Loader2,
+Pencil,
+Play,
+Plug2,
+Plus,
+RefreshCw,
+Search,
+Server,
+Square,
+Terminal,
+Wrench,
+X,
+XCircle,
 } from "lucide-react";
+import { useEffect,useRef,useState } from "react";
 
 interface McpServer {
   id: string;

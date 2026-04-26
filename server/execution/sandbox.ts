@@ -1,7 +1,7 @@
 // @ts-nocheck
-import { Worker } from 'worker_threads';
-import * as vm from 'vm';
 import * as path from 'path';
+import * as vm from 'vm';
+import { Worker } from 'worker_threads';
 import { ExecutionResult } from './executor';
 
 interface SandboxOptions {

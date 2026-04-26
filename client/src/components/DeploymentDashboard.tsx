@@ -1,17 +1,30 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Globe, Server, Activity, Clock, Lock, RefreshCw, 
-  ExternalLink, Settings, AlertCircle, CheckCircle,
-  TrendingUp, Users, Zap, HardDrive, Cpu, MemoryStick,
-  MapPin, Shield, Calendar, Play, Square, Monitor
-} from 'lucide-react';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+Activity,
+AlertCircle,
+Calendar,
+CheckCircle,
+Clock,
+ExternalLink,
+Globe,
+Lock,
+MapPin,
+Monitor,
+Play,
+RefreshCw,
+Server,
+Settings,
+Shield,
+Square,
+TrendingUp,Users,Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 import { DeploymentTypes } from './DeploymentTypes';
 
 interface DeploymentDashboardProps {

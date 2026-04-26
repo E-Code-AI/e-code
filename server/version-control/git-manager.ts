@@ -1,7 +1,6 @@
 import { spawn } from 'child_process';
-import * as path from 'path';
 import * as fs from 'fs/promises';
-import { storage } from '../storage';
+import * as path from 'path';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 export interface GitStatus {

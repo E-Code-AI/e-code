@@ -1,10 +1,10 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Download, Presentation, TrendingUp, Users, Zap, Shield, Globe, Rocket, DollarSign, Award, Target, Building, Code, Cpu, Database, Cloud, Lock, BarChart3, PieChart, GitBranch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/hooks/use-auth';
+import { Award,Building,ChevronLeft,ChevronRight,Cloud,Code,Cpu,Database,DollarSign,Download,GitBranch,Globe,Lock,Presentation,Rocket,Shield,Target,TrendingUp,Users,Zap } from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 export default function PitchDeck() {
   const [currentSlide, setCurrentSlide] = useState(0);

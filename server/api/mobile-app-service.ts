@@ -1,7 +1,7 @@
 // @ts-nocheck
+import { deviceTokens,mobileDevices,projects,pushNotifications } from '@shared/schema';
+import { and,count,desc,eq } from 'drizzle-orm';
 import { db } from '../db';
-import { mobileDevices, pushNotifications, users, projects, deviceTokens } from '@shared/schema';
-import { eq, and, desc, count } from 'drizzle-orm';
 import { fcmService } from '../integrations/fcm-service';
 
 export class MobileAppService {

@@ -79,7 +79,7 @@ Services annexes si activés:
 - `npm run typecheck` : PASS
 - `npm run build` : PASS
 - `npm audit --audit-level=high` : PASS
-- `npm run lint` : BLOCKED — 3351 warnings à résorber pour satisfaire le gate zéro warning
+- `npm run lint` : BLOCKED — 1270 warnings restants à résorber pour satisfaire le gate zéro warning
 - `setup-local-db.sh` : PASS avec Postgres local idempotent
 - `/health` et `/health/readiness` : PASS en boot dev contrôlé
 - `test/e2e/panels/workspace-core.spec.ts` : PASS, couvre ouverture IDE, file tree create/rename/delete, preview URL

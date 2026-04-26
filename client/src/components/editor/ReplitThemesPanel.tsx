@@ -1,35 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useParams } from 'wouter';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
 import {
-  Palette,
-  Sun,
-  Moon,
-  Monitor,
-  Check,
-  Save,
-  Download,
-  Upload,
-  Sparkles,
-  Eye,
-  Edit,
-  Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger,
 } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Check,
+Download,
+Eye,
+Monitor,
+Moon,
+Palette,
+Save,
+Sparkles,
+Sun
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useParams } from 'wouter';
 
 interface ThemeSettings {
   id?: number;

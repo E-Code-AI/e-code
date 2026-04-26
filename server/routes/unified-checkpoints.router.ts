@@ -8,22 +8,20 @@
  * - auto-checkpoints.router.ts (auto/milestone checkpoints)
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
+import {
+autoCheckpointFiles,
+autoCheckpoints,
+checkpointRestores
+} from '@shared/schema';
+import { and,desc,eq,sql } from 'drizzle-orm';
+import { NextFunction,Request,Response,Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db';
-import { eq, desc, and, sql, isNull } from 'drizzle-orm';
-import {
-  autoCheckpoints,
-  autoCheckpointFiles,
-  checkpointRestores,
-  projects,
-  type AutoCheckpoint,
-} from '@shared/schema';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
-import { createLogger } from '../utils/logger';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('unified-checkpoints-router');
 const router = Router();

@@ -8,7 +8,7 @@
  * - Properly cleans up on unmount
  */
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef,useState } from 'react';
 
 interface UseInViewOptions {
   threshold?: number;

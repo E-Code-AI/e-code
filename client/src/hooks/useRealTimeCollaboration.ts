@@ -10,9 +10,9 @@
  * - Activity tracking
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/hooks/use-auth';
+import { useCallback,useEffect,useRef,useState } from 'react';
+import { io,Socket } from 'socket.io-client';
 
 export interface Collaborator {
   id: string;

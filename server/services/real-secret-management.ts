@@ -1,7 +1,4 @@
 import crypto from 'crypto';
-import { db } from '../db';
-import { projects, users } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 import { getSessionSecret } from '../utils/secrets-manager';
 
 const logger = {

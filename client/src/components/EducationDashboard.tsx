@@ -1,32 +1,25 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  BookOpen, 
-  Trophy, 
-  Users, 
-  Target, 
-  Award,
-  Clock,
-  CheckCircle,
-  PlayCircle,
-  Star,
-  TrendingUp,
-  Calendar,
-  MessageSquare,
-  FileText,
-  Code
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { cn } from '@/lib/utils';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Award,
+BookOpen,
+Clock,
+FileText,
+Star,
+TrendingUp,
+Trophy,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface Course {
   id: number;

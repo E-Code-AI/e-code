@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { 
-  Check, 
-  CloudOff, 
-  Loader2, 
-  AlertCircle,
-  WifiOff
+import {
+AlertCircle,
+Check,
+Loader2,
+WifiOff
 } from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface AutoSaveIndicatorProps {
   status: 'idle' | 'saving' | 'saved' | 'error' | 'offline';

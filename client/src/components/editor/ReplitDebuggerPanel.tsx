@@ -1,37 +1,35 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { LazyMotionDiv } from '@/lib/motion';
 import {
-  Bug,
-  Play,
-  Pause,
-  Square,
-  SkipForward,
-  ArrowDown,
-  ArrowUp,
-  ArrowRight,
-  Circle,
-  ChevronRight,
-  ChevronDown,
-  Plus,
-  Trash2,
-  RefreshCw,
-  AlertCircle,
-  X
-} from 'lucide-react';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+Tabs,
+TabsContent,
+TabsList,
+TabsTrigger,
 } from '@/components/ui/tabs';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+ArrowDown,
+ArrowRight,
+ArrowUp,
+Bug,
+ChevronDown,
+ChevronRight,
+Circle,
+Pause,
+Play,
+Plus,
+RefreshCw,
+Square,
+Trash2
+} from 'lucide-react';
+import { useState } from 'react';
 import { useParams } from 'wouter';
 
 interface Breakpoint {

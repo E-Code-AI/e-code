@@ -1,76 +1,59 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
+} from '@/components/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts';
-import {
-  Bell,
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Info,
-  Zap,
-  Activity,
-  Database,
-  Cpu,
-  HardDrive,
-  Wifi,
-  Plus,
-  Settings,
-  Calendar,
-  Clock,
+AlertTriangle,
+Bell,
+Cpu,
+Database,
+DollarSign,
+Info,
+Plus,
+Wifi,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
+import {
+Area,
+AreaChart,
+CartesianGrid,
+Legend,
+ResponsiveContainer,
+Tooltip,
+XAxis,
+YAxis
+} from 'recharts';
 
 interface UsageAlert {
   id: number;

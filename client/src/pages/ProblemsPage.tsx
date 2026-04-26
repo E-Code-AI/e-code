@@ -1,36 +1,32 @@
-import { useState, useMemo } from 'react';
-import { useLocation } from 'wouter';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import {
-  AlertTriangle,
-  AlertCircle,
-  Info,
-  Search,
-  Filter,
-  File,
-  ChevronRight,
-  ChevronDown,
-  Wrench,
-  Zap,
-  RefreshCw,
-  Copy,
-  ExternalLink,
-  CheckCircle2,
-  X,
-  Code,
-  FileWarning,
-  Lightbulb,
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { TABLET_GRID_CLASSES } from '@shared/responsive-config';
+import {
+AlertCircle,
+AlertTriangle,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Code,
+Copy,
+ExternalLink,
+File,
+FileWarning,
+Info,
+Lightbulb,
+RefreshCw,
+Search,
+Wrench,
+Zap
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
+import { useLocation } from 'wouter';
 
 type Severity = 'error' | 'warning' | 'info';
 

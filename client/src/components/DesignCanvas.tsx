@@ -1,11 +1,22 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import {
-  Plus, StickyNote, Type, Image, ZoomIn, ZoomOut, Maximize2,
-  Grid3x3, Move, Trash2, Copy, Pencil, X, MoreHorizontal, Frame,
-  ChevronDown, Minus, RotateCcw, Sparkles
-} from "lucide-react";
-import type { CanvasFrame, CanvasAnnotation } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+import type { CanvasAnnotation,CanvasFrame } from "@shared/schema";
+import {
+Copy,
+Frame,
+Grid3x3,
+Image,
+Maximize2,
+Minus,
+Move,
+Pencil,
+Plus,
+Sparkles,
+StickyNote,
+Trash2,
+Type,
+X
+} from "lucide-react";
+import React,{ useCallback,useEffect,useMemo,useRef,useState } from "react";
 import ConversionDialog from "./ConversionDialog";
 
 interface CanvasMessage {

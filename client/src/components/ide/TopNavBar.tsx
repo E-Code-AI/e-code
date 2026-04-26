@@ -1,53 +1,45 @@
-import { useState } from 'react';
 import { RunnerWorkspaceButton } from '@/components/ide/RunnerWorkspaceButton';
-import { Button } from '@/components/ui/button';
+import { useTheme } from '@/components/ThemeProvider';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Code, 
-  Play, 
-  Square, 
-  Settings, 
-  User, 
-  LogOut, 
-  Plus,
-  X,
-  Menu,
-  Eye,
-  FileCode,
-  MoreHorizontal,
-  Home,
-  Shield,
-  Crown,
-  ChevronDown,
-  Sun,
-  Moon,
-  Monitor,
-  Bell,
-  Clock,
-  Users,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/hooks/use-auth';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { WorkspaceSettings } from '@/components/WorkspaceSettings';
+import { useAuth } from '@/hooks/use-auth';
+import { cn } from '@/lib/utils';
+import {
+FileCode,
+Home,
+LogOut,
+Menu,
+Monitor,
+Moon,
+Play,
+Settings,
+Shield,
+Square,
+Sun,
+User,
+Users,
+X
+} from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { AddTabMenu } from './AddTabMenu';
 import { ReplitPublishButton } from './ReplitPublishButton';
-import { useTheme } from '@/components/ThemeProvider';
-import { useLocation } from 'wouter';
 
 interface Tab {
   id: string;

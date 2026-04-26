@@ -1,27 +1,26 @@
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  Shield, 
-  Globe, 
-  Building,
-  MapPin,
-  FileText,
-  CheckCircle,
-  ExternalLink,
-  Lock,
-  Server,
-  Database,
-  Cloud,
-  Mail,
-  CreditCard,
-  Users,
-  Activity
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table';
+import {
+Activity,
+Building,
+CheckCircle,
+CreditCard,
+Database,
+ExternalLink,
+FileText,
+Globe,
+Lock,
+Mail,
+MapPin,
+Server,
+Shield,
+Users
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { Button } from '@/components/ui/button';
 
 interface Subprocessor {
   name: string;

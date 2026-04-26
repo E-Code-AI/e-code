@@ -5,14 +5,11 @@
  */
 
 import { ChildProcess } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
-import { Project, File } from '@shared/schema';
-import { storage } from './storage';
-import * as runtimeManager from './runtimes/runtime-manager';
-import { Language } from './runtimes/languages';
-import { log } from './vite';
 import { WebSocket } from 'ws';
+import { Language } from './runtimes/languages';
+import * as runtimeManager from './runtimes/runtime-manager';
+import { storage } from './storage';
+import { log } from './vite';
 
 // Map of active project processes
 const activeProjects = new Map<string, {

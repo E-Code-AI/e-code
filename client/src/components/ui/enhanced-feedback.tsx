@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Info, 
-  X,
-  Loader2 
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import {
+AlertTriangle,
+CheckCircle,
+Info,
+X,
+XCircle
+} from 'lucide-react';
+import React,{ useEffect,useState } from 'react';
 
 interface FeedbackProps {
   type?: 'success' | 'error' | 'warning' | 'info';

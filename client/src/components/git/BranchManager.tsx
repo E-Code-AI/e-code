@@ -3,49 +3,47 @@
  * Create, delete, merge, and switch branches with Apple-grade UX
  */
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  GitBranch,
-  Plus,
-  Trash2,
-  GitMerge,
-  Check,
-  Search,
-  MoreVertical,
-  RefreshCw,
-  GitPullRequest,
-  Calendar,
-  User,
-  ArrowRight,
-  Loader2
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
-import { apiRequest, queryClient as globalQueryClient } from '@/lib/queryClient';
+import {
+ArrowRight,
+Calendar,
+Check,
+GitBranch,
+GitMerge,
+Loader2,
+MoreVertical,
+Plus,
+RefreshCw,
+Search,
+Trash2,
+User
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface GitBranchInfo {
   name: string;

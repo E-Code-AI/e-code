@@ -3,27 +3,28 @@
  * Migrated to CodeMirror 6 - Adds SearchReplace, StatusBar, and IDE event handling
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { EditorView } from '@codemirror/view';
-import { openSearchPanel } from '@codemirror/search';
 import { CM6Editor } from '@/components/editor/CM6Editor';
+import { Button } from '@/components/ui/button';
 import {
-  SearchReplace,
-  StatusBar,
-  type SearchOptions,
-  type SearchResult,
+SearchReplace,
+StatusBar,
+type SearchOptions,
+type SearchResult,
 } from '@/design-system';
 import { useToast } from '@/hooks/use-toast';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
-import { 
-  Undo2, Redo2, Save, Search, 
-  Keyboard, X, Sparkles
-} from 'lucide-react';
+import { LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { redo,undo } from '@codemirror/commands';
+import { EditorView } from '@codemirror/view';
 import { useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { undo, redo } from '@codemirror/commands';
+import {
+Keyboard,
+Redo2,Save,Search,
+Undo2,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface EnhancedMobileCodeEditorProps {
   fileId?: number;

@@ -1,15 +1,15 @@
 // @ts-nocheck
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardHeader,CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Smartphone, Download, Bell, RefreshCw, Code, Play, Settings, Users } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
+import { Bell,Code,Download,Play,RefreshCw,Settings,Smartphone,Users } from "lucide-react";
+import { useState } from "react";
 
 interface MobileApp {
   id: number;

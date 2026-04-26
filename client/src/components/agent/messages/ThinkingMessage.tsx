@@ -3,12 +3,12 @@
  * Displays AI extended thinking process with streaming animation
  */
 
-import { Brain, CheckCircle2, Circle, Loader2, XCircle, ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { ThinkingStep } from './types';
 import { Badge } from '@/components/ui/badge';
-import { VibingAnimation } from './VibingAnimation';
+import { cn } from '@/lib/utils';
+import { Brain,CheckCircle2,ChevronDown,ChevronRight,Loader2,XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { ThinkingStep } from './types';
+import { VibingAnimation } from './VibingAnimation';
 
 interface ThinkingMessageProps {
   steps: ThinkingStep[];

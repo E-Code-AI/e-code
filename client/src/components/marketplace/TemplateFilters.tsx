@@ -1,23 +1,30 @@
-import { useState } from 'react';
-import { 
-  ChevronDown, ChevronRight, Check, Package, Code2, 
-  Globe, Smartphone, Brain, Database, Shield, DollarSign,
-  Award, Users, Zap
-} from 'lucide-react';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Label } from '@/components/ui/label';
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import {
+Award,
+Brain,
+ChevronDown,ChevronRight,
+Code2,
+Database,
+Globe,
+Package,
+Shield,
+Smartphone,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TemplateFiltersProps {
   categories: any[];

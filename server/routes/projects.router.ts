@@ -1,18 +1,18 @@
 // @ts-nocheck
-import { Router, Request, Response, NextFunction } from "express";
+import type { User } from "@shared/schema";
 import { insertProjectSchema } from "@shared/schema";
-import { type IStorage } from "../storage";
+import crypto from 'crypto';
+import { NextFunction,Request,Response,Router } from "express";
+import jwt from 'jsonwebtoken';
 import { ensureAuthenticated as sharedEnsureAuth } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
-import type { User, Project } from "@shared/schema";
-import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
+import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
-import { createRateLimitMiddleware } from '../middleware/rate-limiter';
+import { applyVisualEdit,getEditHistory,redoLastEdit,undoLastEdit } from '../services/visual-edits-service';
+import { type IStorage } from "../storage";
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
-import { applyVisualEdit, getEditHistory, redoLastEdit, undoLastEdit } from '../services/visual-edits-service';
 
 const projectLogger = createLogger('projects-router');
 

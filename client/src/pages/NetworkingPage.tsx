@@ -1,78 +1,33 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Network,
-  Globe,
-  Shield,
-  Lock,
-  Server,
-  Activity,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Plus,
-  Settings,
-  RefreshCw,
-  Check,
-  X,
-  Edit,
-  Trash2,
-  Copy,
-  ExternalLink,
-  Wifi,
-  Key,
-  FileKey,
-  AlertTriangle,
-  BarChart3,
-  TrendingUp,
-  Clock,
-  Zap,
-  ChevronRight,
-  Layers,
-  Link2,
-} from 'lucide-react';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import {
+BarChart3,
+Globe,
+Key,
+Layers,
+Link2,
+Lock,
+Network,
+Plus,
+RefreshCw,
+Shield
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface FirewallRule {
   id: string;

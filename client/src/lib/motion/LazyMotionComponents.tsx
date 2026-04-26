@@ -8,11 +8,10 @@
  * fall back to CSS transitions for better performance.
  */
 
-import { Suspense, ReactNode, forwardRef, Children, cloneElement, isValidElement } from 'react';
-import type { HTMLMotionProps, AnimatePresenceProps } from 'framer-motion';
-import { useAnimationPerformance } from './AnimationMonitor';
-import { CSSFade, CSSInViewFade, CSSInViewSlide, CSSInViewScale } from './CSSAnimations';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import type { AnimatePresenceProps,HTMLMotionProps } from 'framer-motion';
+import { Children,ReactNode,Suspense,cloneElement,forwardRef,isValidElement } from 'react';
+import { useAnimationPerformance } from './AnimationMonitor';
 
 type VariantObject = Record<string, unknown>;
 type Variants = Record<string, VariantObject>;

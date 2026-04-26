@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { createLogger } from '../utils/logger';
-import { storage } from '../storage';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
 const logger = createLogger('global-search');

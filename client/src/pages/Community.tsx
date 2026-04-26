@@ -1,31 +1,38 @@
-import React, { useMemo, useState } from 'react';
-import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ECodeLoading } from '@/components/ECodeLoading';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  TrendingUp, Star, MessageSquare, Users, Code, Heart,
-  Share2, Bookmark, Calendar, Award,
-  ChevronRight, Zap, Trophy, Target, Plus,
-  Rocket, Briefcase, Building, Globe
-} from 'lucide-react';
-import { Link } from 'wouter';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { ECodeLoading } from '@/components/ECodeLoading';
+import { useInfiniteQuery,useMutation,useQuery } from '@tanstack/react-query';
+import {
+Award,
+Bookmark,
+Briefcase,Building,
+Calendar,
+ChevronRight,
+Code,
+Globe,
+Heart,
+MessageSquare,
+Plus,
+Rocket,
+Share2,
+Star,
+Target,
+TrendingUp,
+Trophy,
+Users,
+Zap
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
+import { Link } from 'wouter';
 
 interface CommunityPost {
   id: string;

@@ -1,24 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import {
-  Globe,
-  Share2,
-  Sparkles,
-  Eye,
-  MessageSquare,
-  Users,
-  Copy,
-  Check,
-  ExternalLink
+Check,
+Copy,
+ExternalLink,
+Eye,
+Globe,
+MessageSquare,
+Share2,
+Sparkles,
+Users
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface SpotlightSettingsPanelProps {
   projectId: number;

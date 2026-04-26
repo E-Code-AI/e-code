@@ -1,22 +1,27 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Users, Trophy, TrendingUp, Upload, MessageSquare, 
-  BookOpen, Award, Star, GitBranch, Heart, Eye,
-  Calendar, ChevronRight, Plus, Sparkles
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
-import { Link } from 'wouter';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+Award,
+BookOpen,
+Calendar,ChevronRight,
+MessageSquare,
+Sparkles,
+Star,
+TrendingUp,
+Trophy,
+Upload,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 interface Developer {
   id: number;

@@ -4,7 +4,6 @@
  * Professional email templates for billing notifications
  */
 
-import type { UserCredits, BudgetLimit } from '@shared/schema';
 
 const APP_URL = process.env.APP_URL || process.env.REPLIT_DOMAINS?.split(',')[0] ? 
   `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}` : 'http://localhost:5000';

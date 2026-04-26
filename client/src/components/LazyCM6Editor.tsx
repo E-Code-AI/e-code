@@ -5,9 +5,9 @@
  * loading skeleton fallback for better UX.
  */
 
-import { Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { Suspense } from 'react';
 
 const CM6Editor = instrumentedLazy(() => 
   import('@/components/editor/CM6Editor').then(mod => ({ default: mod.CM6Editor })), 'CM6Editor'

@@ -10,14 +10,14 @@
  * 4. Report to Stripe metered billing (async)
  */
 
+import { aiStripeUsageQueue,aiUsageMetering } from '@shared/schema';
+import Stripe from 'stripe';
+import { calculateRequestCost } from '../config/ai-pricing';
 import { db } from '../db';
-import { aiUsageMetering, aiStripeUsageQueue } from '@shared/schema';
+import { getStripe } from '../lib/stripe-client';
 import { createLogger } from '../utils/logger';
 import { normalizeModelName } from '../utils/model-normalizer';
 import { AlertService } from './alert-service';
-import Stripe from 'stripe';
-import { getStripe } from '../lib/stripe-client';
-import { getModelPricing, calculateRequestCost } from '../config/ai-pricing';
 
 const logger = createLogger('ai-metering');
 

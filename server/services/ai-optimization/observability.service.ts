@@ -1,5 +1,5 @@
-import { createLogger, format, transports, Logger } from 'winston';
-import { slackAlertService, type SlackAlertPayload } from './slack-alert.service';
+import { createLogger,format,Logger,transports } from 'winston';
+import { slackAlertService } from './slack-alert.service';
 
 /**
  * AI OPTIMIZATION OBSERVABILITY SERVICE

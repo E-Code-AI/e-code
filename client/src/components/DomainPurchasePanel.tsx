@@ -1,4 +1,3 @@
-import React from "react";
 
 export default function DomainPurchasePanel({ projectId, onClose }: { projectId: string; onClose: () => void }) {
   return (

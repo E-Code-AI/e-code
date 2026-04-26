@@ -1,30 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
-import { 
-  X, Search, Folder, File, ChevronRight, ChevronDown, Plus,
-  FileText, FileCode, Image, Film, Music, Archive, Database,
-  Edit2, Trash2, Copy, FolderPlus, RefreshCw, Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { usePullToRefresh } from '@/hooks/use-mobile-gestures';
-import { VirtualFileTree } from './VirtualFileTree';
-import { useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
-import { FileExplorerSkeleton } from './MobileLoadingSkeleton';
-import { NoFilesEmptyState, NoSearchResultsEmptyState } from './MobileEmptyState';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePullToRefresh } from '@/hooks/use-mobile-gestures';
+import { useFileBrowserPersistence } from '@/hooks/use-mobile-persistence';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Archive,
+ChevronRight,
+Copy,
+Database,
+Edit2,
+FileCode,
+FileText,
+Film,
+Folder,
+FolderPlus,
+Image,
+Loader2,
+Music,
+Plus,
+RefreshCw,
+Search,
+Trash2,
+X
+} from 'lucide-react';
+import { useRef,useState } from 'react';
+import { NoFilesEmptyState,NoSearchResultsEmptyState } from './MobileEmptyState';
+import { FileExplorerSkeleton } from './MobileLoadingSkeleton';
+import { VirtualFileTree } from './VirtualFileTree';
 
 interface FileItem {
   id: number;

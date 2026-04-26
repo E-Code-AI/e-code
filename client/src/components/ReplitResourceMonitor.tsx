@@ -1,32 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Activity,
-  Cpu,
-  HardDrive,
-  MemoryStick,
-  Network,
-  Zap,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-  Maximize2,
-  Minimize2,
-  Settings,
-  Info
-} from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { Line, Area } from 'recharts';
-import { LineChart, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import {
+Activity,
+AlertTriangle,
+Cpu,
+HardDrive,
+Info,
+Maximize2,
+MemoryStick,
+Minimize2,
+Network,
+RefreshCw,
+Zap
+} from 'lucide-react';
+import { useRef,useState } from 'react';
+import { Area,AreaChart,CartesianGrid,Line,LineChart,Tooltip as RechartsTooltip,ResponsiveContainer,XAxis,YAxis } from 'recharts';
 
 interface ResourceMetrics {
   timestamp: Date;

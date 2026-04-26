@@ -1,62 +1,57 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
-import {
-  Monitor,
-  MonitorPlay,
-  Wifi,
-  WifiOff,
-  Settings,
-  Maximize,
-  Minimize,
-  Keyboard,
-  Clipboard,
-  Video,
-  VideoOff,
-  RefreshCw,
-  Power,
-  PowerOff,
-  Layers,
-  Gauge,
-  Lock,
-  Eye,
-  EyeOff,
-  Play,
-  Square,
-  Circle,
-  AlertCircle,
-  CheckCircle2,
-  XCircle,
-  Info,
-  Zap,
-  HardDrive,
-  Cpu,
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+AlertCircle,
+CheckCircle2,
+Circle,
+Eye,
+EyeOff,
+Gauge,
+HardDrive,
+Info,
+Keyboard,
+Layers,
+Lock,
+Maximize,
+Minimize,
+Monitor,
+MonitorPlay,
+Power,
+PowerOff,
+RefreshCw,
+Settings,
+Square,
+Wifi,
+WifiOff,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface VNCConnectionConfig {
   host: string;

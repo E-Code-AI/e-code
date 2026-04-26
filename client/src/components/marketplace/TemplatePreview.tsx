@@ -1,33 +1,40 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { 
-  X, ExternalLink, GitBranch, Download, Star, Heart, 
-  Code2, Package, Calendar, Users, Shield, Globe, 
-  Zap, Clock, Tag, ChevronRight, Play, Eye, Share2,
-  MessageSquare, Award, TrendingUp, DollarSign, Copy, Check
-} from 'lucide-react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Award,
+ChevronRight,
+Code2,
+Download,
+ExternalLink,
+Eye,
+GitBranch,
+Heart,
+Play,
+Share2,
+Star,
+X,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TemplatePreviewProps {
   template: any;

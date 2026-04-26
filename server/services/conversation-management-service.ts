@@ -1,8 +1,8 @@
 // @ts-nocheck
-import { createLogger } from '../utils/logger';
+import { agentMessages,aiConversations } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { db } from '../db';
-import { aiConversations, agentMessages } from '@shared/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
 
 const logger = createLogger('ConversationManagementService');

@@ -1,13 +1,13 @@
 import { spawn } from 'child_process';
+import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
-import crypto from 'crypto';
 import { storage } from '../storage';
+import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { billingService } from './billing-service';
-import { deploymentWebSocketService, DeploymentStatusType, UIStatusType, translateStatusToUI } from './deployment-websocket-service';
-import { sslRenewalService } from './ssl-renewal.service';
-import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { deploymentRollbackService } from './deployment-rollback';
+import { DeploymentStatusType,deploymentWebSocketService } from './deployment-websocket-service';
+import { sslRenewalService } from './ssl-renewal.service';
 
 export interface DeploymentConfig {
   id: string;

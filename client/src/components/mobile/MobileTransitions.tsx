@@ -1,5 +1,5 @@
-import { ReactNode, useEffect, useState } from "react";
-import { LazyMotionDiv, LazyAnimatePresence, type Variants } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionDiv,type Variants } from '@/lib/motion';
+import { ReactNode,useEffect,useState } from "react";
 import { useLocation } from "wouter";
 
 // Page transition variants

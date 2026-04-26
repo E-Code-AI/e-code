@@ -1,20 +1,39 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { useLocation } from 'wouter';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
-import { 
-  Code, Users, Globe, Rocket, Heart, Coffee, Gift, Home,
-  ChevronRight, ArrowRight, MapPin, Clock, DollarSign,
-  Briefcase, GraduationCap, Sparkles, TrendingUp,
-  Shield, Zap, Trophy, Target, Building2, Laptop,
-  Palette, Megaphone, HeartHandshake, ExternalLink
+import {
+ArrowRight,
+Briefcase,
+Building2,
+ChevronRight,
+Clock,
+Code,
+Coffee,
+DollarSign,
+ExternalLink,
+Gift,
+GraduationCap,
+Heart,
+HeartHandshake,
+Home,
+MapPin,
+Megaphone,
+Palette,
+Rocket,
+Shield,
+Sparkles,
+Target,
+TrendingUp,
+Trophy,
+Users
 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface Job {
   id: string;

@@ -7,14 +7,14 @@
  * Also updates the shared autonomousBuildStore for PreviewPanel splash screens
  */
 
-import { useEffect, useLayoutEffect, useRef, useCallback, useMemo, useState } from 'react';
+import { AgentEventBus } from '@/lib/agentEvents';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import type { AutonomousBuildTask,AutonomousWorkspacePayload,Message } from '@/stores/agentConversationStore';
 import { useAgentConversationStore } from '@/stores/agentConversationStore';
+import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
-import { AgentEventBus } from '@/lib/agentEvents';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
-import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
+import { useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState } from 'react';
 
 interface AutonomousProgressEvent {
   type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation' | 'post_validation_start' | 'install_dependencies_start' | 'install_dependencies_complete' | 'verify_build_start' | 'verify_build_complete' | 'responsive_qa_start' | 'responsive_qa_complete' | 'degraded_mode' | 'provider_health';

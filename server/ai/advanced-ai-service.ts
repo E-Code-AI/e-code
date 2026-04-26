@@ -1,6 +1,6 @@
-import { CodeAnalyzer } from './code-analyzer';
+import { File } from '@shared/schema';
 import { aiProviderManager } from './ai-provider-manager';
-import { File, Project } from '@shared/schema';
+import { CodeAnalyzer } from './code-analyzer';
 
 // Helper function to get the default AI provider
 function getAIProvider() {

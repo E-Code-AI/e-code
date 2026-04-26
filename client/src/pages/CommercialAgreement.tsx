@@ -1,8 +1,8 @@
-import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { FileText, Download, Mail, Building2 } from "lucide-react";
+import { Building2,Download,Mail } from "lucide-react";
 
 export default function CommercialAgreement() {
   return (

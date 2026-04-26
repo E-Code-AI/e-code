@@ -1,7 +1,6 @@
-import { Suspense, ComponentType } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, BarChart3 } from 'lucide-react';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { BarChart3,Loader2 } from 'lucide-react';
+import { ComponentType,Suspense } from 'react';
 
 interface ChartFallbackProps {
   height?: string | number;

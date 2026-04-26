@@ -10,16 +10,15 @@
  * Migrated from Monaco to CodeMirror 6 for smaller bundle size and better performance.
  */
 
-import { useRef, useEffect, useCallback } from 'react';
-import { File } from '@shared/schema';
-import { EditorView } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { getBaseExtensions } from '@/lib/cm6/extensions';
-import { getTheme } from '@/lib/cm6/theme';
-import { loadLanguageForFile } from '@/lib/cm6/language-loader';
-import { cn } from '@/lib/utils';
 import { useLayoutStore } from '@/../../shared/stores/layoutStore';
+import { getBaseExtensions } from '@/lib/cm6/extensions';
+import { loadLanguageForFile } from '@/lib/cm6/language-loader';
+import { getTheme } from '@/lib/cm6/theme';
+import { cn } from '@/lib/utils';
+import { Compartment,EditorState } from '@codemirror/state';
+import { EditorView,keymap } from '@codemirror/view';
+import { File } from '@shared/schema';
+import { useCallback,useEffect,useRef } from 'react';
 import { DraggableTabBar } from './DraggableTabBar';
 import { EditorToolbar } from './EditorToolbar';
 

@@ -1,44 +1,37 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Smartphone, 
-  Tablet,
-  Apple,
-  Package,
-  Code2,
-  Settings,
-  PlayCircle,
-  Download,
-  Upload,
-  Wifi,
-  WifiOff,
-  Battery,
-  RotateCw,
-  Camera,
-  Maximize2,
-  Info,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  FileCode,
-  Bug,
-  Rocket,
-  Store
-} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+Apple,
+Battery,
+Bug,
+Camera,
+CheckCircle2,
+FileCode,
+Info,
+Loader2,
+Maximize2,
+Package,
+PlayCircle,
+RotateCw,
+Smartphone,
+Store,
+Wifi,
+WifiOff
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface MobileAppDevelopmentProps {
   projectId: number;

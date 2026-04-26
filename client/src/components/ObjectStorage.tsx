@@ -1,37 +1,35 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Cloud, 
-  Upload, 
-  Download, 
-  Folder, 
-  File,
-  Image,
-  Video,
-  FileText,
-  Archive,
-  Share,
-  Lock,
-  Unlock,
-  Settings,
-  Trash2,
-  Copy,
-  ExternalLink,
-  HardDrive,
-  Globe,
-  Shield,
-  Zap
-} from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Archive,
+Cloud,
+Copy,
+Download,
+File,
+FileText,
+Folder,
+Globe,
+HardDrive,
+Image,
+Lock,
+Settings,
+Share,
+Shield,
+Trash2,
+Unlock,
+Upload,
+Video,
+Zap
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface StorageFile {
   id: string;

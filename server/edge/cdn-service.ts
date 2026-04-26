@@ -1,9 +1,8 @@
 // @ts-nocheck
-import { EventEmitter } from 'events';
 import * as crypto from 'crypto';
-import * as path from 'path';
+import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
-import { edgeManager, EdgeLocation } from './edge-manager';
+import { edgeManager } from './edge-manager';
 
 const logger = createLogger('cdn-service');
 

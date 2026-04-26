@@ -1,9 +1,9 @@
-import { PublicNavbar } from "./layout/PublicNavbar";
-import { PublicFooter } from "./layout/PublicFooter";
 import { Button } from "@/components/ui/button";
-import { Check, X, Minus } from "lucide-react";
-import { useLocation } from "wouter";
+import { Check,Minus,X } from "lucide-react";
 import { ReactNode } from "react";
+import { useLocation } from "wouter";
+import { PublicFooter } from "./layout/PublicFooter";
+import { PublicNavbar } from "./layout/PublicNavbar";
 
 interface Feature {
   name: string;

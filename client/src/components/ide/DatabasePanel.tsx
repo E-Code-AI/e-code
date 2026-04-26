@@ -1,71 +1,64 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
-import { useQuery, useQueries, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useAuth } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Database,
-  Table,
-  RefreshCw,
-  ChevronRight,
-  ChevronDown,
-  ChevronLeft,
-  Search,
-  Settings,
-  Loader2,
-  Copy,
-  Eye,
-  EyeOff,
-  Trash2,
-  MoreVertical,
-  Terminal,
-  LayoutGrid,
-  List,
-  Filter,
-  Columns,
-  Plus,
-  Calendar,
-  Info,
-  Grid3X3,
-  Layers
-} from 'lucide-react';
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
+ChevronDown,
+ChevronLeft,
+ChevronRight,
+Columns,
+Copy,
+Database,
+Eye,
+EyeOff,
+Filter,
+Grid3X3,
+Info,
+Layers,
+LayoutGrid,
+List,
+Loader2,
+MoreVertical,
+Plus,
+RefreshCw,
+Search,
+Settings,
+Table,
+Terminal,
+Trash2
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface DatabasePanelProps {
   projectId: string;

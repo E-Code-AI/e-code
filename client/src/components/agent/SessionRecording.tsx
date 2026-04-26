@@ -1,34 +1,29 @@
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Slider } from '@/components/ui/slider';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
-import {
-  Video,
-  Play,
-  Pause,
-  Square,
-  SkipBack,
-  SkipForward,
-  ChevronDown,
-  Clock,
-  AlertCircle,
-  CheckCircle2,
-  Bookmark,
-  Loader2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+Bookmark,
+CheckCircle2,
+ChevronDown,
+Clock,
+Loader2,
+Square,
+Video
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TimelineMarker {
   timestamp: number;

@@ -1,17 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Package, Plus, Search, Download, Trash2, 
-  CheckCircle, AlertCircle, Clock, RefreshCw,
-  Terminal, Code, Settings, Star, TrendingUp
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+AlertCircle,
+CheckCircle,
+Clock,
+Download,
+Package,Plus,
+RefreshCw,
+Search,
+Settings,Star,
+Terminal,
+Trash2
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface PackageInfo {
   name: string;

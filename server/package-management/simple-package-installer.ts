@@ -1,8 +1,8 @@
-import { spawn, execFile } from 'child_process';
-import { promisify } from 'util';
-import * as path from 'path';
+import { execFile,spawn } from 'child_process';
 import * as fs from 'fs/promises';
-import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
+import * as path from 'path';
+import { promisify } from 'util';
+import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const execFileAsync = promisify(execFile);
 

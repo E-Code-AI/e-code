@@ -1,22 +1,20 @@
-import { useState, useRef, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Search, 
-  X, 
-  ChevronUp, 
-  ChevronDown, 
-  Settings,
-  FileText,
-  Code,
-  Folder,
-  ArrowUpDown,
-  Filter,
-  MoreHorizontal
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+ArrowUpDown,
+ChevronDown,
+ChevronUp,
+Code,
+FileText,
+MoreHorizontal,
+Search,
+Settings,
+X
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface SearchResult {
   id: string;

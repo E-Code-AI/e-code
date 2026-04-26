@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { performanceMonitor } from './performance';
-import { monitoringService } from '../services/monitoring-service';
 import { ensureAuthenticated } from '../middleware/auth';
-import { logAggregator } from './log-aggregator';
-import { uptimeMonitor } from '../services/uptime-monitor';
 import { databaseQueryOptimizer } from '../services/database-query-optimizer';
+import { monitoringService } from '../services/monitoring-service';
 import { redisCache } from '../services/redis-cache';
+import { uptimeMonitor } from '../services/uptime-monitor';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { logAggregator } from './log-aggregator';
+import { performanceMonitor } from './performance';
 
 export const monitoringRouter = Router();
 

@@ -1,21 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import {
-  RotateCcw, Play, Pause, SkipBack, SkipForward, Clock,
-  FileText, GitCommit, Save, AlertTriangle, Check, X,
-  ChevronLeft, ChevronRight, Calendar, History, Loader2
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
-import { format, formatDistanceToNow } from 'date-fns';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import {
+AlertTriangle,Check,
+ChevronLeft,ChevronRight,
+Clock,
+FileText,GitCommit,
+History,Loader2,
+Pause,
+Play,
+RotateCcw,
+Save,
+SkipBack,SkipForward,
+X
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 interface Checkpoint {
   id: string;

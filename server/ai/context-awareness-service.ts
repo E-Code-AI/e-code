@@ -1,11 +1,10 @@
-import { Project, File, files, projects } from '@shared/schema';
-import { storage } from '../storage';
-import { db } from '../db';
-import { eq, desc, and } from 'drizzle-orm';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { parse as parseAST } from '@babel/parser';
 import traverse from '@babel/traverse';
+import { File,files } from '@shared/schema';
+import { desc,eq } from 'drizzle-orm';
+import * as path from 'path';
+import { db } from '../db';
+import { storage } from '../storage';
 
 interface FileContext {
   id: number;

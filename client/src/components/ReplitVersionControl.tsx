@@ -1,38 +1,30 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  GitBranch, 
-  GitCommit, 
-  GitMerge, 
-  GitPullRequest,
-  Plus,
-  Minus,
-  FileText,
-  FolderOpen,
-  Check,
-  X,
-  Clock,
-  ChevronRight,
-  RefreshCw,
-  Download,
-  Upload,
-  AlertCircle,
-  CheckCircle2
-} from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+CheckCircle2,
+ChevronRight,
+Download,
+FileText,
+GitBranch,
+GitCommit,
+Minus,
+Plus,
+RefreshCw,
+Upload
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface GitCommit {
   id: string;

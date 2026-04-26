@@ -3,32 +3,30 @@
  * Inspired by GitKraken and VS Code Git Graph
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import {
-  GitBranch,
-  GitCommit,
-  GitMerge,
-  Search,
-  Calendar,
-  User,
-  Hash,
-  Copy,
-  ExternalLink,
-  Tag,
-  Loader2,
-  RefreshCw
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { formatDistanceToNow } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import {
+Calendar,
+Copy,
+GitBranch,
+GitCommit,
+GitMerge,
+Hash,
+Loader2,
+RefreshCw,
+Search,
+Tag
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface GitCommitNode {
   hash: string;

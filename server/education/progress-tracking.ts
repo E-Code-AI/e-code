@@ -3,9 +3,9 @@
  * Detailed student analytics and learning progress monitoring
  */
 
+import { assignments,submissions } from '@shared/schema';
+import { and,eq,gte,inArray,lte,sql } from 'drizzle-orm';
 import { db } from '../db';
-import { users, submissions, assignments, projects, files } from '@shared/schema';
-import { eq, and, gte, lte, sql, inArray } from 'drizzle-orm';
 
 interface StudentProgress {
   studentId: number;

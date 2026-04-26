@@ -10,11 +10,11 @@
  * - Multi-user concurrent scenarios
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import { afterAll,beforeEach,describe,expect,it } from '@jest/globals';
 import { AIApprovalQueueService } from '../services/ai-approval-queue.service';
+import type { ValidatedAction } from '../services/ai-security.service';
 import { aiSecurityService } from '../services/ai-security.service';
 import { storage } from '../storage';
-import type { ValidatedAction } from '../services/ai-security.service';
 
 describe('AI Approval Queue - Production E2E Tests', () => {
   const approvalQueue = new AIApprovalQueueService();

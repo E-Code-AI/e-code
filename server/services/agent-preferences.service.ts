@@ -1,6 +1,6 @@
 // @ts-nocheck
+import { AI_MODELS,type AiModel } from '@shared/schema';
 import { type IStorage } from '../storage';
-import { AI_MODELS, type AiModel } from '@shared/schema';
 
 /**
  * Agent Preferences Service

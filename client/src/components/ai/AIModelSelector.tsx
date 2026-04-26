@@ -1,21 +1,20 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent } from '@/components/ui/card';
+import {
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Cpu, Zap, CheckCircle2 } from 'lucide-react';
-import { SiOpenai, SiGoogle } from 'react-icons/si';
-import { RAGToggle, RAGStatusBadge, useRAGStats } from './RAGControls';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { CheckCircle2,Cpu,Sparkles,Zap } from 'lucide-react';
+import { useState } from 'react';
+import { SiGoogle,SiOpenai } from 'react-icons/si';
+import { RAGStatusBadge,RAGToggle,useRAGStats } from './RAGControls';
 
 const AnthropicIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">

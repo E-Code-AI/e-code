@@ -1,34 +1,32 @@
-import React, { useState } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ECodeLoading } from '@/components/ECodeLoading';
 import { ReplitLayout } from '@/components/layout/ReplitLayout';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 import {
-  Search,
-  TrendingUp,
-  Star,
-  GitFork,
-  Clock,
-  Filter,
-  Globe,
-  Code2,
-  Gamepad2,
-  Palette,
-  Database,
-  Cpu,
-  BookOpen,
-  Music,
-  Video,
-  Shield,
+BookOpen,
+Clock,
+Code2,
+Cpu,
+Database,
+Gamepad2,
+GitFork,
+Globe,
+Music,
+Palette,
+Search,
+Shield,
+Star,
+TrendingUp,
+Video
 } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 
 // Category type for type safety
 interface Category {

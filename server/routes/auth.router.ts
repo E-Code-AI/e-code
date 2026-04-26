@@ -1,23 +1,21 @@
-import { Router, Request, Response, NextFunction } from "express";
-import bcrypt from "../utils/bcrypt-compat";
+import type { User } from "@shared/schema";
+import { emailVerificationTokens,passwordResetTokens,securityLogs,userRegistrationSchema,users } from "@shared/schema";
+import { and,eq,gte } from "drizzle-orm";
+import { NextFunction,Request,Response,Router } from "express";
 import passport from "passport";
-import { userRegistrationSchema, securityLogs, emailVerificationTokens, passwordResetTokens } from "@shared/schema";
-import { type IStorage } from "../storage";
+import { z } from "zod";
+import { sessionManager } from "../auth/session-manager";
+import { revokeAllUserTokens,revokeToken } from "../auth/token-revocation";
+import { db,withTransaction } from "../db";
 import { ensureAuthenticated as sharedEnsureAuth } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
-import type { User } from "@shared/schema";
-import { randomBytes } from "crypto";
-import { hashToken, generateEmailVerificationToken, generatePasswordResetToken, decodeTokenWithoutVerification } from "../utils/auth-utils";
-import { revokeToken, revokeAllUserTokens } from "../auth/token-revocation";
-import { sendVerificationEmail, sendPasswordResetEmail, resendVerificationEmail } from "../utils/sendgrid-email-service";
-import { z } from "zod";
-import { db, withTransaction } from "../db";
-import { eq, and, gte } from "drizzle-orm";
-import { users } from "@shared/schema";
-import { sessionManager } from "../auth/session-manager";
-import { createLogger } from "../utils/logger";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
-import { createTwoFactorChallenge, consumeVerifiedChallenge } from "./2fa.router";
+import { type IStorage } from "../storage";
+import { decodeTokenWithoutVerification,generateEmailVerificationToken,generatePasswordResetToken,hashToken } from "../utils/auth-utils";
+import bcrypt from "../utils/bcrypt-compat";
+import { createLogger } from "../utils/logger";
+import { resendVerificationEmail,sendPasswordResetEmail,sendVerificationEmail } from "../utils/sendgrid-email-service";
+import { consumeVerifiedChallenge,createTwoFactorChallenge } from "./2fa.router";
 
 const logger = createLogger('auth-router');
 

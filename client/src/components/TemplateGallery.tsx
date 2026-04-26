@@ -1,32 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Search, 
-  Code2, 
-  Sparkles, 
-  TrendingUp,
-  Clock,
-  Users,
-  Star,
-  GitFork,
-  Zap,
-  Globe,
-  Database,
-  Lock,
-  Palette,
-  ShoppingCart,
-  MessageSquare,
-  BarChart,
-  Gamepad2,
-  Music,
-  Video,
-  Map
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import {
+BarChart,
+Clock,
+Code2,
+Database,
+Gamepad2,
+Globe,
+MessageSquare,
+Music,
+Palette,
+Search,
+ShoppingCart,
+Sparkles,
+TrendingUp
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface Template {
   id: string;

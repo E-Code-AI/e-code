@@ -9,10 +9,10 @@
  * When no template matches, uses AI provider to generate actual working code.
  */
 
-import { createLogger } from '../utils/logger';
 import type { AIProviderManager } from '../ai/ai-provider-manager';
 import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
 import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('agent-content-generator');
 

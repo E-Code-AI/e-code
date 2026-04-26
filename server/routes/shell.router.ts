@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { ensureAuthenticated } from '../middleware/auth';
-import { bootstrapAuth, getBootstrapContext } from '../middleware/bootstrap-auth';
-import { storage } from '../storage';
-import { createLogger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
+import { bootstrapAuth,getBootstrapContext } from '../middleware/bootstrap-auth';
+import { storage } from '../storage';
 import { socketIOTerminalService } from '../terminal/socket-io-terminal';
+import { createLogger } from '../utils/logger';
 
 const router = Router();
 const logger = createLogger('shell-router-per-project');

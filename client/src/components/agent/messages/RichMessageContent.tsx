@@ -3,14 +3,14 @@
  * Supports: Headers, bullets, bold, italic, code, emojis, tables, syntax highlighting
  */
 
+import { Button } from '@/components/ui/button';
+import { LightSyntaxHighlighter,darkStyle } from '@/components/ui/LightSyntaxHighlighter';
+import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { Check,Copy } from 'lucide-react';
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { LightSyntaxHighlighter, darkStyle } from '@/components/ui/LightSyntaxHighlighter';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from '@/hooks/use-toast';
 
 interface RichMessageContentProps {
   content: string;

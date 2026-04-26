@@ -1,12 +1,20 @@
-import { useState, useRef, useCallback, memo, useEffect } from 'react';
-import { 
-  ChevronUp, Paperclip, Mic, SlidersHorizontal, ArrowUp, Loader2,
-  Hammer, MessageSquare, Pencil, Zap
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { SlashCommandMenu, DEFAULT_MCP_SERVERS, type MCPServer } from '../ai/SlashCommandMenu';
-import { AgentToolsBottomSheet } from '../ai/AgentToolsBottomSheet';
 import type { AgentToolsSettings } from '@/hooks/useAgentTools';
+import { cn } from '@/lib/utils';
+import {
+ArrowUp,
+ChevronUp,
+Hammer,
+Loader2,
+MessageSquare,
+Mic,
+Paperclip,
+Pencil,
+SlidersHorizontal,
+Zap
+} from 'lucide-react';
+import { memo,useCallback,useEffect,useRef,useState } from 'react';
+import { AgentToolsBottomSheet } from '../ai/AgentToolsBottomSheet';
+import { DEFAULT_MCP_SERVERS,SlashCommandMenu,type MCPServer } from '../ai/SlashCommandMenu';
 
 type AgentMode = 'build' | 'plan' | 'edit' | 'fast';
 

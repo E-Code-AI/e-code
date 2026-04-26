@@ -1,7 +1,7 @@
 // @ts-nocheck
+import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import * as net from 'net';
-import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('cluster-manager');

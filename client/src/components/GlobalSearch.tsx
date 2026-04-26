@@ -1,22 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, X, File, FolderOpen, Code, FileText, Image, 
-  Archive, GitBranch, Clock, Filter, ChevronRight,
-  SortAsc, FileCode
-} from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { useDebounce } from '@/hooks/use-debounce';
-import { apiRequest } from '@/lib/queryClient';
 import { ECodeSpinner } from '@/components/ECodeLoading';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Dialog,DialogContent } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import {
+ChevronRight,
+Clock,
+Code,
+File,
+FileCode,
+FileText,
+Filter,
+Search,X
+} from 'lucide-react';
+import React,{ useEffect,useRef,useState } from 'react';
 
 interface GlobalSearchProps {
   isOpen: boolean;

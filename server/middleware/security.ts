@@ -3,20 +3,10 @@
  * Fortune 500-grade security implementation with enhanced protections
  */
 
-import helmet from 'helmet';
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { createLogger } from '../utils/logger';
 import crypto from 'crypto';
-import { 
-  xssProtection, 
-  sqlInjectionPrevention, 
-  pathTraversalPrevention,
-  requestValidation,
-  rateLimiting,
-  outputEncoding,
-  tokenSecurity
-} from '../utils/security';
-import { securityMonitoring as securityMonitoringService } from '../services/security-monitoring';
+import { NextFunction,Request,RequestHandler,Response } from 'express';
+import helmet from 'helmet';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('security');
 const isDevelopment = process.env.NODE_ENV === 'development';
@@ -616,9 +606,6 @@ export const ipSecurity = {
 
 // Export CSP functions for testing
 export {
-  getCSPDirectives,
-  productionCSPDirectives,
-  developmentCSPDirectives,
-  buildCSPHeader,
-  generateCSPNonce
+buildCSPHeader,developmentCSPDirectives,generateCSPNonce,getCSPDirectives,
+productionCSPDirectives
 };

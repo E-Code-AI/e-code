@@ -1,13 +1,12 @@
 // @ts-nocheck
-import { db } from '../db';
-import { projects, files, checkpoints, checkpointFiles, checkpointDatabase } from '@shared/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { checkpointDatabase,checkpointFiles,checkpoints,files,projects } from '@shared/schema';
+import { exec } from 'child_process';
+import { desc,eq } from 'drizzle-orm';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { createLogger } from '../utils/logger';
-import { exec } from 'child_process';
 import { promisify } from 'util';
-import crypto from 'crypto';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 const logger = createLogger('checkpoint-service');

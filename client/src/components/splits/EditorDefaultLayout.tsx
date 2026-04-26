@@ -3,23 +3,23 @@
  * Complete 3-column desktop IDE layout with all panels
  */
 
-import { Split, TabInfo } from '@/types/splits';
-import { 
-  FileText, 
-  Search, 
-  GitBranch, 
-  Bug, 
-  FlaskConical, 
-  Database, 
-  Package, 
-  History, 
-  Key, 
-  Bot, 
-  Settings,
-  Terminal as TerminalIcon,
-  FileOutput,
-  AlertTriangle,
-  Play
+import { Split } from '@/types/splits';
+import {
+AlertTriangle,
+Bot,
+Bug,
+Database,
+FileOutput,
+FileText,
+FlaskConical,
+GitBranch,
+History,
+Key,
+Package,
+Play,
+Search,
+Settings,
+Terminal as TerminalIcon
 } from 'lucide-react';
 
 /**

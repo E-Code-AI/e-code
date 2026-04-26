@@ -1,37 +1,24 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
-import { toast } from '@/hooks/use-toast';
-import { 
-  GraduationCap, 
-  BookOpen, 
-  Users, 
-  Clock, 
-  Star,
-  PlayCircle,
-  CheckCircle2,
-  Award,
-  Calendar,
-  Search,
-  Filter,
-  UserCheck,
-  Settings,
-  BarChart3,
-  FileText,
-  Video,
-  Code,
-  Target,
-  Zap,
-  Globe
+import { Progress } from '@/components/ui/progress';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useQuery } from '@tanstack/react-query';
+import {
+Award,
+BarChart3,
+BookOpen,
+Clock,
+FileText,
+Filter,
+Settings,
+Star,
+Users
 } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useState } from 'react';
 
 // Types for education data
 interface Classroom {

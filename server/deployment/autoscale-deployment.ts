@@ -1,7 +1,4 @@
 import { createLogger } from '../utils/logger';
-import { db } from '../db';
-import { deployments } from '@shared/schema';
-import { eq } from 'drizzle-orm';
 
 const logger = createLogger('autoscale-deployment');
 

@@ -4,7 +4,7 @@
  * Mirrors Replit's console log streaming behavior
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 export interface ServerLogEntry {
   level: 'info' | 'warn' | 'error' | 'debug';

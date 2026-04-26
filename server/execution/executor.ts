@@ -1,10 +1,10 @@
-import { spawn, execSync } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
-import path from 'path';
+import { spawn } from 'child_process';
+import { existsSync,mkdirSync,rmSync,writeFileSync } from 'fs';
 import os from 'os';
-import { dockerExecutor } from './docker-executor';
-import { remoteExecutor, LOCAL_ONLY_LANGUAGES } from './remote-executor';
+import path from 'path';
 import { createLogger } from '../utils/logger';
+import { dockerExecutor } from './docker-executor';
+import { LOCAL_ONLY_LANGUAGES,remoteExecutor } from './remote-executor';
 
 const logger = createLogger('executor');
 

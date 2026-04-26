@@ -1,14 +1,14 @@
 // @ts-nocheck
+import * as crypto from 'crypto';
+import { LRUCache } from 'lru-cache';
 import { aiProviderManager } from '../ai/ai-provider-manager';
+import { CodeAnalyzer } from '../ai/code-analyzer';
+import { createLogger } from '../utils/logger';
 
 type ChatMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
 };
-import { CodeAnalyzer } from '../ai/code-analyzer';
-import { createLogger } from '../utils/logger';
-import { LRUCache } from 'lru-cache';
-import * as crypto from 'crypto';
 
 const logger = createLogger('ai-code-completion');
 const codeAnalyzer = new CodeAnalyzer();

@@ -1,13 +1,13 @@
 // @ts-nocheck
+import crypto from 'crypto';
 import Stripe from 'stripe';
 import { getStripe } from '../lib/stripe-client';
-import crypto from 'crypto';
-import { storage } from '../storage';
-import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
-import { PLANS, getPlanByTier } from './pricing-constants';
 import { creditsService } from '../services/credits-service';
-import { createLogger } from '../utils/logger';
 import { notifyPaymentFailed } from '../services/notification-events';
+import { getSubscriptionPeriodBoundary } from '../services/stripe-utils';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
+import { PLANS } from './pricing-constants';
 
 function generateIdempotencyKey(prefix: string, ...parts: (string | number)[]): string {
   const timestamp = Date.now();

@@ -1,28 +1,27 @@
-import { useRef, useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
+ContextMenu,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import { cn } from '@/lib/utils';
 import {
-  X,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
-  FileCode,
-  FileJson,
-  FileText,
-  FileImage,
-  Copy,
-  SplitSquareVertical,
-  Pin,
-  PinOff,
+ChevronLeft,
+ChevronRight,
+Copy,
+FileCode,
+FileImage,
+FileJson,
+FileText,
+Pin,
+PinOff,
+Plus,
+SplitSquareVertical,
+X
 } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 export interface Tab {
   id: string;

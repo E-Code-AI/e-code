@@ -1,41 +1,40 @@
-import { useState, Suspense } from 'react';
-import { useParams } from 'wouter';
-import { apiRequest } from '@/lib/queryClient';
+import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
+import { AppStoragePanel } from '@/components/editor/AppStoragePanel';
+import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
+import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
+import { ReplitConsolePanel } from '@/components/ide/ReplitConsolePanel';
+import IntegrationsPanel from '@/components/IntegrationsPanel';
+import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
+import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
+import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
+import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
+import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
+import { MobileDeployPanel } from '@/components/mobile/MobileDeployPanel';
+import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
+import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
 import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
 import { ReplitToolsSheet } from '@/components/mobile/ReplitToolsSheet';
-import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
-import { LazyMobileCodeEditor } from '@/components/mobile/LazyMobileCodeEditor';
-import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
-import { MobileDatabasePanel } from '@/components/mobile/MobileDatabasePanel';
-import { MobileDeployPanel } from '@/components/mobile/MobileDeployPanel';
-import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
-import { ReplitGitPanel } from '@/components/editor/ReplitGitPanel';
-import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
-import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
-import { AgentPanelErrorBoundary } from '@/components/ai/AgentPanelErrorBoundary';
-import { AppStoragePanel } from '@/components/editor/AppStoragePanel';
-import { ReplitConsolePanel } from '@/components/ide/ReplitConsolePanel';
-import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
-import IntegrationsPanel from '@/components/IntegrationsPanel';
 import { Button } from '@/components/ui/button';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
 } from '@/components/ui/sheet';
-import { 
-  ArrowLeft, 
-  RefreshCw, 
-  Share2, 
-  MoreVertical,
-  Loader2,
-  MessageSquarePlus
-} from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
-import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
+import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import {
+ArrowLeft,
+Loader2,
+MessageSquarePlus,
+MoreVertical,
+RefreshCw
+} from 'lucide-react';
+import { Suspense,useState } from 'react';
+import { useParams } from 'wouter';
 
 const MobileTerminal = instrumentedLazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })),

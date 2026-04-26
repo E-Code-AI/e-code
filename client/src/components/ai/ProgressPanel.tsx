@@ -5,31 +5,46 @@
  * Supports WebSocket activity stream for inline chat + Progress dock dual display
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  Activity, FileCode, Terminal, Search, Database,
-  CheckCircle2, XCircle, Clock, ChevronRight, ChevronDown,
-  Loader2, RefreshCw, Filter, ExternalLink, Play, Pause,
-  Brain, Wrench, FileEdit, FilePlus, FileX, Sparkles
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { formatDistanceToNow } from 'date-fns';
-import type { 
-  ActivityEvent as StreamActivityEvent,
-  ThinkingStep,
-  ToolExecutionEvent,
-  FileChangeEvent 
+import type {
+FileChangeEvent,
+ActivityEvent as StreamActivityEvent,
+ThinkingStep,
+ToolExecutionEvent
 } from '@shared/types/agent-activity.types';
+import { useQuery } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import {
+Activity,
+Brain,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Clock,
+Database,
+ExternalLink,
+FileCode,
+FileEdit,FilePlus,FileX,
+Filter,
+Loader2,
+Pause,
+Play,
+RefreshCw,
+Search,
+Terminal,
+Wrench,
+XCircle
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ActivityEvent {
   id: string;

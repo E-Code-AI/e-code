@@ -1,29 +1,18 @@
 // @ts-nocheck
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Trophy, 
-  Star, 
-  Target, 
-  Zap,
-  Award,
-  TrendingUp,
-  Users,
-  Calendar,
-  Flame,
-  Gift,
-  Crown,
-  Medal
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
+import {
+Flame,
+Star,
+Trophy
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface UserStats {
   level: number;

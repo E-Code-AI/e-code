@@ -1,7 +1,7 @@
 // @ts-nocheck
 // Performance Budget Monitoring System
 
-import performanceMonitor, { getWebVitals } from './performance';
+import { getWebVitals } from './performance';
 
 // Performance budget thresholds
 interface PerformanceBudget {
@@ -565,4 +565,4 @@ export const onPerformanceReport = (callback: (report: PerformanceReport) => voi
 export const getPerformanceViolations = () => budgetMonitor.getViolations();
 
 export default budgetMonitor;
-export type { PerformanceBudget, BudgetViolation, PerformanceReport };
+export type { BudgetViolation,PerformanceBudget,PerformanceReport };

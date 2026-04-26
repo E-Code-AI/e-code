@@ -1,25 +1,34 @@
 // @ts-nocheck
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { z } from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardFooter,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle,DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { 
-  Trophy, DollarSign, Clock, Users, Star, Filter, Search, 
-  CheckCircle, AlertCircle, Loader2, Eye, Send, Crown, Shield
-} from 'lucide-react';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import type { Bounty } from '@shared/schema';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+CheckCircle,
+Clock,
+Crown,
+Eye,
+Filter,
+Loader2,
+Send,
+Shield,
+Star,
+Trophy,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { z } from 'zod';
 
 const applyFormSchema = z.object({
   proposal: z.string().min(10, 'Proposal must be at least 10 characters'),

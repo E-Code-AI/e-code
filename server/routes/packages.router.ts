@@ -10,14 +10,14 @@
  * - Uses safePath utility to prevent path traversal attacks
  */
 
+import { spawn } from 'child_process';
 import { Router } from 'express';
+import fs from 'fs/promises';
+import path from 'path';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
-import { spawn } from 'child_process';
-import path from 'path';
-import fs from 'fs/promises';
-import { safePath } from '../utils/safe-path';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { safePath } from '../utils/safe-path';
 
 const router = Router();
 

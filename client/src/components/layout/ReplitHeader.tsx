@@ -1,81 +1,62 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Search,
-  Plus,
-  Bell,
-  Settings,
-  LogOut,
-  User,
-  Zap,
-  Crown,
-  HelpCircle,
-  Book,
-  Users,
-  Code,
-  Database,
-  Globe,
-  Menu,
-  X,
-  Lock,
-  Terminal,
-  Palette,
-  Workflow,
-  Shield,
-  HardDrive,
-  Key,
-  Package,
-  ChevronDown,
-  GraduationCap,
-  DollarSign,
-  Gift,
-  BarChart3,
-  Trophy,
-  Store,
-  Rocket,
-  CreditCard,
-  Share2,
-  GitBranch,
-  Download,
-  Copy,
-  FolderOpen,
-  History,
-  Star,
-  MoreHorizontal,
-  Bot,
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { Link, useLocation } from "wouter";
 import { NotificationCenter } from "@/components/NotificationCenter";
 import { SpotlightSearch } from "@/components/SpotlightSearch";
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-media-query";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
-import { apiRequest, withBootstrapHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest,withBootstrapHeaders } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
+import {
+BarChart3,
+Book,
+ChevronDown,
+Code,
+Copy,
+CreditCard,
+Crown,
+Database,
+DollarSign,
+Download,
+FolderOpen,
+GitBranch,
+Globe,
+GraduationCap,
+HelpCircle,
+History,
+LogOut,
+MoreHorizontal,
+Package,
+Plus,
+Rocket,
+Search,
+Settings,
+Share2,
+Store,
+Trophy,
+User,
+Users,
+Zap
+} from "lucide-react";
+import { useEffect,useState } from "react";
+import { Link,useLocation } from "wouter";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
-import { MobileMenu } from "./MobileMenu";
 import {
-  isActiveNavigationItem,
-  primaryNavigation,
-  secondaryNavigation,
-  type NavigationItem,
+isActiveNavigationItem,
+primaryNavigation,
+secondaryNavigation,
+type NavigationItem,
 } from "@/constants/navigation";
+import { MobileMenu } from "./MobileMenu";
 
-import {
-  DialogContent,
-  DialogTitle
-} from "@/components/ui/dialog";
 
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();

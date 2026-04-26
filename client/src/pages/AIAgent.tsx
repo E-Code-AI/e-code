@@ -1,20 +1,35 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLocation } from 'wouter';
-import { useAuth } from '@/hooks/use-auth';
-import { 
-  Sparkles, Zap, Code, Terminal, Package, GitBranch, 
-  Rocket, ArrowRight, CheckCircle, PlayCircle, Timer,
-  Brain, Cpu, Globe, Shield, Users, Star, TrendingUp,
-  MessageSquare, FileCode, Folder, Settings, Database
-} from 'lucide-react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { useState, useEffect } from 'react';
-import { LazyMotionDiv } from '@/lib/motion';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { BRAND } from '@/constants/brand';
+import { useAuth } from '@/hooks/use-auth';
+import { LazyMotionDiv } from '@/lib/motion';
+import {
+ArrowRight,
+Brain,
+CheckCircle,
+Code,
+Cpu,
+Database,
+FileCode,
+Globe,
+MessageSquare,
+Package,
+PlayCircle,
+Rocket,
+Settings,
+Shield,
+Sparkles,
+Star,
+Timer,
+TrendingUp,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 export default function AIAgent() {
   const [, navigate] = useLocation();

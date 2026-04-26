@@ -1,33 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
-import { 
-  GitBranch,
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  Settings,
-  Bell,
-  Wifi,
-  WifiOff,
-  Zap,
-  Check,
-  Loader2,
-  Circle,
-  Cloud
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
+HoverCard,
+HoverCardContent,
+HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+AlertTriangle,
+Bell,
+Check,
+Circle,
+Cloud,
+GitBranch,
+Info,
+Loader2,
+Settings,
+Wifi,
+WifiOff,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
 
 export type SaveStatus = 'saved' | 'saving' | 'unsaved';
 

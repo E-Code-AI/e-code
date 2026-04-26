@@ -1,9 +1,9 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { z } from 'zod';
+import { MobileSession } from '@shared/schema';
 import crypto from 'crypto';
-import { storage } from '../storage';
+import { NextFunction,Request,Response,Router } from 'express';
+import { z } from 'zod';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
-import { insertMobileSessionSchema, MobileSession } from '@shared/schema';
+import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('mobile-sessions-router');

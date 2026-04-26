@@ -1,11 +1,10 @@
 // @ts-nocheck
 import { spawn } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
-import { log } from './vite';
+import path from 'path';
 import { storage } from './storage';
-import { Project, File } from '@shared/schema';
+import { log } from './vite';
 
 // Interface for Git operations result
 interface GitResult {

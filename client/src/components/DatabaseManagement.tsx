@@ -1,85 +1,75 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { CM6Editor } from '@/components/editor/CM6Editor';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+Alert,
+AlertDescription,
+AlertTitle,
+} from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+Card,
+CardContent,
+CardDescription,
+CardHeader,
+CardTitle,
+} from '@/components/ui/card';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
+DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from '@/components/ui/select';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { Textarea } from '@/components/ui/textarea';
+Table,
+TableBody,
+TableCell,
+TableHead,
+TableHeader,
+TableRow,
+} from '@/components/ui/table';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import {
-  Database,
-  Plus,
-  Play,
-  RefreshCw,
-  Download,
-  Upload,
-  Settings,
-  Terminal,
-  FileText,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  HardDrive,
-  Activity,
-  Shield,
-  Globe,
-  Copy,
-  ExternalLink,
-  Trash2,
-  RotateCcw,
-  Search,
-  Table as TableIcon,
-  Code,
-  Info,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Activity,
+AlertCircle,
+CheckCircle,
+Code,
+Copy,
+Database,
+Download,
+ExternalLink,
+FileText,
+Play,
+Plus,
+RotateCcw,
+Search,
+Settings,
+Shield,
+Table as TableIcon
 } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { CM6Editor } from '@/components/editor/CM6Editor';
+import { useState } from 'react';
 
 interface DatabaseInstance {
   id: number;

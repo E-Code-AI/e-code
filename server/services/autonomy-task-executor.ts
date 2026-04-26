@@ -9,21 +9,21 @@
  * - Task dependency management
  */
 
-import { createLogger } from '../utils/logger';
-import { AIProviderManager } from '../ai/ai-provider-manager';
-import { db } from '../db';
-import { files, projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
 import type { MaxAutonomyTask } from '@shared/schema';
-import type { CheckpointService } from './checkpoint-service';
-import type { BackgroundTestingService } from './background-testing-service';
-import { delegationManager, type DelegationDecision } from './delegation-manager.service';
-import { orchestratorMetrics, type TaskMetric } from './orchestrator-metrics.service';
+import { files } from '@shared/schema';
+import { exec } from 'child_process';
+import { and,eq } from 'drizzle-orm';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { exec } from 'child_process';
 import { promisify } from 'util';
+import { AIProviderManager } from '../ai/ai-provider-manager';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import type { BackgroundTestingService } from './background-testing-service';
+import type { CheckpointService } from './checkpoint-service';
+import { delegationManager,type DelegationDecision } from './delegation-manager.service';
+import { orchestratorMetrics,type TaskMetric } from './orchestrator-metrics.service';
 
 const execAsync = promisify(exec);
 const logger = createLogger('AutonomyTaskExecutor');

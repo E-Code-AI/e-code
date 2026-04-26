@@ -1,9 +1,8 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, TrendingUp, CreditCard, Clock } from 'lucide-react';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { Calendar,Clock,CreditCard,TrendingUp } from 'lucide-react';
 
 export default function Cycles() {
   // Fetch user billing data

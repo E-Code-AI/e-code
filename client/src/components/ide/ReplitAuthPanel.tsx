@@ -1,16 +1,24 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
 import {
-  ShieldCheck, Mail, Chrome, Github, MessageSquare, Apple,
-  Users, Code2, Copy, Check, ChevronRight, Zap, Globe, Lock
+Apple,
+Check,ChevronRight,
+Chrome,
+Code2,Copy,
+Github,
+Globe,Lock,
+Mail,
+MessageSquare,
+ShieldCheck,
+Users,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface AuthConfig {
   projectId: number;

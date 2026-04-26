@@ -1,7 +1,7 @@
 // @ts-nocheck
+import { projects,usageTracking,users } from '@shared/schema';
+import { and,desc,eq,gte,lte } from 'drizzle-orm';
 import { db } from '../db';
-import { usageTracking, users, projects } from '@shared/schema';
-import { eq, and, gte, lte, sql, desc } from 'drizzle-orm';
 
 const logger = {
   info: (message: string, ...args: any[]) => {},

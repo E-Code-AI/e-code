@@ -1,35 +1,32 @@
-import React, { useMemo, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Users, 
-  Mic, 
-  MicOff, 
-  ScreenShare,
-  MessageSquare,
-  Settings,
-  UserPlus,
-  Crown,
-  Eye,
-  Activity,
-  Volume2,
-  VolumeX,
-  Phone,
-  PhoneOff,
-  Monitor,
-  MousePointer,
-  FileText,
-  Zap
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+Activity,
+Crown,
+Eye,
+MessageSquare,
+Mic,
+MicOff,
+Monitor,
+Phone,
+PhoneOff,
+ScreenShare,
+Settings,
+UserPlus,
+Users,
+Volume2,
+VolumeX,
+Zap
 } from 'lucide-react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import React,{ useMemo,useState } from 'react';
 
 interface Collaborator {
   userId: number;

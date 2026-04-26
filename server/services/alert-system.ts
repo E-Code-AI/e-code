@@ -3,11 +3,11 @@
  * Advanced alerting with thresholds, anomaly detection, and notifications
  */
 
+import { alerts } from '@shared/schema';
+import { desc,eq,or } from 'drizzle-orm';
 import { EventEmitter } from 'events';
-import { createLogger } from '../utils/logger';
 import { db } from '../db';
-import { alerts, alertHistory, users } from '@shared/schema';
-import { eq, and, or, gte, lte, desc, sql } from 'drizzle-orm';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('alert-system');
 

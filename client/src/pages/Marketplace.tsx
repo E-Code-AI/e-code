@@ -1,40 +1,37 @@
 // @ts-nocheck
+import { Avatar,AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent } from '@/components/ui/card';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import {
+BarChart3,
+CheckCircle2,
+Code,
+Crown,
+Database,
+Download,
+FileText,
+Filter,
+Globe,
+MessageSquare,
+Package,
+Paintbrush,
+Search,
+Settings,
+Shield,
+Smartphone,
+Star,
+Store,
+Zap
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
-import { toast } from '@/hooks/use-toast';
-import { 
-  Store, 
-  Search, 
-  Star, 
-  Download, 
-  Filter,
-  Package,
-  Zap,
-  Paintbrush,
-  Code,
-  Shield,
-  Globe,
-  Smartphone,
-  Database,
-  BarChart3,
-  FileText,
-  MessageSquare,
-  Heart,
-  ExternalLink,
-  Settings,
-  TrendingUp,
-  Crown,
-  CheckCircle2
-} from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function Marketplace() {
   const [, navigate] = useLocation();

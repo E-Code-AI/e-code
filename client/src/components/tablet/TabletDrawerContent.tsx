@@ -4,25 +4,23 @@
  * Replit-identical design with E-Code branding
  */
 
-import { useState } from 'react';
-import { LazyMotionDiv, LazyMotionButton } from '@/lib/motion';
-import { Button } from '@/components/ui/button';
-import { 
-  FileText, 
-  Wrench, 
-  Bot, 
-  Settings, 
-  Terminal as TerminalIcon,
-  Rocket,
-  Code2,
-  GitBranch,
-  Package,
-  Users,
-  AlertCircle
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
-import { useReducedMotion, getReducedMotionTransition, SPRING_CONFIG } from '@/hooks/use-reduced-motion';
+import { getReducedMotionTransition,SPRING_CONFIG,useReducedMotion } from '@/hooks/use-reduced-motion';
+import { LazyMotionButton,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+Bot,
+FileText,
+GitBranch,
+Package,
+Rocket,
+Settings,
+Terminal as TerminalIcon,
+Users,
+Wrench
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface TabletDrawerContentProps {
   projectId: string | number; // Support both UUID strings and numeric IDs

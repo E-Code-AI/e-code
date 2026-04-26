@@ -1,21 +1,20 @@
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, CheckCircle2, Circle, Loader2, XCircle, AlertTriangle, Clock, Zap, Brain, Target, ArrowRight, FileCode, Link2, ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import {
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { AlertTriangle,ArrowRight,Brain,CheckCircle2,ChevronDown,ChevronUp,Circle,Clock,ExternalLink,FileCode,Link2,Loader2,Target,XCircle,Zap } from 'lucide-react';
+import { useState } from 'react';
 
 export interface DecomposedTask {
   id: string;

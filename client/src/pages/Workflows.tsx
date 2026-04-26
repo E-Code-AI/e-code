@@ -1,56 +1,53 @@
-import { useState, useCallback } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { ECodeLoading } from "@/components/ECodeLoading";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowLeft,
-  Play, 
-  Plus, 
-  MoreVertical,
-  ChevronDown,
-  ChevronRight,
-  Search,
-  Terminal,
-  Trash2,
-  ExternalLink,
-  Zap,
-  Package,
-  PlayCircle,
-  GripVertical,
-  Square,
-  X
-} from "lucide-react";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
+import { ToggleGroup,ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { ECodeLoading } from "@/components/ECodeLoading";
-import { useLocation } from "wouter";
+import { apiRequest,queryClient } from "@/lib/queryClient";
 import { cn } from "@/lib/utils";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
+closestCenter,
+DndContext,
+DragEndEvent,
+KeyboardSensor,
+PointerSensor,
+TouchSensor,
+useSensor,
+useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
+arrayMove,
+SortableContext,
+sortableKeyboardCoordinates,
+useSortable,
+verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+ArrowLeft,
+ChevronDown,
+ChevronRight,
+ExternalLink,
+GripVertical,
+MoreVertical,
+Package,
+Play,
+PlayCircle,
+Plus,
+Search,
+Terminal,
+Trash2,
+Zap
+} from "lucide-react";
+import { useCallback,useState } from "react";
+import { useLocation } from "wouter";
 
 interface WorkflowTask {
   id: number;

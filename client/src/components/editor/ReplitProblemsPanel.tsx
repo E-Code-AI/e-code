@@ -1,21 +1,20 @@
-import React, { useState } from 'react';
-import { useParams } from 'wouter';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  AlertCircle, 
-  AlertTriangle, 
-  Info, 
-  X,
-  Filter,
-  ChevronDown,
-  ChevronRight,
-  FileText
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import {
+AlertCircle,
+AlertTriangle,
+ChevronDown,
+ChevronRight,
+FileText,
+Filter,
+Info
+} from 'lucide-react';
+import { useState } from 'react';
+import { useParams } from 'wouter';
 
 interface Problem {
   id: string;

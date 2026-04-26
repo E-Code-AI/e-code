@@ -1,14 +1,17 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { 
-  Code, FileText, Package, Zap, Terminal, Database, Globe, 
-  Cpu, GitBranch, Layers, Search, Plus, ExternalLink 
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import {
+Code,FileText,
+Plus,
+Search,
+Terminal,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
 import * as Icons from 'react-icons/si';
 
 interface Template {

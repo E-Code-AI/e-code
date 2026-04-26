@@ -1,57 +1,53 @@
-import { useState, useEffect } from "react";
-import { LazyMotionDiv, LazyAnimatePresence } from "@/lib/motion";
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  ExternalLink,
-  Clock,
-  Globe,
-  Lock,
-  Users,
-  Trash2,
-  Edit3,
-  FolderOpen,
-  Star,
-  Grid3x3,
-  List,
-  ChevronDown,
-  Filter,
-  SortAsc,
-  ArrowRight,
-  Code2,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+Dialog,
+DialogContent,
+DialogDescription,
+DialogFooter,
+DialogHeader,
+DialogTitle,
 } from "@/components/ui/dialog";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
+import { Tabs,TabsList,TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { LazyAnimatePresence,LazyMotionDiv } from "@/lib/motion";
+import { apiRequest,queryClient } from "@/lib/queryClient";
 import type { Project } from "@shared/schema";
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+AlertCircle,
+ArrowRight,
+ChevronDown,
+Clock,
+Code2,
+Edit3,
+FolderOpen,
+Globe,
+Grid3x3,
+List,
+Loader2,
+Lock,
+MoreVertical,
+Plus,
+Search,
+SortAsc,
+Trash2,
+Users
+} from "lucide-react";
+import { useState } from "react";
 
 interface AppsViewProps {
   onOpenApp: (appId: number) => void;

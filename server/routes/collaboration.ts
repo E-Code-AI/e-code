@@ -1,14 +1,14 @@
-import { Router, Request, Response } from 'express';
-import { collaborativeEditingService } from '../services/collaborative-editing';
-import { db } from '../db';
-import { collaborationSessions, sessionParticipants, collaborationMessages, projects } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { ensureAuthenticated as requireAuth } from '../middleware/auth';
-import { realEmailService } from '../services/real-email-service';
-import { createLogger } from '../utils/logger';
+import { collaborationMessages,collaborationSessions,sessionParticipants } from '@shared/schema';
+import { and,desc,eq } from 'drizzle-orm';
+import { Request,Response,Router } from 'express';
 import { getCollaborationService } from '../collaboration/unified-collaboration-service';
-import { storage } from '../storage';
+import { db } from '../db';
+import { ensureAuthenticated as requireAuth } from '../middleware/auth';
+import { collaborativeEditingService } from '../services/collaborative-editing';
 import { notifyCollaborationInvite } from '../services/notification-events';
+import { realEmailService } from '../services/real-email-service';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('collaboration-router');
 

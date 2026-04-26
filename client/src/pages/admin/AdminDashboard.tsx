@@ -1,21 +1,20 @@
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  Users, 
-  DollarSign, 
-  FileText, 
-  Ticket,
-  TrendingUp,
-  Package,
-  BookOpen,
-  Globe,
-  Activity,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+import {
+Activity,
+AlertCircle,
+BookOpen,
+CheckCircle,
+DollarSign,
+FileText,
+Globe,
+Package,
+Ticket,
+TrendingUp,
+Users,
+XCircle
 } from 'lucide-react';
 import { AdminLayout } from './AdminLayout';
-import { apiRequest } from '@/lib/queryClient';
 
 interface DashboardStats {
   totalUsers: number;

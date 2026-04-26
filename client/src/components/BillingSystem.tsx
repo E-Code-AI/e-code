@@ -1,23 +1,30 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { 
-  CreditCard, Zap, TrendingUp, Package, Shield, 
-  Check, X, Loader2, AlertCircle, Info, ChevronRight,
-  Sparkles, Crown, Star, Clock, BarChart3
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import {
+Check,
+Clock,
+CreditCard,
+Crown,
+Info,
+Loader2,
+Package,Shield,
+Sparkles,
+Star,
+TrendingUp,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { useLocation } from 'wouter';
 
 interface BillingSystemProps {
   userId: number;

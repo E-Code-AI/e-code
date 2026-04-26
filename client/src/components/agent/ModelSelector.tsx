@@ -1,21 +1,21 @@
-import { Check, ChevronsUpDown, Sparkles, Zap, Brain, Cpu } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
+Command,
+CommandEmpty,
+CommandGroup,
+CommandInput,
+CommandItem,
 } from '@/components/ui/command';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { Brain,Check,ChevronsUpDown,Cpu,Sparkles,Zap } from 'lucide-react';
+import { useState } from 'react';
 
 type ModelCategory = 'openai' | 'anthropic' | 'google' | 'xai' | 'moonshot';
 

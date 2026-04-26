@@ -4,14 +4,12 @@
  * Provides actual code generation and file modification capabilities
  */
 
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
+import { File,Project } from '@shared/schema';
+import { diff_match_patch } from 'diff-match-patch';
+import OpenAI from 'openai';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
-import { File, Project } from '@shared/schema';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { diff_match_patch } from 'diff-match-patch';
 
 const logger = createLogger('real-code-generator');
 

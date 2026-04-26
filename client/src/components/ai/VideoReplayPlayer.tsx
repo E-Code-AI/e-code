@@ -5,23 +5,30 @@
  * Identical to Replit's App Testing video replay interface
  */
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { 
-  Play, Pause, SkipBack, SkipForward, Volume2, VolumeX,
-  Maximize2, Minimize2, RotateCcw, ChevronDown, Clock,
-  CheckCircle2, XCircle, AlertCircle, Loader2
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
+import {
+AlertCircle,
+CheckCircle2,
+ChevronDown,Clock,
+Loader2,
+Maximize2,Minimize2,
+Pause,
+Play,
+RotateCcw,
+SkipBack,SkipForward,Volume2,VolumeX,
+XCircle
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface TestStep {
   id: string;

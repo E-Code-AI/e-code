@@ -1,16 +1,16 @@
-import { useEffect, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogDescription 
-} from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import { Keyboard } from 'lucide-react';
+import { useCallback,useEffect } from 'react';
 
 interface Shortcut {
   key: string;

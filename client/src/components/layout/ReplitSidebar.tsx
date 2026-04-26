@@ -1,46 +1,45 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
+Collapsible,
+CollapsibleContent,
+CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  FileText,
-  Folder,
-  FolderOpen,
-  Plus,
-  Search,
-  Settings,
-  GitBranch,
-  Terminal,
-  Play,
-  Square,
-  RefreshCw,
-  ChevronRight,
-  ChevronDown,
-  Database,
-  Globe,
-  Lock,
-  Users,
-  Star,
-  Clock,
-  Tag,
-  Sparkles,
-  Package,
-  HardDrive,
-  Key,
-  Rocket,
-} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+ChevronDown,
+ChevronRight,
+Clock,
+Database,
+FileText,
+Folder,
+FolderOpen,
+GitBranch,
+Globe,
+HardDrive,
+Key,
+Lock,
+Package,
+Play,
+Plus,
+RefreshCw,
+Rocket,
+Search,
+Settings,
+Sparkles,
+Square,
+Star,
+Terminal,
+Users
+} from "lucide-react";
+import { useState } from "react";
 import { Link } from "wouter";
 
 interface FileNode {

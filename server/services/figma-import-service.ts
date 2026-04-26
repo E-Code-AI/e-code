@@ -1,6 +1,6 @@
+import fetch from 'node-fetch';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
-import fetch from 'node-fetch';
 
 const logger = createLogger('figma-import-service');
 

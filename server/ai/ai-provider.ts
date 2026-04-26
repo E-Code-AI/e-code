@@ -34,12 +34,12 @@
 // ║                                                                          ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
-import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
-import { codeAnalyzer } from './code-analyzer';
-import { createLogger } from '../utils/logger';
+import OpenAI from 'openai';
 import { aiBillingService } from '../services/ai-billing-service';
+import { createLogger } from '../utils/logger';
 import { AI_MODELS } from './ai-provider-manager';
+import { codeAnalyzer } from './code-analyzer';
 
 const logger = createLogger('ai-provider [DEPRECATED]');
 

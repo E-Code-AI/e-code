@@ -1,27 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Zap, Plus, Trash2, Edit, Save, X, TrendingUp, TrendingDown,
-  Cpu, HardDrive, Network, Clock, DollarSign, AlertTriangle,
-  Info, Settings, History, Play, Pause, ChevronRight, Calculator
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { LazyMotionDiv } from '@/lib/motion';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { cn } from '@/lib/utils';
+import { LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+AlertTriangle,
+Calculator,
+Clock,
+Cpu,
+Edit,
+HardDrive,
+History,
+Info,
+Network,
+Plus,
+Settings,
+Trash2,
+TrendingDown,
+TrendingUp,
+Zap
+} from 'lucide-react';
+import { useState } from 'react';
 
 interface AutoScalingConfigProps {
   deploymentId: string;

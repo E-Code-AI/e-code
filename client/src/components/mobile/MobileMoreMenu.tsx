@@ -1,19 +1,34 @@
-import { useRef, useState, useEffect } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence } from '@/lib/motion';
-import { useNativeMotionValue } from '@/lib/native-motion';
-import { 
-  GitBranch, Bug, Settings, Database,
-  Share2, Users, X,
-  Globe, Package, Search, Shield, Key,
-  Workflow, History, Puzzle, RotateCcw,
-  Zap, Layers, Rocket, Command, Keyboard
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { DURATION_CONFIG,SPRING_CONFIG,getReducedMotionTransition,useReducedMotion } from '@/hooks/use-reduced-motion';
 import { useToast } from '@/hooks/use-toast';
-import { useReducedMotion, SPRING_CONFIG, getReducedMotionTransition, DURATION_CONFIG } from '@/hooks/use-reduced-motion';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv } from '@/lib/motion';
+import { useNativeMotionValue } from '@/lib/native-motion';
+import { cn } from '@/lib/utils';
+import {
+Bug,
+Command,
+Database,
+GitBranch,
+Globe,
+History,
+Key,
+Layers,
+Package,
+Puzzle,
+Rocket,
+RotateCcw,
+Search,
+Settings,
+Share2,
+Shield,
+Users,
+Workflow,
+X,
+Zap
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface MobileMoreMenuProps {
   projectId: string | number;

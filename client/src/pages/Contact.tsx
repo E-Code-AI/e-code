@@ -1,29 +1,35 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { apiRequest } from "@/lib/queryClient";
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+Select,
+SelectContent,
+SelectItem,
+SelectTrigger,
+SelectValue,
 } from "@/components/ui/select";
-import {
-  Mail, MessageCircle, Phone, MapPin,
-  Send, Loader2, CheckCircle, Building2,
-  HelpCircle, Users, Briefcase
-} from "lucide-react";
-import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
+import { Textarea } from "@/components/ui/textarea";
 import { getSEOConfig } from "@/config/seo.config";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import {
+Building2,
+CheckCircle,
+HelpCircle,
+Loader2,
+Mail,
+MapPin,
+MessageCircle,Phone,
+Send,
+Users
+} from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "wouter";
 
 const seo = getSEOConfig('contact');
 

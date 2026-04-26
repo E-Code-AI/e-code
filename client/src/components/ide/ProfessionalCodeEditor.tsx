@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { ReplitMonacoEditor } from '@/components/editor/ReplitMonacoEditor';
-import { useState, useEffect } from 'react';
 
 interface ProfessionalCodeEditorProps {
   projectId: string | number;

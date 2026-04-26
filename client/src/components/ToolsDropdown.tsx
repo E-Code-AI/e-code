@@ -1,38 +1,37 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Plus,
-  Database,
-  Terminal,
-  Code,
-  Shield,
-  Eye,
-  Bot,
-  Cloud,
-  Users,
-  Package,
-  Key,
-  GitBranch,
-  Network,
-  HardDrive,
-  AlertCircle,
-  ShieldCheck,
-  FileSearch,
-  Settings,
-  Monitor,
-  Puzzle,
-  Zap,
-  MessageSquareText,
-  Link2,
-  LogOut
+AlertCircle,
+Bot,
+Cloud,
+Code,
+Database,
+Eye,
+FileSearch,
+GitBranch,
+HardDrive,
+Key,
+Link2,
+MessageSquareText,
+Monitor,
+Network,
+Package,
+Plus,
+Puzzle,
+Settings,
+Shield,
+ShieldCheck,
+Terminal,
+Users,
+Zap
 } from 'lucide-react';
+import React from 'react';
 
 interface ToolsDropdownProps {
   onSelectTool: (tool: string) => void;

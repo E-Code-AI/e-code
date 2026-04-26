@@ -1,20 +1,20 @@
-import WebSocket, { WebSocketServer } from 'ws';
-import { IncomingMessage } from 'http';
+import { projects } from '@shared/schema';
+import { and,eq } from 'drizzle-orm';
 import type { Server } from 'http';
+import { IncomingMessage } from 'http';
+import jwt from 'jsonwebtoken';
 import type { Socket } from 'net';
 import type { Duplex } from 'stream';
-import jwt from 'jsonwebtoken';
-import { backgroundTestingService } from '../services/background-testing-service';
-import { createLogger } from '../utils/logger';
+import WebSocket,{ WebSocketServer } from 'ws';
 import { db } from '../db';
-import { projects } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
+import { backgroundTestingService } from '../services/background-testing-service';
 import { storage } from '../storage';
-import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
-import { markSocketAsHandled } from './upgrade-guard';
+import { createLogger } from '../utils/logger';
 import { getJwtSecret } from '../utils/secrets-manager';
-import { wsMetrics } from './ws-metrics';
+import { centralUpgradeDispatcher } from './central-upgrade-dispatcher';
 import { registerShutdownHandler } from './graceful-shutdown';
+import { markSocketAsHandled } from './upgrade-guard';
+import { wsMetrics } from './ws-metrics';
 
 const logger = createLogger('background-testing-ws');
 

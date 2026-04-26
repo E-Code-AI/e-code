@@ -1,20 +1,18 @@
-import { useState, useEffect, useRef } from 'react';
-import { Send, Sparkles, User, Bot, Loader2, Settings, History, Zap, Code, MessageSquare, X, ChevronDown, ChevronUp, Bug, TestTube, FileCode } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { handleSSEWarning, type SSEWarningData } from '@/lib/sse-warning-handler';
-import { streamCodeAction, createStreamController } from '@/lib/streaming';
+import { getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
+import { handleSSEWarning,type SSEWarningData } from '@/lib/sse-warning-handler';
+import { streamCodeAction } from '@/lib/streaming';
+import { cn } from '@/lib/utils';
+import { Bot,Bug,ChevronDown,ChevronUp,Code,FileCode,Loader2,Send,Sparkles,TestTube,User,X,Zap } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface Message {
   id: string;

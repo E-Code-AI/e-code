@@ -1,30 +1,29 @@
-import { useState, useMemo, useCallback, memo, ComponentType } from 'react';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import {
-  Search,
-  FileText,
-  Sparkles,
-  Rocket,
-  HardDrive,
-  UserCheck,
-  Terminal,
-  Database,
-  Code,
-  GitBranch,
-  Puzzle,
-  Users,
-  Eye,
-  Key,
-  Shield,
-  TerminalSquare,
-  Settings,
-  Zap,
-  Store,
-  ChevronRight,
-  X,
-} from 'lucide-react';
 import { TOOL_REGISTRY } from '@/lib/tool-registry';
+import { cn } from '@/lib/utils';
+import {
+ChevronRight,
+Code,
+Database,
+Eye,
+FileText,
+GitBranch,
+HardDrive,
+Key,
+Puzzle,
+Rocket,
+Search,
+Settings,
+Shield,
+Sparkles,
+Store,
+Terminal,
+TerminalSquare,
+UserCheck,
+Users,
+Zap
+} from 'lucide-react';
+import { ComponentType,memo,useCallback,useMemo,useState } from 'react';
 
 const ReplitAgentIcon = memo(({ className }: { className?: string }) => (
   <svg 

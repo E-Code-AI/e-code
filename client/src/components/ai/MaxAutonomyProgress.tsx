@@ -1,27 +1,27 @@
-import { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Collapsible,CollapsibleContent,CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Progress } from '@/components/ui/progress';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  Play, 
-  Pause, 
-  Square, 
-  ChevronDown, 
-  ChevronRight,
-  CheckCircle2,
-  Circle,
-  Loader2,
-  XCircle,
-  Clock,
-  Zap,
-  Shield,
-  RotateCcw,
-  TestTube,
-  DollarSign
-} from 'lucide-react';
+import { useMaxAutonomy,type SessionStatus } from '@/hooks/useMaxAutonomy';
 import { cn } from '@/lib/utils';
-import { useMaxAutonomy, type SessionProgress, type MaxAutonomyTask, type SessionStatus } from '@/hooks/useMaxAutonomy';
+import {
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Circle,
+Clock,
+DollarSign,
+Loader2,
+Pause,
+Play,
+RotateCcw,
+Shield,
+Square,
+TestTube,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useMemo,useState } from 'react';
 
 interface MaxAutonomyProgressProps {
   sessionId: string;

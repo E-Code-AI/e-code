@@ -1,47 +1,41 @@
-import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+Dialog,
+DialogContent,
+DialogDescription,
+DialogHeader,
+DialogTitle,
+} from '@/components/ui/dialog';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Search, 
-  FileText, 
-  Folder, 
-  FolderOpen, 
-  Plus, 
-  MoreVertical,
-  Upload,
-  Download,
-  RefreshCw,
-  Settings,
-  ChevronRight,
-  ChevronDown,
-  File,
-  Code,
-  Image,
-  FileJson,
-  GitBranch,
-  Database,
-  Package,
-  X
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 import { File as FileType } from '@shared/schema';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { FileUpload } from './FileUpload';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+ChevronDown,
+ChevronRight,
+Code,
+File,
+FileJson,
+FileText,
+Folder,
+FolderOpen,
+Image,
+MoreVertical,
+Plus,
+RefreshCw,
+Upload,
+X
+} from 'lucide-react';
+import { useState } from 'react';
+import { FileUpload } from './FileUpload';
 
 interface ReplitFileSidebarProps {
   files: FileType[];

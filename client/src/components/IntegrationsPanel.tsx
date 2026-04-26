@@ -1,17 +1,52 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import type { McpServer,McpTool } from "@shared/schema";
+import { useMutation,useQuery,useQueryClient } from "@tanstack/react-query";
 import {
-  Puzzle, Loader2, Plus, X, Check, Search, ChevronDown, ChevronRight,
-  Database, Sparkles, CreditCard, Cloud, Mail, Phone, Flame, Zap, Github, Plug,
-  MessageSquare, MessageCircle, Send, Smartphone, BookOpen, Table2, Calendar,
-  Users, Music, Layout, ClipboardList, RefreshCw, CheckCircle2, XCircle, AlertCircle,
-  Warehouse, BarChart, GitBranch, Hexagon, Shield, Globe, Link2, ExternalLink, Figma, UserCheck,
+AlertCircle,
+BarChart,
+BookOpen,
+Calendar,
+Check,
+CheckCircle2,
+ChevronDown,ChevronRight,
+ClipboardList,
+Cloud,
+CreditCard,
+Database,
+ExternalLink,Figma,
+Flame,
+GitBranch,
+Github,
+Globe,
+Hexagon,
+Layout,
+Loader2,
+Mail,
+MessageCircle,
+MessageSquare,
+Music,
+Phone,
+Plug,
+Plus,
+Puzzle,
+RefreshCw,
+Search,
+Send,
+Shield,
+Smartphone,
+Sparkles,
+Table2,
+UserCheck,
+Users,
+Warehouse,
+X,
+XCircle,
+Zap
 } from "lucide-react";
-import type { McpServer, McpTool } from "@shared/schema";
+import React,{ useState } from "react";
 
 interface CatalogEntry {
   id: string;

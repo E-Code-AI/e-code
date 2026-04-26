@@ -1,17 +1,18 @@
-import { useState } from "react";
+import PublicLayout from "@/components/layout/PublicLayout";
+import { SEOHead,structuredData } from "@/components/seo/SEOHead";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  ArrowRight, BookOpen, Clock, Play, Search,
-  CheckCircle, Code, Rocket, Database, Globe,
-  Sparkles, Users, Filter
-} from "lucide-react";
-import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
-import { SEOHead, structuredData } from "@/components/seo/SEOHead";
 import { getSEOConfig } from "@/config/seo.config";
+import {
+ArrowRight,BookOpen,Clock,Play,
+Rocket,
+Search,
+Sparkles
+} from "lucide-react";
+import { useState } from "react";
+import { Link } from "wouter";
 
 const seo = getSEOConfig('tutorials');
 

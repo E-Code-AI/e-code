@@ -1,60 +1,50 @@
-import { useState, useEffect, useRef } from 'react';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import {
+Check,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Code,
+Copy,
+Edit,
+Eye,
+EyeOff,
+FileCode,
+Folder,
+FolderOpen,
+FolderTree,
+Key,
+Lock,
+Play,
+Plus,
+RefreshCw,
+Save,
+Server,
+Square,
+TerminalSquare,
+Trash2,
+Unlock,
+Wifi,
+WifiOff,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import { Terminal as XTerm } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import 'xterm/css/xterm.css';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  TerminalSquare,
-  Settings,
-  Key,
-  FolderTree,
-  Play,
-  Square,
-  RefreshCw,
-  Plus,
-  Trash2,
-  Copy,
-  Check,
-  ChevronRight,
-  ChevronDown,
-  FileCode,
-  Folder,
-  FolderOpen,
-  Eye,
-  EyeOff,
-  Lock,
-  Unlock,
-  Server,
-  Link,
-  Wifi,
-  WifiOff,
-  Save,
-  Upload,
-  Download,
-  Edit,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Zap,
-  Code,
-  FileText,
-  Clock,
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 
 interface EnvVariable {
   key: string;

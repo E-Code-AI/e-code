@@ -1,4 +1,3 @@
-import type { ProjectDatabase, InsertProjectDatabase } from '@shared/schema';
 
 export type DatabaseProvider = 'neon' | 'cloudnativepg' | 'supabase' | 'local';
 

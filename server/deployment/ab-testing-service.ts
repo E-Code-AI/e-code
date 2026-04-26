@@ -1,9 +1,9 @@
 // @ts-nocheck
+import { deployments,projects } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import { db } from '../db';
-import { projects, deployments } from '@shared/schema';
-import { eq, and, gte } from 'drizzle-orm';
-import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
+import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ab-testing');

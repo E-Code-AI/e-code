@@ -1,12 +1,10 @@
 import { Router } from 'express';
-import { storage } from '../storage';
-import { ensureAuthenticated } from '../middleware/auth';
-import { previewEvents } from '../preview/preview-websocket';
-import jwt from 'jsonwebtoken';
-import { getJwtSecret } from '../utils/secrets-manager';
 import * as fs from 'fs/promises';
+import jwt from 'jsonwebtoken';
 import path from 'path';
+import { storage } from '../storage';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 // Hot-reload script to inject into HTML files
 // This connects to the preview WebSocket and reloads when file changes are detected

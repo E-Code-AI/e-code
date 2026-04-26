@@ -10,30 +10,27 @@
  * - Haptic feedback
  */
 
-import { useState, useEffect, useRef, memo, useCallback } from 'react';
-import { LazyMotionDiv, LazyMotionButton, LazyAnimatePresence, type PanInfo } from '@/lib/motion';
-import { 
-  Users, 
-  UserPlus, 
-  MessageSquare, 
-  Send, 
-  X, 
-  Copy, 
-  Check,
-  Phone,
-  Video,
-  Circle,
-  ChevronDown
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Avatar,AvatarFallback,AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { useRealTimeCollaboration, Collaborator, ChatMessage } from '@/hooks/useRealTimeCollaboration';
+import { ChatMessage,Collaborator,useRealTimeCollaboration } from '@/hooks/useRealTimeCollaboration';
+import { LazyAnimatePresence,LazyMotionButton,LazyMotionDiv,type PanInfo } from '@/lib/motion';
+import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import {
+Check,
+ChevronDown,
+Copy,
+MessageSquare,
+Send,
+UserPlus,
+Users,
+X
+} from 'lucide-react';
+import { memo,useCallback,useEffect,useRef,useState } from 'react';
 
 interface MobileCollaborationPanelProps {
   projectId: number;

@@ -1,7 +1,6 @@
 // @ts-nocheck
-import React from 'react';
-import { SplitsEditorLayout } from './SplitsEditorLayout';
 import { File } from '@shared/schema';
+import { SplitsEditorLayout } from './SplitsEditorLayout';
 
 // Demo files for testing
 const demoFiles: File[] = [

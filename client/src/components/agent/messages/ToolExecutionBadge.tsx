@@ -3,12 +3,22 @@
  * Displays tool type, status, and execution details
  */
 
-import { 
-  FileText, Edit, Trash2, Terminal, Package, FolderPlus, 
-  Search, Globe, Brain, Code, CheckCircle2, Loader2, XCircle 
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
+import {
+Brain,
+CheckCircle2,
+Code,
+Edit,
+FileText,
+FolderPlus,
+Globe,
+Loader2,
+Package,
+Search,
+Terminal,
+Trash2,
+XCircle
+} from 'lucide-react';
 
 interface ToolExecutionBadgeProps {
   tool: string;

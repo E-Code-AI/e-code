@@ -3,22 +3,21 @@
  * ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Migrated to Central Upgrade Dispatcher
  */
 
-import { WebSocketServer, WebSocket } from 'ws';
-import * as Y from 'yjs';
-import * as encoding from 'lib0/encoding';
+import * as crypto from 'crypto';
+import http,{ IncomingMessage } from 'http';
 import * as decoding from 'lib0/decoding';
-import * as syncProtocol from 'y-protocols/sync';
+import * as encoding from 'lib0/encoding';
+import type { Duplex } from 'stream';
+import { WebSocket,WebSocketServer } from 'ws';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import { Awareness } from 'y-protocols/awareness';
-import { Request } from 'express';
-import http, { IncomingMessage } from 'http';
-import type { Duplex } from 'stream';
-import * as crypto from 'crypto';
+import * as syncProtocol from 'y-protocols/sync';
+import * as Y from 'yjs';
+import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
 import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
-import { createLogger } from '../utils/logger';
-import { redisCache, CacheKeys, CacheTTL } from '../services/redis-cache.service';
 
 const logger = createLogger('collaboration-server');
 

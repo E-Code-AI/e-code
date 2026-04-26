@@ -3,11 +3,11 @@
  * Provides real-time voice and video communication capabilities
  */
 
+import { voiceVideoParticipants,voiceVideoSessions } from '@shared/schema';
+import { and,eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import { WebSocket } from 'ws';
 import { db } from '../db';
-import { voiceVideoSessions, voiceVideoParticipants } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
 
 interface Peer {
   id: string;

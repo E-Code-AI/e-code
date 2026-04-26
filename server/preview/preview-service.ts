@@ -1,20 +1,20 @@
 // @ts-nocheck
-import express from 'express';
-import * as path from 'path';
-import { storage } from '../storage';
-import { createProxyMiddleware, responseInterceptor } from 'http-proxy-middleware';
-import * as fs from 'fs/promises';
+import { environmentVariables } from '@shared/schema';
 import { spawn } from 'child_process';
 import { createHash } from 'crypto';
-import { createLogger } from '../utils/logger';
-import { previewEvents } from './preview-websocket';
-import fetch from 'node-fetch';
-import { db } from '../db';
-import { environmentVariables } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+import express from 'express';
+import * as fs from 'fs/promises';
+import { createProxyMiddleware,responseInterceptor } from 'http-proxy-middleware';
 import jwt from 'jsonwebtoken';
-import { getJwtSecret } from '../utils/secrets-manager';
+import fetch from 'node-fetch';
+import * as path from 'path';
+import { db } from '../db';
+import { storage } from '../storage';
+import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { getJwtSecret } from '../utils/secrets-manager';
+import { previewEvents } from './preview-websocket';
 
 const logger = createLogger('preview-service');
 

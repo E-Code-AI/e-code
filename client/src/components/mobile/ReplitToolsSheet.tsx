@@ -1,28 +1,27 @@
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import { 
-  Search, 
-  FileCode, 
-  Bot, 
-  Rocket, 
-  Database, 
-  Terminal, 
-  GitBranch, 
-  Users, 
-  Package, 
-  Shield, 
-  Code, 
-  FolderTree,
-  HardDrive,
-  Settings
+import {
+Sheet,
+SheetContent,
+SheetHeader,
+SheetTitle,
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
+import {
+Bot,
+Code,
+Database,
+FileCode,
+FolderTree,
+GitBranch,
+HardDrive,
+Package,
+Rocket,
+Search,
+Shield,
+Terminal,
+Users
 } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/lib/utils';
 
 interface Tool {
   id: string;

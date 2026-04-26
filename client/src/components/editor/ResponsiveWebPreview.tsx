@@ -1,28 +1,27 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { SplashScreenSequence } from '@/components/ide/SplashScreenSequence';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { 
-  RefreshCw, 
-  ExternalLink, 
-  Smartphone, 
-  Tablet, 
-  Monitor,
-  X,
-  Maximize2,
-  Minimize2,
-  AlertCircle,
-  WifiOff,
-  Play
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { useQuery } from '@tanstack/react-query';
-import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
-import { apiRequest } from '@/lib/queryClient';
-import { createPreviewWebSocket, type ResilientWebSocket } from '@/lib/websocket-resilience';
 import { useToast } from '@/hooks/use-toast';
-import { SplashScreenSequence } from '@/components/ide/SplashScreenSequence';
+import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { createPreviewWebSocket,type ResilientWebSocket } from '@/lib/websocket-resilience';
+import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
+import { useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+ExternalLink,
+Maximize2,
+Minimize2,
+Monitor,
+Play,
+RefreshCw,
+Smartphone,
+Tablet,
+WifiOff,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ResponsiveWebPreviewProps {
   projectId: string | number; // Support both UUID strings and numeric IDs

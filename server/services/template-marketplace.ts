@@ -1,12 +1,14 @@
 // @ts-nocheck
-import { db } from '../db';
-import { 
-  templates, templateCategories, templateRatings, templateTags,
-  templateCollections, collectionTemplates, users
+import {
+templateCategories,templateRatings,
+templates,
+templateTags,
+users
 } from '@shared/schema';
-import { eq, and, or, like, ilike, desc, asc, sql, inArray, gte, lte, not } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
+import { and,asc,desc,eq,gte,ilike,inArray,lte,not,or,sql } from 'drizzle-orm';
 import Fuse from 'fuse.js';
+import { db } from '../db';
+import { createLogger } from '../utils/logger';
 
 const logger = createLogger('template-marketplace');
 

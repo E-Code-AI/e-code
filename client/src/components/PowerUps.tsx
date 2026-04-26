@@ -1,29 +1,18 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { 
-  Zap, 
-  Cpu, 
-  HardDrive, 
-  Activity,
-  Gauge,
-  Timer,
-  Shield,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  DollarSign,
-  Sparkles
-} from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+CheckCircle,
+Sparkles
+} from 'lucide-react';
+import React,{ useState } from 'react';
 
 interface PowerUp {
   id: string;

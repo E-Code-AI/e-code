@@ -1,58 +1,55 @@
-import { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { CreateProjectModal } from "@/components/CreateProjectModal";
-import { BuildModeSelector, BuildMode } from "@/components/ai/BuildModeSelector";
-import { Project } from "@shared/schema";
-import AppLayout from "@/components/layout/AppLayout";
-import { 
-  Plus, 
-  Code, 
-  FileText, 
-  Clock, 
-  Settings, 
-  Grid, 
-  List, 
-  Search, 
-  MoreVertical, 
-  Trash, 
-  Edit, 
-  Copy, 
-  Lock, 
-  Globe,
-  Sparkles,
-  Bot,
-  Timer,
-  MessageSquare,
-  Zap,
-  ArrowRight
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { ECodeLoading } from '@/components/ECodeLoading';
 import { AuthModal } from '@/components/AuthModal';
-import { getProjectUrl } from '@/lib/utils';
+import { CreateProjectModal } from "@/components/CreateProjectModal";
+import { ECodeLoading } from '@/components/ECodeLoading';
 import { AIModelSelector } from '@/components/ai/AIModelSelector';
-import { SEOHead, structuredData } from '@/components/seo/SEOHead';
+import { BuildMode,BuildModeSelector } from "@/components/ai/BuildModeSelector";
+import AppLayout from "@/components/layout/AppLayout";
+import { SEOHead,structuredData } from '@/components/seo/SEOHead';
+import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card,CardContent,CardFooter,CardHeader,CardTitle } from "@/components/ui/card";
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+Tabs,
+TabsList,
+TabsTrigger
+} from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest,queryClient } from "@/lib/queryClient";
+import { getProjectUrl } from '@/lib/utils';
+import { Project } from "@shared/schema";
+import { useMutation,useQuery } from "@tanstack/react-query";
+import {
+ArrowRight,
+Bot,
+Clock,
+Code,
+Copy,
+Edit,
+Globe,
+Grid,
+List,
+Lock,
+MessageSquare,
+MoreVertical,
+Plus,
+Search,
+Sparkles,
+Timer,
+Trash,
+Zap
+} from "lucide-react";
+import { useEffect,useRef,useState } from "react";
+import { useLocation } from "wouter";
 
 export default function Home() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

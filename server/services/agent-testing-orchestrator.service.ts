@@ -9,8 +9,15 @@
  * Fortune 500 Engineering Standards
  */
 
-import type { Browser, Page, BrowserContext } from 'playwright';
+import { desc,eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
+import type { Browser,BrowserContext,Page } from 'playwright';
+import {
+BrowserTestExecution,
+browserTestExecutions,
+testArtifacts
+} from '../../shared/schema';
+import { db } from '../db';
 
 let playwrightModule: typeof import('playwright') | null = null;
 async function getPlaywright() {
@@ -23,15 +30,6 @@ async function getPlaywright() {
   }
   return playwrightModule;
 }
-import { db } from '../db';
-import { 
-  browserTestExecutions, 
-  testArtifacts,
-  BrowserTestExecution,
-  InsertBrowserTestExecution,
-  InsertTestArtifact
-} from '../../shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
 
 export interface TestExecutionContext {
   sessionId: string;

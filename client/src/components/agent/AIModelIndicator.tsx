@@ -1,20 +1,19 @@
-import { Cpu, Zap, Sparkles, Brain, ChevronDown, Info } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuLabel,
+DropdownMenuSeparator,
+DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import {
+Tooltip,
+TooltipContent,
+TooltipProvider,
+TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+import { Brain,ChevronDown,Cpu,Info,Sparkles,Zap } from 'lucide-react';
 
 export type ModelTier = 'fast' | 'balanced' | 'quality';
 

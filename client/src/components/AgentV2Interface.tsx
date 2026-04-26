@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Progress } from '@/components/ui/progress';
+import { Alert,AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
+import { RadioGroup,RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Bot, Play, Square, Plus, FileText, Code, DollarSign, AlertCircle, CheckCircle, Loader2, Sparkles } from 'lucide-react';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { AlertCircle,Bot,CheckCircle,Code,DollarSign,FileText,Loader2,Play,Plus,Sparkles,Square } from 'lucide-react';
+import { useState } from 'react';
 
 interface AgentV2Progress {
   status: 'initializing' | 'analyzing' | 'building' | 'testing' | 'completed' | 'error';

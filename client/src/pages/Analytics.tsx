@@ -1,32 +1,26 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Activity, 
-  BarChart3, 
-  Clock, 
-  Users, 
-  Globe, 
-  TrendingUp, 
-  Eye,
-  Mouse,
-  Smartphone,
-  Monitor,
-  MapPin,
-  Calendar,
-  Filter,
-  Download,
-  Share,
-  Settings
-} from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useQuery } from '@tanstack/react-query';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { apiRequest } from '@/lib/queryClient';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import {
+Activity,
+BarChart3,
+Calendar,
+Clock,
+Download,
+Eye,
+Globe,
+Monitor,
+Share,
+Smartphone,
+Users
+} from 'lucide-react';
+import { useState } from 'react';
+import { Area,AreaChart,CartesianGrid,Legend,Line,LineChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts';
 
 // Types for analytics data
 interface OverviewStat {

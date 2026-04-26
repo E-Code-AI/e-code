@@ -1,9 +1,9 @@
+import PublicLayout from "@/components/layout/PublicLayout";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Code, Sparkles, Rocket, CheckCircle, Layers, Globe, Zap } from "lucide-react";
+import { ArrowRight,CheckCircle,Code,Layers,Rocket,Sparkles } from "lucide-react";
 import { Link } from "wouter";
-import PublicLayout from "@/components/layout/PublicLayout";
 
 export default function AppBuilder() {
   return (

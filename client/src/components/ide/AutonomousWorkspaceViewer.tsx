@@ -11,25 +11,24 @@
  * - Auto-closes on completion
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Loader2, 
-  CheckCircle2, 
-  XCircle, 
-  FileCode, 
-  Rocket, 
-  Sparkles,
-  Terminal,
-  Package,
-  Code2,
-  PlayCircle
-} from 'lucide-react';
+import { Dialog,DialogContent,DialogDescription,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import {
+CheckCircle2,
+Code2,
+FileCode,
+Loader2,
+Package,
+Rocket,
+Sparkles,
+Terminal,
+XCircle
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 
 interface AutonomousWorkspaceViewerProps {
   bootstrapToken: string | null;

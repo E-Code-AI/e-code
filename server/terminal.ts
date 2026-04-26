@@ -1,20 +1,18 @@
 // @ts-nocheck
-import { WebSocketServer, WebSocket } from 'ws';
-import { Server, IncomingMessage } from 'http';
+import { File } from '@shared/schema';
+import { ChildProcess,spawn } from 'child_process';
+import { parse as parseCookie } from 'cookie';
+import { IncomingMessage,Server } from 'http';
+import jwt from 'jsonwebtoken';
 import os from 'os';
 import path from 'path';
-import fs from 'fs';
-import { spawn, ChildProcess } from 'child_process';
-import { storage, sessionStore } from './storage';
-import { File } from '@shared/schema';
-import readline from 'readline';
-import { createLogger } from './utils/logger';
+import { WebSocket,WebSocketServer } from 'ws';
 import { ContainerExecutor } from './execution/container-executor';
+import { sessionStore,storage } from './storage';
+import { redisSessionManager } from './terminal/redis-session-manager';
 import { terminalScalabilityManager } from './terminal/scalability-manager';
 import { websocketHeartbeatManager } from './terminal/websocket-heartbeat';
-import { redisSessionManager, TerminalSession as RedisTerminalSession } from './terminal/redis-session-manager';
-import { parse as parseCookie } from 'cookie';
-import jwt from 'jsonwebtoken';
+import { createLogger } from './utils/logger';
 import { getJwtSecret } from './utils/secrets-manager';
 
 // Create a logger for the terminal module

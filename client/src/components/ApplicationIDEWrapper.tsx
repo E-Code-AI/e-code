@@ -1,30 +1,28 @@
 // @ts-nocheck
-import { ReactNode, useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
+import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
+import CodeEditor from '@/components/CodeEditor';
+import { ECodeLoading } from '@/components/ECodeLoading';
+import FileExplorer from '@/components/FileExplorer';
+import { ConsolePanel } from '@/components/ide/ConsolePanel';
 import { ReplitHeader } from '@/components/layout/ReplitHeader';
 import { ReplitSidebar } from '@/components/layout/ReplitSidebar';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Button } from '@/components/ui/button';
-import FileExplorer from '@/components/FileExplorer';
-import CodeEditor from '@/components/CodeEditor';
-import { ReplitAgentPanelV3 } from '@/components/ai/ReplitAgentPanelV3';
-import { ConsolePanel } from '@/components/ide/ConsolePanel';
 import { RunButton } from '@/components/RunButton';
+import { Button } from '@/components/ui/button';
+import { ResizableHandle,ResizablePanel,ResizablePanelGroup } from '@/components/ui/resizable';
 import { WebPreview } from '@/components/WebPreview';
-import { File } from '@shared/schema';
-import { 
-  FileCode,
-  Terminal as TerminalIcon,
-  Bot,
-  X,
-  PanelLeft,
-  PanelLeftClose,
-  Loader2
-} from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { ECodeLoading } from '@/components/ECodeLoading';
+import { File } from '@shared/schema';
+import { useMutation,useQuery,useQueryClient } from '@tanstack/react-query';
+import {
+Bot,
+PanelLeft,
+PanelLeftClose,
+Terminal as TerminalIcon,
+X
+} from 'lucide-react';
+import { ReactNode,useEffect,useState } from 'react';
 
 interface ApplicationIDEWrapperProps {
   projectName: string;

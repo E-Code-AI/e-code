@@ -1,54 +1,59 @@
-import { useState } from 'react';
+import { PageHeader,PageShell } from '@/components/layout/PageShell';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogDescription,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu,DropdownMenuContent,DropdownMenuItem,DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageShell, PageHeader } from '@/components/layout/PageShell';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import {
-  Link,
-  Search,
-  Plus,
-  Check,
-  X,
-  ExternalLink,
-  Settings,
-  Trash2,
-  RefreshCw,
-  Key,
-  Webhook,
-  Radio,
-  Zap,
-  Eye,
-  EyeOff,
-  Copy,
-  MoreHorizontal,
-  AlertCircle,
-  CheckCircle2,
-  Clock,
-  Activity,
-  ArrowRight,
-  Play,
-  Pause,
-  Filter,
-  Loader2,
-  Globe,
-  Code,
-  Database,
-  HeadphonesIcon,
-  Server,
-  ShieldCheck,
-  BarChart3,
+AlertCircle,
+BarChart3,
+Bell,
+Box,
+Building2,
+CheckCircle2,
+CircleDot,
+Cloud,
+Code,
+Copy,
+Database,
+Eye,
+EyeOff,
+Globe,
+Headphones,
+HeadphonesIcon,
+Key,
+LineChart,
+Link,
+Loader2,
+Mail,
+MessageSquare,
+MoreHorizontal,
+Phone,
+Plus,
+Radio,
+RefreshCw,
+Search,
+Search as SearchIcon,
+Send,
+Server,
+Settings,
+ShieldCheck,
+Users,
+Webhook,
+Workflow as WorkflowIcon,
+X,
+Zap
 } from 'lucide-react';
-import { SiGithub, SiSlack, SiJira, SiNotion, SiGitlab, SiDiscord, SiTrello, SiFigma, SiDatadog, SiSentry, SiGrafana, SiJenkins, SiVercel, SiMongodb, SiPostgresql, SiRedis, SiStripe } from 'react-icons/si';
-import { Box, LineChart, Bell, Cloud, Mail, Users, Building2, Workflow as WorkflowIcon, CircleDot, Search as SearchIcon, MessageSquare, Headphones, Phone, Send } from 'lucide-react';
+import { useState } from 'react';
+import { SiDatadog,SiDiscord,SiFigma,SiGithub,SiGitlab,SiGrafana,SiJenkins,SiJira,SiMongodb,SiNotion,SiPostgresql,SiRedis,SiSentry,SiSlack,SiStripe,SiTrello,SiVercel } from 'react-icons/si';
 
 // Icon aliases for providers without SI icons
 const SiAsana = Box;
@@ -67,8 +72,6 @@ const SiIntercom = MessageSquare;
 const SiHubspot = Users;
 const SiSalesforce = Building2;
 const SiZapier = Zap;
-import { useToast } from '@/hooks/use-toast';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 interface Integration {
   id: string;

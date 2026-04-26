@@ -4,14 +4,13 @@
  */
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import { 
-  CallToolResult,
-  ListResourcesResult,
-  ListToolsResult,
-  ReadResourceResult,
+import {
+ListResourcesResult,
+ListToolsResult,
+ReadResourceResult
 } from "@modelcontextprotocol/sdk/types.js";
-import { EventEmitter } from "events";
 import * as crypto from "crypto";
+import { EventEmitter } from "events";
 
 // MCP Server URL configuration
 const DEFAULT_MCP_SERVER_URL = "http://localhost:3200/mcp";

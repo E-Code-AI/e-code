@@ -1,33 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Rocket, Globe, Server, Activity, Clock, AlertCircle,
-  CheckCircle, XCircle, RefreshCw, Settings, ExternalLink,
-  Shield, Zap, Cpu, HardDrive, Network, BarChart,
-  GitBranch, Copy, Terminal, Play, Pause, RotateCcw,
-  ArrowUpRight, Info, Loader2, Plus, Key, History, TrendingUp
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Alert,AlertDescription,AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { useToast } from '@/hooks/use-toast';
-import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Dialog,DialogContent,DialogFooter,DialogHeader,DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { DeploymentMetrics } from './deployment/DeploymentMetrics';
-import { AutoScalingConfig } from './deployment/AutoScalingConfig';
-import { RollbackManager } from './deployment/RollbackManager';
+import { Switch } from '@/components/ui/switch';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import {
+Activity,
+AlertCircle,
+CheckCircle,
+Clock,
+Copy,
+ExternalLink,
+History,
+Key,
+Loader2,
+Pause,
+Plus,
+RefreshCw,
+Rocket,
+RotateCcw,
+Server,
+Shield,
+TrendingUp,
+XCircle
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { AutoScalingConfig } from './deployment/AutoScalingConfig';
+import { DeploymentMetrics } from './deployment/DeploymentMetrics';
+import { RollbackManager } from './deployment/RollbackManager';
 
 interface DeploymentManagerProps {
   projectId?: number;

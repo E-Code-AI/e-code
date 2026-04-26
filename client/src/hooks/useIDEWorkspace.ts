@@ -8,15 +8,15 @@
  * @returns All IDE state, queries, and action handlers
  */
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ActivityItem } from '@/components/ide/ReplitActivityBar';
+import type { Tab as EditorTab } from '@/components/ide/ReplitTabBar';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { safeSessionStorage } from '@/lib/safe-storage';
-import type { File, Project } from '@shared/schema';
-import type { ActivityItem } from '@/components/ide/ReplitActivityBar';
-import type { Tab as EditorTab } from '@/components/ide/ReplitTabBar';
+import type { File,Project } from '@shared/schema';
+import { useQuery,useQueryClient } from '@tanstack/react-query';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 
 export interface Tab {
   id: string;

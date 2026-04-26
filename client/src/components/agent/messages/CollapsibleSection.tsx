@@ -3,10 +3,10 @@
  * Smooth animations and clean UX
  */
 
-import { useState } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { ChevronDown,ChevronRight } from 'lucide-react';
+import { useState } from 'react';
 
 interface CollapsibleSectionProps {
   title: string;

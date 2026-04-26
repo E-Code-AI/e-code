@@ -4,29 +4,29 @@
  * Simplified version to prove floating panes work on desktop
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
-import { cn } from '@/lib/utils';
-import { File } from '@shared/schema';
-import { SplitsLayout } from './SplitsLayout';
-import { ReplitToolDock } from '../editor/ReplitToolDock';
-import { ReplitStatusBar } from '../editor/ReplitStatusBar';
-import { ReplitBreadcrumbs } from '../editor/ReplitBreadcrumbs';
-import { MultiTabEditor } from '../editor/MultiTabEditor';
-import { ReplitFileExplorer } from '../editor/ReplitFileExplorer';
-import { CommandPalette, generateDefaultCommands } from '../command-palette/CommandPalette';
-import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useLayoutStore } from '@/../../shared/stores/layoutStore';
-import useSplitsStore from '@/stores/splits-store';
-import { useDeviceType } from '@/hooks/use-media-query';
-import { createEditorDefaultLayout, TOOL_DOCK_TO_TAB_MAP } from './EditorDefaultLayout';
-import { Share2, Rocket } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { RunButton } from '@/components/RunButton';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { useDeviceType } from '@/hooks/use-media-query';
 import { useToast } from '@/hooks/use-toast';
+import { useCommandPalette } from '@/hooks/useCommandPalette';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import useSplitsStore from '@/stores/splits-store';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { File } from '@shared/schema';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import { Rocket,Share2 } from 'lucide-react';
+import { useEffect,useMemo,useRef } from 'react';
+import { CommandPalette,generateDefaultCommands } from '../command-palette/CommandPalette';
+import { MultiTabEditor } from '../editor/MultiTabEditor';
 import { PanelShell } from '../editor/PanelShell';
+import { ReplitBreadcrumbs } from '../editor/ReplitBreadcrumbs';
+import { ReplitFileExplorer } from '../editor/ReplitFileExplorer';
+import { ReplitStatusBar } from '../editor/ReplitStatusBar';
+import { ReplitToolDock } from '../editor/ReplitToolDock';
+import { createEditorDefaultLayout,TOOL_DOCK_TO_TAB_MAP } from './EditorDefaultLayout';
+import { SplitsLayout } from './SplitsLayout';
 
 const ReplitSearchPanel = instrumentedLazy(() => import('../editor/ReplitSearchPanel').then((module) => ({ default: module.ReplitSearchPanel })), 'ReplitSearchPanel');
 const ReplitAgentPanelV3 = instrumentedLazy(() => import('../ai/ReplitAgentPanelV3').then((module) => ({ default: module.ReplitAgentPanelV3 })), 'ReplitAgentPanelV3');

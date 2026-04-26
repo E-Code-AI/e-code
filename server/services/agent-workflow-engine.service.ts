@@ -1,32 +1,29 @@
+import Anthropic from '@anthropic-ai/sdk';
+import {
+agentAuditTrail,
+agentSessions,
+agentWorkflows,
+autoCheckpointFiles,
+type AgentSession,
+type AgentWorkflow,
+type InsertAutoCheckpointFile
+} from '@shared/schema';
+import { and,eq,sql } from 'drizzle-orm';
 import { EventEmitter } from 'events';
+import { OpenAI } from 'openai';
 import * as path from 'path';
 import { db } from '../db';
-import {
-  agentWorkflows,
-  agentSessions,
-  agentAuditTrail,
-  autoCheckpoints,
-  autoCheckpointFiles,
-  type AgentWorkflow,
-  type InsertAgentWorkflow,
-  type AgentSession,
-  type InsertAutoCheckpoint,
-  type InsertAutoCheckpointFile
-} from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
-import { agentFileOperations } from './agent-file-operations.service';
-import { agentCommandExecution } from './agent-command-execution.service';
-import { agentToolFramework } from './agent-tool-framework.service';
-import { OpenAI } from 'openai';
-import Anthropic from '@anthropic-ai/sdk';
 import { createLogger } from '../utils/logger';
-import { redisIdempotency } from './redis-idempotency.service';
-import { dependencyInstallService, installDependencies } from './dependency-install.service';
-import { buildVerificationService, verifyBuild } from './build-verification.service';
-import { responsiveValidationService, validateResponsive } from './responsive-validation.service';
-import { viewportValidationService, validateViewports } from './viewport-validation.service';
-import { checkpointService } from './checkpoint.service';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { agentCommandExecution } from './agent-command-execution.service';
+import { agentFileOperations } from './agent-file-operations.service';
+import { agentToolFramework } from './agent-tool-framework.service';
+import { verifyBuild } from './build-verification.service';
+import { checkpointService } from './checkpoint.service';
+import { installDependencies } from './dependency-install.service';
+import { redisIdempotency } from './redis-idempotency.service';
+import { validateResponsive } from './responsive-validation.service';
+import { validateViewports } from './viewport-validation.service';
 
 const logger = createLogger('agent-workflow-engine');
 

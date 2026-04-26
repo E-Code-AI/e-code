@@ -1,27 +1,45 @@
 // @ts-nocheck
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Bot, Send, StopCircle, Loader2, Trash2, Plus, Search,
-  FolderOpen, FileText, Code2, Users, Activity, RefreshCw,
-  ChevronRight, ChevronDown, Edit, Save, X, Copy, Check, Sparkles,
-  Terminal, Brain, Zap, MessageSquare, Settings, Eye,
-  Server, HardDrive, Package, Folder, Globe, Cpu, Database, MemoryStick
-} from 'lucide-react';
-import { format } from 'date-fns';
 import { CM6Editor } from '@/components/editor/CM6Editor';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest,getCSRFToken,queryClient,withBootstrapHeaders } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import {
+Activity,
+Bot,
+Brain,
+Check,
+ChevronDown,
+ChevronRight,
+Code2,
+Copy,
+FileText,
+Folder,
+FolderOpen,
+Globe,
+Loader2,
+MessageSquare,
+RefreshCw,
+Save,
+Search,
+Send,
+Server,
+Sparkles,
+StopCircle,
+Trash2,
+Users,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 // ===== Types =====
 interface AIModel {

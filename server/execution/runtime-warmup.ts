@@ -1,5 +1,4 @@
 import { spawn } from 'child_process';
-import { existsSync } from 'fs';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('runtime-warmup');

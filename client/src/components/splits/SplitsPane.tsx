@@ -1,28 +1,24 @@
 // @ts-nocheck
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { useDraggable, useDroppable, DndContext } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
-import { useSpring, useNativeMotionValue as useMotionValue } from '@/lib/native-motion';
-import { cn } from '@/lib/utils';
-import { PaneGroup, TabInfo, DragItem, DropZone } from '@/types/splits';
-import useSplitsStore from '@/stores/splits-store';
-import { X, Maximize2, Minimize2, MoreVertical, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
+ContextMenuContent,
+ContextMenuItem,
+ContextMenuSeparator,
+ContextMenuTrigger
 } from '@/components/ui/context-menu';
+import {
+DropdownMenu,
+DropdownMenuContent,
+DropdownMenuItem,
+DropdownMenuSeparator,
+DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { cn } from '@/lib/utils';
+import useSplitsStore from '@/stores/splits-store';
+import { DragItem,DropZone,PaneGroup } from '@/types/splits';
+import { Maximize2,Minimize2,MoreVertical,X } from 'lucide-react';
+import React,{ useCallback,useRef,useState } from 'react';
 
 interface SplitsPaneProps {
   paneGroup: PaneGroup;

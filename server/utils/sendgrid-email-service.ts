@@ -1,6 +1,4 @@
 import sgMail from '@sendgrid/mail';
-import { z } from 'zod';
-import { hashToken } from './auth-utils';
 import { securityLogs } from '@shared/schema';
 import { db } from '../db';
 

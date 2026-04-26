@@ -6,18 +6,18 @@
  * that capture project state at specific points in time.
  */
 
-import { db } from '../db';
-import { 
-  autoCheckpoints, 
-  autoCheckpointFiles, 
-  checkpointRestores,
-  type AutoCheckpoint,
-  type InsertAutoCheckpoint,
-  type AutoCheckpointFile,
-  type CheckpointRestore
-} from '../../shared/schema';
-import { eq, desc, lt, and, sql, inArray } from 'drizzle-orm';
+import { desc,eq,inArray,sql } from 'drizzle-orm';
 import { EventEmitter } from 'events';
+import {
+autoCheckpointFiles,
+autoCheckpoints,
+checkpointRestores,
+type AutoCheckpoint,
+type AutoCheckpointFile,
+type CheckpointRestore,
+type InsertAutoCheckpoint
+} from '../../shared/schema';
+import { db } from '../db';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('checkpoint-service');

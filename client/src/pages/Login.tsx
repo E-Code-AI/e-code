@@ -1,24 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { ECodeLogo } from '@/components/ECodeLogo';
+import { TwoFactorVerify } from '@/components/security/TwoFactorVerify';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card,CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
-import { 
-  Loader2, Code, ArrowRight, Eye, EyeOff, 
-  Sparkles, Mail, Lock, Github, Chrome,
-  Twitter, Shield, CheckCircle, ChevronLeft
-} from 'lucide-react';
-import { Link } from 'wouter';
+import { apiRequest,queryClient,resetCSRFToken } from '@/lib/queryClient';
 import { getProjectUrl } from '@/lib/utils';
-import { ECodeLogo } from '@/components/ECodeLogo';
-import { apiRequest, queryClient, resetCSRFToken } from '@/lib/queryClient';
-import { TwoFactorVerify } from '@/components/security/TwoFactorVerify';
+import {
+ArrowRight,
+CheckCircle,ChevronLeft,
+Chrome,
+Code,
+Eye,EyeOff,
+Github,
+Loader2,
+Lock,
+Mail,
+Shield,
+Sparkles,
+Twitter
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 // Import stock images
 const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';

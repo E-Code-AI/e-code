@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { AgentEventBus } from '@/lib/agentEvents';
+import { useEffect,useRef } from 'react';
 import { useToast } from './use-toast';
 
 const RATE_LIMIT_MS = 2000;

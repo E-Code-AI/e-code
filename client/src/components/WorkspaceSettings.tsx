@@ -1,16 +1,16 @@
-import { useState } from 'react';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { 
-  Sparkles, 
-  Eye, 
-  Palette, 
-  Code, 
-  Settings2
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import {
+Code,
+Eye,
+Palette,
+Settings2,
+Sparkles
 } from 'lucide-react';
+import { useState } from 'react';
 
 interface WorkspaceSettingsProps {
   projectId?: number;

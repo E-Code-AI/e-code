@@ -1,36 +1,34 @@
-import { useState, useCallback } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { 
-  AlertCircle, 
-  AlertTriangle, 
-  Info, 
-  CheckCircle2, 
-  Code, 
-  Bug,
-  Shield,
-  Zap,
-  FileCode,
-  GitBranch,
-  ChevronDown,
-  ChevronRight,
-  Sparkles,
-  PlayCircle,
-  XCircle,
-  Target,
-  Lightbulb,
-  Clock
-} from 'lucide-react';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
+import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
+import {
+AlertCircle,
+AlertTriangle,
+Bug,
+CheckCircle2,
+ChevronDown,
+ChevronRight,
+Clock,
+Code,
+FileCode,
+Info,
+Lightbulb,
+PlayCircle,
+Shield,
+Sparkles,
+Target,
+XCircle,
+Zap
+} from 'lucide-react';
+import { useCallback,useState } from 'react';
 
 interface CodeIssue {
   id: number;

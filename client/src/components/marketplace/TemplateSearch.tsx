@@ -1,25 +1,23 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, X, Mic, Clock, TrendingUp, Sparkles } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
+Command,
+CommandEmpty,
+CommandGroup,
+CommandItem,
+CommandList
 } from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+Popover,
+PopoverContent,
+PopoverTrigger,
 } from '@/components/ui/popover';
-import { cn } from '@/lib/utils';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { Clock,Mic,Search,Sparkles,TrendingUp,X } from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import { useDebounce } from 'use-debounce';
-import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
 interface TemplateSearchProps {
   value: string;

@@ -1,25 +1,23 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover,PopoverContent,PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
-import {
-  MousePointer2,
-  Type,
-  Palette,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Bold,
-  Save,
-  X,
-  Pipette,
-  Square,
-  Move,
-} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+AlignCenter,
+AlignLeft,
+AlignRight,
+Bold,
+MousePointer2,
+Move,
+Palette,
+Save,
+Square,
+Type,
+X
+} from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 
 interface ElementSelection {
   elementId: string;

@@ -3,9 +3,8 @@
  * Implements network isolation, firewall rules, and traffic filtering
  */
 
-import { execSync, spawn } from 'child_process';
+import { execSync } from 'child_process';
 import * as fs from 'fs/promises';
-import * as path from 'path';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('network-security');

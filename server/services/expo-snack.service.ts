@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { Snack, SnackFiles, SnackState } from 'snack-sdk';
+import { Snack,SnackFiles,SnackState } from 'snack-sdk';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('expo-snack');

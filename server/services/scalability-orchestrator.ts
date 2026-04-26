@@ -4,15 +4,15 @@
  * Simulates container orchestration on Replit environment
  */
 
+import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import { createLogger } from '../utils/logger';
-import { RedisCache, redisCache } from './redis-cache';
-import { DatabasePoolManager, dbPool } from './database-pool';
-import { cdnOptimization } from './cdn-optimization';
-import { spawn, ChildProcess } from 'child_process';
+import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
-import * as fs from 'fs/promises';
+import { createLogger } from '../utils/logger';
+import { cdnOptimization } from './cdn-optimization';
+import { DatabasePoolManager,dbPool } from './database-pool';
+import { RedisCache,redisCache } from './redis-cache';
 
 const logger = createLogger('scalability-orchestrator');
 

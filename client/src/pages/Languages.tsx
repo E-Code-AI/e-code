@@ -1,29 +1,29 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { 
-  Code, 
-  Search, 
-  Zap, 
-  Package, 
-  Terminal, 
-  Globe,
-  Sparkles,
-  CheckCircle,
-  ArrowRight,
-  Coffee,
-  Cpu,
-  Database,
-  Smartphone,
-  Cloud,
-  Gamepad2,
-  BarChart
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Tabs,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import {
+ArrowRight,
+BarChart,
+CheckCircle,
+Cloud,
+Code,
+Coffee,
+Cpu,
+Database,
+Gamepad2,
+Globe,
+Package,
+Search,
+Smartphone,
+Sparkles,
+Terminal,
+Zap
 } from 'lucide-react';
+import { useState } from 'react';
 import { Link } from 'wouter';
 
 const languages = [

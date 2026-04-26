@@ -1,41 +1,35 @@
-import { useState, useEffect } from 'react';
-import { PublicNavbar } from '@/components/layout/PublicNavbar';
 import { PublicFooter } from '@/components/layout/PublicFooter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PublicNavbar } from '@/components/layout/PublicNavbar';
+import { Alert,AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  Github, 
-  GitBranch, 
-  Import,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-  Folder,
-  File,
-  Star,
-  GitFork,
-  Clock,
-  Users,
-  Code,
-  Lock,
-  Unlock,
-  Search,
-  Link2,
-  ArrowRight,
-  Sparkles,
-  Zap
-} from 'lucide-react';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { useLocation } from 'wouter';
-import { Link } from 'wouter';
+import {
+AlertCircle,
+ArrowRight,
+CheckCircle,
+Clock,
+GitBranch,
+GitFork,
+Github,
+Import,
+Loader2,
+Lock,
+Search,
+Sparkles,
+Star,
+Unlock,
+Users,
+Zap
+} from 'lucide-react';
+import { useEffect,useState } from 'react';
+import { Link,useLocation } from 'wouter';
 
 interface Repository {
   id: number;

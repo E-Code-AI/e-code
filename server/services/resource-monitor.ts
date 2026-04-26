@@ -1,11 +1,9 @@
-import { db } from "../db";
 import { usageTracking } from "@shared/schema";
-import { eq, and, gte, sql } from "drizzle-orm";
-import * as os from "os";
-import * as fs from "fs";
-import * as path from "path";
 import { exec } from "child_process";
+import { and,eq,sql } from "drizzle-orm";
+import * as os from "os";
 import { promisify } from "util";
+import { db } from "../db";
 import { getProjectWorkspacePath } from "../utils/project-fs-sync";
 
 const execAsync = promisify(exec);

@@ -1,15 +1,14 @@
 // WebSocket service for real-time agent progress updates
-import { WebSocketServer, WebSocket } from 'ws';
 import type { IncomingMessage } from 'http';
+import { Server } from 'http';
+import jwt from 'jsonwebtoken';
 import type { Socket } from 'net';
 import type { Duplex } from 'stream';
-import { Server } from 'http';
+import { WebSocket,WebSocketServer } from 'ws';
 import { createLogger } from '../utils/logger';
-import { wrapWebSocketServer, markSocketAsHandled } from '../websocket/upgrade-guard';
-import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { isOriginAllowed } from '../utils/origin-validation';
 import { getJwtSecret } from '../utils/secrets-manager';
-import jwt from 'jsonwebtoken';
+import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 
 const logger = createLogger('agent-websocket-service');
 

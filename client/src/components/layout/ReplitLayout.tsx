@@ -1,16 +1,16 @@
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { ECodeLoading } from "@/components/ECodeLoading";
+import { MobileCreateModal } from "@/components/mobile/MobileCreateModal";
+import { MobileFileExplorer } from "@/components/mobile/MobileFileExplorer";
+import { MobileNavigation } from "@/components/mobile/MobileNavigation";
+import { MobileToolsPanel } from "@/components/mobile/MobileToolsPanel";
+import { PullToRefresh } from "@/components/ui/mobile-gestures";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useDeviceInfo,useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { ReactNode,useEffect,useState } from "react";
+import { useLocation } from "wouter";
 import { ReplitHeader } from "./ReplitHeader";
 import { ReplitSidebar } from "./ReplitSidebar";
-import { MobileNavigation } from "@/components/mobile/MobileNavigation";
-import { MobileFileExplorer } from "@/components/mobile/MobileFileExplorer";
-import { MobileToolsPanel } from "@/components/mobile/MobileToolsPanel";
-import { MobileCreateModal } from "@/components/mobile/MobileCreateModal";
-import { PullToRefresh } from "@/components/ui/mobile-gestures";
-import { useLocation } from "wouter";
-import { cn } from "@/lib/utils";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { useIsMobile, useDeviceInfo } from "@/hooks/use-mobile";
-import { ECodeLoading } from "@/components/ECodeLoading";
 
 interface ReplitLayoutProps {
   children: ReactNode;

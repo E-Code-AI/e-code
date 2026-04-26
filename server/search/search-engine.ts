@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { storage } from '../storage';
 import * as path from 'path';
+import { storage } from '../storage';
 
 export interface SearchResult {
   type: 'file' | 'project' | 'user' | 'code';

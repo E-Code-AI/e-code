@@ -4,20 +4,17 @@
  * Provides sandboxed, containerized runtime for user code
  */
 
-import { spawn, ChildProcess } from 'child_process';
-import { EventEmitter } from 'events';
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import * as fsSync from 'fs';
+import { File } from '@shared/schema';
 import * as crypto from 'crypto';
-import * as os from 'os';
 import type Docker from 'dockerode';
-import { createLogger } from '../utils/logger';
+import { EventEmitter } from 'events';
+import * as fs from 'fs/promises';
+import * as os from 'os';
+import * as path from 'path';
 import { storage } from '../storage';
-import { Project, File } from '@shared/schema';
+import { createLogger } from '../utils/logger';
 // @ts-expect-error - tar-stream doesn't have type definitions
 import * as tarStream from 'tar-stream';
-import { Readable } from 'stream';
 
 const logger = createLogger('docker-executor');
 

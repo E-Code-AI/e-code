@@ -11,15 +11,15 @@
  * This is a core Phase 1 feature for achieving Replit AI Agent V3 parity.
  */
 
+import {
+agentAuditTrail,
+agentSessions,
+autonomousActions,
+type RiskThreshold
+} from '@shared/schema';
+import { desc,eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
 import { db } from '../db';
-import {
-  agentSessions,
-  autonomousActions,
-  agentAuditTrail,
-  type RiskThreshold
-} from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('AutonomousEngine');

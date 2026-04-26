@@ -1,38 +1,36 @@
 // @ts-nocheck
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Form,FormControl,FormField,FormItem,FormLabel,FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+Popover,
+PopoverContent,
+PopoverTrigger,
+} from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { File } from '@shared/schema';
+import { useMutation } from '@tanstack/react-query';
+import {
+Book,
+Check,
+Code,
+Lightbulb,
+MessageSquare,
+RotateCw,
+SendHorizonal,
+Sparkles,
+X
+} from 'lucide-react';
+import { useEffect,useRef,useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { 
-  Sparkles, 
-  Code, 
-  MessageSquare, 
-  Book, 
-  RotateCw, 
-  SendHorizonal,
-  ChevronsUp,
-  ChevronsDown,
-  Check,
-  X,
-  Lightbulb,
-} from 'lucide-react';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { File } from '@shared/schema';
 
 interface GhostwriterProps {
   activeFile: File | undefined;

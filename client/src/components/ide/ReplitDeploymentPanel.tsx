@@ -1,70 +1,61 @@
 // @ts-nocheck
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card,CardContent,CardHeader,CardTitle } from '@/components/ui/card';
+import { ChartConfig,ChartContainer,ChartTooltip,ChartTooltipContent } from '@/components/ui/chart';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
-import { cn } from '@/lib/utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { apiRequest,queryClient } from '@/lib/queryClient';
+import { cn } from '@/lib/utils';
+import { useMutation,useQuery } from '@tanstack/react-query';
 import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Area,
-  AreaChart,
-} from 'recharts';
-import {
-  Rocket,
-  Globe,
-  Server,
-  Activity,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  ExternalLink,
-  RefreshCw,
-  Loader2,
-  Zap,
-  Copy,
-  Play,
-  Square,
-  RotateCcw,
-  Pause,
-  Trash2,
-  Filter,
-  ArrowDown,
-  BarChart3,
-  TrendingUp,
-  AlertTriangle,
-  Timer,
-  DollarSign,
-  Wifi,
-  WifiOff,
-  FileText,
-  Terminal,
-  Info,
-  History,
-  ArrowLeft,
-  Shield,
-  Link2,
-  CheckCircle2,
+Activity,
+AlertCircle,
+AlertTriangle,
+ArrowDown,
+CheckCircle,
+CheckCircle2,
+Clock,
+Copy,
+DollarSign,
+ExternalLink,
+FileText,
+Filter,
+Globe,
+History,
+Loader2,
+Pause,
+RefreshCw,
+Rocket,
+RotateCcw,
+Server,
+Shield,
+Square,
+Terminal,
+Timer,
+Trash2,
+TrendingUp,
+Wifi,
+WifiOff,
+XCircle
 } from 'lucide-react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
+import {
+Area,
+AreaChart,
+Bar,
+BarChart,
+CartesianGrid,
+XAxis,
+YAxis
+} from 'recharts';
 
 interface ReplitDeploymentPanelProps {
   projectId: string;

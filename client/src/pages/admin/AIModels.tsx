@@ -1,11 +1,10 @@
+import { AllModelsSelector } from '@/components/AllModelsSelector';
+import { Badge } from '@/components/ui/badge';
+import { Card,CardContent,CardDescription,CardHeader,CardTitle } from '@/components/ui/card';
+import { useQuery } from '@tanstack/react-query';
+import { Activity,Brain,CheckCircle,Zap } from 'lucide-react';
 import { useState } from 'react';
 import { AdminLayout } from './AdminLayout';
-import { AllModelsSelector } from '@/components/AllModelsSelector';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Brain, Zap, Activity, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
 
 export default function AIModels() {
   const [activeProvider, setActiveProvider] = useState('all');

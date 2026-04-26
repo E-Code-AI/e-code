@@ -9,8 +9,11 @@
  * Fortune 500 Engineering Standards
  */
 
-import type { Browser, Page } from 'playwright';
+import { eq } from 'drizzle-orm';
 import { EventEmitter } from 'events';
+import type { Browser,Page } from 'playwright';
+import { SessionRecording,sessionRecordings } from '../../shared/schema';
+import { db } from '../db';
 
 let playwrightModule: typeof import('playwright') | null = null;
 async function getPlaywright() {
@@ -23,9 +26,6 @@ async function getPlaywright() {
   }
   return playwrightModule;
 }
-import { db } from '../db';
-import { sessionRecordings, SessionRecording, InsertSessionRecording } from '../../shared/schema';
-import { eq } from 'drizzle-orm';
 
 export interface RecordingContext {
   sessionId: string;

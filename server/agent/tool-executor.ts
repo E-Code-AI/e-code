@@ -6,9 +6,9 @@
  * This ensures files appear in the UI Files panel immediately
  */
 
+import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
-import { spawn } from 'child_process';
 import winston from 'winston';
 import { storage } from '../storage';
 
