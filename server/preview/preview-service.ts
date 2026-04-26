@@ -55,6 +55,42 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
           return url + (url.indexOf('?') === -1 ? '?' : '&') + 'bootstrap=' + encodeURIComponent(bootstrap);
         }
 
+        function preserveBootstrapInUrl(url) {
+          if (!bootstrap || typeof url !== 'string') return url;
+          if (url.startsWith('http://') || url.startsWith('https://')) {
+            try {
+              var absolute = new URL(url, window.location.href);
+              if (absolute.origin !== window.location.origin || absolute.searchParams.has('bootstrap')) {
+                return url;
+              }
+              absolute.searchParams.set('bootstrap', bootstrap);
+              return absolute.toString();
+            } catch {
+              return url;
+            }
+          }
+          if (url.startsWith('//') || url.startsWith('data:') || url.startsWith('blob:') || url.indexOf('bootstrap=') !== -1) {
+            return url;
+          }
+          return appendBootstrap(url);
+        }
+
+        var originalPushState = history.pushState;
+        history.pushState = function(state, title, url) {
+          if (typeof url === 'string') {
+            url = preserveBootstrapInUrl(url);
+          }
+          return originalPushState.call(this, state, title, url);
+        };
+
+        var originalReplaceState = history.replaceState;
+        history.replaceState = function(state, title, url) {
+          if (typeof url === 'string') {
+            url = preserveBootstrapInUrl(url);
+          }
+          return originalReplaceState.call(this, state, title, url);
+        };
+
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith('/preview/')) return url;
