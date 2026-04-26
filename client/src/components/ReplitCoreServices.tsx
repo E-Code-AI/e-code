@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   Shield, 
   Download, 
   Terminal, 
@@ -26,6 +26,7 @@ import {
   Users
 } from "lucide-react";
 import { apiRequest } from '@/lib/queryClient';
+import { useParams } from 'wouter';
 
 interface SecurityIssue {
   type: string;
@@ -71,8 +72,13 @@ interface SystemStatus {
   }>;
 }
 
-export function ReplitCoreServices() {
+interface ReplitCoreServicesProps {
+  projectId?: string | number | null;
+}
+
+export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreServicesProps = {}) {
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [activeTab, setActiveTab] = useState('security');
   const [loading, setLoading] = useState(false);
   
@@ -97,6 +103,12 @@ export function ReplitCoreServices() {
   
   // Status Page State
   const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+
+  const resolvedProjectId =
+    providedProjectId ??
+    params.projectId ??
+    params.id ??
+    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('projectId') : null);
 
   // Fetch initial data
   useEffect(() => {
@@ -244,6 +256,15 @@ export function ReplitCoreServices() {
   };
 
   const createDatabase = async () => {
+    if (!resolvedProjectId) {
+      toast({
+        title: "Project Required",
+        description: "Open this panel from a real project workspace to create a database.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
@@ -251,7 +272,7 @@ export function ReplitCoreServices() {
         name: newDbName,
         type: dbType,
         plan: dbPlan,
-        projectId: 1
+        projectId: resolvedProjectId
       });
 
       setDatabases(prev => [...prev, newDb]);
