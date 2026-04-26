@@ -61,6 +61,8 @@ interface CreationProgress {
   progress: number;
   message: string;
   details?: string;
+  requestTitle?: string;
+  requestPrompt?: string;
 }
 
 const formSchema = z.object({
@@ -515,6 +517,13 @@ export const CreateProjectModal = ({
     }
 
     setIsGeneratingAI(true);
+    setCreationProgress({
+      step: 'creating',
+      progress: 10,
+      message: 'Submitting your AI app request...',
+      requestTitle: form.getValues('name') || prompt.trim().split(' ').slice(0, 6).join(' '),
+      requestPrompt: prompt.trim(),
+    });
     abortControllerRef.current = new AbortController();
     
     try {
@@ -538,22 +547,111 @@ export const CreateProjectModal = ({
       });
 
       if (response.success && response.projectId) {
-        toast({
-          title: "AI project created",
-          description: "Redirecting to your new project...",
-        });
-        
+        setCreatedProjectId(response.projectId);
         queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-        
-        const projectName = response.projectSlug || `Project ${response.projectId}`;
+
+        const requestTitle = form.getValues('name') || response.project?.name || `Project ${response.projectId}`;
+        const updateProgress = (progress: Partial<CreationProgress>) => {
+          setCreationProgress((prev) => ({
+            step: progress.step || prev?.step || 'creating',
+            progress: progress.progress ?? prev?.progress ?? 10,
+            message: progress.message || prev?.message || 'Preparing workspace...',
+            details: progress.details ?? prev?.details,
+            requestTitle,
+            requestPrompt: prompt.trim(),
+          }));
+        };
+
+        updateProgress({
+          step: 'scaffolding',
+          progress: 25,
+          message: 'Scaffolding the requested app...',
+        });
+
+        const bootstrapToken = response.bootstrapToken;
+        const pollStartedAt = Date.now();
+        const maxWaitMs = 20000;
+        let previewResolved = false;
+        let lastBootstrapStatus = 'provisioning';
+
+        while (Date.now() - pollStartedAt < maxWaitMs) {
+          if (bootstrapToken) {
+            const bootstrapStatus = await apiRequest<{
+              success: boolean;
+              status: 'provisioning' | 'planning' | 'executing' | 'ready' | 'error';
+              workflowStatus?: 'idle' | 'planning' | 'executing' | 'completed' | 'failed';
+              message?: string;
+            }>('GET', `/api/workspace/bootstrap/${bootstrapToken}/status`).catch(() => null);
+
+            if (bootstrapStatus?.success) {
+              lastBootstrapStatus = bootstrapStatus.status;
+
+              if (bootstrapStatus.workflowStatus === 'planning') {
+                updateProgress({
+                  step: 'scaffolding',
+                  progress: 40,
+                  message: 'Analyzing your prompt and generating the build plan...',
+                });
+              } else if (bootstrapStatus.workflowStatus === 'executing') {
+                updateProgress({
+                  step: 'configuring',
+                  progress: 70,
+                  message: 'Building files and starting the app preview...',
+                });
+              } else if (bootstrapStatus.workflowStatus === 'completed') {
+                updateProgress({
+                  step: 'configuring',
+                  progress: 88,
+                  message: 'Finalizing workspace and syncing preview...',
+                });
+              } else if (bootstrapStatus.workflowStatus === 'failed' || bootstrapStatus.status === 'error') {
+                throw new Error(bootstrapStatus.message || 'AI workspace generation failed');
+              }
+            }
+          }
+
+          const previewStatus = await apiRequest<{ previewUrl: string | null; status?: string }>(
+            'GET',
+            `/api/preview/url?projectId=${response.projectId}`
+          ).catch(() => null);
+
+          if (previewStatus?.previewUrl || previewStatus?.status === 'running' || previewStatus?.status === 'static') {
+            previewResolved = true;
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1200));
+        }
+
+        updateProgress({
+          step: 'ready',
+          progress: 100,
+          message: previewResolved
+            ? 'App generated. Opening the live workspace...'
+            : lastBootstrapStatus === 'executing' || lastBootstrapStatus === 'ready'
+              ? 'Workspace is active. Opening the IDE with live agent progress...'
+              : 'Opening the workspace to continue generation...',
+        });
+
+        toast({
+          title: previewResolved ? 'AI app generated' : 'AI workspace started',
+          description: previewResolved
+            ? 'Opening the app with its live preview.'
+            : 'Opening the IDE with autonomous build progress.',
+        });
+
+        const projectName = response.project?.name || `Project ${response.projectId}`;
         onSubmit?.(projectName, response.projectId);
-        
-        const redirectUrl = response.bootstrapToken 
+
+        const redirectUrl = response.bootstrapToken
           ? `/ide/${response.projectId}?bootstrap=${response.bootstrapToken}`
           : `/ide/${response.projectId}`;
-        navigate(redirectUrl);
-        onClose();
-        resetState();
+
+        setTimeout(() => {
+          navigate(redirectUrl);
+          onClose();
+          resetState();
+        }, 450);
         return;
       }
       
@@ -672,6 +770,19 @@ export const CreateProjectModal = ({
               <h3 className="text-[15px] font-semibold text-[var(--ecode-text)]">
                 {CREATION_STEPS[creationProgress.step].label}
               </h3>
+              {creationProgress.requestTitle && (
+                <div className="rounded-md border border-[var(--ecode-border)] bg-[var(--ecode-sidebar)] px-3 py-2 text-left">
+                  <p className="text-[11px] text-[var(--ecode-muted)]">Requested app</p>
+                  <p className="text-[13px] font-medium text-[var(--ecode-text)] break-words">
+                    {creationProgress.requestTitle}
+                  </p>
+                  {creationProgress.requestPrompt && (
+                    <p className="text-[11px] text-[var(--ecode-text-secondary)] mt-1 break-words line-clamp-4">
+                      {creationProgress.requestPrompt}
+                    </p>
+                  )}
+                </div>
+              )}
               <p className="text-[13px] text-[var(--ecode-text-secondary)]">
                 {creationProgress.message}
               </p>

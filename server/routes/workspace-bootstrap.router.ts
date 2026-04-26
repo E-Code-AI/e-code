@@ -827,13 +827,43 @@ router.get('/bootstrap/:token/status', ensureAuthenticated, async (req: Request,
     const [session] = await db.select()
       .from(agentSessions)
       .where(eq(agentSessions.id, sessionId));
+
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        error: 'Bootstrap session not found'
+      });
+    }
+
+    const workflowStatus = session.workflowStatus || 'idle';
+    const status =
+      workflowStatus === 'completed'
+        ? 'ready'
+        : workflowStatus === 'failed'
+          ? 'error'
+          : workflowStatus === 'planning'
+            ? 'planning'
+            : workflowStatus === 'executing'
+              ? 'executing'
+              : 'provisioning';
+
+    const messageMap: Record<string, string> = {
+      provisioning: 'Workspace is being provisioned.',
+      planning: 'AI is analyzing the request and generating the execution plan.',
+      executing: 'AI is building files and starting services.',
+      ready: 'Workspace generation completed.',
+      error: 'Workspace generation failed.',
+    };
     
     res.json({
       success: true,
-      status: session.isActive ? 'ready' : 'provisioning',
+      status,
+      workflowStatus,
+      isActive: session.isActive,
       projectId,
       sessionId,
-      workspaceUrl: `/ws/agent?projectId=${projectId}&sessionId=${sessionId}`
+      workspaceUrl: `/ws/agent?projectId=${projectId}&sessionId=${sessionId}`,
+      message: messageMap[status] || 'Workspace status updated.'
     });
     
   } catch (error: any) {
