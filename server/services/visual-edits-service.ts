@@ -56,6 +56,20 @@ export interface VisualEditResult {
   filePath: string;
 }
 
+function isMissingVisualEditStorage(error: any): boolean {
+  const directCode = error?.code;
+  const causeCode = error?.cause?.code;
+  const message = String(error?.message || '');
+  const causeMessage = String(error?.cause?.message || '');
+
+  return (
+    directCode === '42P01' ||
+    causeCode === '42P01' ||
+    /relation .* does not exist/i.test(message) ||
+    /relation .* does not exist/i.test(causeMessage)
+  );
+}
+
 const STYLE_KEY_ALLOWLIST = new Set([
   'color',
   'backgroundColor',
@@ -399,17 +413,24 @@ export async function applyVisualEdit(req: VisualEditRequest): Promise<VisualEdi
 }
 
 async function getLatestVisualEdit(projectId: number, status: 'applied' | 'undone') {
-  const rows = await db.execute(sql`
-    SELECT *
-    FROM file_versions
-    WHERE project_id = ${projectId}
-      AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
-      AND COALESCE(metadata->>'status', 'applied') = ${status}
-    ORDER BY created_at DESC, id DESC
-    LIMIT 1
-  `);
+  try {
+    const rows = await db.execute(sql`
+      SELECT *
+      FROM file_versions
+      WHERE project_id = ${projectId}
+        AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
+        AND COALESCE(metadata->>'status', 'applied') = ${status}
+      ORDER BY created_at DESC, id DESC
+      LIMIT 1
+    `);
 
-  return (rows.rows?.[0] as any) ?? null;
+    return (rows.rows?.[0] as any) ?? null;
+  } catch (error) {
+    if (isMissingVisualEditStorage(error)) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function updateVisualEditStatus(id: number, status: 'applied' | 'undone') {
@@ -426,7 +447,7 @@ async function updateVisualEditStatus(id: number, status: 'applied' | 'undone') 
 export async function undoLastEdit(projectId: number, userId: number): Promise<any | null> {
   const project = await storage.getProject(projectId);
   if (!project) throw new Error('Project not found');
-  const hasAccess = await storage.isProjectCollaborator(projectId, userId);
+  const hasAccess = project.ownerId === userId || await storage.isProjectCollaborator(projectId, userId);
   if (!hasAccess) throw new Error('Not authorized');
 
   const row = await getLatestVisualEdit(projectId, 'applied');
@@ -445,7 +466,7 @@ export async function undoLastEdit(projectId: number, userId: number): Promise<a
 export async function redoLastEdit(projectId: number, userId: number): Promise<any | null> {
   const project = await storage.getProject(projectId);
   if (!project) throw new Error('Project not found');
-  const hasAccess = await storage.isProjectCollaborator(projectId, userId);
+  const hasAccess = project.ownerId === userId || await storage.isProjectCollaborator(projectId, userId);
   if (!hasAccess) throw new Error('Not authorized');
 
   const row = await getLatestVisualEdit(projectId, 'undone');
@@ -462,31 +483,38 @@ export async function redoLastEdit(projectId: number, userId: number): Promise<a
 }
 
 export async function getEditHistory(projectId: number, limit = 20): Promise<any[]> {
-  const rows = await db.execute(sql`
-    SELECT
-      id,
-      file_id,
-      project_id,
-      change_summary,
-      created_at,
-      updated_at,
-      metadata
-    FROM file_versions
-    WHERE project_id = ${projectId}
-      AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
-    ORDER BY created_at DESC, id DESC
-    LIMIT ${limit}
-  `);
+  try {
+    const rows = await db.execute(sql`
+      SELECT
+        id,
+        file_id,
+        project_id,
+        change_summary,
+        created_at,
+        updated_at,
+        metadata
+      FROM file_versions
+      WHERE project_id = ${projectId}
+        AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
+      ORDER BY created_at DESC, id DESC
+      LIMIT ${limit}
+    `);
 
-  return (rows.rows as any[]).map((row) => ({
-    id: row.id,
-    fileId: row.file_id,
-    projectId: row.project_id,
-    filePath: row.metadata?.filePath ?? '',
-    summary: row.change_summary ?? row.metadata?.summary ?? 'Visual edit',
-    status: row.metadata?.status ?? 'applied',
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    metadata: row.metadata ?? {},
-  }));
+    return (rows.rows as any[]).map((row) => ({
+      id: row.id,
+      fileId: row.file_id,
+      projectId: row.project_id,
+      filePath: row.metadata?.filePath ?? '',
+      summary: row.change_summary ?? row.metadata?.summary ?? 'Visual edit',
+      status: row.metadata?.status ?? 'applied',
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      metadata: row.metadata ?? {},
+    }));
+  } catch (error) {
+    if (isMissingVisualEditStorage(error)) {
+      return [];
+    }
+    throw error;
+  }
 }

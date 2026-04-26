@@ -1009,6 +1009,11 @@ export class ProjectsRouter {
           return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
         }
 
+        const hasAccess = project.ownerId === userId || await this.storage.isProjectCollaborator(projectId, userId);
+        if (!hasAccess) {
+          return res.status(403).json({ error: 'Access denied', code: 'ACCESS_DENIED' });
+        }
+
         const result = await applyVisualEdit({
           projectId,
           userId,
@@ -1053,6 +1058,17 @@ export class ProjectsRouter {
       try {
         const projectId = Number(req.params.projectId);
         const userId = (req.user as User).id;
+        const project = await this.storage.getProject(projectId);
+
+        if (!project) {
+          return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+        }
+
+        const hasAccess = project.ownerId === userId || await this.storage.isProjectCollaborator(projectId, userId);
+        if (!hasAccess) {
+          return res.status(403).json({ error: 'Access denied', code: 'ACCESS_DENIED' });
+        }
+
         const edit = await undoLastEdit(projectId, userId);
 
         if (!edit) {
@@ -1081,6 +1097,17 @@ export class ProjectsRouter {
       try {
         const projectId = Number(req.params.projectId);
         const userId = (req.user as User).id;
+        const project = await this.storage.getProject(projectId);
+
+        if (!project) {
+          return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+        }
+
+        const hasAccess = project.ownerId === userId || await this.storage.isProjectCollaborator(projectId, userId);
+        if (!hasAccess) {
+          return res.status(403).json({ error: 'Access denied', code: 'ACCESS_DENIED' });
+        }
+
         const edit = await redoLastEdit(projectId, userId);
 
         if (!edit) {
