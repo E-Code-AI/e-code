@@ -74,6 +74,7 @@ export default function PreviewPage() {
   const [url, setUrl] = useState(projectId ? '' : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000'));
   const [inputUrl, setInputUrl] = useState(url);
   const [isLoading, setIsLoading] = useState(false);
+  const [isStartingPreview, setIsStartingPreview] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -92,40 +93,44 @@ export default function PreviewPage() {
   const [history, setHistory] = useState<string[]>([url]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
+  const resolveProjectPreview = useCallback(async () => {
+    if (!projectId) return '';
+
+    try {
+      setIsLoading(true);
+      const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+      const resolvedUrl = data?.previewUrl || '';
+
+      setUrl(resolvedUrl);
+      setInputUrl(resolvedUrl);
+
+      if (resolvedUrl) {
+        setHistory([resolvedUrl]);
+        setHistoryIndex(0);
+      }
+
+      return resolvedUrl;
+    } catch {
+      setUrl('');
+      setInputUrl('');
+      return '';
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     let cancelled = false;
 
-    const resolveProjectPreview = async () => {
-      if (!projectId) return;
-
-      try {
-        setIsLoading(true);
-        const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
-        const resolvedUrl = data?.previewUrl || '';
-        if (cancelled || !resolvedUrl) return;
-
-        setUrl(resolvedUrl);
-        setInputUrl(resolvedUrl);
-        setHistory([resolvedUrl]);
-        setHistoryIndex(0);
-      } catch {
-        if (!cancelled) {
-          setUrl('');
-          setInputUrl('');
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    resolveProjectPreview();
+    void (async () => {
+      const resolvedUrl = await resolveProjectPreview();
+      if (cancelled || !resolvedUrl) return;
+    })();
 
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [resolveProjectPreview]);
 
   const getCurrentBreakpoint = useCallback((width: number): Breakpoint => {
     return BREAKPOINTS.find(bp => 
@@ -176,6 +181,10 @@ export default function PreviewPage() {
   };
 
   const handleRefresh = () => {
+    if (!url && projectId) {
+      void resolveProjectPreview();
+      return;
+    }
     setIsRefreshing(true);
     if (iframeRef.current) {
       iframeRef.current.src = url;
@@ -224,7 +233,34 @@ export default function PreviewPage() {
   };
 
   const handleOpenExternal = () => {
+    if (!url) return;
     window.open(url, '_blank');
+  };
+
+  const handleRunPreview = async () => {
+    if (!projectId || isStartingPreview) return;
+
+    try {
+      setIsStartingPreview(true);
+      setIsLoading(true);
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      const resolvedUrl = await resolveProjectPreview();
+      if (!resolvedUrl) {
+        toast({
+          title: 'Preview is starting',
+          description: 'The app is launching. Refresh in a moment if it does not appear yet.',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Failed to start preview',
+        description: error?.message || 'An error occurred while starting the preview.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingPreview(false);
+      setIsLoading(false);
+    }
   };
 
   const handleZoomChange = (value: number[]) => {
@@ -607,22 +643,38 @@ export default function PreviewPage() {
               {deviceType === 'device' && selectedDevice.type === 'mobile' && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/3 h-6 bg-black rounded-b-xl z-10" />
               )}
-              
-              <iframe
-                ref={iframeRef}
-                src={url}
-                className="w-full h-full border-0"
-                style={{
-                  transform: `scale(${zoomLevel / 100})`,
-                  transformOrigin: 'top left',
-                  width: `${100 * (100 / zoomLevel)}%`,
-                  height: `${100 * (100 / zoomLevel)}%`,
-                }}
-                title="Preview"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                onLoad={() => setIsLoading(false)}
-                data-testid="iframe-preview"
-              />
+
+              {url ? (
+                <iframe
+                  ref={iframeRef}
+                  src={url}
+                  className="w-full h-full border-0"
+                  style={{
+                    transform: `scale(${zoomLevel / 100})`,
+                    transformOrigin: 'top left',
+                    width: `${100 * (100 / zoomLevel)}%`,
+                    height: `${100 * (100 / zoomLevel)}%`,
+                  }}
+                  title="Preview"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  onLoad={() => setIsLoading(false)}
+                  data-testid="iframe-preview"
+                />
+              ) : projectId ? (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 p-8 text-center bg-background">
+                  <Play className="h-10 w-10 text-muted-foreground" />
+                  <div className="space-y-1">
+                    <h3 className="text-[15px] font-semibold text-foreground">Preview not running</h3>
+                    <p className="text-[13px] text-muted-foreground max-w-sm">
+                      Start the app to load the project preview on this page.
+                    </p>
+                  </div>
+                  <Button onClick={handleRunPreview} disabled={isStartingPreview} data-testid="button-run-preview-page">
+                    {isStartingPreview ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Play className="h-4 w-4 mr-2" />}
+                    {isStartingPreview ? 'Starting...' : 'Run Preview'}
+                  </Button>
+                </div>
+              ) : null}
 
               {isLoading && (
                 <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
