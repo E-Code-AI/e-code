@@ -40,9 +40,11 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
   const { data: publishState, isLoading } = useQuery<PublishState>({
     queryKey: ['/api/projects', projectId, 'publish', 'status'],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/publish/status`, { credentials: 'include' });
-      if (!res.ok) return { status: 'idle' };
-      return res.json();
+      try {
+        return await apiRequest<PublishState>('GET', `/api/projects/${projectId}/publish/status`);
+      } catch {
+        return { status: 'idle' };
+      }
     },
     refetchInterval: (query) => {
       const data = query.state.data;
