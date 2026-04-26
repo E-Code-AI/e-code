@@ -127,11 +127,7 @@ export default function ObjectStorage() {
   const { data: projects = [], isLoading: projectsLoading } = useQuery<ProjectOption[]>({
     queryKey: ["/api/projects"],
     queryFn: async () => {
-      const response = await fetch("/api/projects", { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      return response.json();
+      return apiRequest<ProjectOption[]>("GET", "/api/projects");
     },
   });
 

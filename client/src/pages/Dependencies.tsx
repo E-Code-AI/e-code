@@ -7,6 +7,7 @@ import { ReplitPackagesPanel } from "@/components/editor/ReplitPackagesPanel";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProjectSummary {
   id: number;
@@ -23,11 +24,7 @@ export default function Dependencies() {
   const { data: projects = [], isLoading, error } = useQuery<ProjectSummary[]>({
     queryKey: ["/api/projects"],
     queryFn: async () => {
-      const response = await fetch("/api/projects", { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      const data = await response.json();
+      const data = await apiRequest<any>("GET", "/api/projects");
       return Array.isArray(data) ? data : data.projects || [];
     },
     staleTime: 30000,

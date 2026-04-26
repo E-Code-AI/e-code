@@ -5,6 +5,7 @@ import SecurityScannerPanel from "@/components/SecurityScannerPanel";
 import { PageHeader, PageShell, PageShellLoading } from "@/components/layout/PageShell";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ProjectOption {
   id: number | string;
@@ -17,11 +18,7 @@ export default function SecurityScanner() {
   const { data: projects = [], isLoading } = useQuery<ProjectOption[]>({
     queryKey: ["/api/projects"],
     queryFn: async () => {
-      const response = await fetch("/api/projects", { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      return response.json();
+      return apiRequest<ProjectOption[]>("GET", "/api/projects");
     },
   });
 
