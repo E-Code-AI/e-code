@@ -126,7 +126,16 @@ export function PreviewDeploymentPanel({
   } : null;
   
   const isRunning = preview?.status === 'running';
-  const previewUrl = isRunning ? (previewUrlData?.previewUrl || null) : null;
+  const previewRuntimeStatus = previewData?.status || previewUrlData?.status || '';
+  const hasResolvedLivePreview = Boolean(
+    previewUrlData?.previewUrl &&
+    (previewRuntimeStatus === 'running' || previewRuntimeStatus === 'static')
+  );
+  const previewUrl = hasResolvedLivePreview
+    ? previewUrlData?.previewUrl || null
+    : isRunning
+      ? (previewUrlData?.previewUrl || null)
+      : null;
   const buildPreviewPath = (path: string) => {
     if (!bootstrapToken) return path;
     return `${path}${path.includes('?') ? '&' : '?'}bootstrap=${encodeURIComponent(bootstrapToken)}`;
@@ -278,9 +287,9 @@ export function PreviewDeploymentPanel({
   if (compact) {
     return (
       <div className={cn("flex items-center gap-2", className)} data-testid="preview-deployment-compact">
-        {isLoading ? (
+        {!hasResolvedLivePreview && isLoading ? (
           <Skeleton className="h-8 w-24" />
-        ) : isRunning ? (
+        ) : previewUrl ? (
           <>
             <TooltipProvider>
               <Tooltip>
@@ -368,7 +377,7 @@ export function PreviewDeploymentPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {isLoading ? (
+        {!hasResolvedLivePreview && isLoading ? (
           <div className="space-y-3">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-20 w-full" />
@@ -376,7 +385,7 @@ export function PreviewDeploymentPanel({
         ) : (
           <>
             <LazyAnimatePresence mode="wait">
-              {isRunning ? (
+              {previewUrl ? (
                 <LazyMotionDiv
                   key="running"
                   initial={{ opacity: 0, y: 10 }}
