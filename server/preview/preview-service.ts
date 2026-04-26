@@ -461,15 +461,48 @@ function selectPackageJsonFile(files: any[]) {
     return null;
   }
 
-  const priority = ['package.json', 'client/package.json', 'frontend/package.json', 'app/package.json'];
-  for (const candidate of priority) {
-    const match = packageFiles.find((file) => String(file.path || file.name || '') === candidate);
-    if (match) {
-      return match;
-    }
-  }
+  const scorePackageJson = (file: any): number => {
+    const filePath = String(file.path || file.name || 'package.json').replace(/\\/g, '/');
+    const isRootManifest = filePath === 'package.json';
+    const isFrontendManifest = ['client/package.json', 'frontend/package.json', 'app/package.json'].includes(filePath);
 
-  return packageFiles[0];
+    let packageJson: any = {};
+    try {
+      packageJson = JSON.parse(file.content || '{}');
+    } catch {
+      packageJson = {};
+    }
+
+    const deps = { ...(packageJson.dependencies || {}), ...(packageJson.devDependencies || {}) };
+    const scripts = packageJson.scripts || {};
+    const hasFrontendDeps = Boolean(
+      deps.react ||
+      deps['react-dom'] ||
+      deps.vue ||
+      deps.svelte ||
+      deps['@angular/core'] ||
+      deps.vite ||
+      deps['@vitejs/plugin-react'] ||
+      deps['@vitejs/plugin-vue']
+    );
+    const hasBackendDeps = Boolean(deps.express || deps.fastify || deps.koa || deps.nestjs);
+    const hasFrontendScripts = ['dev', 'build', 'preview'].some((scriptName) => typeof scripts[scriptName] === 'string');
+    const looksLikeWorkspaceRoot = Boolean(packageJson.workspaces || deps.turbo || deps.nx || deps.lerna || deps.concurrently);
+
+    let score = 0;
+
+    if (isFrontendManifest) score += 220;
+    if (isRootManifest) score += 120;
+    if (hasFrontendDeps) score += 160;
+    if (hasFrontendScripts) score += 80;
+    if (hasBackendDeps) score += 40;
+    if (looksLikeWorkspaceRoot && hasFrontendDeps) score -= 40;
+    if (looksLikeWorkspaceRoot && isRootManifest) score -= 30;
+
+    return score;
+  };
+
+  return [...packageFiles].sort((left, right) => scorePackageJson(right) - scorePackageJson(left))[0];
 }
 
 interface PreviewInstance {
