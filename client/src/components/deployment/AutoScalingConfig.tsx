@@ -98,28 +98,19 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
   // Fetch scaling policies
   const { data: policies = [], isLoading } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-policies'],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/autoscale`),
   });
 
   // Fetch scaling history
   const { data: history = [] } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-history'],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/history`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/autoscale/history`),
   });
 
   // Fetch scaling status
   const { data: status } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'scaling-status'],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/autoscale/status`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/autoscale/status`),
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
@@ -131,9 +122,8 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
         ? `/api/deployments/${deploymentId}/autoscale/${policy.id}`
         : `/api/deployments/${deploymentId}/autoscale`;
       const method = policy.id ? 'PUT' : 'POST';
-      
-      const response = await apiRequest(method, url, policy);
-      return response.json();
+
+      return apiRequest(method, url, policy);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'scaling-policies'] });
@@ -155,10 +145,8 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
 
   // Delete policy mutation
   const deletePolicyMutation = useMutation({
-    mutationFn: async (policyId: string) => {
-      const response = await apiRequest('DELETE', `/api/deployments/${deploymentId}/autoscale/${policyId}`, {});
-      return response.json();
-    },
+    mutationFn: (policyId: string) =>
+      apiRequest('DELETE', `/api/deployments/${deploymentId}/autoscale/${policyId}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'scaling-policies'] });
       toast({
@@ -177,10 +165,8 @@ export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfig
 
   // Toggle policy mutation
   const togglePolicyMutation = useMutation({
-    mutationFn: async ({ policyId, enabled }: { policyId: string; enabled: boolean }) => {
-      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/autoscale/${policyId}/toggle`, { enabled });
-      return response.json();
-    },
+    mutationFn: ({ policyId, enabled }: { policyId: string; enabled: boolean }) =>
+      apiRequest('POST', `/api/deployments/${deploymentId}/autoscale/${policyId}/toggle`, { enabled }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'scaling-policies'] });
     },

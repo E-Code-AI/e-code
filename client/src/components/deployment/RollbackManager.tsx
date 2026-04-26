@@ -118,10 +118,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   // Fetch deployment snapshots
   const { data: snapshots = [], isLoading } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'versions'],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/versions`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/versions`),
   });
 
   // Fetch version diff
@@ -129,10 +126,10 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
     queryKey: ['/api/deployments', deploymentId, 'diff', compareVersions],
     queryFn: async () => {
       if (!compareVersions) return null;
-      const response = await fetch(
+      return apiRequest(
+        'GET',
         `/api/deployments/${deploymentId}/diff?v1=${compareVersions[0]}&v2=${compareVersions[1]}`
       );
-      return response.json();
     },
     enabled: !!compareVersions,
   });
@@ -141,18 +138,15 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
   const { data: rollbackHistory = [], isLoading: isLoadingHistory } = useQuery<RollbackStatus[]>({
     queryKey: ['/api/deployments', deploymentId, 'rollback', 'history'],
     queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/rollback/history`, { credentials: 'include' });
-      const data = await response.json();
+      const data = await apiRequest('GET', `/api/deployments/${deploymentId}/rollback/history`);
       return data.history || [];
     },
   });
 
   // Rollback mutation
   const rollbackMutation = useMutation({
-    mutationFn: async ({ version, options }: { version: string; options: typeof rollbackOptions }) => {
-      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/rollback`, { version, ...options });
-      return response.json();
-    },
+    mutationFn: ({ version, options }: { version: string; options: typeof rollbackOptions }) =>
+      apiRequest('POST', `/api/deployments/${deploymentId}/rollback`, { version, ...options }),
     onSuccess: (data) => {
       setActiveRollback(data);
       setShowRollbackDialog(false);
@@ -174,10 +168,8 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
 
   // Create snapshot mutation
   const createSnapshotMutation = useMutation({
-    mutationFn: async (data: {} = {}) => {
-      const response = await apiRequest('POST', `/api/deployments/${deploymentId}/snapshot`, data);
-      return response.json();
-    },
+    mutationFn: (data: {} = {}) =>
+      apiRequest('POST', `/api/deployments/${deploymentId}/snapshot`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/deployments', deploymentId, 'versions'] });
       toast({
@@ -196,8 +188,7 @@ export function RollbackManager({ deploymentId, className }: RollbackManagerProp
 
   const pollRollbackStatus = async (rollbackId: string) => {
     const checkStatus = async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/rollback/${rollbackId}/status`, { credentials: 'include' });
-      const status = await response.json();
+      const status = await apiRequest('GET', `/api/deployments/${deploymentId}/rollback/${rollbackId}/status`);
       setActiveRollback(status);
       
       if (status.status === 'completed') {

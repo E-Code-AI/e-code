@@ -58,14 +58,8 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
   const fetchDeployments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/deployment/${projectId}/enterprise`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setDeployments(data.deployments || []);
-      }
+      const data = await apiRequest('GET', `/api/deployment/${projectId}/enterprise`);
+      setDeployments(data.deployments || []);
     } catch (error) {
       console.error('Error fetching deployments:', error);
       toast({

@@ -24,6 +24,7 @@ import { Separator } from '@/components/ui/separator';
 import { LazyMotionDiv } from '@/lib/motion';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DeploymentMetricsProps {
   deploymentId: string;
@@ -72,10 +73,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
   // Fetch metrics data
   const { data: metrics, isLoading, refetch } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'metrics', timeRange],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/metrics?range=${timeRange}`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/metrics?range=${timeRange}`),
     refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
@@ -83,10 +81,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
   // Fetch health status
   const { data: health } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'health'],
-    queryFn: async () => {
-      const response = await fetch(`/api/deployments/${deploymentId}/health`, { credentials: 'include' });
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/health`),
     refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
