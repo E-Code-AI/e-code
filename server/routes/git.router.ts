@@ -576,7 +576,7 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
   }
 });
 
-router.get('/github/status', ensureAuthenticated, async (req: Request, res: Response) => {
+router.get('/github/status', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
     if (!userId) {
