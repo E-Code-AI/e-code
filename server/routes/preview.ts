@@ -405,6 +405,62 @@ async function workspaceHasRunnableFiles(projectId: string): Promise<boolean> {
   return walk(workspacePath);
 }
 
+async function readWorkspaceFiles(projectId: string): Promise<any[]> {
+  const workspacePath = getProjectWorkspacePath(projectId);
+  const discovered: any[] = [];
+
+  const walk = async (dir: string) => {
+    const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (entry.name === '.git' || entry.name === 'node_modules') continue;
+      const fullPath = path.join(dir, entry.name);
+      const relPath = path.relative(workspacePath, fullPath);
+      if (entry.isDirectory()) {
+        discovered.push({
+          name: entry.name,
+          path: relPath,
+          isDirectory: true,
+          isFolder: true,
+          content: '',
+        });
+        await walk(fullPath);
+        continue;
+      }
+
+      const content = await fs.readFile(fullPath, 'utf8').catch(() => '');
+      discovered.push({
+        name: entry.name,
+        path: relPath,
+        isDirectory: false,
+        isFolder: false,
+        content,
+      });
+    }
+  };
+
+  await walk(workspacePath);
+  return discovered;
+}
+
+async function getMergedProjectFiles(projectId: string): Promise<any[]> {
+  const dbFiles = await storage.getFilesByProject(projectId).catch(() => []);
+  const workspaceFiles = await readWorkspaceFiles(projectId).catch(() => []);
+
+  if (workspaceFiles.length === 0) {
+    return dbFiles;
+  }
+
+  const merged = new Map<string, any>();
+  for (const file of dbFiles) {
+    merged.set(String(file.path || file.name), file);
+  }
+  for (const file of workspaceFiles) {
+    merged.set(String(file.path || file.name), file);
+  }
+
+  return [...merged.values()];
+}
+
 const resolvePreviewAccess = async (req: any, res: any) => {
   const bootstrapToken = req?.query?.bootstrap || req?.headers?.['x-bootstrap-token'];
   const projectIdParam = req?.params?.projectId || req?.params?.id;
@@ -494,7 +550,7 @@ router.get('/url', async (req, res) => {
     if (!access) return;
     
     // Check if project has runnable files
-    const files = await storage.getFilesByProject(projectId).catch((error: any) => {
+    const files = await getMergedProjectFiles(projectId).catch((error: any) => {
       console.error('[preview:url] Failed to read project files', { projectId, error: error?.message || error });
       return [];
     });
@@ -674,7 +730,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
     setCacheHeaders(res);
     
     // Get all project files
-    const files = await storage.getFilesByProject(projectId);
+    const files = await getMergedProjectFiles(projectId);
     
     // Check for ?file= query parameter for specific file selection
     const fileParam = req.query.file as string | undefined;
@@ -867,7 +923,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
     setCacheHeaders(res);
     
     // Get all project files
-    const files = await storage.getFilesByProject(projectId);
+    const files = await getMergedProjectFiles(projectId);
     
     // Normalize the filepath
     const normalizedPath = filepath.startsWith('/') ? filepath.slice(1) : filepath;
@@ -971,7 +1027,7 @@ router.get('/projects/:id/preview-url', ensureProjectAccess, async (req, res) =>
     }
     
     // Check if it's an HTML project or has runnable code
-    const files = await storage.getFilesByProject(projectId);
+    const files = await getMergedProjectFiles(projectId);
     const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isDirectory);
     const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isDirectory);
     const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isDirectory);
