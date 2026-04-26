@@ -433,7 +433,10 @@ export class PTYTerminalService {
       
       let session: PTYSession | null = null;
       
-      if (requireDocker) {
+      if (process.env.FORCE_LOCAL_PTY === 'true' && allowInsecure) {
+        logger.warn('[DEV] FORCE_LOCAL_PTY=true - creating local PTY session');
+        session = await this.createLocalSession(projectId);
+      } else if (requireDocker) {
         if (!dockerAvailable) {
           logger.error(`BLOCKED: Terminal session rejected - Docker required but unavailable`);
           logger.error(`Set ALLOW_INSECURE_LOCAL_PTY=true ONLY in development to allow local PTY`);
@@ -496,7 +499,7 @@ export class PTYTerminalService {
       // Use node:20-alpine as base image for a lightweight shell environment
       const dockerArgs = [
         'run',
-        '-it',
+        '-i',
         '--rm',
         '--name', containerName,
         // Security: Resource limits
@@ -706,6 +709,10 @@ export class PTYTerminalService {
   private async setupProjectDirectory(projectId: string): Promise<string> {
     try {
       const { bulkSyncProjectFiles, getProjectWorkspacePath: _getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      if (!Number.isInteger(Number(projectId))) {
+        const { ensureProjectDirectory } = await import('../utils/project-fs-sync');
+        return ensureProjectDirectory(projectId);
+      }
       const files = await storage.getFilesByProjectId(projectId);
       const projectDir = await bulkSyncProjectFiles(projectId, files as any);
       return projectDir;
@@ -722,6 +729,11 @@ export class PTYTerminalService {
    */
   private async syncFilesBack(projectId: string, workDir: string): Promise<void> {
     try {
+      const numericProjectId = parseInt(projectId, 10);
+      if (!Number.isInteger(numericProjectId)) {
+        logger.debug(`Skipping database file sync for non-numeric project ${projectId}`);
+        return;
+      }
       const existingFiles = await storage.getFilesByProjectId(projectId);
       const existingFileMap = new Map(existingFiles.map(f => [f.path || f.name, f]));
       
@@ -756,7 +768,7 @@ export class PTYTerminalService {
               } else {
                 // Create new file
                 await storage.createFile({
-                  projectId: parseInt(projectId, 10),
+                  projectId: numericProjectId,
                   name: entry.name,
                   path: relativePath,
                   content,

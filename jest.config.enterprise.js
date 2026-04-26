@@ -94,7 +94,7 @@ export default {
     '^@test/(.*)$': '<rootDir>/tests/$1'
   },
 
-  // Setup files - commented out since we don't need it yet  // setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.ts'],
+  setupFiles: ['<rootDir>/test/setup/env.setup.ts'],
 
   // Timeout for async tests
   testTimeout: 10000,

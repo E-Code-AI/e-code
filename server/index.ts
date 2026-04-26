@@ -1,14 +1,7 @@
 // OpenAI SDK requires this shim to be imported FIRST before any other openai import.
 // Must be at the very top before any route/service imports that pull in the openai package.
 import 'openai/shims/node';
-
-// Load environment variables in development only (production uses platform env vars)
-// Note: In production builds, this entire block is eliminated via dead code elimination
-// because process.env.NODE_ENV is defined as 'production' at build time
-if (process.env.NODE_ENV === 'development') {
-  const dotenv = await import('dotenv');
-  dotenv.config();
-}
+import './env';
 
 // ✅ Sentry error tracking: Initialize FIRST (after dotenv) to catch startup errors
 import { errorTracking } from './services/error-tracking';
