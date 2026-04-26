@@ -14,6 +14,7 @@ import { eq, and, asc, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from '../utils/logger';
+import { ensureProjectDirectory } from '../utils/project-fs-sync';
 
 const logger = createLogger('workflows-router');
 
@@ -460,6 +461,7 @@ async function executeTask(
   depth: number
 ): Promise<{ success: boolean; error?: string }> {
   logs.push(`\n=== Executing task: ${task.taskType} ===`);
+  const workspaceCwd = await resolveWorkflowCwd(workflow, logs);
   
   try {
     switch (task.taskType) {
@@ -469,7 +471,7 @@ async function executeTask(
           return { success: true };
         }
         logs.push(`Running: ${task.command}`);
-        await executeShellCommand(task.command, logs, processes);
+        await executeShellCommand(task.command, logs, processes, workspaceCwd);
         logs.push('✓ Command completed');
         break;
         
@@ -477,9 +479,9 @@ async function executeTask(
         const packageArg = task.command || 'all';
         logs.push(`Installing packages: ${packageArg}`);
         if (packageArg === 'all') {
-          await executeShellCommand('npm install', logs, processes);
+          await executeShellCommand('npm install', logs, processes, workspaceCwd);
         } else {
-          await executeShellCommand(`npm install ${packageArg}`, logs, processes);
+          await executeShellCommand(`npm install ${packageArg}`, logs, processes, workspaceCwd);
         }
         logs.push('✓ Packages installed');
         break;
@@ -515,10 +517,25 @@ async function executeTask(
   }
 }
 
-function executeShellCommand(command: string, logs: string[], processes: ChildProcess[]): Promise<void> {
+async function resolveWorkflowCwd(workflow: WorkflowWithTasks, logs: string[]): Promise<string> {
+  if (!workflow.projectId) {
+    return process.cwd();
+  }
+
+  try {
+    const projectDir = await ensureProjectDirectory(workflow.projectId);
+    logs.push(`Workspace: ${projectDir}`);
+    return projectDir;
+  } catch (error: any) {
+    logs.push(`Workspace fallback: ${error.message || 'unknown error'}`);
+    return process.cwd();
+  }
+}
+
+function executeShellCommand(command: string, logs: string[], processes: ChildProcess[], cwd: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn('bash', ['-c', command], {
-      cwd: process.cwd(),
+      cwd,
       env: { ...process.env, CI: 'true' },
     });
     
