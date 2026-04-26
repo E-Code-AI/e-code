@@ -12,7 +12,7 @@ import {
   Brush, Eye, Settings, ChevronRight
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface Theme {
   id: string;
@@ -158,29 +158,33 @@ export default function Themes() {
 
   const handleExportTheme = async () => {
     try {
-      const response = await fetch('/api/themes/export', {
+      const exportUrl = '/api/themes/export';
+      const response = await fetch(exportUrl, {
         headers: {
           'Content-Type': 'application/json',
+          ...withBootstrapHeaders(exportUrl),
         },
         credentials: 'include'
       });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ecode-theme-settings.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-        
-        toast({
-          title: "Theme exported",
-          description: "Your theme settings have been downloaded"
-        });
+
+      if (!response.ok) {
+        throw new Error('Failed to export theme');
       }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ecode-theme-settings.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Theme exported",
+        description: "Your theme settings have been downloaded"
+      });
     } catch (error) {
       toast({
         title: "Error",

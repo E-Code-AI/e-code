@@ -184,27 +184,30 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const downloadBackup = async (backupId: string, name: string) => {
     try {
-      const response = await fetch(`/api/backups/${projectId}/${backupId}/download`, {
+      const downloadUrl = `/api/backups/${projectId}/${backupId}/download`;
+      const response = await fetch(downloadUrl, {
         credentials: 'include',
-        headers: withBootstrapHeaders(`/api/backups/${projectId}/${backupId}/download`),
+        headers: withBootstrapHeaders(downloadUrl),
       });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${name}-${new Date().toISOString().split('T')[0]}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        toast({
-          title: "Download Started",
-          description: "Backup download has begun"
-        });
+
+      if (!response.ok) {
+        throw new Error('Failed to download backup');
       }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name}-${new Date().toISOString().split('T')[0]}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Download Started",
+        description: "Backup download has begun"
+      });
     } catch (error) {
       toast({
         title: "Download Failed",

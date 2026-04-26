@@ -165,23 +165,25 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
         headers: withBootstrapHeaders(exportUrl)
       });
       
-      if (response.ok) {
-        const entries = await response.json();
-        const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `database-${projectId}-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        toast({
-          title: "Export Complete",
-          description: "Database exported successfully"
-        });
+      if (!response.ok) {
+        throw new Error('Failed to export database');
       }
+
+      const entries = await response.json();
+      const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `database-${projectId}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Export Complete",
+        description: "Database exported successfully"
+      });
     } catch (error) {
       toast({
         title: "Export Failed",

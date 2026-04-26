@@ -135,16 +135,14 @@ const CodeEditor = ({ file, onChange, onSelectionChange, collaboration }: CodeEd
     setIsSaving(true);
     
     try {
-      const response = await apiRequest('PATCH', `/api/files/${file.id}`, {
+      await apiRequest('PATCH', `/api/files/${file.id}`, {
         content: fileContent,
       });
-      
-      if (response.ok) {
-        setLastSaved(new Date());
-        if (autoSaveTimeoutRef.current) {
-          clearTimeout(autoSaveTimeoutRef.current);
-          autoSaveTimeoutRef.current = null;
-        }
+
+      setLastSaved(new Date());
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
       }
     } catch (error) {
       console.error('Failed to save file:', error);
