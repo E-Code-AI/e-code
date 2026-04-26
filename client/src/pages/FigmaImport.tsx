@@ -32,12 +32,10 @@ export default function FigmaImport() {
     setImportStatus('processing');
 
     try {
-      const response = await apiRequest('POST', '/api/import/figma', {
+      const result = await apiRequest('POST', '/api/import/figma', {
         projectId: parseInt(projectId!),
         figmaUrl
       });
-
-      const result = await response.json();
       if (result.success) {
         setImportStatus('completed');
         setImportDetails(result.import);

@@ -208,14 +208,11 @@ export function PackageManager({ projectId, language: propLanguage, className }:
 
   const handleInstallFallback = async (packageName: string, version?: string) => {
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/packages`, {
+      await apiRequest('POST', `/api/projects/${projectId}/packages`, {
         name: packageName,
         version,
         language: detectedLanguage,
       });
-      
-      if (!response.ok) throw new Error('Installation failed');
-      
       toast({
         title: 'Package Installed',
         description: `Successfully installed ${packageName}`,
@@ -232,10 +229,7 @@ export function PackageManager({ projectId, language: propLanguage, className }:
 
   const handleUninstall = async (packageName: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`);
-      
-      if (!response.ok) throw new Error('Uninstall failed');
-      
+      await apiRequest('DELETE', `/api/projects/${projectId}/packages/${encodeURIComponent(packageName)}`);
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
       toast({
         title: 'Package Uninstalled',
@@ -254,12 +248,9 @@ export function PackageManager({ projectId, language: propLanguage, className }:
     setInstallingPackages(prev => new Set([...prev, packageName]));
     
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/packages/update`, {
+      await apiRequest('POST', `/api/projects/${projectId}/packages/update`, {
         packages: [packageName],
       });
-      
-      if (!response.ok) throw new Error('Update failed');
-      
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'packages'] });
       toast({
         title: 'Package Updated',

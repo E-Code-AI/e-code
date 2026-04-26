@@ -72,8 +72,7 @@ export default function Themes() {
   // Update theme settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: async (settings: ThemeSettings) => {
-      const response = await apiRequest('PUT', '/api/themes/settings', settings);
-      return response.json();
+      return apiRequest('PUT', '/api/themes/settings', settings);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
@@ -87,8 +86,7 @@ export default function Themes() {
   // Install theme mutation
   const installThemeMutation = useMutation({
     mutationFn: async (themeId: string) => {
-      const response = await apiRequest('POST', '/api/themes/install', { themeId });
-      return response.json();
+      return apiRequest('POST', '/api/themes/install', { themeId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/themes/installed'] });
@@ -143,8 +141,7 @@ export default function Themes() {
     };
     
     try {
-      const response = await apiRequest('POST', '/api/themes/create', customTheme);
-      await response.json();
+      await apiRequest('POST', '/api/themes/create', customTheme);
       
       toast({
         title: "Theme created",
@@ -204,8 +201,7 @@ export default function Themes() {
         reader.onload = async (event) => {
           try {
             const settings = JSON.parse(event.target?.result as string);
-            const response = await apiRequest('POST', '/api/themes/import', { settings });
-            await response.json();
+            await apiRequest('POST', '/api/themes/import', { settings });
             
             queryClient.invalidateQueries({ queryKey: ['/api/themes/settings'] });
             
