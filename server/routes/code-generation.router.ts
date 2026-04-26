@@ -56,14 +56,30 @@ ${context ? `Context: ${context}` : ''}
 ${files && files.length > 0 ? `Referenced Files:\n${files.map(f => `\n--- ${f.path} ---\n${f.content}`).join('\n')}` : ''}
 
 Hard requirements:
-1. Write ${language || 'code'} only. No markdown fences.
-2. For React UI, prefer shadcn/ui-style component architecture, HSL theme tokens, dark mode, and Framer Motion.
-3. Include robust loading, empty, and error states.
-4. Include proper typing and production-safe error handling.
-5. Avoid placeholder “Welcome” starter copy. Use the product intent from the prompt.
-6. Output maintainable code that can be formatted and type-checked automatically.
+1. Output a multi-file project. Each file MUST be a fenced code block whose path
+   appears as a heading line on its own immediately ABOVE the fence
+   (example heading: "src/App.tsx"; example heading: "tailwind.config.ts").
+   No prose between the heading and the opening fence.
+2. React/TS UI MUST follow this exact contract:
+   - shadcn/ui component imports use the alias path: from "@/components/ui/<name>".
+   - Re-usable helpers live at "@/lib/utils" and the cn() helper is imported from there.
+   - HSL design tokens are declared as CSS variables ("--background: 220 20% 97%;")
+     and consumed in tailwind.config via "hsl(var(--background))".
+   - Dark mode is a REAL toggle, not a static class. Use ONE of:
+       (a) next-themes ThemeProvider + useTheme(), or
+       (b) document.documentElement.classList.toggle("dark") wired to a button.
+   - Framer Motion is imported AND used as motion.<tag> with at least one
+     AnimatePresence + layout/exit animation.
+   - Ship a components.json shadcn config file at the project root.
+3. Every emitted file is COMPLETE — no "..." placeholders, no truncated functions,
+   no half-finished JSX. If you are running short on space, drop optional UI
+   polish before dropping correctness.
+4. Include robust loading, empty, and error states.
+5. Include proper typing and production-safe error handling.
+6. Avoid placeholder "Welcome" starter copy. Use the product intent from the prompt.
+7. Output must be formattable by prettier and typecheckable in isolatedModules.
 
-Generate the code now.`;
+Generate the project now.`;
 
     const messages = [
       { role: 'system' as const, content: systemPrompt },
@@ -75,15 +91,25 @@ Generate the code now.`;
     logger.info('[Code Generation] Using model:', model);
     
     const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-4.1/.test(model);
-    
+
     const streamOptions: any = {};
-    
-    // Set correct token limit parameter based on model
+
+    // Multi-file project generation needs significantly more headroom than a
+    // single-snippet response. 16k completion tokens is comfortable for the
+    // largest target models (Claude 4.x, GPT-4.1) and avoids truncation of
+    // the final file in a multi-file emission.
+    const COMPLETION_BUDGET = 16000;
     if (usesMaxCompletionTokens) {
-      streamOptions.max_completion_tokens = 4000;
+      streamOptions.max_completion_tokens = COMPLETION_BUDGET;
     } else {
-      streamOptions.max_tokens = 4000;
+      streamOptions.max_tokens = COMPLETION_BUDGET;
     }
+
+    // The default streamLimiter timeout is 60s total — fine for short snippets
+    // but far too aggressive for a 16k-token multi-file emission, which routinely
+    // takes 90-300s on Claude 4.x. Allow up to 5 minutes for the full stream to
+    // complete; the per-chunk size limit still protects against runaway output.
+    streamOptions.timeoutMs = 300_000;
     
     // Only add temperature for models that support it (GPT-4, Claude, Gemini, etc.)
     // GPT-4.1 family and o-series models don't support custom temperature

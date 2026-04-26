@@ -864,15 +864,23 @@ export class AIProviderManager {
       promptCacheManager.cacheSystemPrompt(systemMessage, 'anthropic');
     }
     
+    // Claude 4.x models reject the `temperature` param on streaming requests
+    // (Anthropic returned: "`temperature` is deprecated for this model.").
+    // Only send it for older Claude families that still accept it.
+    const claude4xRe = /^claude-(?:opus|sonnet|haiku)-[4-9]/;
+    const sendTemperature = !claude4xRe.test(modelId);
+    const requestParams: any = {
+      model: modelId,
+      messages: cachedMessages as any,
+      system: cachedSystem as any,
+      max_tokens: options?.max_tokens || 4000,
+      stream: true,
+    };
+    if (sendTemperature) {
+      requestParams.temperature = options?.temperature ?? 0.7;
+    }
     try {
-      const stream = await this.anthropicClient.messages.create({
-        model: modelId,
-        messages: cachedMessages as any,
-        system: cachedSystem as any,
-        max_tokens: options?.max_tokens || 4000,
-        temperature: options?.temperature || 0.7,
-        stream: true,
-      });
+      const stream = await this.anthropicClient.messages.create(requestParams) as unknown as AsyncIterable<any>;
       
       let buffer = '';
       for await (const chunk of stream) {
