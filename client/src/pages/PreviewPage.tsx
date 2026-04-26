@@ -676,7 +676,7 @@ export default function PreviewPage() {
                 </div>
               ) : null}
 
-              {isLoading && (
+              {!url && isLoading && (
                 <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
                   <RefreshCw className="h-8 w-8 animate-spin text-primary" />
                 </div>
