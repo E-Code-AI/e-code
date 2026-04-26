@@ -63,8 +63,18 @@ export default function AnimationPreview({
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Export failed");
+        let errorMessage = "Export failed";
+        try {
+          const errorText = await res.text();
+          if (errorText.startsWith("{")) {
+            const err = JSON.parse(errorText);
+            errorMessage = err.message || err.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          }
+        } catch {
+        }
+        throw new Error(errorMessage);
       }
 
       const blob = await res.blob();

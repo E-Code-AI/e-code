@@ -145,6 +145,11 @@ export function OrchestratorProgress({
               {progress.currentTaskDelegation && (
                 <AIModelBadge delegation={progress.currentTaskDelegation} />
               )}
+              {activeParallelCapacity > 0 && (
+                <Badge variant="secondary" className="text-[10px]">
+                  Parallel-ready: {activeParallelCapacity}
+                </Badge>
+              )}
               {progress.currentTaskTitle && progress.status === 'running' && (
                 <span className="text-[11px] text-muted-foreground truncate">
                   Working on: {progress.currentTaskTitle}
