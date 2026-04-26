@@ -22,6 +22,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { useQuery } from '@tanstack/react-query';
 
 interface DevicePreset {
   name: string;
@@ -70,6 +71,10 @@ export default function PreviewPage() {
   const projectId = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('projectId')
     : null;
+  const { data: project } = useQuery({
+    queryKey: projectId ? [`/api/projects/${projectId}`] : [],
+    enabled: !!projectId,
+  });
   
   const [url, setUrl] = useState(projectId ? '' : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000'));
   const [inputUrl, setInputUrl] = useState(url);
@@ -665,6 +670,11 @@ export default function PreviewPage() {
                   <Play className="h-10 w-10 text-muted-foreground" />
                   <div className="space-y-1">
                     <h3 className="text-[15px] font-semibold text-foreground">Preview not running</h3>
+                    {(project as any)?.name && (
+                      <p className="text-[12px] text-foreground">
+                        Requested app: <span className="font-medium">{(project as any).name}</span>
+                      </p>
+                    )}
                     <p className="text-[13px] text-muted-foreground max-w-sm">
                       Start the app to load the project preview on this page.
                     </p>

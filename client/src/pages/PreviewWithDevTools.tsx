@@ -210,6 +210,11 @@ export default function PreviewWithDevTools() {
                   <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
                     <p className="text-muted-foreground">Loading preview...</p>
+                    {(project as any)?.name && (
+                      <p className="text-[12px] text-foreground mt-2">
+                        Requested app: <span className="font-medium">{(project as any).name}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               ) : !previewUrl ? (
@@ -218,6 +223,11 @@ export default function PreviewWithDevTools() {
                     <Globe className="h-10 w-10 mx-auto text-muted-foreground" />
                     <div className="space-y-1">
                       <h3 className="text-[15px] font-semibold">Preview not running</h3>
+                      {(project as any)?.name && (
+                        <p className="text-[12px] text-foreground">
+                          Requested app: <span className="font-medium">{(project as any).name}</span>
+                        </p>
+                      )}
                       <p className="text-[13px] text-muted-foreground">
                         Start the app to load the live preview with devtools.
                       </p>

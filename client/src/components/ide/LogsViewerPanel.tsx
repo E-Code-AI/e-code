@@ -50,13 +50,24 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
   const handleExport = async (format: 'json' | 'csv' | 'txt') => {
     try {
       const exportFormat = format === 'txt' ? 'json' : format;
-      const response = await fetch(`/api/logs/export?format=${exportFormat}`, {
+      const exportUrl = `/api/logs/export?format=${exportFormat}`;
+      const response = await fetch(exportUrl, {
         method: 'GET',
         credentials: 'include',
-        headers: withBootstrapHeaders(`/api/logs/export?format=${exportFormat}`),
+        headers: withBootstrapHeaders(exportUrl),
       });
 
-      if (!response.ok) throw new Error('Export failed');
+      if (!response.ok) {
+        let message = 'Export failed';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const text = await response.text().catch(() => '');
+          if (text) message = text;
+        }
+        throw new Error(message);
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
