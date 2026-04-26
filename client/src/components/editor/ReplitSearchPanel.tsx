@@ -1,5 +1,6 @@
 import { useState, useDeferredValue } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import DOMPurify from 'dompurify';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -58,17 +59,19 @@ function ShimmerSkeleton() {
 }
 
 export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: string; onFileSelect?: (fileId: number, line?: number) => void }) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState<'all' | 'files' | 'code' | 'symbols'>('all');
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [useRegex, setUseRegex] = useState(false);
   const openFile = useLayoutStore((state) => state.openFile);
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
   
   const deferredQuery = useDeferredValue(searchQuery);
 
   const { data, isLoading, isFetching } = useQuery<SearchResponse>({
-    queryKey: ['/api/search/global', projectId, deferredQuery.trim(), searchType, caseSensitive, useRegex],
-    enabled: !!projectId && deferredQuery.trim().length >= 2,
+    queryKey: ['/api/search/global', resolvedProjectId, deferredQuery.trim(), searchType, caseSensitive, useRegex],
+    enabled: !!resolvedProjectId && deferredQuery.trim().length >= 2,
     queryFn: async () => {
       const response = await apiRequest<{
         results: Array<{
@@ -80,7 +83,7 @@ export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: str
         totalMatches: number;
       }>('POST', '/api/search/global', {
         query: deferredQuery.trim(),
-        projectId: String(projectId),
+        projectId: String(resolvedProjectId),
         type: searchType === 'files' ? 'files' : searchType === 'symbols' ? 'symbols' : 'content',
         caseSensitive,
         useRegex,
@@ -153,6 +156,16 @@ export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: str
         </div>
       </div>
 
+      {!resolvedProjectId ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-3">
+          <Search className="w-12 h-12 text-muted-foreground opacity-40 mb-3" />
+          <p className="text-[17px] font-medium leading-tight text-foreground">No project selected</p>
+          <p className="text-[13px] text-muted-foreground mt-1">
+            Open a real workspace project to search files, code, and symbols.
+          </p>
+        </div>
+      ) : (
+        <>
       <div className="px-2.5 py-1.5 border-b border-[var(--ecode-border)] shrink-0">
         <div className="relative">
           <Input
@@ -324,6 +337,8 @@ export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: str
           </div>
         )}
       </ScrollArea>
+        </>
+      )}
     </div>
   );
 }

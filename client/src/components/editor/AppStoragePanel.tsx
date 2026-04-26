@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,7 +74,7 @@ interface StorageResponse {
 }
 
 interface AppStoragePanelProps {
-  projectId: string | number;
+  projectId?: string | number;
   className?: string;
 }
 
@@ -258,6 +259,7 @@ function FileTreeItem({
 }
 
 export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
@@ -265,16 +267,17 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const { toast } = useToast();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
-  const queryKey = ['/api/projects', projectId, 'storage'];
+  const queryKey = ['/api/projects', resolvedProjectId, 'storage'];
 
   const { data: storageData, isLoading, error, refetch } = useQuery<StorageResponse>({
     queryKey,
     queryFn: async () => {
-      if (!projectId) throw new Error('Project ID required');
-      return apiRequest<StorageResponse>('GET', `/api/projects/${projectId}/storage`);
+      if (!resolvedProjectId) throw new Error('Project ID required');
+      return apiRequest<StorageResponse>('GET', `/api/projects/${resolvedProjectId}/storage`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
     staleTime: 30000,
   });
 
@@ -283,10 +286,10 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
       const formData = new FormData();
       formData.append('file', file);
 
-      return apiRequest('POST', `/api/projects/${projectId}/storage/upload`, formData);
+      return apiRequest('POST', `/api/projects/${resolvedProjectId}/storage/upload`, formData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'storage'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
     },
     onError: (error: any) => {
       toast({
@@ -299,11 +302,11 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
 
   const createFolderMutation = useMutation({
     mutationFn: async (name: string) => {
-      return apiRequest('POST', `/api/projects/${projectId}/storage/folder`, { name });
+      return apiRequest('POST', `/api/projects/${resolvedProjectId}/storage/folder`, { name });
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Folder created' });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'storage'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
       setShowNewFolderDialog(false);
       setNewFolderName('');
     },
@@ -318,11 +321,11 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
 
   const deleteMutation = useMutation({
     mutationFn: async (path: string) => {
-      return apiRequest('DELETE', `/api/projects/${projectId}/storage/${encodeURIComponent(path)}`);
+      return apiRequest('DELETE', `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(path)}`);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'File deleted' });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'storage'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
       setSelectedFile(null);
     },
     onError: (error: any) => {
@@ -365,14 +368,14 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
   }, []);
 
   const handleDownload = useCallback((path: string, name: string) => {
-    const url = `/api/projects/${projectId}/storage/${encodeURIComponent(path)}/download`;
+    const url = `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(path)}/download`;
     const a = document.createElement('a');
     a.href = url;
     a.download = name;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-  }, [projectId]);
+  }, [resolvedProjectId]);
 
   const handleDelete = useCallback((path: string) => {
     if (confirm('Are you sure you want to delete this file?')) {
@@ -381,12 +384,12 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
   }, [deleteMutation]);
 
   const handleCopyUrl = useCallback(async (path: string) => {
-    const url = `${window.location.origin}/api/projects/${projectId}/storage/${encodeURIComponent(path)}/download`;
+    const url = `${window.location.origin}/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(path)}/download`;
     await navigator.clipboard.writeText(url);
     setCopiedPath(path);
     setTimeout(() => setCopiedPath(null), 2000);
     toast({ title: 'Copied', description: 'URL copied to clipboard' });
-  }, [projectId, toast]);
+  }, [resolvedProjectId, toast]);
 
   const selectedFileData = useMemo(() => {
     if (!selectedFile || !storageData?.files) return null;
@@ -405,7 +408,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
     return findFile(storageData.files, selectedFile);
   }, [selectedFile, storageData?.files]);
 
-  if (!projectId) {
+  if (!resolvedProjectId) {
     return (
       <div 
         className={cn("h-full flex flex-col items-center justify-center p-3 bg-background", className)}
@@ -539,7 +542,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                 <FileTreeItem
                   key={node.path}
                   node={node}
-                  projectId={projectId}
+                  projectId={resolvedProjectId}
                   depth={0}
                   expandedFolders={expandedFolders}
                   toggleFolder={toggleFolder}
@@ -574,7 +577,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
               {isImageFile(selectedFileData.contentType, selectedFileData.name) && (
                 <div className="flex-1 flex items-center justify-center bg-muted rounded-lg mb-4 overflow-hidden">
                   <img
-                    src={`/api/projects/${projectId}/storage/${encodeURIComponent(selectedFileData.path)}/download`}
+                    src={`/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(selectedFileData.path)}/download`}
                     alt={selectedFileData.name}
                     className="max-w-full max-h-[300px] object-contain"
                     data-testid="img-preview"

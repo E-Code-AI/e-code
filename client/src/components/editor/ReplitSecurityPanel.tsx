@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { apiRequest } from '@/lib/queryClient';
 import { createSecurityWebSocket, type ResilientWebSocket, type ConnectionState } from '@/lib/websocket-resilience';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,7 @@ import { cn } from '@/lib/utils';
 import type { SecurityScan, Vulnerability, SecurityScanSettings } from '@shared/schema';
 
 interface ReplitSecurityPanelProps {
-  projectId: string;
+  projectId?: string;
   className?: string;
 }
 
@@ -50,6 +51,7 @@ function VulnerabilitySkeleton() {
 }
 
 export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [activeTab, setActiveTab] = useState<'active' | 'hidden'>('active');
   const [showSettings, setShowSettings] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -58,33 +60,34 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const wsRef = useRef<ResilientWebSocket | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const { data: settings } = useQuery<SecurityScanSettings>({
-    queryKey: ['/api/workspace/projects', projectId, 'security-settings'],
-    enabled: !!projectId,
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'security-settings'],
+    enabled: !!resolvedProjectId,
   });
 
   const { data: initialScans } = useQuery<SecurityScan[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
-    enabled: !!projectId,
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'security-scans'],
+    enabled: !!resolvedProjectId,
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
     refetchIntervalInBackground: false,
   });
 
   const { data: activeVulnerabilities, isLoading: isLoadingActive } = useQuery<Vulnerability[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'active'],
     queryFn: async () => {
-      return apiRequest<Vulnerability[]>('GET', `/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`);
+      return apiRequest<Vulnerability[]>('GET', `/api/workspace/projects/${resolvedProjectId}/vulnerabilities/by-hidden?hidden=false`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
   });
 
   const { data: hiddenVulnerabilities, isLoading: isLoadingHidden } = useQuery<Vulnerability[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'hidden'],
     queryFn: async () => {
-      return apiRequest<Vulnerability[]>('GET', `/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`);
+      return apiRequest<Vulnerability[]>('GET', `/api/workspace/projects/${resolvedProjectId}/vulnerabilities/by-hidden?hidden=true`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
   });
 
   const scans = realtimeScans.length > 0 ? realtimeScans : (initialScans || []);
@@ -97,14 +100,14 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
 
   const startScanMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/workspace/projects/${projectId}/security-scans`, {
+      return apiRequest('POST', `/api/workspace/projects/${resolvedProjectId}/security-scans`, {
         scanType: 'full',
         status: 'queued',
         scanner: 'semgrep',
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-scans'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'security-scans'] });
       toast({ title: 'Security scan started', description: 'Scanning for vulnerabilities...' });
     },
     onError: (error: any) => {
@@ -114,10 +117,10 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (updates: Partial<SecurityScanSettings>) => {
-      return apiRequest('PATCH', `/api/workspace/projects/${projectId}/security-settings`, updates);
+      return apiRequest('PATCH', `/api/workspace/projects/${resolvedProjectId}/security-settings`, updates);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'security-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'security-settings'] });
       toast({ description: 'Settings updated' });
     },
     onError: (error: any) => {
@@ -130,8 +133,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       return apiRequest('PATCH', `/api/workspace/vulnerabilities/${id}/hide`, { isHidden });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'active'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
     },
     onError: (error: any) => {
       toast({ title: 'Error', description: error.message || 'Failed to update vulnerability', variant: 'destructive' });
@@ -157,9 +160,9 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   };
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!resolvedProjectId) return;
 
-    const resilientWs = createSecurityWebSocket(projectId);
+    const resilientWs = createSecurityWebSocket(resolvedProjectId);
     wsRef.current = resilientWs;
 
     const unsubscribeState = resilientWs.onStateChange((event) => {
@@ -191,8 +194,8 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             }
             break;
           case 'vulnerability_update':
-            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'active'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/workspace/projects', resolvedProjectId, 'vulnerabilities', 'by-hidden', 'hidden'] });
             break;
           case 'error':
             console.error('[SecurityPanel] WebSocket error:', message.message);
@@ -211,7 +214,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       resilientWs.destroy();
       wsRef.current = null;
     };
-  }, [projectId, queryClient]);
+  }, [resolvedProjectId, queryClient]);
 
   return (
     <div className={cn('flex flex-col h-full bg-[var(--ecode-surface)]', className)} data-testid="security-panel">
@@ -226,6 +229,17 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {!resolvedProjectId ? (
+          <div className="flex h-full items-center justify-center p-4 text-center">
+            <div className="space-y-2">
+              <ShieldCheck className="mx-auto h-10 w-10 text-[var(--ecode-text-muted)] opacity-50" />
+              <p className="text-sm font-medium text-[var(--ecode-text)]">No project selected</p>
+              <p className="text-xs text-[var(--ecode-text-muted)]">
+                Open a real workspace project to run security scans and view vulnerabilities.
+              </p>
+            </div>
+          </div>
+        ) : (
         <div className="p-2.5 space-y-2">
           <p className="text-[10px] text-[var(--ecode-text-muted)]">
             Scan for security risks and privacy leaks.{' '}
@@ -514,6 +528,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
             </p>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

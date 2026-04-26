@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -216,6 +217,7 @@ function NoChangesEmptyState() {
 export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: ReplitGitPanelProps & { mode?: 'desktop' | 'tablet' | 'mobile' }) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>('main');
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [branchSearch, setBranchSearch] = useState('');
@@ -229,30 +231,32 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   const [repoSearch, setRepoSearch] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedFileStaged, setSelectedFileStaged] = useState(false);
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const { data: status, refetch: refetchStatus, isLoading, isError, error } = useQuery<GitStatus>({
-    queryKey: [`/api/git/${projectId}/status`],
-    queryFn: () => apiRequest('GET', `/api/git/${projectId}/status`),
+    queryKey: [`/api/git/${resolvedProjectId}/status`],
+    queryFn: () => apiRequest('GET', `/api/git/${resolvedProjectId}/status`),
+    enabled: !!resolvedProjectId,
     retry: 1, // Only retry once to avoid long loading states
     staleTime: 30000, // 30 seconds
   });
 
   const { data: remotesData } = useQuery<{ remotes: { name: string; url: string; type: 'fetch' | 'push' }[] }>({
-    queryKey: [`/api/git/${projectId}/remotes`],
-    queryFn: () => apiRequest('GET', `/api/git/${projectId}/remotes`),
+    queryKey: [`/api/git/${resolvedProjectId}/remotes`],
+    queryFn: () => apiRequest('GET', `/api/git/${resolvedProjectId}/remotes`),
     enabled: !!status,
   });
 
   const { data: commitsData, isLoading: isLoadingCommits } = useQuery<{ commits: GitCommitInfo[] }>({
-    queryKey: [`/api/git/${projectId}/commits`],
-    queryFn: () => apiRequest('GET', `/api/git/${projectId}/commits`),
+    queryKey: [`/api/git/${resolvedProjectId}/commits`],
+    queryFn: () => apiRequest('GET', `/api/git/${resolvedProjectId}/commits`),
     enabled: !!status,
   });
   const commits = commitsData?.commits;
 
   const { data: branchesData } = useQuery<{ branches: GitBranchInfo[] }>({
-    queryKey: [`/api/git/${projectId}/branches`],
-    queryFn: () => apiRequest('GET', `/api/git/${projectId}/branches`),
+    queryKey: [`/api/git/${resolvedProjectId}/branches`],
+    queryFn: () => apiRequest('GET', `/api/git/${resolvedProjectId}/branches`),
     enabled: !!status,
   });
   const branches = branchesData?.branches || [];
@@ -270,8 +274,8 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const { data: diffData, isLoading: isLoadingDiff } = useQuery<GitDiffResponse>({
-    queryKey: [`/api/git/${projectId}/diff`, selectedFile, selectedFileStaged],
-    queryFn: () => apiRequest('GET', `/api/git/${projectId}/diff/${encodeURIComponent(selectedFile!)}${selectedFileStaged ? '?staged=true' : ''}`),
+    queryKey: [`/api/git/${resolvedProjectId}/diff`, selectedFile, selectedFileStaged],
+    queryFn: () => apiRequest('GET', `/api/git/${resolvedProjectId}/diff/${encodeURIComponent(selectedFile!)}${selectedFileStaged ? '?staged=true' : ''}`),
     enabled: !!selectedFile,
   });
 
@@ -279,9 +283,9 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   const repoName = originRemote?.url?.split('/').slice(-2).join('/').replace('.git', '') || '';
 
   const stageMutation = useMutation({
-    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${projectId}/stage`, { files }),
+    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${resolvedProjectId}/stage`, { files }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
       toast({ description: 'Files staged' });
     },
     onError: (error: any) => {
@@ -290,9 +294,9 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const unstageMutation = useMutation({
-    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${projectId}/unstage`, { files }),
+    mutationFn: async (files: string[]) => apiRequest('POST', `/api/git/${resolvedProjectId}/unstage`, { files }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
       toast({ description: 'Files unstaged' });
     },
     onError: (error: any) => {
@@ -301,10 +305,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const pullMutation = useMutation({
-    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/pull`, {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${resolvedProjectId}/pull`, {}),
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/commits`] });
       toast({ description: data?.info || 'Changes pulled successfully' });
     },
     onError: (error: any) => {
@@ -313,10 +317,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const pushMutation = useMutation({
-    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/push`, {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${resolvedProjectId}/push`, {}),
     onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/commits`] });
       toast({ description: data?.info || 'Changes pushed successfully' });
     },
     onError: (error: any) => {
@@ -325,9 +329,9 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const fetchMutation = useMutation({
-    mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/fetch`, {}),
+    mutationFn: async () => apiRequest('POST', `/api/git/${resolvedProjectId}/fetch`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
       toast({ description: 'Fetched latest from remote' });
     },
     onError: (error: any) => {
@@ -336,10 +340,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const commitMutation = useMutation({
-    mutationFn: async (message: string) => apiRequest('POST', `/api/git/${projectId}/commit`, { message }),
+    mutationFn: async (message: string) => apiRequest('POST', `/api/git/${resolvedProjectId}/commit`, { message }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/commits`] });
       setCommitMessage('');
       toast({ description: 'Changes committed successfully' });
     },
@@ -349,10 +353,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async (branch: string) => apiRequest('POST', `/api/git/${projectId}/checkout`, { branch }),
+    mutationFn: async (branch: string) => apiRequest('POST', `/api/git/${resolvedProjectId}/checkout`, { branch }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/branches`] });
       setShowBranchDropdown(false);
       toast({ description: 'Switched branch' });
     },
@@ -362,9 +366,9 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const connectRemoteMutation = useMutation({
-    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${projectId}/remotes`, { url, name: 'origin' }),
+    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${resolvedProjectId}/remotes`, { url, name: 'origin' }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/remotes`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/remotes`] });
       setRemoteUrl('');
       toast({ description: 'Remote connected' });
     },
@@ -374,12 +378,12 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const cloneRepoMutation = useMutation({
-    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${projectId}/clone`, { url }),
+    mutationFn: async (url: string) => apiRequest('POST', `/api/git/${resolvedProjectId}/clone`, { url }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/commits`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/branches`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/remotes`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/commits`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/remotes`] });
       toast({ description: 'Repository imported into this project' });
     },
     onError: (error: any) => {
@@ -399,10 +403,10 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   });
 
   const createBranchMutation = useMutation({
-    mutationFn: async (name: string) => apiRequest('POST', `/api/git/${projectId}/branch`, { name }),
+    mutationFn: async (name: string) => apiRequest('POST', `/api/git/${resolvedProjectId}/branch`, { name }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/branches`] });
-      queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/branches`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/git/${resolvedProjectId}/status`] });
       toast({ description: 'Branch created successfully' });
       setShowBranchDropdown(false);
       setBranchSearch('');
@@ -472,6 +476,18 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
   const importantBranches = filteredBranches.filter(b => b.name === 'main' || b.name === 'master');
   const activeBranches = filteredBranches.filter(b => !b.isRemote && b.name !== 'main' && b.name !== 'master');
   const staleBranches = filteredBranches.filter(b => b.isRemote);
+
+  if (!resolvedProjectId) {
+    return (
+      <div className={cn("flex flex-col items-center justify-center h-full bg-background p-4", className)} data-testid="git-no-project-state">
+        <GitBranch className="w-12 h-12 text-muted-foreground/40 mb-3" />
+        <h3 className="text-[15px] font-medium text-foreground mb-1">No project selected</h3>
+        <p className="text-[13px] text-muted-foreground text-center">
+          Open a real workspace project to inspect branches, commits, and remotes.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

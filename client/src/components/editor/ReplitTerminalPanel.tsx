@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams } from 'wouter';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { Terminal as XTerm } from 'xterm';
@@ -97,6 +98,7 @@ function getTerminalTheme() {
 }
 
 export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -112,6 +114,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const { toast } = useToast();
   const { theme } = useTheme();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   useEffect(() => {
     if (xtermRef.current) {
@@ -135,19 +138,19 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   }, []);
 
   const connectWebSocket = useCallback(async (forceNewSession = false) => {
-    if (!projectId) return;
+    if (!resolvedProjectId) return;
 
     setIsConnecting(true);
 
     try {
       if (forceNewSession || !sessionIdRef.current) {
-        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${resolvedProjectId}/shell/create`, {});
         sessionIdRef.current = sessionId;
       }
 
       destroySocket();
 
-      const socket = createShellWebSocket(projectId, sessionIdRef.current);
+      const socket = createShellWebSocket(resolvedProjectId, sessionIdRef.current);
       wsRef.current = socket;
 
       const unsubscribeState = socket.onStateChange((event) => {
@@ -218,7 +221,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
         });
       }
     }
-  }, [destroySocket, projectId, toast, writeSystemMessage]);
+  }, [destroySocket, resolvedProjectId, toast, writeSystemMessage]);
 
   useEffect(() => {
     if (!terminalRef.current || xtermRef.current) return;
@@ -415,6 +418,18 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
       </div>
 
       <div className="flex-1 relative">
+        {!resolvedProjectId ? (
+          <div className="flex h-full items-center justify-center p-4 text-center">
+            <div className="space-y-2">
+              <Terminal className="mx-auto h-10 w-10 text-[var(--ecode-text-muted)] opacity-50" />
+              <p className="text-sm font-medium text-[var(--ecode-text)]">No project selected</p>
+              <p className="text-xs text-[var(--ecode-text-muted)]">
+                Open a real workspace project to start a shell session.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
         {isLoading && (
           <div className="absolute inset-0 z-10 p-3 bg-background flex flex-col gap-2">
             <ShimmerSkeleton className="h-4 w-3/4 rounded" />
@@ -431,6 +446,8 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
           )}
           data-testid="terminal-container"
         />
+          </>
+        )}
       </div>
     </div>
   );

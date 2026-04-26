@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -59,7 +60,7 @@ interface SecretsResponse {
 }
 
 interface SecretsPanelProps {
-  projectId: string | number;
+  projectId?: string | number;
   className?: string;
 }
 
@@ -90,6 +91,7 @@ function ShimmerSkeleton({ className }: { className?: string }) {
 }
 
 export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEnvironment, setSelectedEnvironment] = useState<Environment>('all');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -101,30 +103,31 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
   const [revealedSecrets, setRevealedSecrets] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const { toast } = useToast();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
-  const queryKey = ['/api/projects', projectId, 'secrets', selectedEnvironment];
+  const queryKey = ['/api/projects', resolvedProjectId, 'secrets', selectedEnvironment];
 
   const { data: secretsData, isLoading, error, refetch } = useQuery<SecretsResponse>({
     queryKey,
     queryFn: async () => {
-      if (!projectId) throw new Error('Project ID required');
+      if (!resolvedProjectId) throw new Error('Project ID required');
       const url = selectedEnvironment === 'all'
-        ? `/api/projects/${projectId}/secrets`
-        : `/api/projects/${projectId}/secrets?environment=${selectedEnvironment}`;
+        ? `/api/projects/${resolvedProjectId}/secrets`
+        : `/api/projects/${resolvedProjectId}/secrets?environment=${selectedEnvironment}`;
       return apiRequest<SecretsResponse>('GET', url);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
     staleTime: 30000,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: { key: string; value: string; environment: string; isSecret: boolean }) => {
-      if (!projectId) throw new Error('Project ID required');
-      return apiRequest('POST', `/api/projects/${projectId}/secrets`, data);
+      if (!resolvedProjectId) throw new Error('Project ID required');
+      return apiRequest('POST', `/api/projects/${resolvedProjectId}/secrets`, data);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Secret created' });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'secrets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'secrets'] });
       resetForm();
       setShowAddDialog(false);
     },
@@ -139,7 +142,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, value, environment, isSecret }: { id: string; value?: string; environment?: string; isSecret?: boolean }) => {
-      return apiRequest('PATCH', `/api/projects/${projectId}/secrets/${id}`, {
+      return apiRequest('PATCH', `/api/projects/${resolvedProjectId}/secrets/${id}`, {
         ...(value !== undefined && { value }),
         ...(environment !== undefined && { environment }),
         ...(isSecret !== undefined && { isSecret })
@@ -147,7 +150,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Secret updated' });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'secrets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'secrets'] });
       resetForm();
       setEditingSecret(null);
     },
@@ -162,11 +165,11 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest('DELETE', `/api/projects/${projectId}/secrets/${id}`);
+      return apiRequest('DELETE', `/api/projects/${resolvedProjectId}/secrets/${id}`);
     },
     onSuccess: () => {
       toast({ title: 'Success', description: 'Secret deleted' });
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'secrets'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'secrets'] });
     },
     onError: (error: any) => {
       toast({
@@ -179,7 +182,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
 
   const revealMutation = useMutation({
     mutationFn: async (id: string) => {
-      return apiRequest('POST', `/api/projects/${projectId}/secrets/${id}/reveal`);
+      return apiRequest('POST', `/api/projects/${resolvedProjectId}/secrets/${id}/reveal`);
     },
     onSuccess: (data: { value: string }, id: string) => {
       setRevealedSecrets(prev => ({ ...prev, [id]: data.value }));
@@ -240,7 +243,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
     s.key.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (!projectId) {
+  if (!resolvedProjectId) {
     return (
       <div 
         className={cn("h-full flex flex-col items-center justify-center p-3 bg-background", className)}
