@@ -676,8 +676,8 @@ export const CreateProjectModal = ({
       form.setValue('description', prompt);
       
       toast({
-        title: "AI suggestion applied",
-        description: "Project structure suggested based on your description. Click Create to proceed.",
+        title: "AI request needs manual confirmation",
+        description: "The full AI bootstrap did not start. A template suggestion was applied to the form instead.",
       });
     } catch (error) {
       const words = prompt.split(' ').slice(0, 4);
@@ -685,11 +685,21 @@ export const CreateProjectModal = ({
       suggestedName = suggestedName.charAt(0).toUpperCase() + suggestedName.slice(1);
       form.setValue('name', suggestedName);
       form.setValue('description', prompt);
+
+      const message = error instanceof Error ? error.message : 'AI workspace generation failed';
+      setCreationProgress({
+        step: 'error',
+        progress: 0,
+        message: 'AI app generation failed',
+        details: message,
+        requestTitle: form.getValues('name') || suggestedName,
+        requestPrompt: prompt.trim(),
+      });
       
       toast({
-        title: "AI generation unavailable",
-        description: "Using template-based setup. You can still create your project.",
-        variant: "default",
+        title: "AI generation failed",
+        description: message,
+        variant: "destructive",
       });
     } finally {
       setIsGeneratingAI(false);
@@ -935,7 +945,7 @@ export const CreateProjectModal = ({
                     ) : (
                       <>
                         <Wand2 className="mr-2 h-4 w-4" />
-                        Generate Project Structure
+                        Generate Full App
                       </>
                     )}
                   </Button>

@@ -349,22 +349,42 @@ export function PreviewPanel({
           />
         ) : previewStatus?.status === 'no_runnable_files' ? (
           <div className="h-full flex items-center justify-center text-center p-8">
-            <div>
+            <div className="max-w-md">
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-[15px] font-semibold mb-2">Preview not ready</h3>
+              {appName && (
+                <p className="text-[12px] text-foreground mb-2">
+                  Requested app: <span className="font-medium">{appName}</span>
+                </p>
+              )}
               <p className="text-[13px] text-muted-foreground max-w-md">
                 No runnable app was detected yet. Add an entrypoint such as `index.html`, or a `package.json` with a valid start or dev script.
               </p>
+              {autonomousBuildTask && (
+                <p className="text-[12px] text-muted-foreground mt-3">
+                  Current build step: {autonomousBuildTask}
+                </p>
+              )}
             </div>
           </div>
         ) : !isPreviewRunning ? (
           <div className="h-full flex items-center justify-center text-center p-8">
-            <div>
+            <div className="max-w-md">
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
               <h3 className="text-[15px] font-semibold mb-2">Preview not running</h3>
+              {appName && (
+                <p className="text-[12px] text-foreground mb-2">
+                  Requested app: <span className="font-medium">{appName}</span>
+                </p>
+              )}
               <p className="text-[13px] text-muted-foreground mb-4">
                 Click the Run button to start your project and see a live preview.
               </p>
+              {autonomousBuildTask && (
+                <p className="text-[12px] text-muted-foreground mb-4">
+                  Current build step: {autonomousBuildTask}
+                </p>
+              )}
               <Button onClick={handleStartPreview} disabled={startPreviewMutation.isPending}>
                 <Play className="h-4 w-4 mr-2" />
                 Start Preview
