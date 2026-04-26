@@ -126,10 +126,23 @@ export function MobilePreviewPanel({
   const [iframeKey, setIframeKey] = useState(0);
   const [currentPath, setCurrentPath] = useState('/');
   const [isLoading, setIsLoading] = useState(false);
+  const [startupGraceActive, setStartupGraceActive] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const hasAttemptedAutoStart = useRef(false);
+  const startupGraceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { toast } = useToast();
   const { phase: buildPhase, isActive: isBuildActive, progress: buildProgress, currentTask } = useAutonomousBuildStore();
+
+  const markPreviewStartAttempt = () => {
+    if (startupGraceTimerRef.current) {
+      clearTimeout(startupGraceTimerRef.current);
+    }
+    setStartupGraceActive(true);
+    startupGraceTimerRef.current = setTimeout(() => {
+      setStartupGraceActive(false);
+      startupGraceTimerRef.current = null;
+    }, 6000);
+  };
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
@@ -185,6 +198,7 @@ export function MobilePreviewPanel({
       projectId
     ) {
       hasAttemptedAutoStart.current = true;
+      markPreviewStartAttempt();
       startPreviewMutation.mutate(undefined);
     }
   }, [previewStatus?.status, projectId]);
@@ -195,9 +209,34 @@ export function MobilePreviewPanel({
       previewStatus?.status === 'stopped' &&
       !startPreviewMutation.isPending
     ) {
+      markPreviewStartAttempt();
       startPreviewMutation.mutate(undefined);
     }
   }, [buildPhase, previewStatus?.status, startPreviewMutation]);
+
+  useEffect(() => {
+    const previewHasSettled =
+      previewStatus?.status === 'running' ||
+      previewStatus?.status === 'static' ||
+      previewStatus?.status === 'error' ||
+      previewStatus?.status === 'no_runnable_files';
+
+    if (previewHasSettled) {
+      if (startupGraceTimerRef.current) {
+        clearTimeout(startupGraceTimerRef.current);
+        startupGraceTimerRef.current = null;
+      }
+      setStartupGraceActive(false);
+    }
+  }, [previewStatus?.status]);
+
+  useEffect(() => {
+    return () => {
+      if (startupGraceTimerRef.current) {
+        clearTimeout(startupGraceTimerRef.current);
+      }
+    };
+  }, []);
 
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
@@ -213,10 +252,11 @@ export function MobilePreviewPanel({
       !isPreviewRunning &&
       !isPreviewError &&
       !noRunnableFiles &&
-      (hasAttemptedAutoStart.current || isStatusLoading));
+      (startupGraceActive || isStatusLoading));
 
   const handleRetry = () => {
     hasAttemptedAutoStart.current = false;
+    markPreviewStartAttempt();
     startPreviewMutation.mutate(undefined);
   };
   const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || '';
@@ -259,6 +299,7 @@ export function MobilePreviewPanel({
   };
 
   const handleRun = () => {
+    markPreviewStartAttempt();
     startPreviewMutation.mutate(undefined);
   };
 
