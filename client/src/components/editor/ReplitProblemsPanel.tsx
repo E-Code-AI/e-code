@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams } from 'wouter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,18 +33,20 @@ interface ReplitProblemsPanelProps {
 }
 
 export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblemsPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [filter, setFilter] = useState<'all' | 'errors' | 'warnings' | 'info'>('all');
   const [groupByFile, setGroupByFile] = useState(true);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   // Fetch real problems from LSP/linting backend
   const { data: diagnostics = [], isLoading } = useQuery<any[]>({
-    queryKey: ['/api/workspace/diagnostics', projectId],
+    queryKey: ['/api/workspace/diagnostics', resolvedProjectId],
     queryFn: async () => {
-      if (!projectId) return [];
-      return apiRequest<any[]>('GET', `/api/workspace/projects/${projectId}/diagnostics`);
+      if (!resolvedProjectId) return [];
+      return apiRequest<any[]>('GET', `/api/workspace/projects/${resolvedProjectId}/diagnostics`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
@@ -167,13 +170,18 @@ export function ReplitProblemsPanel({ projectId, onFileNavigate }: ReplitProblem
       {/* Problems List */}
       <ScrollArea className="flex-1">
         <div className="p-2">
-          {isLoading ? (
+          {!resolvedProjectId ? (
+            <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-[13px]">
+              Open the problems panel from a real workspace to inspect diagnostics.
+            </div>
+          ) : isLoading ? (
+          
             <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-[13px]">
               Loading problems...
             </div>
           ) : filteredProblems.length === 0 ? (
             <div className="text-center py-8 text-[var(--ecode-text-secondary)] text-[13px]">
-              No problems found 🎉
+              No problems found
             </div>
           ) : (
             Object.entries(groupedProblems).map(([file, fileProblems]) => (

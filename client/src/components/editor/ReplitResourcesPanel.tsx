@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { Activity, Cpu, HardDrive, Network } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ResourceMetric } from '@shared/schema';
 
 interface ReplitResourcesPanelProps {
-  projectId: string;
+  projectId?: string;
   className?: string;
 }
 
@@ -18,24 +19,26 @@ interface WebSocketMessage {
 }
 
 export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [realtimeMetrics, setRealtimeMetrics] = useState<ResourceMetric[]>([]);
   const [latestMetric, setLatestMetric] = useState<ResourceMetric | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef<number>(0);
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   // Fetch initial metrics from REST API
   const { data: initialMetrics } = useQuery<ResourceMetric[]>({
-    queryKey: [`/api/workspace/projects/${projectId}/resource-metrics`],
-    enabled: !!projectId,
+    queryKey: [`/api/workspace/projects/${resolvedProjectId}/resource-metrics`],
+    enabled: !!resolvedProjectId,
     refetchInterval: 30000,
     refetchIntervalInBackground: false
   });
 
   // Fetch latest metrics
   const { data: initialLatest } = useQuery<ResourceMetric>({
-    queryKey: [`/api/workspace/projects/${projectId}/resource-metrics/latest`],
-    enabled: !!projectId,
+    queryKey: [`/api/workspace/projects/${resolvedProjectId}/resource-metrics/latest`],
+    enabled: !!resolvedProjectId,
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
   });
@@ -46,11 +49,11 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
 
   // WebSocket connection for real-time updates
   useEffect(() => {
-    if (!projectId) return;
+    if (!resolvedProjectId) return;
 
     const connectWebSocket = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/resources/ws?projectId=${projectId}`;
+      const wsUrl = `${protocol}//${window.location.host}/api/resources/ws?projectId=${resolvedProjectId}`;
 
       try {
         const ws = new WebSocket(wsUrl);
@@ -113,7 +116,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
         wsRef.current = null;
       }
     };
-  }, [projectId]);
+  }, [resolvedProjectId]);
 
   const getUsageColor = (percent: number) => {
     if (percent >= 90) return 'bg-status-critical';
@@ -217,7 +220,11 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
         </div>
       )}
 
-      {!latest && (
+      {!resolvedProjectId ? (
+        <div className="flex-1 flex items-center justify-center text-[13px] text-muted-foreground text-center px-4">
+          Open the resources panel from a real workspace to inspect live usage.
+        </div>
+      ) : !latest && (
         <div className="flex-1 flex items-center justify-center text-[13px] text-muted-foreground">
           No resource metrics available
         </div>
