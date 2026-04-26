@@ -49,9 +49,7 @@ interface ResourceUsage {
 export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) {
   const { data: apiResources, isLoading, isError } = useQuery<any>({
     queryKey: ['/api/resources', projectId],
-    queryFn: async () => {
-      return apiRequest('GET', `/api/resources?projectId=${projectId}`);
-    },
+    queryFn: () => apiRequest('GET', `/api/resources?projectId=${projectId}`),
     enabled: !!projectId,
     refetchInterval: 30000,
     refetchIntervalInBackground: false,

@@ -70,36 +70,25 @@ export function PowerUps({ projectId }: PowerUpsProps) {
   // Fetch power-ups
   const { data: powerUps = [] } = useQuery<PowerUp[]>({
     queryKey: ['/api/powerups', projectId],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/powerups/${projectId}`);
-      return res.json();
-    }
+    queryFn: () => apiRequest<PowerUp[]>('GET', `/api/powerups/${projectId}`)
   });
 
   // Fetch usage
   const { data: usage = [] } = useQuery<PowerUpUsage[]>({
     queryKey: ['/api/powerups', projectId, 'usage'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/powerups/${projectId}/usage`);
-      return res.json();
-    }
+    queryFn: () => apiRequest<PowerUpUsage[]>('GET', `/api/powerups/${projectId}/usage`)
   });
 
   // Fetch bundles
   const { data: bundles = [] } = useQuery<PowerUpBundle[]>({
     queryKey: ['/api/powerups/bundles'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/powerups/bundles');
-      return res.json();
-    }
+    queryFn: () => apiRequest<PowerUpBundle[]>('GET', '/api/powerups/bundles')
   });
 
   // Activate power-up
   const activatePowerUpMutation = useMutation({
-    mutationFn: async (powerUpId: string) => {
-      const res = await apiRequest('POST', `/api/powerups/${projectId}/${powerUpId}/activate`, {});
-      return res.json();
-    },
+    mutationFn: (powerUpId: string) =>
+      apiRequest('POST', `/api/powerups/${projectId}/${powerUpId}/activate`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/powerups', projectId] });
       toast({
@@ -111,10 +100,8 @@ export function PowerUps({ projectId }: PowerUpsProps) {
 
   // Update power-up
   const updatePowerUpMutation = useMutation({
-    mutationFn: async ({ powerUpId, value }: { powerUpId: string; value: number }) => {
-      const res = await apiRequest('PATCH', `/api/powerups/${projectId}/${powerUpId}`, { value });
-      return res.json();
-    },
+    mutationFn: ({ powerUpId, value }: { powerUpId: string; value: number }) =>
+      apiRequest('PATCH', `/api/powerups/${projectId}/${powerUpId}`, { value }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/powerups', projectId] });
     }
