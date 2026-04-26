@@ -62,6 +62,7 @@ Dernier état vérifié:
 - suite panels complète 4 viewports: PASS 92/92
 - validations ciblées suite panels: PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment
 - lint zéro warning: PASS
+- couche multi-modèles + orchestration agentique locale: PARTIAL GATE PASS — proxy unifié `/api/ai/proxy/*`, runner plan/act/observe/reflect, outils agent normalisés, smoke `pnpm run test:smoke:agent` validé 3 fois
 - génération multi-format + hardening + déploiement production: en cours
 
 État précédent:

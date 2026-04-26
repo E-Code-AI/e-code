@@ -10,7 +10,7 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import winston from 'winston';
-import { storage } from '../storage';
+import { ensureProjectDirectory, getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const ALLOWED_COMMANDS = new Set([
   'npm', 'npx', 'node', 'git', 'grep', 'find', 'ls', 'cat', 'echo', 
@@ -96,6 +96,12 @@ const logger = winston.createLogger({
   transports: [new winston.transports.Console({ format: winston.format.simple() })]
 });
 
+async function getStorageIfConfigured(): Promise<any | null> {
+  if (!process.env.DATABASE_URL) return null;
+  const module = await import('../storage');
+  return module.storage;
+}
+
 export interface ToolExecutionResult {
   success: boolean;
   output?: any;
@@ -114,12 +120,20 @@ export class ToolExecutor {
   private projectRoot: string;
   private projectId: string;
 
-  constructor(projectId: string) {
+  constructor(projectId: string, options?: { projectRoot?: string }) {
     // Store projectId for database operations
     this.projectId = projectId;
-    // In production, map projectId to actual project directory
-    // For now, use current working directory
-    this.projectRoot = process.cwd();
+    this.projectRoot = options?.projectRoot || (projectId === 'default'
+      ? process.cwd()
+      : getProjectWorkspacePath(projectId));
+  }
+
+  private async ensureProjectRoot(): Promise<void> {
+    if (this.projectId !== 'default') {
+      this.projectRoot = await ensureProjectDirectory(this.projectId);
+      return;
+    }
+    await fs.mkdir(this.projectRoot, { recursive: true });
   }
 
   /**
@@ -148,15 +162,18 @@ export class ToolExecutor {
     
     try {
       logger.info(`[AgentExecutor] Executing tool: ${toolName}`, { parameters });
+      await this.ensureProjectRoot();
 
       let result: ToolExecutionResult;
 
       switch (toolName) {
         case 'create_file':
+        case 'write_file':
           result = await this.createFile(parameters);
           break;
         
         case 'edit_file':
+        case 'edit':
           result = await this.editFile(parameters);
           break;
         
@@ -169,23 +186,44 @@ export class ToolExecutor {
           break;
         
         case 'list_directory':
+        case 'list_dir':
           result = await this.listDirectory(parameters);
           break;
         
         case 'run_command':
+        case 'run_bash':
           result = await this.runCommand(parameters);
+          break;
+
+        case 'run_tests':
+          result = await this.runTests(parameters);
+          break;
+
+        case 'git_ops':
+          result = await this.gitOps(parameters);
           break;
         
         case 'install_package':
+        case 'package_install':
           result = await this.installPackage(parameters);
           break;
         
         case 'web_search':
           result = await this.webSearch(parameters);
           break;
+
+        case 'web_fetch':
+          result = await this.webFetch(parameters);
+          break;
         
         case 'search_code':
+        case 'search_codebase':
+        case 'grep':
           result = await this.searchCode(parameters);
+          break;
+
+        case 'screenshot_preview':
+          result = await this.screenshotPreview(parameters);
           break;
         
         case 'get_project_structure':
@@ -253,6 +291,8 @@ export class ToolExecutor {
     const projectIdStr = this.projectId;
     if (projectIdStr && projectIdStr !== 'default') {
       try {
+        const storage = await getStorageIfConfigured();
+        if (!storage) throw new Error('DATABASE_URL not configured; database file sync skipped');
         // Use getFileByPath for efficient lookup
         const existingFile = await storage.getFileByPath(projectIdStr, params.path);
         
@@ -288,27 +328,80 @@ export class ToolExecutor {
     };
   }
 
-  private async editFile(params: { path: string; old_content: string; new_content: string; description?: string }): Promise<ToolExecutionResult> {
+  private async editFile(params: {
+    path: string;
+    old_content?: string;
+    new_content?: string;
+    oldContent?: string;
+    newContent?: string;
+    content?: string;
+    description?: string;
+  }): Promise<ToolExecutionResult> {
     const filePath = this.validatePath(params.path);
 
     // Read current content
     const currentContent = await fs.readFile(filePath, 'utf-8');
+    const oldContent = params.old_content ?? params.oldContent;
+    const newContentParam = params.new_content ?? params.newContent ?? params.content;
+
+    if (typeof newContentParam !== 'string') {
+      return {
+        success: false,
+        error: 'New content is required for edit_file/edit'
+      };
+    }
+
+    if (typeof oldContent !== 'string') {
+      await fs.writeFile(filePath, newContentParam, 'utf-8');
+      const projectIdStr = this.projectId;
+      if (projectIdStr && projectIdStr !== 'default') {
+        try {
+          const storage = await getStorageIfConfigured();
+          if (!storage) throw new Error('DATABASE_URL not configured; database file sync skipped');
+          const existingFile = await storage.getFileByPath(projectIdStr, params.path);
+          if (existingFile) {
+            await storage.updateFile(existingFile.id, { content: newContentParam });
+          } else {
+            await storage.createFile({
+              projectId: projectIdStr,
+              path: params.path,
+              content: newContentParam
+            });
+          }
+        } catch (dbError: any) {
+          logger.warn(`[AgentExecutor] Failed to sync overwritten file to database: ${dbError.message}`);
+        }
+      }
+      return {
+        success: true,
+        output: {
+          path: params.path,
+          description: params.description || 'File overwritten successfully',
+          linesChanged: newContentParam.split('\n').length
+        },
+        metadata: {
+          filesChanged: [params.path]
+        }
+      };
+    }
 
     // Replace old content with new content
-    if (!currentContent.includes(params.old_content)) {
+    if (!currentContent.includes(oldContent)) {
       return {
         success: false,
         error: 'Old content not found in file. File may have changed.'
       };
     }
 
-    const newContent = currentContent.replace(params.old_content, params.new_content);
+    const newContent = currentContent.replace(oldContent, newContentParam);
     await fs.writeFile(filePath, newContent, 'utf-8');
 
     // ✅ FIXED Jan 2026: Also update in database (create if not exists)
     const projectIdStr = this.projectId;
     if (projectIdStr && projectIdStr !== 'default') {
       try {
+        const storage = await getStorageIfConfigured();
+        if (!storage) throw new Error('DATABASE_URL not configured; database file sync skipped');
         // Use getFileByPath for efficient lookup
         const existingFile = await storage.getFileByPath(projectIdStr, params.path);
         
@@ -334,7 +427,7 @@ export class ToolExecutor {
       output: {
         path: params.path,
         description: params.description || 'File edited successfully',
-        linesChanged: params.new_content.split('\n').length
+        linesChanged: newContentParam.split('\n').length
       },
       metadata: {
         filesChanged: [params.path]
@@ -459,7 +552,7 @@ export class ToolExecutor {
    * Command Execution
    * Uses spawn() without shell to prevent command injection attacks
    */
-  private async runCommand(params: { command: string; description: string; timeout?: number }): Promise<ToolExecutionResult> {
+  private async runCommand(params: { command: string; description?: string; timeout?: number }): Promise<ToolExecutionResult> {
     const timeout = params.timeout || 30000;
 
     return new Promise((resolve) => {
@@ -521,7 +614,7 @@ export class ToolExecutor {
               success: true,
               output: {
                 command: params.command,
-                description: params.description,
+                description: params.description || params.command,
                 stdout: stdout.trim(),
                 stderr: stderr.trim()
               },
@@ -556,15 +649,85 @@ export class ToolExecutor {
   }
 
   private async installPackage(params: { package_name: string; dev?: boolean; version?: string }): Promise<ToolExecutionResult> {
+    const packageName = (params as any).package_name || (params as any).package || (params as any).name;
+    if (!packageName) {
+      return { success: false, error: 'package_name is required' };
+    }
+    const manager = (params as any).manager || 'npm';
     const versionSpec = params.version ? `@${params.version}` : '';
-    const packageSpec = `${params.package_name}${versionSpec}`;
+    const packageSpec = `${packageName}${versionSpec}`;
     const devFlag = params.dev ? '--save-dev' : '';
-    const command = `npm install ${packageSpec} ${devFlag}`.trim();
+    const installCommand = manager === 'pnpm' ? 'pnpm add' : manager === 'yarn' ? 'yarn add' : 'npm install';
+    const command = `${installCommand} ${packageSpec} ${devFlag}`.trim();
 
     return await this.runCommand({
       command,
       description: `Installing package: ${packageSpec}${params.dev ? ' (dev dependency)' : ''}`
     });
+  }
+
+  private async runTests(params: { command?: string; timeout?: number }): Promise<ToolExecutionResult> {
+    return await this.runCommand({
+      command: params.command || 'npm test',
+      description: 'Run project tests',
+      timeout: params.timeout || 120000
+    });
+  }
+
+  private async gitOps(params: {
+    operation: 'status' | 'add' | 'commit' | 'diff' | 'log' | 'branch' | 'checkout' | 'pull' | 'push';
+    args?: string[];
+    message?: string;
+    timeout?: number;
+  }): Promise<ToolExecutionResult> {
+    const allowed = new Set(['status', 'add', 'commit', 'diff', 'log', 'branch', 'checkout', 'pull', 'push']);
+    if (!allowed.has(params.operation)) {
+      return { success: false, error: `Unsupported git operation: ${params.operation}` };
+    }
+
+    const args = params.operation === 'commit' && params.message
+      ? ['commit', '-m', `'${params.message.replace(/'/g, '')}'`]
+      : [params.operation, ...(params.args || [])];
+
+    return await this.runCommand({
+      command: `git ${args.join(' ')}`,
+      description: `Git ${params.operation}`,
+      timeout: params.timeout || 60000
+    });
+  }
+
+  private async webFetch(params: { url: string; max_bytes?: number }): Promise<ToolExecutionResult> {
+    const url = new URL(params.url);
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return { success: false, error: 'Only http and https URLs are allowed' };
+    }
+
+    const response = await fetch(url);
+    const text = await response.text();
+    const maxBytes = params.max_bytes || 200000;
+
+    return {
+      success: response.ok,
+      error: response.ok ? undefined : `HTTP ${response.status}`,
+      output: {
+        url: params.url,
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: text.slice(0, maxBytes),
+        truncated: text.length > maxBytes
+      }
+    };
+  }
+
+  private async screenshotPreview(params: { url?: string }): Promise<ToolExecutionResult> {
+    return {
+      success: false,
+      error: 'screenshot_preview requires the Playwright preview service and is exposed through the browser-testing API.',
+      output: {
+        url: params.url,
+        route: '/api/admin/agent/browser-testing'
+      }
+    };
   }
 
   /**
@@ -640,7 +803,11 @@ export class ToolExecutor {
       return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     };
     
-    const sanitizedPattern = escapeRegex(params.pattern);
+    const rawPattern = params.pattern || (params as any).query;
+    if (!rawPattern) {
+      return { success: false, error: 'pattern is required' };
+    }
+    const sanitizedPattern = escapeRegex(rawPattern);
     
     // ✅ A-H10: Build args array for spawn() instead of shell command string
     const args: string[] = [
@@ -698,7 +865,7 @@ export class ToolExecutor {
             success: false,
             error: error.message,
             output: {
-              pattern: params.pattern,
+              pattern: rawPattern,
               sanitizedPattern,
               matches: [],
               error: error.message
@@ -711,7 +878,7 @@ export class ToolExecutor {
           const matches = stdout.trim().split('\n').filter(l => l);
           
           const output: any = {
-            pattern: params.pattern,
+            pattern: rawPattern,
             sanitizedPattern,
             matches,
             matchCount: matches.length
@@ -738,7 +905,7 @@ export class ToolExecutor {
           success: false,
           error: error.message,
           output: {
-            pattern: params.pattern,
+            pattern: rawPattern,
             matches: [],
             error: error.message
           }

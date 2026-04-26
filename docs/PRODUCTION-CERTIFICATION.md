@@ -96,3 +96,33 @@ Router validation:
 - `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/api/router-contracts.spec.ts test/e2e/panels/workspace-core.spec.ts --reporter=line` — PASS (4/4).
 - `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/api/panel-router-contracts.spec.ts --reporter=line` — PASS (1/1).
 - Controlled dev boot on `127.0.0.1:5063` plus `router-contracts.spec.ts`, `panel-router-contracts.spec.ts`, and `workspace-core.spec.ts` — PASS (5/5).
+
+## Multi-Model Proxy And Agent Orchestration Gate — 2026-04-27
+
+Status: PARTIAL PRODUCTION GATE PASS for the multi-model proxy and local agent orchestration surfaces. This does not change the global platform verdict, which remains blocked until the remaining generation, hardening, robustness, and deployment gates above are complete.
+
+Implemented:
+
+- Unified model proxy at `/api/ai/proxy/models`, `/api/ai/proxy/chat`, and `/api/ai/proxy/chat/stream`.
+- Normalized model registry for Claude Sonnet 4, Claude Opus 4.7, GPT-4o, Gemini 2.5 Flash/Pro, and Moonshot Kimi-compatible models.
+- Normalized request schema for messages, tools/function declarations, vision-capable content parts, BYOK provider keys, fallback model chain, usage, token estimates, and request cost.
+- Agent tool executor now resolves real project workspaces via `/tmp/projects/<projectId>` instead of the repository root.
+- Agent tool aliases added for `write_file`, `edit`, `run_bash`, `search_codebase`, `grep`, `list_dir`, `web_fetch`, `run_tests`, `git_ops`, `package_install`, and `screenshot_preview`.
+- Agent orchestration runner added with plan/act/observe/reflect steps, file-backed resume state, optional DB persistence into `agent_sessions` when `DATABASE_URL` is configured, pause/resume/stop/fork endpoints, and SSE state streaming.
+- Acceptance smoke added: `pnpm run test:smoke:agent`.
+
+Verified commands:
+
+- `pnpm run test:smoke:agent` — PASS, agent added `/health`, wrote a test, ran `npm test`, and committed in an isolated generated project.
+- `pnpm run test:smoke:agent && pnpm run test:smoke:agent` — PASS, repeated twice after unique workspace IDs were hardened.
+- `pnpm test` — PASS (3 suites, 4 tests).
+- `pnpm run build` — PASS (client, server bundle, runner bundle).
+- `pnpm run typecheck` — PASS after final edits.
+- `pnpm run lint` — PASS after final edits.
+- `pnpm run test:smoke:backend` — PASS for critical health/auth/system endpoints.
+
+Known limitations for this gate:
+
+- Live provider calls still require real provider keys and quotas; the proxy is wired for BYOK/platform keys but was not certified against every third-party provider in this pass.
+- `screenshot_preview` is exposed as an agent tool contract but delegates to the existing browser-testing API instead of taking screenshots directly inside `ToolExecutor`.
+- The local deterministic runner currently certifies the `/health` route task path; arbitrary long-horizon LLM planning remains covered by existing agent planners and requires provider-key E2E.

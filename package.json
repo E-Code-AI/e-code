@@ -28,6 +28,7 @@
     "test:e2e:panels": "bash scripts/run-panel-playwright-systematic.sh",
     "test:smoke:backend": "node scripts/smoke-critical-endpoints.mjs",
     "test:smoke:terminal": "node scripts/test-terminal-websocket.mjs",
+    "test:smoke:agent": "tsx scripts/smoke-agent-health-route.ts",
     "test:coverage": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --coverage --passWithNoTests || echo 'Coverage: Install dependencies with npm install'",
     "test:watch": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --watch --passWithNoTests",
     "test:full": "npm run test:ci && npm run test:unit && npm run test:integration && npm run test:e2e",

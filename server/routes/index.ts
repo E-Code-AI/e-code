@@ -127,11 +127,13 @@ const lazyMemoryBankRouter = lazyRouter(() => import('./memory-bank.router'));
 const lazyAgentAutonomousRouter = lazyRouter(() => import('./agent-autonomous.router'));
 const lazyAgentTestingRouter = lazyRouter(() => import('./agent-testing.router'));
 const lazyAgentWorkflowRouter = lazyRouter(() => import('./agent-workflow.router'));
+const lazyAgentOrchestrationRouter = lazyRouter(() => import('./agent-orchestration.router'));
 const lazyAgentStepCacheRouter = lazyRouter(() => import('./agent-step-cache.router'));
 const lazyBackgroundTestsRouter = lazyRouter(() => import('./background-tests.router'));
 const lazyRagRouter = lazyRouter(() => import('./rag.router'));
 const lazyAiHealthRouter = lazyRouter(() => import('./ai-health'));
 const lazyGenerationMetricsRouter = lazyRouter(() => import('./generation-metrics.router'));
+const lazyModelProxyRouter = lazyRouter(() => import('./model-proxy.router'));
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -290,6 +292,10 @@ export class MainRouter {
     // No blocking - users pay for what they use via Stripe metered billing
     app.use('/api/agent', aiUsageTracker);
     app.use('/api/admin/agent', aiUsageTracker);
+    app.use('/api/ai/proxy', aiUsageTracker);
+
+    // Unified multi-model proxy: normalized chat, SSE, tools, BYOK, fallback, metering
+    app.use('/api/ai/proxy', tierRateLimiters.streaming, lazyModelProxyRouter);
 
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', tierRateLimiters.api, lazyAgentPreferencesRouter);
@@ -319,6 +325,9 @@ export class MainRouter {
 
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, lazyAgentWorkflowRouter);
+
+    // Agent orchestration routes: plan → act → observe → reflect, pause/resume/fork/stream
+    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentOrchestrationRouter);
 
     // Agent step cache routes (caching intermediate agent phases for cost optimization)
     app.use('/api/agent/step-cache', tierRateLimiters.api, lazyAgentStepCacheRouter);
