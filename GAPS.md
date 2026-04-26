@@ -5,6 +5,11 @@ Source: audit statique + commandes réelles lancées depuis `main` à `6efd9bf6`
 
 ## Bloquants
 
+0. Contrat infrastructure GCP pas encore respecté partout.
+   - Cible production: Google Cloud Platform uniquement; GCS via `@google-cloud/storage`, Cloud Run/Cloud Run Jobs, Cloud SQL Postgres, Secret Manager, Terraform `infra/terraform/` et Cloud Build.
+   - Écart actuel détecté: `server/services/storage.service.ts` supporte encore S3; `docs/HANDOFF.md` et `docs/PRODUCTION-CERTIFICATION.md` acceptaient encore S3/Replit storage; plusieurs surfaces parlent de S3-compatible/MinIO/Replit Object Storage.
+   - Impact: aucune certification production honnête tant que le stockage, le runtime utilisateur, les secrets et le déploiement ne sont pas alignés GCP-only.
+
 1. Playwright E2E global rouge.
    - Résultat: `npm run test:e2e` => 156 tests, 0 succès, 144 échecs, 12 skipped.
    - Symptôme dominant: réponses 403 sur `/`, `/api/csrf-token`, `/api/templates/categories`, `/api/projects/u/...`.
@@ -60,7 +65,7 @@ Source: audit statique + commandes réelles lancées depuis `main` à `6efd9bf6`
    - Risque: UI existante sans backend réel ou backend inaccessible.
 
 6. Secrets et dépendances externes nécessaires pour prouver les flows.
-   - IA multi-provider, Stripe, SendGrid, OAuth, Firebase, S3/Postgres/Redis ne sont pas validés en E2E sans environnement complet.
+   - IA multi-provider, Stripe, SendGrid, OAuth, Firebase, GCS/Cloud SQL/Redis-compatible managed service ne sont pas validés en E2E sans environnement complet.
 
 7. Build OK mais performance bundle à surveiller.
    - Warning Vite: chunk `vendor-ag-grid-community` >500 kB.

@@ -4,6 +4,7 @@ Date: 2026-04-26
 Branch: `main`
 Certification source: `docs/SURFACE-MAP.md`
 Panel router inventory: `docs/PANEL-ROUTER-INVENTORY.md`
+Infrastructure contract: `docs/INFRASTRUCTURE-GCP.md`
 
 ## Current Verdict
 
@@ -45,6 +46,7 @@ The repository already contains a previous `READY` note, but the current certifi
 ### External / environment blockers
 
 - Production artifact boot requires real production configuration: HTTPS `APP_URL`, 32+ character secrets, durable storage backend (`STORAGE_BACKEND=replit` or S3 credentials), and production database credentials.
+- Infrastructure target is GCP-only: GCS via `@google-cloud/storage`, Cloud Run services, Cloud Run Jobs, Cloud SQL Postgres, Secret Manager, Terraform under `infra/terraform/`, and Cloud Build. Existing S3/Replit-storage production paths are blockers until removed or hard-disabled for production.
 - AI generation certification requires available provider keys for the formats/models under test. Current local boot only initialized the providers present in the local environment; missing provider keys must be supplied before claiming multi-provider production readiness.
 
 ## Next Gate

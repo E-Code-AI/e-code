@@ -8,6 +8,8 @@ Mode: état des lieux uniquement, aucun correctif applicatif.
 
 La plateforme n'est pas un backend Fastify: aucune dépendance ou instance Fastify applicative n'est détectée hors dépendances transitives. Le serveur principal est Express (`server/index.ts`, `express.Router`, `app.use`, `app.get/post/...`). Le web est React/Vite, le desktop est un wrapper Electron qui charge `https://e-code.ai`, et le mobile natif présent est Capacitor/Android autour du bundle web, pas React Native.
 
+Contrat infrastructure actualisé le 2026-04-27: la cible production est Google Cloud Platform uniquement. Stockage GCS via `@google-cloud/storage`, compute Cloud Run/Cloud Run Jobs, runtime utilisateur Cloud Run + gVisor + `gcsfuse`, DB Cloud SQL Postgres, secrets Secret Manager, déploiement Terraform `infra/terraform/` + Cloud Build. Les chemins S3/MinIO/Replit Object Storage détectés sont donc des écarts de production, pas des alternatives acceptées.
+
 Inventaire statique mesuré:
 
 | Surface | Volume détecté | Note |

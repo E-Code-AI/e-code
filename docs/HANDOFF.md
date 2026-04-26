@@ -12,7 +12,10 @@ Minimum production:
 - `APP_URL` (`https://...` obligatoire en production)
 - `ALLOWED_ORIGINS`
 - `RUNNER_JWT_SECRET`
-- `STORAGE_BACKEND=replit` ou `STORAGE_BACKEND=s3` avec les credentials associés
+- `STORAGE_BACKEND=gcs`
+- `GCP_PROJECT_ID`
+- `GCS_BUCKET`
+- `CLOUD_SQL_INSTANCE_CONNECTION_NAME` (`project:region:instance`)
 
 Selon les providers utilisés:
 
@@ -33,16 +36,29 @@ Services annexes si activés:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `REDIS_URL`
-- `S3_*` ou stockage Replit
+
+## Contrat infrastructure production
+
+- Plateforme: Google Cloud Platform.
+- Stockage: Google Cloud Storage via `@google-cloud/storage`; jamais S3, jamais MinIO, jamais S3-compatible en production.
+- Compute: Cloud Run pour services stateless; Cloud Run Jobs pour workers.
+- Exécution code utilisateur: Cloud Run avec gVisor, image custom par stack, montage GCS via `gcsfuse`.
+- DB: Cloud SQL Postgres; Auth Proxy en dev, socket `/cloudsql/<instance>` en prod Cloud Run.
+- Secrets: Secret Manager injecté par `--set-secrets`.
+- Terminal/PTY: WebSocket Cloud Run jusqu'à 60 min; au-delà, option premium Cloud Workstations.
+- LSP: dans le même container Cloud Run que le runtime utilisateur.
+- Git: `isomorphic-git` serveur ou shellout `git` dans le container runtime.
+- Déploiement: Terraform `infra/terraform/` + Cloud Build uniquement.
 
 ## Actions manuelles restantes
 
-### Replit Deploy
+### Google Cloud Deploy
 
-- vérifier les secrets de déploiement
-- vérifier `APP_URL`
-- vérifier `ALLOWED_ORIGINS`
-- confirmer la disponibilité PostgreSQL
+- provisionner/valider Terraform `infra/terraform/`
+- vérifier les secrets Secret Manager et les mappings Cloud Run `--set-secrets`
+- vérifier `APP_URL` et `ALLOWED_ORIGINS`
+- confirmer Cloud SQL Postgres et la connexion `/cloudsql/<instance>`
+- confirmer le bucket GCS projet et les permissions IAM `gcsfuse`
 
 ### Sentry
 
