@@ -112,10 +112,10 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
         title: "Debug Session Started",
         description: "Debugger is now attached to your application"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Debug Error",
-        description: "Failed to start debug session",
+        description: error?.message || "Failed to start debug session",
         variant: "destructive"
       });
     }
@@ -130,10 +130,10 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
         title: "Debug Session Stopped",
         description: "Debugger has been detached"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to stop debug session",
+        description: error?.message || "Failed to stop debug session",
         variant: "destructive"
       });
     }
@@ -147,10 +147,10 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
         title: "Breakpoint Added",
         description: `Breakpoint set at ${file}:${line}`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to add breakpoint",
+        description: error?.message || "Failed to add breakpoint",
         variant: "destructive"
       });
     }
@@ -164,10 +164,10 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
         title: "Breakpoint Removed",
         description: "Breakpoint has been deleted"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to remove breakpoint",
+        description: error?.message || "Failed to remove breakpoint",
         variant: "destructive"
       });
     }
