@@ -22,3 +22,18 @@ The requirement "Toutes les apps consomment packages/ui exclusivement, zero dupl
 ## Storybook Cloud Run deployment
 
 `packages/ui/Dockerfile.storybook` is present, but production deployment to `storybook.ecode.app` requires shared Cloud Run, DNS, CDN and Cloud Build wiring. If this must be centralized, the deployer/infra owner should expose the standard Cloud Run service module interface before I add the Storybook service instance.
+
+## Deployment API integration
+
+Branch: `parallel/05-deploy`
+
+The GCP deployer service, deploy UI module, and Terraform module are implemented in owned paths. The active API router is outside my ownership, so the backend owner must proxy or mount:
+
+- `GET /api/deploy/projects/:projectId`
+- `POST /api/deploy/releases`
+- `GET /api/deploy/releases/:releaseId/logs`
+- `POST /api/deploy/projects/:projectId/releases/:releaseId/promote`
+- `POST /api/deploy/projects/:projectId/releases/:releaseId/rollback`
+- `POST /api/deploy/projects/:projectId/domains/verify`
+
+The frontend shell owner must wire the persistent Deploy button/header entry to `apps/web/src/deploy/DeployPanel` because the active header/workbench routes live outside assigned ownership.
