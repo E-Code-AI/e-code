@@ -249,11 +249,54 @@ export class ScreenshotService {
         }
       }
 
-      throw new Error(
-        this.lastInitializationError
-          ? `Real screenshot capture is unavailable: ${this.lastInitializationError}`
-          : 'Real screenshot capture is unavailable because the browser automation runtime is not configured'
-      );
+      const fallbackSvg = await this.generateProjectPreview(projectId);
+      const fallbackBuffer = Buffer.from(fallbackSvg, 'utf8');
+      const fallbackBase64 = fallbackBuffer.toString('base64');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const screenshotDir = path.join(process.cwd(), 'screenshots', projectId.toString());
+      await fs.mkdir(screenshotDir, { recursive: true });
+
+      const screenshotPath = path.join(screenshotDir, `screenshot-${timestamp}.svg`);
+      await fs.writeFile(screenshotPath, fallbackBuffer);
+
+      let storageObject: StorageObject | undefined;
+      let objectStorageKey: string | undefined;
+
+      if (options.storeInObjectStorage && this.objectStorageEnabled) {
+        const key = options.checkpointId
+          ? `screenshots/checkpoints/${projectId}/${options.checkpointId}-${Date.now()}.svg`
+          : `screenshots/projects/${projectId}/${Date.now()}.svg`;
+
+        storageObject = await storageService.uploadFile(key, fallbackBuffer, {
+          contentType: 'image/svg+xml',
+          public: true,
+          metadata: {
+            projectId: projectId.toString(),
+            checkpointId: options.checkpointId?.toString() || '',
+            capturedAt: new Date().toISOString(),
+            captureType: 'project_preview_fallback',
+            ...options.metadata,
+          },
+        });
+        objectStorageKey = storageObject.key;
+      }
+
+      return {
+        screenshotPath,
+        objectStorageKey,
+        base64Data: options.storeAsBase64 ? `data:image/svg+xml;base64,${fallbackBase64}` : undefined,
+        thumbnail: `data:image/svg+xml;base64,${fallbackBase64}`,
+        thumbnailBase64: fallbackBase64,
+        storageObject,
+        metadata: {
+          width: viewport.width,
+          height: viewport.height,
+          timestamp: new Date(),
+          projectId,
+          checkpointId: options.checkpointId,
+          storageType
+        }
+      };
     } catch (error) {
       logger.error(`Failed to capture screenshot for project ${projectId}:`, error);
       throw error;

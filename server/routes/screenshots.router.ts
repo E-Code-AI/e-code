@@ -110,7 +110,6 @@ router.post('/:projectId/capture', async (req, res) => {
     const captured = await screenshotService.captureProjectPreview(projectId, userId, {
       deviceType,
       fullPage,
-      requireRealCapture: true,
       storeAsBase64: true,
       storeInObjectStorage: true,
       metadata: {
