@@ -229,9 +229,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
     queryKey: ['/api/workflows', projectId],
     queryFn: async () => {
       const url = projectId ? `/api/workflows?projectId=${projectId}` : '/api/workflows';
-      const res = await fetch(url, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch workflows');
-      return res.json();
+      return apiRequest('GET', url);
     },
   });
 

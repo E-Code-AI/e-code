@@ -63,14 +63,8 @@ export function PendingApprovalsPanel({
   // Fetch pending actions
   const fetchPendingActions = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}/ai/pending`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPendingActions(data.actions || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/projects/${projectId}/ai/pending`);
+      setPendingActions(data.actions || []);
     } catch (error) {
       console.error('Failed to fetch pending actions:', error);
     }

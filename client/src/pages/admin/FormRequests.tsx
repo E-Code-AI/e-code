@@ -107,17 +107,7 @@ export default function AdminFormRequests() {
       }
       params.set('page', String(page));
       params.set('pageSize', String(PAGE_SIZE));
-
-      const response = await fetch(`/api/admin/form-requests?${params.toString()}`, {
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to load customer requests');
-      }
-
-      return await response.json();
+      return await apiRequest('GET', `/api/admin/form-requests?${params.toString()}`);
     },
   });
 

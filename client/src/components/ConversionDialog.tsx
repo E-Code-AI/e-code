@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
-import { getCSRFToken } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ConversionDialogProps {
   open: boolean;
@@ -30,37 +30,30 @@ export default function ConversionDialog({ open, onOpenChange, projectId, frameI
     setErrorMsg("");
 
     try {
-      const csrf = await getCSRFToken();
-      const res = await fetch(`/api/projects/${projectId}/conversions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(csrf ? { "x-csrf-token": csrf } : {}) } as HeadersInit,
-        credentials: "include",
-        body: JSON.stringify({ frameId, targetArtifactType: selectedType }),
+      const conversion = await apiRequest<any>("POST", `/api/projects/${projectId}/conversions`, {
+        frameId,
+        targetArtifactType: selectedType,
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || "Failed to start conversion");
-      }
 
       const pollConversion = async (conversionId: string) => {
         for (let i = 0; i < 30; i++) {
           await new Promise(r => setTimeout(r, 1000));
-          const pollRes = await fetch(`/api/projects/${projectId}/conversions/${conversionId}`, { credentials: "include" });
-          if (!pollRes.ok) continue;
-          const conversion = await pollRes.json();
-          if (conversion.status === "complete") {
-            setStatus("complete");
-            return;
-          }
-          if (conversion.status === "failed") {
-            throw new Error(conversion.error || "Conversion failed");
+          try {
+            const polledConversion = await apiRequest<any>("GET", `/api/projects/${projectId}/conversions/${conversionId}`);
+            if (polledConversion.status === "complete") {
+              setStatus("complete");
+              return;
+            }
+            if (polledConversion.status === "failed") {
+              throw new Error(polledConversion.error || "Conversion failed");
+            }
+          } catch {
+            continue;
           }
         }
         throw new Error("Conversion timed out");
       };
 
-      const conversion = await res.json();
       await pollConversion(conversion.id);
     } catch (err: any) {
       setErrorMsg(err.message || "Conversion failed");
