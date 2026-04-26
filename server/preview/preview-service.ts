@@ -574,9 +574,28 @@ export class PreviewService {
     this.pendingSyncs.set(projectId, timer);
   }
 
+  private async getMergedProjectFiles(projectId: string, files?: any[]): Promise<any[]> {
+    const dbFiles = files ?? await storage.getFilesByProject(projectId);
+    const workspaceFiles = await this.readWorkspaceFiles(projectId).catch(() => []);
+
+    if (workspaceFiles.length === 0) {
+      return dbFiles;
+    }
+
+    const merged = new Map<string, any>();
+    for (const file of dbFiles || []) {
+      merged.set(String(file.path || file.name), file);
+    }
+    for (const file of workspaceFiles) {
+      merged.set(String(file.path || file.name), file);
+    }
+
+    return [...merged.values()];
+  }
+
   private async syncPreviewWorkspace(projectId: string, files?: any[]): Promise<void> {
     const previewPath = path.join('/tmp', `preview-${projectId}`);
-    const projectFiles = files ?? await storage.getFilesByProject(projectId);
+    const projectFiles = await this.getMergedProjectFiles(projectId, files);
 
     await fs.mkdir(previewPath, { recursive: true });
 
@@ -990,19 +1009,7 @@ export class PreviewService {
       return errInstance;
     }
 
-    const workspaceFiles = await this.readWorkspaceFiles(projectId).catch(() => []);
-    if (workspaceFiles.length > 0) {
-      const merged = new Map<string, any>();
-      for (const file of files || []) {
-        merged.set(String(file.path || file.name), file);
-      }
-      // Prefer the live workspace snapshot when the database is stale or only
-      // partially populated during bootstrap/autonomous generation.
-      for (const file of workspaceFiles) {
-        merged.set(String(file.path || file.name), file);
-      }
-      files = [...merged.values()];
-    }
+    files = await this.getMergedProjectFiles(projectId, files);
 
     if (!files || files.length === 0) {
       const errInstance = this.makeErrorInstance(projectId, runId, 'No files found in project');
