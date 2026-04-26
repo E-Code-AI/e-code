@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Shield, Users, Settings, ArrowRight } from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,11 +39,7 @@ export function CustomRoles() {
   const { data: teams = [], isLoading, error } = useQuery<TeamSummary[]>({
     queryKey: ["/api/teams"],
     queryFn: async () => {
-      const response = await fetch("/api/teams", { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to load teams");
-      }
-      const data = await response.json();
+      const data = await apiRequest<any>("GET", "/api/teams");
       return Array.isArray(data) ? data : data.teams || [];
     },
     staleTime: 30000,

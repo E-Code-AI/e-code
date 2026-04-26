@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AdminLayout } from './AdminLayout';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -122,9 +123,9 @@ export default function AdminMonitoring() {
     setLoading(true);
     try {
       const [healthRes, metricsRes, detailedRes] = await Promise.all([
-        fetch('/api/health', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/metrics', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/health/detailed', { credentials: 'include' }).then(r => r.ok ? r.json() : null).catch(() => null),
+        apiRequest('GET', '/api/health').catch(() => null),
+        apiRequest('GET', '/api/metrics').catch(() => null),
+        apiRequest('GET', '/api/health/detailed').catch(() => null),
       ]);
       setHealthData(healthRes);
       setMetricsData(metricsRes);
