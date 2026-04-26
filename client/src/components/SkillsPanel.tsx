@@ -47,9 +47,11 @@ export default function SkillsPanel({ projectId, onClose }: SkillsPanelProps) {
   const skillsQuery = useQuery<Skill[]>({
     queryKey: ["/api/skills", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/skills/${projectId}`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<Skill[]>("GET", `/api/skills/${projectId}`);
+      } catch {
+        return [];
+      }
     },
   });
 

@@ -113,9 +113,11 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
   const automationsQuery = useQuery<Automation[]>({
     queryKey: ["/api/projects", projectId, "automations"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/automations`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<Automation[]>("GET", `/api/projects/${projectId}/automations`);
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -123,9 +125,11 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
     queryKey: ["/api/automations", showRuns, "runs"],
     queryFn: async () => {
       if (!showRuns) return [];
-      const res = await fetch(`/api/automations/${showRuns}/runs`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<AutomationRun[]>("GET", `/api/automations/${showRuns}/runs`);
+      } catch {
+        return [];
+      }
     },
     enabled: !!showRuns,
   });

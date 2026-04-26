@@ -50,11 +50,8 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const fetchCollaborators = async () => {
     try {
-      const response = await fetch(`/api/collaboration/${projectId}/users`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiRequest<{ collaborators?: Collaborator[] }>('GET', `/api/collaboration/${projectId}/users`);
+      if (data) {
         setCollaborators(data.collaborators || []);
       }
     } catch (error) {
