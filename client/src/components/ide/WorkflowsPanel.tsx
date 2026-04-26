@@ -33,7 +33,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { toast } from '@/hooks/use-toast';
 
 interface Workflow {
-  id: string;
+  id: string | number;
   name: string;
   command: string;
   description?: string;
@@ -43,6 +43,7 @@ interface Workflow {
   runOnStart?: boolean;
   lastRun?: string;
   runCount?: number;
+  isRunButton?: boolean;
 }
 
 interface WorkflowsPanelProps {
@@ -67,6 +68,10 @@ const SYSTEM_WORKFLOWS: Workflow[] = [
   { id: 'test', name: 'Test', command: 'npm test', description: 'Run test suite', icon: 'test', isSystem: true },
   { id: 'preview', name: 'Preview', command: 'npm run preview', description: 'Preview production build', icon: 'globe', isSystem: true },
 ];
+
+function isPersistedWorkflow(workflow: Workflow): boolean {
+  return typeof workflow.id === 'number' || /^\d+$/.test(String(workflow.id));
+}
 
 export function WorkflowsPanel({ projectId, onRunWorkflow, className }: WorkflowsPanelProps) {
   const queryClient = useQueryClient();
@@ -119,7 +124,7 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (workflowId: string) => {
+    mutationFn: async (workflowId: string | number) => {
       return apiRequest('DELETE', `/api/workflows/${workflowId}`, {});
     },
     onSuccess: () => {
@@ -130,10 +135,10 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
 
   const runMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
-        workflow: workflow.id,
-        command: workflow.command
-      });
+      if (isPersistedWorkflow(workflow)) {
+        return apiRequest('POST', `/api/workflows/${workflow.id}/run`);
+      }
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
     },
     onSuccess: (_, workflow) => {
       toast({ title: `Running: ${workflow.name}` });

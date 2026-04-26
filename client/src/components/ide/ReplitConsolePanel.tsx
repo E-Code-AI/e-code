@@ -55,7 +55,7 @@ interface ConsoleLog {
 }
 
 interface Workflow {
-  id: string;
+  id: string | number;
   name: string;
   command: string;
   description?: string;
@@ -63,6 +63,7 @@ interface Workflow {
   isDefault?: boolean;
   isSystem?: boolean;
   isRunning?: boolean;
+  isRunButton?: boolean;
 }
 
 interface ReplitConsolePanelProps {
@@ -83,6 +84,10 @@ const DEFAULT_WORKFLOWS: Workflow[] = [
   { id: 'project', name: 'Project', command: 'npm run dev', isDefault: true, isSystem: true },
   { id: 'start-application', name: 'Start application', command: 'npm run dev', isSystem: true },
 ];
+
+function isPersistedWorkflow(workflow: Workflow): boolean {
+  return typeof workflow.id === 'number' || /^\d+$/.test(String(workflow.id));
+}
 
 export function ReplitConsolePanel({ 
   projectId, 
@@ -122,13 +127,13 @@ export function ReplitConsolePanel({
 
   const runWorkflowMutation = useMutation({
     mutationFn: async (workflow: Workflow) => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {
-        workflow: workflow.id,
-        command: workflow.command
-      });
+      if (isPersistedWorkflow(workflow)) {
+        return apiRequest('POST', `/api/workflows/${workflow.id}/run`);
+      }
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
     },
     onMutate: (workflow) => {
-      setRunningWorkflowIds(prev => new Set(prev).add(workflow.id));
+      setRunningWorkflowIds(prev => new Set(prev).add(String(workflow.id)));
       setLatestRunStartIndex(logs.length);
     },
     onSuccess: (_, workflow) => {
@@ -138,7 +143,7 @@ export function ReplitConsolePanel({
     onError: (error: Error, workflow) => {
       setRunningWorkflowIds(prev => {
         const next = new Set(prev);
-        next.delete(workflow.id);
+        next.delete(String(workflow.id));
         return next;
       });
       toast({ title: 'Failed to run workflow', description: error.message, variant: 'destructive' });
@@ -146,19 +151,20 @@ export function ReplitConsolePanel({
   });
 
   const stopWorkflowMutation = useMutation({
-    mutationFn: async (workflowId: string) => {
-      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`, {
-        workflow: workflowId
-      });
+    mutationFn: async (workflow: Workflow) => {
+      if (isPersistedWorkflow(workflow)) {
+        return apiRequest('POST', `/api/workflows/${workflow.id}/stop`);
+      }
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/stop`);
     },
-    onSuccess: (_, workflowId) => {
+    onSuccess: (_, workflow) => {
       setRunningWorkflowIds(prev => {
         const next = new Set(prev);
-        next.delete(workflowId);
+        next.delete(String(workflow.id));
         return next;
       });
       toast({ title: 'Workflow stopped' });
-      onStopWorkflow?.(workflowId);
+      onStopWorkflow?.(String(workflow.id));
     },
     onError: (error: Error) => {
       toast({ title: 'Failed to stop workflow', description: error.message, variant: 'destructive' });
@@ -528,7 +534,7 @@ export function ReplitConsolePanel({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
             {allWorkflows.map((workflow) => {
-              const isWorkflowRunning = runningWorkflowIds.has(workflow.id);
+              const isWorkflowRunning = runningWorkflowIds.has(String(workflow.id));
               return (
                 <DropdownMenuItem
                   key={workflow.id}
@@ -553,7 +559,7 @@ export function ReplitConsolePanel({
                     )}
                     onClick={() => {
                       if (isWorkflowRunning) {
-                        stopWorkflowMutation.mutate(workflow.id);
+                        stopWorkflowMutation.mutate(workflow);
                       } else {
                         runWorkflowMutation.mutate(workflow);
                       }
@@ -621,7 +627,9 @@ export function ReplitConsolePanel({
             size="icon"
             className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
             onClick={() => {
-              runningWorkflowIds.forEach(id => stopWorkflowMutation.mutate(id));
+              allWorkflows
+                .filter(workflow => runningWorkflowIds.has(String(workflow.id)))
+                .forEach(workflow => stopWorkflowMutation.mutate(workflow));
             }}
             disabled={stopWorkflowMutation.isPending}
             data-testid="stop-all-button"
