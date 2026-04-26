@@ -118,7 +118,7 @@ export function PreviewDeploymentPanel({
     runId: previewData.runId || '',
     ports: previewData.ports || [],
     primaryPort: previewData.primaryPort || 0,
-    url: previewUrlData?.previewUrl || `/api/preview/projects/${projectId}/preview/`,
+    url: previewUrlData?.previewUrl || '',
     status: previewData.status as PreviewStatus['status'],
     services: previewData.services || [],
     lastHealthCheck: previewData.lastHealthCheck,

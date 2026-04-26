@@ -269,8 +269,9 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!previewUrl) return;
     
     try {
-      // Build shareable URL with full origin
-      const shareableUrl = `${window.location.origin}${previewUrl}`;
+      const shareableUrl = previewUrl.startsWith('http')
+        ? previewUrl
+        : `${window.location.origin}${previewUrl}`;
       await navigator.clipboard.writeText(shareableUrl);
       
       toast({

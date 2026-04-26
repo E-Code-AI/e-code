@@ -121,7 +121,15 @@ export function ResponsiveWebPreview({
   });
 
   const previewUrl = previewData?.previewUrl || '';
-  const headerPreviewUrl = previewUrl || `/api/preview/projects/${projectId}/preview`;
+  const headerPreviewUrl =
+    previewUrl ||
+    (previewStatus === 'starting'
+      ? 'Starting preview...'
+      : previewStatus === 'stopped'
+        ? 'Preview stopped'
+        : previewStatus === 'error'
+          ? 'Preview unavailable'
+          : 'Preview not ready');
   const previewStatus = previewData?.status;
   const {
     data: previewDiagnostics,
