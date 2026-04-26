@@ -66,6 +66,11 @@ interface PreviewStatus {
   frameworkType?: string;
 }
 
+interface PreviewUrlResponse {
+  previewUrl: string | null;
+  status?: string;
+}
+
 type ViewportSize = 'mobile' | 'tablet' | 'desktop';
 
 const viewportSizes: Record<ViewportSize, { width: number; label: string; icon: React.ElementType }> = {
@@ -99,12 +104,18 @@ export function PreviewDeploymentPanel({
     enabled: !!projectId,
   });
 
+  const { data: previewUrlData, refetch: refetchPreviewUrl } = useQuery<PreviewUrlResponse>({
+    queryKey: ['/api/preview/url', projectId],
+    queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
+    enabled: !!projectId,
+  });
+
   const preview: PreviewStatus | null = previewData ? {
     projectId: String(projectId),
     runId: previewData.runId || '',
     ports: previewData.ports || [],
     primaryPort: previewData.primaryPort || 0,
-    url: `/api/preview/projects/${projectId}/preview/`,
+    url: previewUrlData?.previewUrl || `/api/preview/projects/${projectId}/preview/`,
     status: previewData.status as PreviewStatus['status'],
     services: previewData.services || [],
     lastHealthCheck: previewData.lastHealthCheck,
@@ -112,10 +123,7 @@ export function PreviewDeploymentPanel({
   } : null;
   
   const isRunning = preview?.status === 'running';
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const previewUrl = isRunning 
-    ? `${origin}/api/preview/projects/${projectId}/preview/`
-    : null;
+  const previewUrl = isRunning ? (previewUrlData?.previewUrl || null) : null;
 
   useEffect(() => {
     if (isRunning && previewUrl && onPreviewReady && lastReportedUrlRef.current !== previewUrl) {
@@ -137,6 +145,7 @@ export function PreviewDeploymentPanel({
     onSuccess: () => {
       setIsStarting(true);
       queryClient.invalidateQueries({ queryKey: [`/api/preview/projects/${projectId}/preview/status`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
       toast({ title: 'Starting preview...', description: 'Your app preview is being prepared.' });
     },
     onError: (error: Error) => {
@@ -151,6 +160,7 @@ export function PreviewDeploymentPanel({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/preview/projects/${projectId}/preview/status`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
       toast({ title: 'Preview stopped' });
     },
     onError: (error: Error) => {
@@ -166,6 +176,7 @@ export function PreviewDeploymentPanel({
     onSuccess: () => {
       setIsStarting(true);
       queryClient.invalidateQueries({ queryKey: [`/api/preview/projects/${projectId}/preview/status`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
       toast({ title: 'Restarting preview...' });
     },
     onError: (error: Error) => {

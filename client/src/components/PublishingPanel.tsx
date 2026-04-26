@@ -124,11 +124,7 @@ function OverviewTab({ projectId }: { projectId: string }) {
 
   const { data, isLoading } = useQuery<PublishStatusResponse>({
     queryKey: ["/api/projects", projectId, "publish", "status"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/publish/status`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load publish status");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/publish/status`),
     refetchInterval: (query) => (query.state.data?.status === "publishing" ? 2000 : 15000),
   });
 
@@ -197,20 +193,12 @@ function OverviewTab({ projectId }: { projectId: string }) {
 function LogsTab({ projectId }: { projectId: string }) {
   const latestQuery = useQuery<LatestDeploymentResponse>({
     queryKey: ["/api/projects", projectId, "deployment", "latest"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/deployment/latest`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load latest deployment");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/deployment/latest`),
   });
   const deploymentId = latestQuery.data?.deployment?.deploymentId;
   const logsQuery = useQuery<DeploymentLogsResponse>({
     queryKey: ["/api/deployments", deploymentId, "logs"],
-    queryFn: async () => {
-      const res = await fetch(`/api/deployments/${deploymentId}/logs?type=all&limit=200`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load logs");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/deployments/${deploymentId}/logs?type=all&limit=200`),
     enabled: !!deploymentId,
     refetchInterval: 10000,
   });
@@ -241,11 +229,7 @@ function LogsTab({ projectId }: { projectId: string }) {
 function ResourcesTab({ projectId }: { projectId: string }) {
   const { data, isLoading } = useQuery<LatestDeploymentResponse>({
     queryKey: ["/api/projects", projectId, "deployment", "latest"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/deployment/latest`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load latest deployment");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/deployment/latest`),
     refetchInterval: 30000,
   });
 
@@ -288,11 +272,7 @@ function AnalyticsTab({ projectId }: { projectId: string }) {
   const [period, setPeriod] = useState<"24h" | "7d" | "30d">("30d");
   const { data, isLoading } = useQuery<DeploymentAnalyticsResponse>({
     queryKey: ["/api/projects", projectId, "deployments", "analytics", period],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/deployments/analytics?period=${period}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load analytics");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/deployments/analytics?period=${period}`),
     refetchInterval: 60000,
   });
 
