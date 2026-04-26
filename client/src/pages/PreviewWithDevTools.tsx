@@ -43,6 +43,7 @@ export default function PreviewWithDevTools() {
   const [customHeight, setCustomHeight] = useState(1080);
   const [previewUrl, setPreviewUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isStartingPreview, setIsStartingPreview] = useState(false);
 
   // Get project details
   const { data: project } = useQuery({
@@ -50,31 +51,31 @@ export default function PreviewWithDevTools() {
     enabled: !!projectId,
   });
 
+  const loadPreviewUrl = async () => {
+    if (!projectId) return '';
+    setIsLoading(true);
+
+    try {
+      const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+      const resolvedUrl = data?.previewUrl || '';
+      setPreviewUrl(resolvedUrl);
+      return resolvedUrl;
+    } catch (error) {
+      console.error('Failed to resolve preview URL:', error);
+      setPreviewUrl('');
+      return '';
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
 
-    const loadPreviewUrl = async () => {
-      if (!projectId) return;
-      setIsLoading(true);
-
-      try {
-        const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
-        if (!cancelled) {
-          setPreviewUrl(data?.previewUrl || '');
-        }
-      } catch (error) {
-        console.error('Failed to resolve preview URL:', error);
-        if (!cancelled) {
-          setPreviewUrl('');
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadPreviewUrl();
+    void (async () => {
+      const resolvedUrl = await loadPreviewUrl();
+      if (cancelled && resolvedUrl) return;
+    })();
 
     return () => {
       cancelled = true;
@@ -91,6 +92,10 @@ export default function PreviewWithDevTools() {
   };
 
   const refreshPreview = () => {
+    if (!previewUrl) {
+      void loadPreviewUrl();
+      return;
+    }
     // Force iframe reload
     const iframe = document.getElementById('preview-iframe') as HTMLIFrameElement;
     if (iframe) {
@@ -99,7 +104,20 @@ export default function PreviewWithDevTools() {
   };
 
   const openInNewTab = () => {
+    if (!previewUrl) return;
     window.open(previewUrl, '_blank');
+  };
+
+  const startPreview = async () => {
+    if (!projectId || isStartingPreview) return;
+
+    try {
+      setIsStartingPreview(true);
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      await loadPreviewUrl();
+    } finally {
+      setIsStartingPreview(false);
+    }
   };
 
   return (
@@ -114,8 +132,8 @@ export default function PreviewWithDevTools() {
                   Preview: {(project as any)?.name || 'Loading...'}
                 </CardTitle>
                 <Badge variant="outline" className="gap-1">
-                  <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                  Live
+                  <div className={`h-2 w-2 rounded-full ${previewUrl ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/50'}`} />
+                  {previewUrl ? 'Live' : isStartingPreview ? 'Starting' : 'Not running'}
                 </Badge>
               </div>
               
@@ -149,6 +167,12 @@ export default function PreviewWithDevTools() {
                 <Button size="sm" variant="ghost" onClick={openInNewTab}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
+                {!previewUrl && (
+                  <Button size="sm" variant="outline" onClick={startPreview} disabled={isStartingPreview}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isStartingPreview ? 'animate-spin' : ''}`} />
+                    {isStartingPreview ? 'Starting...' : 'Run Preview'}
+                  </Button>
+                )}
                 <Button size="sm" variant="ghost">
                   <Share2 className="h-4 w-4" />
                 </Button>
@@ -186,6 +210,22 @@ export default function PreviewWithDevTools() {
                   <div className="text-center">
                     <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
                     <p className="text-muted-foreground">Loading preview...</p>
+                  </div>
+                </div>
+              ) : !previewUrl ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center space-y-4 max-w-md px-6">
+                    <Globe className="h-10 w-10 mx-auto text-muted-foreground" />
+                    <div className="space-y-1">
+                      <h3 className="text-[15px] font-semibold">Preview not running</h3>
+                      <p className="text-[13px] text-muted-foreground">
+                        Start the app to load the live preview with devtools.
+                      </p>
+                    </div>
+                    <Button onClick={startPreview} disabled={isStartingPreview}>
+                      <RefreshCw className={`h-4 w-4 mr-2 ${isStartingPreview ? 'animate-spin' : ''}`} />
+                      {isStartingPreview ? 'Starting...' : 'Run Preview'}
+                    </Button>
                   </div>
                 </div>
               ) : (
