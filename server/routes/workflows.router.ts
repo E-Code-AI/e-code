@@ -15,6 +15,8 @@ import { z } from 'zod';
 import { spawn, ChildProcess } from 'child_process';
 import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
+import { ensureAuthenticated } from '../middleware/auth';
+import { storage } from '../storage';
 
 const logger = createLogger('workflows-router');
 
@@ -28,6 +30,83 @@ const runCommandSchema = z.object({
   command: z.string().min(1),
   name: z.string().optional(),
 });
+
+async function ensureProjectAccessById(projectId: string | number, userId: number): Promise<void> {
+  const project = await storage.getProject(projectId);
+  if (!project) {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  if (project.ownerId === userId) {
+    return;
+  }
+
+  const collaborators = await storage.getProjectCollaborators(projectId);
+  const isCollaborator = collaborators.some((c: any) => c.userId === userId);
+  if (!isCollaborator) {
+    throw new Error('PROJECT_FORBIDDEN');
+  }
+}
+
+async function ensureWorkflowAccess(req: Request, res: Response, next: () => void | Promise<void>) {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const workflowId = parseInt(req.params.id, 10);
+    if (!Number.isFinite(workflowId)) {
+      return res.status(400).json({ error: 'Invalid workflow ID' });
+    }
+
+    const workflow = await getWorkflowWithTasks(workflowId);
+    if (!workflow) {
+      return res.status(404).json({ error: 'Workflow not found' });
+    }
+
+    if (workflow.projectId) {
+      await ensureProjectAccessById(workflow.projectId, userId);
+    }
+
+    return next();
+  } catch (error: any) {
+    if (error?.message === 'PROJECT_NOT_FOUND') {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (error?.message === 'PROJECT_FORBIDDEN') {
+      return res.status(403).json({ error: "You don't have access to this project" });
+    }
+    logger.error('Failed to verify workflow access:', error);
+    return res.status(500).json({ error: 'Failed to verify workflow access' });
+  }
+}
+
+async function ensureProjectAccessFromRequest(req: Request, res: Response, next: () => void | Promise<void>) {
+  try {
+    const userId = (req as any).user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const projectId = req.query.projectId ?? req.body?.projectId;
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+
+    await ensureProjectAccessById(projectId as string | number, userId);
+    return next();
+  } catch (error: any) {
+    if (error?.message === 'PROJECT_NOT_FOUND') {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    if (error?.message === 'PROJECT_FORBIDDEN') {
+      return res.status(403).json({ error: "You don't have access to this project" });
+    }
+    logger.error('Failed to verify project access for workflow route:', error);
+    return res.status(500).json({ error: 'Failed to verify project access' });
+  }
+}
 
 // Helper to get workflow with tasks
 async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTasks | null> {
@@ -51,7 +130,7 @@ async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTas
 }
 
 // Get all workflows for a project
-workflowsRouter.get('/', async (req: Request, res: Response) => {
+workflowsRouter.get('/', ensureAuthenticated, ensureProjectAccessFromRequest, async (req: Request, res: Response) => {
   try {
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
     
@@ -93,7 +172,7 @@ workflowsRouter.get('/', async (req: Request, res: Response) => {
 });
 
 // Execute a one-off command in a project's workspace without persisting a workflow
-workflowsRouter.post('/run-command', async (req: Request, res: Response) => {
+workflowsRouter.post('/run-command', ensureAuthenticated, ensureProjectAccessFromRequest, async (req: Request, res: Response) => {
   try {
     const { projectId, command, name } = runCommandSchema.parse(req.body);
     const logs: string[] = [`Starting command: ${name || command}`];
@@ -119,7 +198,7 @@ workflowsRouter.post('/run-command', async (req: Request, res: Response) => {
 });
 
 // Get single workflow
-workflowsRouter.get('/:id', async (req: Request, res: Response) => {
+workflowsRouter.get('/:id', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const workflow = await getWorkflowWithTasks(id);
@@ -151,7 +230,7 @@ const createWorkflowSchema = z.object({
 });
 
 // Create workflow
-workflowsRouter.post('/', async (req: Request, res: Response) => {
+workflowsRouter.post('/', ensureAuthenticated, ensureProjectAccessFromRequest, async (req: Request, res: Response) => {
   try {
     const data = createWorkflowSchema.parse(req.body);
     
@@ -216,7 +295,7 @@ const updateWorkflowSchema = z.object({
 });
 
 // Update workflow
-workflowsRouter.patch('/:id', async (req: Request, res: Response) => {
+workflowsRouter.patch('/:id', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const data = updateWorkflowSchema.parse(req.body);
@@ -280,7 +359,7 @@ workflowsRouter.patch('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete workflow
-workflowsRouter.delete('/:id', async (req: Request, res: Response) => {
+workflowsRouter.delete('/:id', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -309,7 +388,7 @@ workflowsRouter.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // Run workflow
-workflowsRouter.post('/:id/run', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/run', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const workflow = await getWorkflowWithTasks(id);
@@ -345,7 +424,7 @@ workflowsRouter.post('/:id/run', async (req: Request, res: Response) => {
 });
 
 // Stop workflow
-workflowsRouter.post('/:id/stop', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/stop', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -375,7 +454,7 @@ workflowsRouter.post('/:id/stop', async (req: Request, res: Response) => {
 });
 
 // Get workflow runs
-workflowsRouter.get('/:id/runs', async (req: Request, res: Response) => {
+workflowsRouter.get('/:id/runs', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
@@ -393,7 +472,7 @@ workflowsRouter.get('/:id/runs', async (req: Request, res: Response) => {
 });
 
 // Set workflow as Run Button
-workflowsRouter.post('/:id/set-run-button', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/set-run-button', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     
@@ -422,7 +501,7 @@ workflowsRouter.post('/:id/set-run-button', async (req: Request, res: Response) 
 });
 
 // Reorder tasks
-workflowsRouter.post('/:id/reorder-tasks', async (req: Request, res: Response) => {
+workflowsRouter.post('/:id/reorder-tasks', ensureAuthenticated, ensureWorkflowAccess, async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const { taskIds } = req.body as { taskIds: number[] };
