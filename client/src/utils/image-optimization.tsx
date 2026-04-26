@@ -15,7 +15,7 @@ interface ImageConfig {
 }
 
 // Image source set for responsive loading
-interface ImageSrcSet {
+interface _ImageSrcSet {
   src: string;
   width?: number;
   descriptor?: string;
@@ -188,7 +188,7 @@ interface OptimizedImageProps extends React.ImgHTMLAttributes<HTMLImageElement> 
 export function OptimizedImage({
   src,
   alt,
-  placeholder,
+  placeholder: _placeholder,
   srcSet,
   sizes,
   loading = 'lazy',

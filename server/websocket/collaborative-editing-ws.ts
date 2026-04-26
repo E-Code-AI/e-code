@@ -14,8 +14,8 @@ const logger = createLogger('collaborative-editing-ws');
 // Configuration from environment with defaults
 const MAX_CONNECTIONS_PER_USER = parseInt(process.env.WS_MAX_CONNECTIONS_PER_USER || '5', 10);
 const PING_INTERVAL_MS = parseInt(process.env.WS_PING_INTERVAL_MS || '30000', 10);
-const SOCKET_TIMEOUT_MS = parseInt(process.env.WS_SOCKET_TIMEOUT_MS || '30000', 10);
-const INACTIVE_THRESHOLD_MS = parseInt(process.env.WS_INACTIVE_THRESHOLD_MS || '1800000', 10); // 30 min default
+const _SOCKET_TIMEOUT_MS = parseInt(process.env.WS_SOCKET_TIMEOUT_MS || '30000', 10);
+const _INACTIVE_THRESHOLD_MS = parseInt(process.env.WS_INACTIVE_THRESHOLD_MS || '1800000', 10); // 30 min default
 
 interface WebSocketMessage {
   type: string;
@@ -63,7 +63,7 @@ interface AuthenticatedWebSocket extends WebSocket {
 const userConnectionCounts = new Map<string, number>();
 
 // 8.2 FIX: Track unanswered pings for timeout detection
-const PONG_TIMEOUT_MS = 10000;
+const _PONG_TIMEOUT_MS = 10000;
 const MAX_MISSED_PONGS = 3;
 const unansweredPings = new Map<string, number>();
 
@@ -563,7 +563,7 @@ export class CollaborativeEditingWebSocketHandler {
     logger.info('Shutting down collaborative editing WebSocket service...');
     
     // Close all connections with proper code/reason
-    this.connections.forEach((wsSet, userId) => {
+    this.connections.forEach((wsSet, _userId) => {
       wsSet.forEach(ws => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({

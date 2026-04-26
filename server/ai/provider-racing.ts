@@ -241,7 +241,7 @@ export class ProviderRacing {
   private async raceWithCancellation<T>(
     promises: Promise<T>[],
     controllers: AbortController[],
-    raceId: string
+    _raceId: string
   ): Promise<T & { index: number }> {
     return new Promise((resolve, reject) => {
       let settled = false;

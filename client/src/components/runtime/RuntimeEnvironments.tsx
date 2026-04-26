@@ -358,7 +358,7 @@ export function RuntimeEnvironments({
   const [selectedLanguage, setSelectedLanguage] = useState<string>('javascript');
   const [isDebugging, setIsDebugging] = useState(false);
   const [isProfiling, setIsProfiling] = useState(false);
-  const [showDependencies, setShowDependencies] = useState(false);
+  const [_showDependencies, _setShowDependencies] = useState(false);
   const { toast } = useToast();
 
   // Detect language from file extension

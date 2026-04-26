@@ -27,7 +27,7 @@ function resolveVariant(
   return value;
 }
 
-function detectInViewAnimationType(
+function _detectInViewAnimationType(
   whileInView: string | VariantObject | undefined,
   variants?: Variants
 ): 'fade' | 'slide' | 'scale' | null {
@@ -40,7 +40,7 @@ function detectInViewAnimationType(
   return null;
 }
 
-function getSlideDirection(
+function _getSlideDirection(
   initial: string | VariantObject | undefined,
   variants?: Variants
 ): 'up' | 'down' | 'left' | 'right' {
@@ -53,7 +53,7 @@ function getSlideDirection(
   return 'up';
 }
 
-function getSlideDistance(
+function _getSlideDistance(
   initial: string | VariantObject | undefined,
   variants?: Variants
 ): number {
@@ -66,7 +66,7 @@ function getSlideDistance(
   return 20;
 }
 
-function getStaggerDelay(
+function _getStaggerDelay(
   transition: Record<string, unknown> | undefined,
   childIndex?: number
 ): number {
@@ -79,7 +79,7 @@ function getStaggerDelay(
   return 0;
 }
 
-function applyStaggerToChildren(
+function _applyStaggerToChildren(
   children: ReactNode,
   transition: Record<string, unknown> | undefined
 ): ReactNode {

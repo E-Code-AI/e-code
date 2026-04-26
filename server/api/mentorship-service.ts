@@ -317,7 +317,7 @@ export class MentorshipService {
   }
 
   // Get upcoming sessions for mentor/mentee
-  async getUpcomingSessions(userId: number) {
+  async getUpcomingSessions(_userId: number) {
     const now = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(now.getDate() + 7);

@@ -5,8 +5,8 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
 
-const execAsync = promisify(exec);
-const logger = createLogger('build-pipeline');
+const _execAsync = promisify(exec);
+const _logger = createLogger('build-pipeline');
 
 export interface BuildConfig {
   projectId: number;

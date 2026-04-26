@@ -5,7 +5,7 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { CodeAnalyzer } from '../ai/code-analyzer';
 import { createLogger } from '../utils/logger';
 
-type ChatMessage = {
+type _ChatMessage = {
   role: 'system' | 'user' | 'assistant';
   content: string;
 };

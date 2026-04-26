@@ -84,7 +84,7 @@ interface TabletIDEViewProps {
 
 export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspaceComplete, onWorkspaceError }: TabletIDEViewProps) {
   // Tablet detection and layout config
-  const { isIPad, isIPadPro, orientation, screenSize } = useTablet();
+  const { isIPad: _isIPad, isIPadPro: _isIPadPro, orientation, screenSize } = useTablet();
   const layout = useTabletLayout();
   const { toast } = useToast();
   const { isReady: isSchemaReady } = useSchemaWarmingStore();
@@ -270,7 +270,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
     }, 100);
   }, [toast]);
   
-  const handleOpenSecrets = useCallback(() => {
+  const _handleOpenSecrets = useCallback(() => {
     setDrawerOpen(false);
     setTimeout(() => {
       setRightPanel('secrets');

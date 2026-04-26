@@ -39,7 +39,7 @@ interface MobileFeature {
 export default function MobileAppsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedPlatform, setSelectedPlatform] = useState("all");
+  const [_selectedPlatform, _setSelectedPlatform] = useState("all");
 
   // Fetch mobile apps
   const { data: apps, isLoading: appsLoading } = useQuery({

@@ -159,7 +159,7 @@ router.post('/chat', async (req, res) => {
     if (!provider) return res.status(503).json({ error: 'No AI provider available' });
 
     const systemPrompt = `You are an expert AI coding assistant embedded in E-Code, an AI-powered IDE. You are helping with project ${projectId || 'unknown'}. Provide clear, concise, and actionable answers.`;
-    const history = (Array.isArray(conversationHistory) ? conversationHistory : [])
+    const _history = (Array.isArray(conversationHistory) ? conversationHistory : [])
       .slice(-10)
       .filter((m: any) => m.role && m.content)
       .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content) }));
@@ -175,7 +175,7 @@ router.post('/chat', async (req, res) => {
 // POST /api/agent/chat/stream — SSE streaming chat used by editor AIAgentPanel
 router.post('/chat/stream', async (req, res) => {
   try {
-    const { projectId, message, context, provider: providerName, systemPrompt: extraSystemPrompt, maxTokens, temperature } = req.body;
+    const { projectId, message, context, provider: _providerName, systemPrompt: extraSystemPrompt, maxTokens, temperature } = req.body;
     if (!message) return res.status(400).json({ error: 'message is required' });
 
     if (!validateAndSetSSEHeaders(res, req)) return;
@@ -243,7 +243,7 @@ router.get('/conversation', async (req, res) => {
     const { eq, and, desc } = await import('drizzle-orm');
 
     // Use withScopedTransaction to verify project ownership via tenant isolation
-    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, _context) => {
       // Verify project ownership - returns null if user doesn't own this project
       const project = await scopedQueries.getProjectById(projectId);
       if (!project && projectId >= 0) {
@@ -357,7 +357,7 @@ router.get('/projects/:projectId/conversations', async (req, res) => {
 // POST /api/agent/conversation - Create or get conversation for project
 router.post('/conversation', async (req, res) => {
   try {
-    const { projectId: projectIdRaw, initialPrompt, forceNew } = req.body;
+    const { projectId: projectIdRaw, initialPrompt: _initialPrompt, forceNew } = req.body;
     const userId = req.user!.id;
 
     const { aiConversations } = await import('@shared/schema');
@@ -415,7 +415,7 @@ router.post('/conversation', async (req, res) => {
     }
 
     // Positive projectId: verify project ownership via tenant isolation
-    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, _context) => {
       // Verify project ownership - returns null if user doesn't own this project
       const project = await scopedQueries.getProjectById(projectId);
       if (!project) {
@@ -572,7 +572,7 @@ router.post('/conversation/:id/mode', async (req, res) => {
     }
 
     // Verify project ownership via tenant isolation
-    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, _context) => {
       const project = await scopedQueries.getProjectById(projectId);
       if (!project) {
         return { error: 'Project not found or access denied', status: 403 };
@@ -626,7 +626,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
     }
 
     const { aiConversations, agentMessages } = await import('@shared/schema');
-    const { eq, and, desc, asc, count } = await import('drizzle-orm');
+    const { eq, and, desc: _desc, asc, count } = await import('drizzle-orm');
 
     // First get the conversation to find its projectId
     const [conversation] = await db
@@ -732,7 +732,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
     }
 
     // Verify project ownership via tenant isolation
-    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, _context) => {
       const project = await scopedQueries.getProjectById(projectId);
       if (!project) {
         return { error: 'Project not found or access denied', status: 403 };
@@ -762,7 +762,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
     const conversationIdStr = req.params.id;
     const conversationId = parseInt(conversationIdStr, 10);
     const userId = req.user!.id;
-    const { role, content, timestamp, metadata, extendedThinking } = req.body;
+    const { role, content, timestamp: _timestamp, metadata, extendedThinking } = req.body;
 
     // Validate conversation ID
     if (isNaN(conversationId)) {
@@ -863,7 +863,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
     }
 
     // Verify project ownership via tenant isolation
-    const result = await withScopedTransaction(userId, userId, async (scopedQueries, context) => {
+    const result = await withScopedTransaction(userId, userId, async (scopedQueries, _context) => {
       const project = await scopedQueries.getProjectById(projectId);
       if (!project) {
         return { error: 'Project not found or access denied', status: 403 };
@@ -1192,7 +1192,7 @@ export function setupAgentWebSocket(io: SocketIOServer) {
 
   agentNamespace.use((socket, next) => {
     // Authenticate socket connection
-    const token = socket.handshake.auth.token;
+    const _token = socket.handshake.auth.token;
     // Verify admin token here
     next();
   });

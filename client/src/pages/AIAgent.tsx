@@ -34,7 +34,7 @@ import { useLocation } from 'wouter';
 export default function AIAgent() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [appDescription, setAppDescription] = useState('');
+  const [_appDescription, _setAppDescription] = useState('');
 
   // Rediriger les utilisateurs connectés vers le dashboard
   useEffect(() => {
@@ -43,7 +43,7 @@ export default function AIAgent() {
     }
   }, [user, navigate]);
 
-  const handleStartBuilding = async (description: string) => {
+  const _handleStartBuilding = async (_description: string) => {
     if (!user) {
       navigate('/login?redirect=/dashboard');
       return;

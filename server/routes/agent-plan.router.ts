@@ -223,12 +223,12 @@ export class AgentPlanRouter {
         }
 
         // Collect all streamed data
-        let fullResponse = '';
+        let _fullResponse = '';
         let plan: any = null;
 
         for await (const event of aiPlanGenerator.generatePlan(userId, projectId, goal, context)) {
           if (event.type === 'chunk') {
-            fullResponse += event.data.content;
+            _fullResponse += event.data.content;
           } else if (event.type === 'plan') {
             plan = event.data;
           } else if (event.type === 'error') {

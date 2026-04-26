@@ -224,7 +224,7 @@ function broadcastToProject(projectId: number, message: any) {
   });
 }
 
-export function setupCheckpointWebSocket(httpServer: Server) {
+export function setupCheckpointWebSocket(_httpServer: Server) {
   // W-H10: Add maxPayload to prevent DoS via large messages
   const wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
@@ -261,7 +261,7 @@ export function setupCheckpointWebSocket(httpServer: Server) {
     logger.info('Checkpoint WebSocket service shut down');
   }, 50);
 
-  wss.on('connection', (ws: AuthenticatedWebSocket, request: IncomingMessage) => {
+  wss.on('connection', (ws: AuthenticatedWebSocket, _request: IncomingMessage) => {
     logger.info('[Checkpoint WS] New client connected');
     
     ws.subscribedProjects = new Set();

@@ -58,14 +58,14 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   const { toast } = useToast();
   const [selectedFrame, setSelectedFrame] = useState<string>('');
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
-  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
-  
-  const { 
-    breakpoints, 
-    addBreakpoint, 
-    removeBreakpoint, 
-    toggleBreakpoint, 
-    updateCondition 
+  const [consoleOutput, _setConsoleOutput] = useState<string[]>([]);
+
+  const {
+    breakpoints,
+    addBreakpoint: _addBreakpoint,
+    removeBreakpoint,
+    toggleBreakpoint,
+    updateCondition: _updateCondition
   } = useBreakpointStore();
 
   // Fetch debug session
@@ -107,7 +107,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   });
 
   // Toggle breakpoint
-  const toggleBreakpointMutation = useMutation({
+  const _toggleBreakpointMutation = useMutation({
     mutationFn: async ({ file, line }: { file: string; line: number }) => {
       return apiRequest('POST', `/api/debug/${projectId}/breakpoints/toggle`, { file, line });
     },
@@ -140,19 +140,19 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
             isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />
           )}
           {!variable.expandable && <div className="w-3" />}
-          
+
           <span className="font-mono text-[13px] font-medium">{variable.name}</span>
           <span className="font-mono text-[13px] text-muted-foreground">:</span>
           <span className="font-mono text-[13px] truncate flex-1">
-            {typeof variable.value === 'object' 
-              ? variable.type 
+            {typeof variable.value === 'object'
+              ? variable.type
               : String(variable.value)
             }
           </span>
           <Badge variant="outline" className="text-[11px]">{variable.type}</Badge>
         </div>
-        
-        {isExpanded && variable.children?.map(child => 
+
+        {isExpanded && variable.children?.map(child =>
           renderVariable(child, varPath, depth + 1)
         )}
       </div>
@@ -168,8 +168,8 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
             <div>
               <CardTitle className="text-[15px]">Debugger</CardTitle>
               <CardDescription>
-                {debugSession?.status === 'running' 
-                  ? 'Debug session active' 
+                {debugSession?.status === 'running'
+                  ? 'Debug session active'
                   : debugSession?.status === 'paused'
                   ? 'Paused at breakpoint'
                   : 'Debug when ready'
@@ -177,7 +177,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
               </CardDescription>
             </div>
           </div>
-          
+
           {/* Debug Controls */}
           <div className="flex items-center gap-1">
             {!debugSession || debugSession.status === 'stopped' ? (
@@ -328,8 +328,8 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
                             onClick={() => toggleBreakpoint(bp.id)}
                             data-testid={`toggle-breakpoint-${bp.id}`}
                             className={`h-3 w-3 rounded-full border-2 ${
-                              bp.enabled 
-                                ? 'bg-red-500 border-red-500' 
+                              bp.enabled
+                                ? 'bg-red-500 border-red-500'
                                 : 'border-muted-foreground'
                             }`}
                           />

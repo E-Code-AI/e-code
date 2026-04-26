@@ -9,7 +9,7 @@ import helmet from 'helmet';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('security');
-const isDevelopment = process.env.NODE_ENV === 'development';
+const _isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 const isReplitPreview = Boolean(
   process.env.REPL_ID ||

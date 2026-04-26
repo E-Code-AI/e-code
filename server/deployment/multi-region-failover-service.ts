@@ -405,8 +405,8 @@ export class MultiRegionFailoverService extends EventEmitter {
     }
 
     private async checkRegionHealth(
-        deploymentId: number,
-        config: HealthCheckConfig
+        _deploymentId: number,
+        _config: HealthCheckConfig
     ): Promise<{ status: 'healthy' | 'degraded' | 'unhealthy'; responseTime: number; availability: number }> {
         // In production, this would make actual HTTP requests
         // For now, simulate health checks

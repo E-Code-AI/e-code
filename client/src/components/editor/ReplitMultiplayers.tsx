@@ -204,7 +204,7 @@ export function ReplitMultiplayers({
     setActivityFeed(prev => [newEvent, ...prev].slice(0, 50));
   }, []);
 
-  const { data, isLoading, isError, refetch } = useQuery<CollaboratorsResponse>({
+  const { data, isLoading, isError: _isError, refetch: _refetch } = useQuery<CollaboratorsResponse>({
     queryKey: ['/api/collaboration', projectId, 'users'],
     queryFn: async () => {
       if (!projectId) return { collaborators: [], pendingInvites: [] };

@@ -47,21 +47,21 @@ const tools: Tool[] = [
   { id: 'settings', name: 'Settings', icon: Settings, section: 'bottom' },
 ];
 
-export function ReplitToolDock({ 
-  activeTool, 
+export function ReplitToolDock({
+  activeTool,
   onToolChange,
-  isCollapsed = false,
-  onCollapseToggle 
+  isCollapsed: _isCollapsed = false,
+  onCollapseToggle: _onCollapseToggle
 }: ReplitToolDockProps) {
   const [hoveredTool, setHoveredTool] = useState<string | null>(null);
-  
+
   const topTools = tools.filter(t => t.section === 'top');
   const bottomTools = tools.filter(t => t.section === 'bottom');
 
   const renderTool = (tool: Tool) => {
     const Icon = tool.icon;
     const isActive = activeTool === tool.id;
-    
+
     return (
       <Tooltip key={tool.id} delayDuration={0}>
         <TooltipTrigger asChild>
@@ -81,7 +81,7 @@ export function ReplitToolDock({
             {isActive && (
               <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--ecode-accent)]" />
             )}
-            
+
             {/* Icon - 18px size */}
             <Icon className={cn(
               "h-[18px] w-[18px] transition-colors",

@@ -82,9 +82,9 @@ const frameworkOptions = {
   ],
 };
 
-const AIPanel: React.FC<AIToolProps> = ({ 
-  projectId, 
-  currentFileContent = '', 
+const AIPanel: React.FC<AIToolProps> = ({
+  projectId: _projectId,
+  currentFileContent = '',
   currentLanguage = 'javascript',
   onInsertCode
 }) => {
@@ -96,9 +96,9 @@ const AIPanel: React.FC<AIToolProps> = ({
   const [docStyle, setDocStyle] = useState('standard');
   const [framework, setFramework] = useState('');
   const [result, setResult] = useState('');
-  
+
   const { toast } = useToast();
-  const { 
+  const {
     completionMutation,
     explanationMutation,
     convertMutation,
@@ -120,9 +120,9 @@ const AIPanel: React.FC<AIToolProps> = ({
 
   const handleGenerateCompletion = async () => {
     try {
-      const completion = await completionMutation.mutateAsync({ 
-        code, 
-        language 
+      const completion = await completionMutation.mutateAsync({
+        code,
+        language
       });
       setResult(completion);
     } catch (error) {
@@ -132,9 +132,9 @@ const AIPanel: React.FC<AIToolProps> = ({
 
   const handleGenerateExplanation = async () => {
     try {
-      const explanation = await explanationMutation.mutateAsync({ 
-        code, 
-        language 
+      const explanation = await explanationMutation.mutateAsync({
+        code,
+        language
       });
       setResult(explanation);
     } catch (error) {
@@ -144,10 +144,10 @@ const AIPanel: React.FC<AIToolProps> = ({
 
   const handleConvertCode = async () => {
     try {
-      const convertedCode = await convertMutation.mutateAsync({ 
-        code, 
-        fromLanguage, 
-        toLanguage 
+      const convertedCode = await convertMutation.mutateAsync({
+        code,
+        fromLanguage,
+        toLanguage
       });
       setResult(convertedCode);
     } catch (error) {
@@ -157,10 +157,10 @@ const AIPanel: React.FC<AIToolProps> = ({
 
   const handleGenerateDocumentation = async () => {
     try {
-      const documentedCode = await documentationMutation.mutateAsync({ 
-        code, 
-        language, 
-        style: docStyle as any 
+      const documentedCode = await documentationMutation.mutateAsync({
+        code,
+        language,
+        style: docStyle as any
       });
       setResult(documentedCode);
     } catch (error) {
@@ -170,10 +170,10 @@ const AIPanel: React.FC<AIToolProps> = ({
 
   const handleGenerateTests = async () => {
     try {
-      const tests = await testGenerationMutation.mutateAsync({ 
-        code, 
-        language, 
-        framework 
+      const tests = await testGenerationMutation.mutateAsync({
+        code,
+        language,
+        framework
       });
       setResult(tests);
     } catch (error) {
@@ -253,8 +253,8 @@ const AIPanel: React.FC<AIToolProps> = ({
                 className="font-mono text-[13px] h-32"
                 placeholder="Enter your code here..."
               />
-              <Button 
-                onClick={handleGenerateCompletion} 
+              <Button
+                onClick={handleGenerateCompletion}
                 disabled={!code.trim() || isProcessing}
                 className="w-full"
               >
@@ -276,8 +276,8 @@ const AIPanel: React.FC<AIToolProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <Label>Completion Result</Label>
                 {result && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handleInsertCode}
                     className="h-7 text-[11px]"
@@ -334,8 +334,8 @@ const AIPanel: React.FC<AIToolProps> = ({
                 className="font-mono text-[13px] h-32"
                 placeholder="Enter your code here..."
               />
-              <Button 
-                onClick={handleGenerateExplanation} 
+              <Button
+                onClick={handleGenerateExplanation}
                 disabled={!code.trim() || isProcessing}
                 className="w-full"
               >
@@ -388,7 +388,7 @@ const AIPanel: React.FC<AIToolProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  
+
                   <Label className="text-[11px]">To:</Label>
                   <Select value={toLanguage} onValueChange={setToLanguage}>
                     <SelectTrigger className="w-32 h-7 text-[11px]">
@@ -411,8 +411,8 @@ const AIPanel: React.FC<AIToolProps> = ({
                 className="font-mono text-[13px] h-32"
                 placeholder="Enter your code here..."
               />
-              <Button 
-                onClick={handleConvertCode} 
+              <Button
+                onClick={handleConvertCode}
                 disabled={!code.trim() || fromLanguage === toLanguage || isProcessing}
                 className="w-full"
               >
@@ -434,8 +434,8 @@ const AIPanel: React.FC<AIToolProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <Label>Converted Code</Label>
                 {result && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handleInsertCode}
                     className="h-7 text-[11px]"
@@ -483,7 +483,7 @@ const AIPanel: React.FC<AIToolProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  
+
                   <Label htmlFor="docStyle" className="text-[11px]">Style:</Label>
                   <Select value={docStyle} onValueChange={setDocStyle}>
                     <SelectTrigger className="w-32 h-7 text-[11px]">
@@ -505,8 +505,8 @@ const AIPanel: React.FC<AIToolProps> = ({
                 className="font-mono text-[13px] h-32"
                 placeholder="Enter your code here..."
               />
-              <Button 
-                onClick={handleGenerateDocumentation} 
+              <Button
+                onClick={handleGenerateDocumentation}
                 disabled={!code.trim() || isProcessing}
                 className="w-full"
               >
@@ -528,8 +528,8 @@ const AIPanel: React.FC<AIToolProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <Label>Documented Code</Label>
                 {result && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handleInsertCode}
                     className="h-7 text-[11px]"
@@ -577,10 +577,10 @@ const AIPanel: React.FC<AIToolProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  
+
                   <Label htmlFor="framework" className="text-[11px]">Framework:</Label>
-                  <Select 
-                    value={framework} 
+                  <Select
+                    value={framework}
                     onValueChange={setFramework}
                     disabled={!(language in frameworkOptions)}
                   >
@@ -610,8 +610,8 @@ const AIPanel: React.FC<AIToolProps> = ({
                 className="font-mono text-[13px] h-32"
                 placeholder="Enter your code here..."
               />
-              <Button 
-                onClick={handleGenerateTests} 
+              <Button
+                onClick={handleGenerateTests}
                 disabled={!code.trim() || isProcessing}
                 className="w-full"
               >
@@ -633,8 +633,8 @@ const AIPanel: React.FC<AIToolProps> = ({
               <div className="flex items-center justify-between mb-2">
                 <Label>Generated Tests</Label>
                 {result && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={handleInsertCode}
                     className="h-7 text-[11px]"

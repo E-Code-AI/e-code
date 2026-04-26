@@ -216,7 +216,7 @@ export class ResourcesService {
     // Handle incoming messages (for future interactivity like requesting specific time ranges)
     ws.on('message', (data) => {
       try {
-        const message = JSON.parse(data.toString());
+        const _message = JSON.parse(data.toString());
         // Handle commands like requesting specific time ranges, etc.
       } catch (error) {
         console.error('[Resources] Error parsing message:', error);

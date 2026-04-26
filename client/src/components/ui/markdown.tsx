@@ -15,7 +15,7 @@ export function Markdown({ children, className }: MarkdownProps) {
       className={cn("prose prose-sm dark:prose-invert max-w-none", className)}
       remarkPlugins={[remarkGfm]}
       components={{
-        code({ node, inline, className, children, ...props }) {
+        code({ node: _node, inline, className, children, ...props }) {
           const match = /language-(\w+)/.exec(className || '');
           return !inline && match ? (
             <LightSyntaxHighlighter

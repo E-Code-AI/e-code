@@ -36,7 +36,7 @@ interface FeedbackInboxPanelProps {
   onSendToAI?: (text: string) => void;
 }
 
-export default function FeedbackInboxPanel({ projectId, onClose, onSendToAI }: FeedbackInboxPanelProps) {
+export default function FeedbackInboxPanel({ projectId, onClose: _onClose, onSendToAI }: FeedbackInboxPanelProps) {
   const [filter, setFilter] = useState<"all" | "open" | "resolved">("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();

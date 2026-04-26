@@ -46,7 +46,7 @@ export default function EnvironmentPanel({ projectId }: EnvironmentPanelProps) {
     variables,
     isLoading,
     createVariableMutation,
-    updateVariableMutation,
+    updateVariableMutation: _updateVariableMutation,
     deleteVariableMutation,
   } = useEnvironment();
 

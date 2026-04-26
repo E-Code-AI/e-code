@@ -24,7 +24,7 @@ export function useCollaboration(projectId: number, fileId: number) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
-  const ydocRef = useRef<Y.Doc | null>(null);
+  const _ydocRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebsocketProvider | null>(null);
 
   // Connect to collaboration server

@@ -35,7 +35,7 @@ export function useAICodeActions() {
   });
 
   const handleAIEvent = useCallback((event: CustomEvent<AICodeActionEvent>) => {
-    const { type, action, result, error, code } = event.detail;
+    const { type, action, result, error, code: _code } = event.detail;
 
     switch (type) {
       case 'loading':

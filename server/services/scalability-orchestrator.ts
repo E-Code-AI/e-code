@@ -339,7 +339,7 @@ export class ScalabilityOrchestrator extends EventEmitter {
    */
   private startHealthMonitoring(): void {
     this.healthCheckInterval = setInterval(async () => {
-      for (const [id, container] of this.containers) {
+      for (const [_id, container] of this.containers) {
         if (container.status === 'running') {
           await this.healthCheck(container);
         }
@@ -420,7 +420,7 @@ export class ScalabilityOrchestrator extends EventEmitter {
   /**
    * Get project info (simulated)
    */
-  private async getProjectInfo(projectId: string): Promise<{ userId: string } | null> {
+  private async getProjectInfo(_projectId: string): Promise<{ userId: string } | null> {
     // In production, this would query the database
     // For now, return simulated data
     return { userId: 'user-1' };

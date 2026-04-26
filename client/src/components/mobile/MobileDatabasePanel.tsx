@@ -251,7 +251,7 @@ export function MobileDatabasePanel({ projectId, className }: MobileDatabasePane
     enabled: !!projectId
   });
 
-  const { data: credentials, isLoading: credentialsLoading, refetch: refetchCredentials } = useQuery<DatabaseCredentials>({
+  const { data: credentials, isLoading: credentialsLoading, refetch: _refetchCredentials } = useQuery<DatabaseCredentials>({
     queryKey: ['/api/database/project', projectId, 'credentials'],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/database/project/${projectId}/credentials`);

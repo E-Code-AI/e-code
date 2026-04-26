@@ -16,7 +16,7 @@ The repository already contains a previous `READY` note, but the current certifi
 | Phase | Status | Notes |
 | --- | --- | --- |
 | A — Discovery & Mapping | DONE | `docs/SURFACE-MAP.md` generated from repository wiring. |
-| B — Static Audit | BLOCKED | Typecheck, build, and audit pass. Lint exits 0 but reports 1270 warnings after global unused-import cleanup; strict zero-warning gate not met. |
+| B — Static Audit | PASS | Typecheck, lint zero-warning, build, and audit high pass. |
 | C — Dynamic Verification | DONE FOR CORE IDE PANELS | Local DB bootstrap, migrations, boot, `/health`, `/health/readiness`, workspace-core smoke, router contracts, and systematic panel-suite runner are present. Full systematic panel matrix passes 92/92 across 23 panels and 4 viewports. |
 | D — Generation Pipeline E2E | PENDING | Requires AI-provider key check; non-AI checks continue if keys are missing. |
 | E — Backend Hardening | PENDING | Session restart, headers, logs, rate limits, idempotent migrations, seed. |
@@ -38,9 +38,8 @@ The repository already contains a previous `READY` note, but the current certifi
 
 ### Internal blockers
 
-- `npm run lint` currently exits 0 but reports 1270 warnings. The requested certification gate is zero lint warnings.
-- Exhaustive Playwright coverage is now green for core IDE panels in `test/e2e/panels/systematic-panels.spec.ts`: 23 panels × 4 viewports = 92/92 passing.
 - Generation E2E specs are not yet implemented for every supported app format in `docs/SURFACE-MAP.md`.
+- Exhaustive Playwright coverage is now green for core IDE panels in `test/e2e/panels/systematic-panels.spec.ts`: 23 panels × 4 viewports = 92/92 passing.
 - Backend hardening, frontend robustness, and production deployment smoke are not yet fully green.
 
 ### External / environment blockers
@@ -53,7 +52,7 @@ The repository already contains a previous `READY` note, but the current certifi
 Phase B global gates:
 
 - `npm run typecheck` — PASS
-- `npm run lint` — BLOCKED: exits 0, reports 1270 warnings
+- `npm run lint` — PASS: 0 warnings
 - `npm run build` — PASS
 - `npm audit --audit-level=high` — PASS
 

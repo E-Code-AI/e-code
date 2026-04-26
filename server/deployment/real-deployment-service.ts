@@ -395,7 +395,7 @@ export class RealDeploymentService {
     const functions = await this.discoverServerlessFunctions(buildPath);
     
     for (const func of functions) {
-      const functionId = await containerOrchestrator.deployFunction({
+      const _functionId = await containerOrchestrator.deployFunction({
         name: `${deployment.id}-${func.name}`,
         handler: func.handler,
         runtime: func.runtime,
@@ -430,7 +430,7 @@ export class RealDeploymentService {
     
     try {
       // Use Let's Encrypt for SSL
-      const certResult = await this.requestLetsEncryptCert(
+      const _certResult = await this.requestLetsEncryptCert(
         config.customDomain || deployment.url.replace('https://', '')
       );
       
@@ -578,7 +578,7 @@ CMD ["sh"]`;
     const functions = [];
     
     // Check for common serverless files
-    const patterns = ['api/*.js', 'functions/*.js', 'lambda/*.js'];
+    const _patterns = ['api/*.js', 'functions/*.js', 'lambda/*.js'];
     
     // Simplified function discovery
     try {

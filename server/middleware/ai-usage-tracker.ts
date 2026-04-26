@@ -26,7 +26,7 @@ const logger = createLogger('ai-usage-tracker');
 type SubscriptionTier = 'free' | 'core' | 'teams' | 'enterprise';
 
 // Monthly included quotas (requests)
-const MONTHLY_INCLUDED_REQUESTS: Record<SubscriptionTier, number> = {
+const _MONTHLY_INCLUDED_REQUESTS: Record<SubscriptionTier, number> = {
   free: 100,
   core: 10_000,
   teams: 50_000,
@@ -44,7 +44,7 @@ const RATE_LIMITS_PER_MINUTE: Record<SubscriptionTier, number> = {
 };
 
 // Create rate limiters per tier
-const rateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
+const _rateLimiters: Record<SubscriptionTier, RateLimiterMemory> = {
   free: new RateLimiterMemory({
     points: RATE_LIMITS_PER_MINUTE.free,
     duration: 60, // 1 minute

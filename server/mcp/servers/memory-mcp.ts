@@ -168,7 +168,7 @@ export class MemoryMCPServer {
 
   async deleteNode(id: string): Promise<boolean> {
     try {
-      const result = await db
+      const _result = await db
         .delete(schema.knowledgeGraphNodes)
         .where(eq(schema.knowledgeGraphNodes.id, id));
       

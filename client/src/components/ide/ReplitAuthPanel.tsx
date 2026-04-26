@@ -98,7 +98,7 @@ function ProviderIcon({ provider }: { provider: string }) {
 export function ReplitAuthPanel({ projectId }: { projectId: string }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const numericProjectId = parseInt(projectId, 10);
+  const _numericProjectId = parseInt(projectId, 10);
 
   const { data: config, isLoading } = useQuery<AuthConfig>({
     queryKey: ['/api/project-auth', projectId, 'config'],

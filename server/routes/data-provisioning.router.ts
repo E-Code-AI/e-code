@@ -50,7 +50,7 @@ router.post('/generate', ensureAuthenticated, async (req: Request, res: Response
  */
 router.post('/seed', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
-    const userId = (req.user as any)?.id;
+    const _userId = (req.user as any)?.id;
     const { projectId, seedType } = req.body;
 
     if (!projectId || !seedType) {

@@ -165,7 +165,7 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
         if (data.type === 'pong') {
           return;
         }
-      } catch (err) {
+      } catch (_err) {
       }
     };
 
@@ -173,7 +173,7 @@ export function useRuntimeLogs(options: UseRuntimeLogsOptions): UseRuntimeLogsRe
       onError?.(event);
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = (_event) => {
       setIsConnected(false);
       wsRef.current = null;
       onDisconnect?.();

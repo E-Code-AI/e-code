@@ -149,7 +149,7 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
     }
   };
 
-  const addBreakpoint = async (file: string, line: number) => {
+  const _addBreakpoint = async (file: string, line: number) => {
     try {
       await apiRequest('POST', `/api/debug/${projectId}/breakpoints`, { file, line });
       fetchBreakpoints();

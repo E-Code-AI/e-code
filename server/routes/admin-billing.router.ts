@@ -8,7 +8,7 @@ import { createLogger } from '../utils/logger';
 
 const router = Router();
 const logger = createLogger('admin-billing-router');
-const paymentService = new StripePaymentService();
+const _paymentService = new StripePaymentService();
 
 const stripe: Stripe | null = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
 if (!stripe) logger.warn('STRIPE_SECRET_KEY not configured - billing features will be limited');
@@ -36,7 +36,7 @@ async function ensureAdmin(req: Request, res: Response, next: Function) {
 
 router.get('/plans', ensureAuthenticated, ensureAdmin, async (_req: Request, res: Response) => {
   try {
-    const plans = Object.entries(PLANS).map(([key, plan]) => ({
+    const plans = Object.entries(PLANS).map(([_key, plan]) => ({
       id: plan.tier,
       name: plan.name,
       monthlyPrice: plan.priceMonthly,

@@ -64,7 +64,7 @@ interface DebuggerPanelProps {
 export function DebuggerPanel({ projectId, onFileSelect }: DebuggerPanelProps) {
   const [watchExpression, setWatchExpression] = useState('');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   
   const projectIdStr = String(projectId);
 

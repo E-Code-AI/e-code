@@ -159,7 +159,7 @@ export class ExpoSnackService {
       throw new Error(`No active Snack session for project ${projectId}`);
     }
 
-    const unsubscribe = snack.addStateListener((state, prevState) => {
+    const unsubscribe = snack.addStateListener((state, _prevState) => {
       callback(state);
     });
 

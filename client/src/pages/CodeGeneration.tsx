@@ -77,9 +77,9 @@ const STATS = [
 ];
 
 export default function CodeGeneration() {
-  const [, setLocation] = useLocation();
+  const [, _setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('generator');
-  const [selectedExample, setSelectedExample] = useState<string | null>(null);
+  const [_selectedExample, setSelectedExample] = useState<string | null>(null);
 
   const handleExampleSelect = (example: typeof FEATURED_EXAMPLES[0]) => {
     // Set the example prompt and switch to generator

@@ -61,7 +61,7 @@ Dernier état vérifié:
 - suite panels `desktop-xl-1600`: PASS 23/23
 - suite panels complète 4 viewports: PASS 92/92
 - validations ciblées suite panels: PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment
-- lint zéro warning: BLOCKED (1270 warnings restants après cleanup imports global)
+- lint zéro warning: PASS
 - génération multi-format + hardening + déploiement production: en cours
 
 État précédent:

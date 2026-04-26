@@ -51,7 +51,7 @@ async function validateTerminalConnection(req: IncomingMessage): Promise<{ isVal
       }
     }
   }
-  
+
   const url = new URL(req.url || '', `http://${req.headers.host}`);
   const token = url.searchParams.get('token') || url.searchParams.get('bootstrap');
   if (token) {
@@ -62,7 +62,7 @@ async function validateTerminalConnection(req: IncomingMessage): Promise<{ isVal
       }
     } catch { }
   }
-  
+
   return { isValid: false };
 }
 
@@ -72,9 +72,9 @@ export function setupTerminalWebsocket(server: Server) {
     server,
     path: '/api/terminal/ws'
   });
-  
+
   logger.info('Setting up terminal WebSocket server');
-  
+
   wss.on('connection', async (ws, req) => {
     try {
       // Get the project ID from query params
@@ -116,14 +116,14 @@ export function setupTerminalWebsocket(server: Server) {
       if (!terminalSessions.has(projectId)) {
         // Use stable sessionId for Redis persistence (not timestamp-based)
         const sessionId = `terminal-${projectId}`;
-        
+
         // Try to restore session from Redis first
         const existingSession = await redisSessionManager.getSession(sessionId);
-        
+
         if (existingSession) {
           logger.info(`Restored session from Redis: ${sessionId}`);
         }
-        
+
         // Register with scalability manager
         if (!terminalScalabilityManager.registerSession(sessionId)) {
           ws.close(1008, 'Server at capacity - maximum terminal sessions reached. Please try again later.');
@@ -149,7 +149,7 @@ export function setupTerminalWebsocket(server: Server) {
         };
 
         terminalSessions.set(projectId, newSession);
-        
+
         // Persist to Redis
         await redisSessionManager.saveSession({
           sessionId,
@@ -165,20 +165,20 @@ export function setupTerminalWebsocket(server: Server) {
 
       const terminalSession = terminalSessions.get(projectId)!;
       terminalSession.clients.add(ws);
-      
+
       // FORTUNE 500 MONITORING: Register for heartbeat monitoring
       websocketHeartbeatManager.registerClient(ws, terminalSession.sessionId);
-      
+
       // Send welcome message
       ws.send(JSON.stringify({
         type: 'output',
         data: `Welcome to E-Code Terminal\r\nProject: ${projectId}\r\n\r\n$ `
       }));
-      
+
       // Handle messages from the client
       // SECURITY: Message size limit to prevent memory exhaustion (1MB)
       const MAX_MESSAGE_SIZE = 1024 * 1024;
-      
+
       ws.on('message', async (message) => {
         try {
           // SECURITY: Reject oversized messages
@@ -188,23 +188,23 @@ export function setupTerminalWebsocket(server: Server) {
             ws.send(JSON.stringify({ type: 'error', data: 'Message too large' }));
             return;
           }
-          
+
           const data = JSON.parse(message.toString());
-          
+
           // SECURITY: Validate message has required type field
           if (!data || typeof data !== 'object' || typeof data.type !== 'string') {
             ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
             return;
           }
-          
+
           if (data.type === 'replace_line') {
             // Atomic replace: clear current line and set new command (prevents race conditions)
             const newCommand = data.command || '';
             const currentBufferLength = terminalSession.outputBuffer.length;
-            
+
             // Clear current buffer
             terminalSession.outputBuffer = '';
-            
+
             // Echo backspaces to clear the visual line
             if (currentBufferLength > 0) {
               const clearSequence = '\b \b'.repeat(currentBufferLength);
@@ -213,10 +213,10 @@ export function setupTerminalWebsocket(server: Server) {
                 data: clearSequence
               }));
             }
-            
+
             // Set new command in buffer
             terminalSession.outputBuffer = newCommand;
-            
+
             // Echo new command to terminal
             if (newCommand) {
               broadcast(projectId, JSON.stringify({
@@ -226,7 +226,7 @@ export function setupTerminalWebsocket(server: Server) {
             }
           } else if (data.type === 'input') {
             const input = data.data;
-            
+
             // Process each character in the input
             for (const char of input) {
               // Handle backspace/delete (0x7F)
@@ -244,13 +244,13 @@ export function setupTerminalWebsocket(server: Server) {
               else if (char === '\r' || char === '\n') {
                 const command = terminalSession.outputBuffer.trim();
                 terminalSession.outputBuffer = '';
-                
+
                 // Echo newline
                 broadcast(projectId, JSON.stringify({
                   type: 'output',
                   data: '\r\n'
                 }));
-                
+
                 if (command) {
                   // Add to history (avoid duplicates)
                   if (terminalSession.commandHistory[terminalSession.commandHistory.length - 1] !== command) {
@@ -259,14 +259,14 @@ export function setupTerminalWebsocket(server: Server) {
                       terminalSession.commandHistory.shift();
                     }
                   }
-                  
+
                   // FORTUNE 500 SCALABILITY: Queue command execution via scalability manager
                   await terminalScalabilityManager.queueCommand(
                     terminalSession.sessionId,
                     command,
                     async () => executeCommand(projectId, command)
                   );
-                  
+
                   // Persist session activity to Redis
                   const session = terminalSessions.get(projectId);
                   if (session) {
@@ -295,7 +295,7 @@ export function setupTerminalWebsocket(server: Server) {
             const { cols, rows } = data;
             if (cols && rows) {
               logger.info(`Terminal resize: ${cols}x${rows} for project ${projectId}`);
-              
+
               // Store dimensions in terminal session for potential reconnects
               terminalSession.columns = cols;
               terminalSession.rows = rows;
@@ -304,13 +304,13 @@ export function setupTerminalWebsocket(server: Server) {
             // Send command history to the client
             const index = data.index || 0;
             let historyCommand = '';
-            
+
             if (data.type === 'history_up' && index < terminalSession.commandHistory.length) {
               historyCommand = terminalSession.commandHistory[terminalSession.commandHistory.length - 1 - index];
             } else if (data.type === 'history_down' && index > 0) {
               historyCommand = terminalSession.commandHistory[terminalSession.commandHistory.length - index];
             }
-            
+
             if (historyCommand) {
               ws.send(JSON.stringify({
                 type: 'history',
@@ -324,7 +324,7 @@ export function setupTerminalWebsocket(server: Server) {
             const suggestions = terminalSession.autocompleteSuggestions
               .filter(suggestion => suggestion.startsWith(currentInput))
               .slice(0, 10); // Limit to 10 suggestions
-            
+
             if (suggestions.length > 0) {
               ws.send(JSON.stringify({
                 type: 'autocomplete_suggestions',
@@ -336,21 +336,21 @@ export function setupTerminalWebsocket(server: Server) {
           logger.error(`Error handling terminal message: ${error}`);
         }
       });
-      
+
       // Handle client disconnect
       ws.on('close', async () => {
         logger.info(`Terminal client disconnected for project ${projectId}`);
-        
+
         const session = terminalSessions.get(projectId);
         if (session) {
           session.clients.delete(ws);
-          
+
           if (session.clients.size === 0) {
             logger.info(`No clients left for project ${projectId}, checkpointing session to Redis`);
-            
+
             terminalScalabilityManager.unregisterSession(session.sessionId);
             websocketHeartbeatManager.unregisterClient(ws);
-            
+
             await redisSessionManager.saveSession({
               sessionId: session.sessionId,
               projectId,
@@ -361,30 +361,30 @@ export function setupTerminalWebsocket(server: Server) {
               createdAt: Date.now(),
               lastActivity: Date.now()
             });
-            
+
             terminalSessions.delete(projectId);
           }
         }
       });
-      
+
       // Send initial connection message
       ws.send(JSON.stringify({
         type: 'connected',
         data: `Connected to terminal for project ${projectId}`
       }));
-      
+
     } catch (error) {
       logger.error(`Error setting up terminal WebSocket: ${error}`);
       ws.close(1011, 'Internal error');
     }
   });
-  
+
   return wss;
 }
 
 // Start a terminal process for a project
-async function startProcess(projectId: string, terminalInfo: { 
-  process: ChildProcess | null, 
+async function _startProcess(projectId: string, terminalInfo: {
+  process: ChildProcess | null,
   clients: Set<WebSocket>,
   commandHistory: string[],
   autocompleteSuggestions: string[],
@@ -394,7 +394,7 @@ async function startProcess(projectId: string, terminalInfo: {
   try {
     // Get project details
     const project = await storage.getProject(projectId);
-    
+
     if (!project) {
       broadcastToClients(terminalInfo.clients, {
         type: 'error',
@@ -402,29 +402,29 @@ async function startProcess(projectId: string, terminalInfo: {
       });
       return;
     }
-    
+
     // Get project files to determine the working directory
     const files = await storage.getFilesByProjectId(projectId);
-    
+
     // Create a temporary directory for the project
     const projectDir = await createProjectDir(project, files);
-    
+
     logger.info(`Starting terminal process for project ${projectId} in ${projectDir}`);
-    
+
     // Determine which shell to use based on OS
     const shell = os.platform() === 'win32' ? 'cmd.exe' : 'bash';
     const args = os.platform() === 'win32' ? ['/K', 'cd', projectDir] : [];
-    
+
     // Spawn the process
     const termProcess = spawn(shell, args, {
       cwd: projectDir,
       env: { ...process.env, TERM: 'xterm-256color' },
       stdio: ['pipe', 'pipe', 'pipe']
     });
-    
+
     // Store the process
     terminalInfo.process = termProcess;
-    
+
     // Apply terminal dimensions if they were previously set
     if (terminalInfo.columns && terminalInfo.rows && termProcess.stdin) {
       try {
@@ -434,7 +434,7 @@ async function startProcess(projectId: string, terminalInfo: {
         logger.error(`Failed to apply terminal dimensions on start: ${err}`);
       }
     }
-    
+
     // Handle process output
     termProcess.stdout.on('data', (data: Buffer) => {
       broadcastToClients(terminalInfo.clients, {
@@ -442,47 +442,47 @@ async function startProcess(projectId: string, terminalInfo: {
         data: data.toString()
       });
     });
-    
+
     termProcess.stderr.on('data', (data: Buffer) => {
       broadcastToClients(terminalInfo.clients, {
         type: 'output',
         data: data.toString()
       });
     });
-    
+
     // Handle process exit
     termProcess.on('exit', (code: number | null) => {
       logger.info(`Terminal process exited with code ${code} for project ${projectId}`);
-      
+
       broadcastToClients(terminalInfo.clients, {
         type: 'exit',
         data: `Process exited with code ${code}`
       });
-      
+
       terminalInfo.process = null;
     });
-    
+
     // Notify clients that the process has started
     broadcastToClients(terminalInfo.clients, {
       type: 'started',
       data: `Terminal started in ${projectDir}`
     });
-    
+
   } catch (error) {
     logger.error(`Error starting terminal process: ${error}`);
-    
+
     broadcastToClients(terminalInfo.clients, {
       type: 'error',
       data: `Failed to start terminal: ${error}`
     });
-    
+
     terminalInfo.process = null;
   }
 }
 
 // Stop a terminal process
-function stopProcess(projectId: string, terminalInfo: { 
-  process: ChildProcess | null, 
+function _stopProcess(projectId: string, terminalInfo: {
+  process: ChildProcess | null,
   clients: Set<WebSocket>,
   commandHistory: string[],
   autocompleteSuggestions: string[],
@@ -491,11 +491,11 @@ function stopProcess(projectId: string, terminalInfo: {
 }) {
   if (terminalInfo.process) {
     logger.info(`Stopping terminal process for project ${projectId}`);
-    
+
     // Kill the process
     terminalInfo.process.kill();
     terminalInfo.process = null;
-    
+
     // Notify clients
     broadcastToClients(terminalInfo.clients, {
       type: 'stopped',
@@ -514,7 +514,7 @@ interface TerminalMessage {
 // Broadcast a message to all connected clients
 function broadcastToClients(clients: Set<WebSocket>, message: TerminalMessage): void {
   const messageStr = JSON.stringify(message);
-  
+
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(messageStr);
@@ -531,9 +531,9 @@ async function createProjectDir(project: { id: number | string }, files: File[])
 async function executeCommand(projectId: string, command: string) {
   const session = terminalSessions.get(projectId);
   if (!session) return;
-  
+
   logger.info(`Executing command for project ${projectId}: ${command}`);
-  
+
   try {
     // Handle built-in commands
     if (command === 'clear') {
@@ -546,20 +546,20 @@ async function executeCommand(projectId: string, command: string) {
       }));
       return;
     }
-    
+
     if (command.startsWith('cd ')) {
       const newDir = command.substring(3).trim();
-      
+
       // SECURITY: Robust path traversal protection using path.resolve() + path.relative()
       // This handles: .., ../, ..;, URL encoding, symlinks, case variations, etc.
       // Anchor to per-project directory to prevent cross-project traversal
       const projectRoot = path.resolve(`/tmp/projects/${projectId}`);
       const baseDir = session.currentDirectory;
       const resolvedPath = path.resolve(baseDir, newDir);
-      
+
       // Use path.relative to check if the resolved path is within project root
       const relativePath = path.relative(projectRoot, resolvedPath);
-      
+
       // SECURITY: Block if relative path escapes project root (starts with ..) or is absolute
       // This prevents cross-project traversal even within the same workspace
       if (relativePath.startsWith('..') || path.isAbsolute(relativePath)) {
@@ -569,7 +569,7 @@ async function executeCommand(projectId: string, command: string) {
         }));
         return;
       }
-      
+
       session.currentDirectory = resolvedPath;
       broadcast(projectId, JSON.stringify({
         type: 'output',
@@ -577,18 +577,18 @@ async function executeCommand(projectId: string, command: string) {
       }));
       return;
     }
-    
+
     // Get project info for language detection
     const project = await storage.getProject(projectId);
     const language = project?.language || 'nodejs';
-    
+
     // Execute command in container
     const result = await containerExecutor.execute({
       language,
       code: command,
       timeout: 30000 // 30 second timeout
     });
-    
+
     // Send output
     if (result.stdout) {
       broadcast(projectId, JSON.stringify({
@@ -596,20 +596,20 @@ async function executeCommand(projectId: string, command: string) {
         data: result.stdout
       }));
     }
-    
+
     if (result.stderr) {
       broadcast(projectId, JSON.stringify({
         type: 'output',
         data: result.stderr
       }));
     }
-    
+
     // Send prompt
     broadcast(projectId, JSON.stringify({
       type: 'output',
       data: '\r\n$ '
     }));
-    
+
   } catch (error) {
     logger.error(`Failed to execute command for project ${projectId}:`, error);
     broadcast(projectId, JSON.stringify({
@@ -623,7 +623,7 @@ async function executeCommand(projectId: string, command: string) {
 function broadcast(projectId: string, message: string) {
   const session = terminalSessions.get(projectId);
   if (!session) return;
-  
+
   session.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(message);

@@ -164,7 +164,7 @@ export function UnifiedAIInterface({
 
         for (const line of lines) {
           if (line.startsWith("event: ")) {
-            const eventType = line.slice(7).trim();
+            const _eventType = line.slice(7).trim();
             continue;
           }
           if (line.startsWith("data: ")) {

@@ -198,8 +198,8 @@ type BudgetLimit = typeof budgetLimits.$inferSelect;
 type InsertBudgetLimit = z.infer<typeof insertBudgetLimitSchema>;
 type UsageAlert = typeof usageAlerts.$inferSelect;
 type InsertUsageAlert = z.infer<typeof insertUsageAlertSchema>;
-type Alert = typeof alerts.$inferSelect;
-type InsertAlert = z.infer<typeof insertAlertSchema>;
+type _Alert = typeof alerts.$inferSelect;
+type _InsertAlert = z.infer<typeof insertAlertSchema>;
 type AutoscaleDeployment = typeof autoscaleDeployments.$inferSelect;
 type InsertAutoscaleDeployment = z.infer<typeof insertAutoscaleDeploymentSchema>;
 type ReservedVmDeployment = typeof reservedVmDeployments.$inferSelect;
@@ -213,7 +213,7 @@ type InsertObjectStorageBucket = z.infer<typeof insertObjectStorageBucketSchema>
 type ObjectStorageFile = typeof objectStorageFiles.$inferSelect;
 type InsertObjectStorageFile = z.infer<typeof insertObjectStorageFileSchema>;
 type KeyValueStore = typeof keyValueStore.$inferSelect;
-type InsertKeyValueStore = z.infer<typeof insertKeyValueStoreSchema>;
+type _InsertKeyValueStore = z.infer<typeof insertKeyValueStoreSchema>;
 type AiConversation = typeof aiConversations.$inferSelect;
 type InsertAiConversation = z.infer<typeof insertAiConversationSchema>;
 type DynamicIntelligence = typeof dynamicIntelligence.$inferSelect;
@@ -233,7 +233,7 @@ type ProjectImport = typeof projectImports.$inferSelect; // Added type for Proje
 type NotificationRecord = typeof pushNotifications.$inferSelect;
 type InsertNotificationRecord = z.infer<typeof insertNotificationSchema>;
 type NotificationPreferenceRecord = typeof notificationPreferences.$inferSelect;
-type InsertNotificationPreferenceRecord = z.infer<typeof insertNotificationPreferenceSchema>;
+type _InsertNotificationPreferenceRecord = z.infer<typeof insertNotificationPreferenceSchema>;
 type NotificationPreferencesPayload = Partial<{
   email: Record<string, any> | null | undefined;
   push: Record<string, any> | null | undefined;
@@ -399,7 +399,7 @@ const normalizeStringArray = (value: unknown, fallback: string[] = []): string[]
   return [String(value)];
 };
 
-const toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | null | undefined => {
+const _toMutableArray = <T>(value: readonly T[] | T[] | null | undefined): T[] | null | undefined => {
   if (Array.isArray(value)) {
     return [...value];
   }
@@ -2012,7 +2012,7 @@ export class DatabaseStorage implements IStorage {
     return null;
   }
 
-  async trackAIUsage(userId: string | number, tokens: number, mode: string): Promise<void> {
+  async trackAIUsage(_userId: string | number, _tokens: number, _mode: string): Promise<void> {
     // For now, just log the usage
     // AI usage tracked for user
   }
@@ -2023,7 +2023,7 @@ export class DatabaseStorage implements IStorage {
     return { id: Date.now(), ...record, createdAt: new Date() };
   }
 
-  async updateUserAiTokens(userId: string | number, tokensUsed: number): Promise<void> {
+  async updateUserAiTokens(_userId: string | number, _tokensUsed: number): Promise<void> {
     // For now, just log the token usage
     // Updated AI tokens for user
   }
@@ -2160,7 +2160,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Audit log operations
-  async getAuditLogs(filters: { userId: string | number; action?: string; dateRange?: string }): Promise<any[]> {
+  async getAuditLogs(_filters: { userId: string | number; action?: string; dateRange?: string }): Promise<any[]> {
     // For now, return empty array - in production, this would query an audit logs table
     return [];
   }
@@ -2302,7 +2302,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Theme operations
-  async getUserThemeSettings(userId: string | number): Promise<any> {
+  async getUserThemeSettings(_userId: string | number): Promise<any> {
     // In production, query user_theme_settings table
     return {
       theme: 'dark',
@@ -2317,7 +2317,7 @@ export class DatabaseStorage implements IStorage {
     return settings;
   }
 
-  async getInstalledThemes(userId: string | number): Promise<any[]> {
+  async getInstalledThemes(_userId: string | number): Promise<any[]> {
     // In production, query user_installed_themes table
     return [
       { id: 'dark', name: 'Dark', installed: true },
@@ -2325,12 +2325,12 @@ export class DatabaseStorage implements IStorage {
     ];
   }
 
-  async installTheme(userId: string | number, themeId: string): Promise<void> {
+  async installTheme(_userId: string | number, _themeId: string): Promise<void> {
     // In production, insert into user_installed_themes table
     // Installing theme for user
   }
 
-  async uninstallTheme(userId: string | number, themeId: string): Promise<void> {
+  async uninstallTheme(_userId: string | number, _themeId: string): Promise<void> {
     // In production, delete from user_installed_themes table
     // Uninstalling theme for user
   }
@@ -2377,7 +2377,7 @@ export class DatabaseStorage implements IStorage {
 
   // Checkpoints operations
   async createCheckpoint(checkpoint: any): Promise<Checkpoint> {
-    const filesSnapshot = await this.getFilesByProjectId(checkpoint.projectId);
+    const _filesSnapshot = await this.getFilesByProjectId(checkpoint.projectId);
     const [newCheckpoint] = await this.db.insert(checkpoints).values({
       ...checkpoint,
       // Store files snapshot in metadata field instead
@@ -2390,7 +2390,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Agent operations
-  async getAgentWorkSteps(projectId: string | number, sessionId: string): Promise<any[]> {
+  async getAgentWorkSteps(_projectId: string | number, _sessionId: string): Promise<any[]> {
     // For now, return empty array as we don't have a dedicated table for work steps
     // In a real implementation, this would query a work_steps table
     return [];
@@ -2859,12 +2859,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Deployment methods
-  async saveDeployment(deployment: any): Promise<void> {
+  async saveDeployment(_deployment: any): Promise<void> {
     // Store deployment in memory or database
     // Saving deployment
   }
 
-  async getDeployment(deploymentId: string): Promise<any | null> {
+  async getDeployment(_deploymentId: string): Promise<any | null> {
     // Retrieve deployment from storage
     return null;
   }
@@ -2872,7 +2872,7 @@ export class DatabaseStorage implements IStorage {
 
 
   // Collaboration methods
-  async getProjectCollaborators(projectId: string | number): Promise<any[]> {
+  async getProjectCollaborators(_projectId: string | number): Promise<any[]> {
     // Return empty array for now - proper implementation would use a collaborators table
     return [];
   }
@@ -2926,7 +2926,7 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  async likeProject(projectId: string | number, userId: string | number): Promise<void> {
+  async likeProject(projectId: string | number, _userId: string | number): Promise<void> {
     // Placeholder - would use a project_likes table
     await this.db
       .update(projects)
@@ -2934,14 +2934,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(projects.id, _num(projectId)));
   }
 
-  async unlikeProject(projectId: string | number, userId: string | number): Promise<void> {
+  async unlikeProject(projectId: string | number, _userId: string | number): Promise<void> {
     await this.db
       .update(projects)
       .set({ likes: sql`GREATEST(${projects.likes} - 1, 0)` })
       .where(eq(projects.id, _num(projectId)));
   }
 
-  async isProjectLiked(projectId: string | number, userId: string | number): Promise<boolean> {
+  async isProjectLiked(_projectId: string | number, _userId: string | number): Promise<boolean> {
     // Placeholder - would check project_likes table
     return false;
   }
@@ -2951,7 +2951,7 @@ export class DatabaseStorage implements IStorage {
     return project?.likes || 0;
   }
 
-  async trackProjectView(projectId: string | number, userId: string | number): Promise<void> {
+  async trackProjectView(projectId: string | number, _userId: string | number): Promise<void> {
     await this.incrementProjectViews(projectId);
   }
 
@@ -5955,7 +5955,7 @@ async function initSessionStore() {
           console.warn('[Session Store] TLS connection failed, retrying without TLS');
           try { redisClient.removeAllListeners(); redisClient.disconnect(); } catch (_) {}
           const plainUrl = redisUrl.replace('rediss://', 'redis://');
-          const { tls, ...plainOpts } = redisOpts;
+          const { tls: _tls, ...plainOpts } = redisOpts;
           redisClient = new ioredis.default(plainUrl, plainOpts);
           redisClient.on('error', (err) => {
             if (!sessionStoreErrorLogged) {

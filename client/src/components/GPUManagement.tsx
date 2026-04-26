@@ -6,7 +6,7 @@ interface GPUManagementProps {
   projectId: number;
 }
 
-export function GPUManagement({ projectId }: GPUManagementProps) {
+export function GPUManagement({ projectId: _projectId }: GPUManagementProps) {
   return (
     <Card>
       <CardHeader>

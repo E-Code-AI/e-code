@@ -131,7 +131,7 @@ export default function Home() {
       setIsCreateModalOpen(false);
       setIsBuildModeOpen(false);
       
-      const isAIPrompt = variables.prompt.length > 20;
+      const _isAIPrompt = variables.prompt.length > 20;
       const promptToUse = variables.prompt;
       
       // Handle redirect based on response type

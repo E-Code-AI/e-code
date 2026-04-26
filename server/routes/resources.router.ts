@@ -72,8 +72,8 @@ function getMemoryMetrics(): { used: number; total: number; percentage: number }
 
 function getStorageMetrics(): { used: number; total: number; percentage: number } {
   try {
-    const fs = require('fs');
-    const path = require('path');
+    const _fs = require('fs');
+    const _path = require('path');
     const { execSync } = require('child_process');
     
     const dfOutput = execSync('df -B1 / 2>/dev/null || echo "0 0 0"', { encoding: 'utf-8' });

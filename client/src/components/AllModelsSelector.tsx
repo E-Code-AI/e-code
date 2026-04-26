@@ -333,7 +333,7 @@ export function AllModelsSelector() {
         };
       }
 
-      const data = await apiRequest('POST', endpoint, payload);
+      const _data = await apiRequest('POST', endpoint, payload);
 
       toast({
         title: "Model Test Successful",

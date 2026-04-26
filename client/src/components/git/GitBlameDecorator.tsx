@@ -272,7 +272,7 @@ export function GitBlameDecorator({
   enabled = true
 }: GitBlameDecoratorProps) {
   const [blameData, setBlameData] = useState<BlameInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, setIsLoading] = useState(false);
   const prevEnabledRef = useRef(enabled);
 
   useEffect(() => {

@@ -92,7 +92,7 @@ router.use(aiUsageTracker);
 // Helper to validate and setup SSE headers (Fortune 500-grade reliability with 403 rejection)
 const setupSSE = (res: any, req?: any): ((cleanupFn?: () => void) => void) | null => {
   const origin = req?.headers?.origin;
-  const isDevMode = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+  const _isDevMode = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
   const allowedOrigins = [
     'https://e-code.ai',
     'https://www.e-code.ai',
@@ -507,7 +507,7 @@ Focus on planning, design, and collaboration - not implementation.`
       tokens: 0 
     });
     
-    let fullResponse = '';
+    let _fullResponse = '';
     
     // ✅ Stream based on provider and CAPTURE token usage for billing
     // ✅ FORTUNE 500: Pass abort signal and connection state for graceful cleanup
@@ -636,7 +636,7 @@ Focus on planning, design, and collaboration - not implementation.`
             const { exec } = await import('child_process');
             const { promisify } = await import('util');
             const fs = await import('fs/promises');
-            const execAsync = promisify(exec);
+            const _execAsync = promisify(exec);
             
             const projectIdNum = Number(projectId);
             
@@ -739,8 +739,8 @@ Focus on planning, design, and collaboration - not implementation.`
             let conversationSnapshot: Array<{ role: string; content: string; timestamp?: string }> | undefined;
             if (conversationId) {
               try {
-                const { aiConversations, agentMessages } = await import('../../shared/schema');
-                const { eq, desc } = await import('drizzle-orm');
+                const { aiConversations: _aiConversations, agentMessages } = await import('../../shared/schema');
+                const { eq, desc: _desc } = await import('drizzle-orm');
                 
                 // Get conversation messages from agentMessages table
                 const messages = await db
@@ -913,7 +913,7 @@ async function streamOpenAI(res: any, messages: any[], options: any) {
   
   let fullContent = '';
   let toolCalls: any[] = [];
-  let currentToolCall: any = null;
+  let _currentToolCall: any = null;
   let tokensInput = 0;
   let tokensOutput = 0;
   

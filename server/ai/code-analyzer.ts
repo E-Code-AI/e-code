@@ -90,7 +90,7 @@ export interface CodeSuggestion {
 export class CodeAnalyzer {
   private typeChecker?: ts.TypeChecker;
 
-  async analyzeCode(code: string, language: string, filePath?: string): Promise<CodeContext> {
+  async analyzeCode(code: string, language: string, _filePath?: string): Promise<CodeContext> {
     const context: CodeContext = {
       language,
       imports: [],

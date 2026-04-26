@@ -4,7 +4,7 @@ import { db } from '../db';
 
 // Check if running in test/development environment
 const isTestEnv = process.env.NODE_ENV === 'test';
-const isDevelopment = process.env.NODE_ENV === 'development';
+const _isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Initialize SendGrid with API key

@@ -58,7 +58,7 @@ export function SplitsEditorLayout({
   onFileRename,
   projectName = 'Untitled Project',
   projectId,
-  editorContent,
+  editorContent: _editorContent,
   terminalContent,
   previewContent,
   consoleContent,
@@ -70,7 +70,7 @@ export function SplitsEditorLayout({
   
   // Global layout state store (Zustand)
   const {
-    deviceType,
+    deviceType: _deviceType,
     setDeviceType,
     activeTool,
     setActiveTool,
@@ -176,7 +176,7 @@ export function SplitsEditorLayout({
         togglePanel('left');
       }
     },
-    onNavigate: (path) => {
+    onNavigate: (_path) => {
       // Navigation handler
     },
   });
@@ -269,14 +269,14 @@ export function SplitsEditorLayout({
               <div className="h-full bg-[var(--ecode-editor-bg)] flex flex-col">
                 <ReplitBreadcrumbs
                   filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-                  onNavigate={(path) => {}}
+                  onNavigate={(_path) => {}}
                 />
                 <div className="flex-1 overflow-hidden">
                   <MultiTabEditor
                     files={files}
                     activeFileId={activeFileId}
                     onFileSelect={onFileSelect}
-                    onChange={(fileId, content) => {}}
+                    onChange={(_fileId, _content) => {}}
                   />
                 </div>
               </div>
@@ -478,7 +478,7 @@ export function SplitsEditorLayout({
                     {/* Breadcrumbs Navigation */}
                     <ReplitBreadcrumbs
                       filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-                      onNavigate={(path) => {}}
+                      onNavigate={(_path) => {}}
                     />
                     
                     {/* Multi-Tab Editor - One Monaco instance per open tab */}
@@ -487,7 +487,7 @@ export function SplitsEditorLayout({
                         files={files}
                         activeFileId={activeFileId}
                         onFileSelect={onFileSelect}
-                        onChange={(fileId, content) => {
+                        onChange={(_fileId, _content) => {
                           // File updates handled by MultiTabEditor's onChange callback
                           // Parent can implement auto-save or debounced save to API
                         }}
@@ -548,7 +548,7 @@ export function SplitsEditorLayout({
                       <TabsContent value="problems" className="flex-1 m-0 overflow-hidden">
                         <ReplitProblemsPanel 
                           projectId={projectId}
-                          onFileNavigate={(file, line, column) => {
+                          onFileNavigate={(_file, _line, _column) => {
                             // File navigation requires parent component integration
                             // Parent can implement this by opening file and scrolling to line
                           }}
@@ -581,7 +581,7 @@ export function SplitsEditorLayout({
                 {/* Breadcrumbs when bottom panel is closed */}
                 <ReplitBreadcrumbs
                   filePath={files?.find(f => f.id === activeFileId)?.path || ''}
-                  onNavigate={(path) => {}}
+                  onNavigate={(_path) => {}}
                 />
                 
                 {/* Multi-Tab Editor - One Monaco instance per open tab */}
@@ -590,7 +590,7 @@ export function SplitsEditorLayout({
                     files={files}
                     activeFileId={activeFileId}
                     onFileSelect={onFileSelect}
-                    onChange={(fileId, content) => {
+                    onChange={(_fileId, _content) => {
                       // File updates handled by MultiTabEditor's onChange callback
                       // Parent can implement auto-save or debounced save to API
                     }}

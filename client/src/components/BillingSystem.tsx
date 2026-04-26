@@ -159,7 +159,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   const [plansLoading, setPlansLoading] = useState(true);
   const [selectedTier, setSelectedTier] = useState<string>('core');
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [_showPaymentDialog, _setShowPaymentDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('month');
   const { toast } = useToast();
@@ -208,7 +208,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   };
 
   const plans = getPlansForDisplay();
-  const selectedPlan = getSelectedPlanId();
+  const _selectedPlan = getSelectedPlanId();
 
   const loadSubscription = async () => {
     try {

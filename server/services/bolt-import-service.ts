@@ -8,7 +8,7 @@ interface BoltImportResponse {
 }
 
 export class BoltImportService {
-  async importFromUrl(url: string, userId: number, projectName?: string): Promise<BoltImportResponse> {
+  async importFromUrl(_url: string, _userId: number, _projectName?: string): Promise<BoltImportResponse> {
     logger.info('Bolt import feature requested - this feature is planned for a future release');
     
     return {
@@ -18,7 +18,7 @@ export class BoltImportService {
     };
   }
 
-  async importFromArchive(fileBuffer: Buffer, userId: number, projectName?: string): Promise<BoltImportResponse> {
+  async importFromArchive(_fileBuffer: Buffer, _userId: number, _projectName?: string): Promise<BoltImportResponse> {
     logger.info('Bolt archive import feature requested - this feature is planned for a future release');
     
     return {

@@ -85,13 +85,13 @@ interface RealTimeCollaborationProps {
 }
 
 // Generate a consistent color for collaborators based on user ID
-const generateCollaboratorColor = (userId?: string | number) => {
+const _generateCollaboratorColor = (userId?: string | number) => {
   if (!userId) return CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)].bg;
   return getCursorColor(userId).bg;
 };
 
 // Get full cursor style with background and text colors
-const getCollaboratorCursorStyle = (userId?: string | number) => {
+const _getCollaboratorCursorStyle = (userId?: string | number) => {
   if (!userId) return getCursorStyle('default');
   return getCursorStyle(userId);
 };
@@ -100,8 +100,8 @@ export function RealTimeCollaboration({
   projectId,
   fileId,
   editor,
-  onCollaboratorJoin,
-  onCollaboratorLeave,
+  onCollaboratorJoin: _onCollaboratorJoin,
+  onCollaboratorLeave: _onCollaboratorLeave,
 }: RealTimeCollaborationProps) {
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
   const [activeTab, setActiveTab] = useState<'users' | 'chat' | 'call'>('users');

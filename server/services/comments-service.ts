@@ -60,7 +60,7 @@ export class CommentsService {
     return this.storage.getFileComments(projectId, fileId);
   }
 
-  async resolveComment(commentId: number, userId: number): Promise<void> {
+  async resolveComment(commentId: number, _userId: number): Promise<void> {
     await this.storage.updateComment(commentId, { resolved: true, updatedAt: new Date() });
   }
 
@@ -96,11 +96,11 @@ export class CommentsService {
     await this.storage.updateAnnotation(annotationId, { status, updatedAt: new Date() });
   }
 
-  async deleteComment(commentId: number, userId: number): Promise<void> {
+  async deleteComment(commentId: number, _userId: number): Promise<void> {
     await this.storage.deleteComment(commentId);
   }
 
-  async deleteAnnotation(annotationId: number, userId: number): Promise<void> {
+  async deleteAnnotation(annotationId: number, _userId: number): Promise<void> {
     await this.storage.deleteAnnotation(annotationId);
   }
 }

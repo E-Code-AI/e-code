@@ -447,7 +447,7 @@ export class AgentPreferencesService {
     highPowerMode?: boolean;
     taskComplexity?: 'simple' | 'medium' | 'complex';
   }): AiModel {
-    const { preferredModel, extendedThinking, highPowerMode, taskComplexity } = settings;
+    const { preferredModel, extendedThinking, highPowerMode, taskComplexity: _taskComplexity } = settings;
 
     // If high power mode is on, upgrade to a high-power model
     if (highPowerMode) {

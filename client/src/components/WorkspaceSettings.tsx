@@ -16,7 +16,7 @@ interface WorkspaceSettingsProps {
   projectId?: number;
 }
 
-export function WorkspaceSettings({ projectId }: WorkspaceSettingsProps) {
+export function WorkspaceSettings({ projectId: _projectId }: WorkspaceSettingsProps) {
   const [agentAudioNotification, setAgentAudioNotification] = useState(false);
   const [agentPushNotification, setAgentPushNotification] = useState(true);
   const [assistantPushNotification, setAssistantPushNotification] = useState(true);

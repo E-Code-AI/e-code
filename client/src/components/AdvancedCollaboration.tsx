@@ -107,7 +107,7 @@ export function AdvancedCollaboration() {
   }, [projects, selectedProject]);
 
   // Fetch collaborators from API
-  const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
+  const { data: collaboratorsData, isLoading: _isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
     queryKey: ['/api/collaboration', selectedProject, 'collaborators'],
     enabled: !!selectedProject,
   });

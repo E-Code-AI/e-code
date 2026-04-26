@@ -69,7 +69,7 @@ export function ReplitResourceMonitor({ projectId, className }: ResourceMonitorP
   const [timeRange, setTimeRange] = useState<'1m' | '5m' | '15m' | '1h'>('5m');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const chartRef = useRef<HTMLDivElement>(null);
+  const _chartRef = useRef<HTMLDivElement>(null);
 
   // Fetch current metrics
   const { data: currentMetrics } = useQuery<ResourceMetrics>({

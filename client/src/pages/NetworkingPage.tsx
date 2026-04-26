@@ -118,14 +118,14 @@ interface NetworkNode {
   connections: string[];
 }
 
-const firewallRules: FirewallRule[] = [];
-const vpcPeerings: VPCPeering[] = [];
-const dnsRecords: DNSRecord[] = [];
-const sslCertificates: SSLCertificate[] = [];
-const zeroTrustPolicies: ZeroTrustPolicy[] = [];
-const portForwards: PortForward[] = [];
-const trafficStats: TrafficStats | null = null;
-const networkNodes: NetworkNode[] = [];
+const _firewallRules: FirewallRule[] = [];
+const _vpcPeerings: VPCPeering[] = [];
+const _dnsRecords: DNSRecord[] = [];
+const _sslCertificates: SSLCertificate[] = [];
+const _zeroTrustPolicies: ZeroTrustPolicy[] = [];
+const _portForwards: PortForward[] = [];
+const _trafficStats: TrafficStats | null = null;
+const _networkNodes: NetworkNode[] = [];
 
 function EmptyState({ 
   icon: Icon, 
@@ -156,8 +156,8 @@ export default function NetworkingPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('topology');
   const [showAddRuleDialog, setShowAddRuleDialog] = useState(false);
-  const [showAddDNSDialog, setShowAddDNSDialog] = useState(false);
-  const [showAddPolicyDialog, setShowAddPolicyDialog] = useState(false);
+  const [_showAddDNSDialog, _setShowAddDNSDialog] = useState(false);
+  const [_showAddPolicyDialog, _setShowAddPolicyDialog] = useState(false);
 
   const [newRule, setNewRule] = useState<Partial<FirewallRule>>({
     name: '',
@@ -171,7 +171,7 @@ export default function NetworkingPage() {
     enabled: true,
   });
 
-  const [newDNSRecord, setNewDNSRecord] = useState<Partial<DNSRecord>>({
+  const [_newDNSRecord, _setNewDNSRecord] = useState<Partial<DNSRecord>>({
     name: '',
     type: 'A',
     value: '',
@@ -179,7 +179,7 @@ export default function NetworkingPage() {
     enabled: true,
   });
 
-  const handleCopyToClipboard = (text: string) => {
+  const _handleCopyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: 'Copied to clipboard', description: text });
   };
@@ -194,11 +194,11 @@ export default function NetworkingPage() {
     setNewRule({ name: '', priority: 100, direction: 'ingress', action: 'allow', protocol: 'tcp', sourceIp: '0.0.0.0/0', destinationIp: '*', port: '443', enabled: true });
   };
 
-  const handleDeleteRule = (rule: FirewallRule) => {
+  const _handleDeleteRule = (rule: FirewallRule) => {
     toast({ title: 'Rule deleted', description: `Firewall rule "${rule.name}" has been deleted.` });
   };
 
-  const handleToggleRule = (rule: FirewallRule) => {
+  const _handleToggleRule = (rule: FirewallRule) => {
     toast({ title: rule.enabled ? 'Rule disabled' : 'Rule enabled', description: `Firewall rule "${rule.name}" has been ${rule.enabled ? 'disabled' : 'enabled'}.` });
   };
 
@@ -215,9 +215,9 @@ export default function NetworkingPage() {
 
   const inputClassName = "min-h-[44px] border-border bg-card text-foreground placeholder:text-muted-foreground focus:ring-primary/20 focus:border-primary/40 focus:ring-2 transition-all duration-200";
   const cardClassName = "border border-border bg-card shadow-sm";
-  const switchClassName = "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted";
+  const _switchClassName = "data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted";
 
-  const getStatusBadge = (status: string) => {
+  const _getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; label: string }> = {
       active: { variant: 'default', label: 'Active' },
       healthy: { variant: 'default', label: 'Healthy' },

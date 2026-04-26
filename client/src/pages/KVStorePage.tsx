@@ -75,7 +75,7 @@ export default function KVStorePage() {
   });
   const [importData, setImportData] = useState('');
 
-  const { data: entries = [], isLoading, error: entriesError } = useQuery<KVEntry[]>({
+  const { data: entries = [], isLoading, error: _entriesError } = useQuery<KVEntry[]>({
     queryKey: ['/api/kv-store'],
     queryFn: () => apiRequest('GET', '/api/kv-store')
   });
@@ -138,7 +138,7 @@ export default function KVStorePage() {
     }
   });
 
-  const bulkDeleteMutation = useMutation({
+  const _bulkDeleteMutation = useMutation({
     mutationFn: async (keys: string[]) => {
       return apiRequest('DELETE', '/api/kv-store/bulk', { keys });
     },

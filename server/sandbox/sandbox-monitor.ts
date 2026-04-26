@@ -511,7 +511,7 @@ export class SandboxMonitor extends EventEmitter {
   /**
    * Archive old log files
    */
-  private async archiveOldLogFiles(cutoffDate: Date): Promise<void> {
+  private async archiveOldLogFiles(_cutoffDate: Date): Promise<void> {
     // Implementation for archiving old log files
     // This would typically involve reading log files, filtering by date,
     // and moving old entries to archive files

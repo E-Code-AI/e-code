@@ -90,7 +90,7 @@ const ResponsiveWebPreview = instrumentedLazy(() => import('@/components/editor/
 const AgentActionsPanel = instrumentedLazy(() => import('@/components/ide/AgentActionsPanel').then(mod => ({ default: mod.AgentActionsPanel })), 'AgentActionsPanel');
 const ToolsPanel = instrumentedLazy(() => import('@/components/ide/ToolsPanel').then(mod => ({ default: mod.ToolsPanel })), 'ToolsPanel');
 
-const EnhancedMobileFileExplorer = instrumentedLazy(() => import('@/components/mobile/EnhancedMobileFileExplorer').then(mod => ({ default: mod.EnhancedMobileFileExplorer })), 'EnhancedMobileFileExplorer');
+const _EnhancedMobileFileExplorer = instrumentedLazy(() => import('@/components/mobile/EnhancedMobileFileExplorer').then(mod => ({ default: mod.EnhancedMobileFileExplorer })), 'EnhancedMobileFileExplorer');
 const LazyMobileCodeEditor = instrumentedLazy(() => import('@/components/mobile/LazyMobileCodeEditor').then(mod => ({ default: mod.LazyMobileCodeEditor })), 'LazyMobileCodeEditor');
 const EnhancedMobileTerminal = instrumentedLazy(() => import('@/components/mobile/EnhancedMobileTerminal').then(mod => ({ default: mod.EnhancedMobileTerminal })), 'EnhancedMobileTerminal');
 const MobilePreviewPanel = instrumentedLazy(() => import('@/components/mobile/MobilePreviewPanel').then(mod => ({ default: mod.MobilePreviewPanel })), 'MobilePreviewPanel');
@@ -204,7 +204,7 @@ function UnifiedIDELayout({
 
   const {
     project,
-    projectLanguage,
+    projectLanguage: _projectLanguage,
     projectName,
     projectDescription,
     files,
@@ -220,7 +220,7 @@ function UnifiedIDELayout({
     isRunning,
     setIsRunning,
     executionId,
-    setExecutionId,
+    setExecutionId: _setExecutionId,
     activeActivityItem,
     setActiveActivityItem,
     isSidebarCollapsed,
@@ -253,28 +253,28 @@ function UnifiedIDELayout({
 
     filesRaw,
     // Real integrations
-    activeFileId,
-    activeFileName,
-    activeFileContent,
-    activeFileLanguage,
+    activeFileId: _activeFileId,
+    activeFileName: _activeFileName,
+    activeFileContent: _activeFileContent,
+    activeFileLanguage: _activeFileLanguage,
     fileContents,
-    dirtyFiles,
+    dirtyFiles: _dirtyFiles,
     handleCodeChange,
     handleCursorChange,
-    wsConnected,
-    wsStatus,
+    wsConnected: _wsConnected,
+    wsStatus: _wsStatus,
     livePreviewUrl,
-    connectionQuality,
-    remoteUsers,
-    activeYtext,
-    remoteAwareness,
-    collabConnected,
-    logs,
-    currentConsoleRunId,
-    pendingAIMessage,
+    connectionQuality: _connectionQuality,
+    remoteUsers: _remoteUsers,
+    activeYtext: _activeYtext,
+    remoteAwareness: _remoteAwareness,
+    collabConnected: _collabConnected,
+    logs: _logs,
+    currentConsoleRunId: _currentConsoleRunId,
+    pendingAIMessage: _pendingAIMessage,
     setPendingAIMessage,
     userPrefs,
-    creditBalance,
+    creditBalance: _creditBalance,
     // New exports
     updateProjectMutation,
     visibilityMutation,
@@ -283,20 +283,20 @@ function UnifiedIDELayout({
     frameworkPublishMutation,
     frameworkUnpublishMutation,
     deploySettingsMutation,
-    forkMutation,
-    uploadFileMutation,
+    forkMutation: _forkMutation,
+    uploadFileMutation: _uploadFileMutation,
     createArtifactMutation,
-    applyVisualEditMutation,
+    applyVisualEditMutation: _applyVisualEditMutation,
     // Workspace management
-    wsLoading,
-    runnerOnline,
-    handleStartWorkspace,
-    handleStopWorkspace,
+    wsLoading: _wsLoading,
+    runnerOnline: _runnerOnline,
+    handleStartWorkspace: _handleStartWorkspace,
+    handleStopWorkspace: _handleStopWorkspace,
     // Visual editor
-    visualEditorActive,
-    selectedVEElement,
-    setSelectedVEElement,
-    handleVisualEditorToggle,
+    visualEditorActive: _visualEditorActive,
+    selectedVEElement: _selectedVEElement,
+    setSelectedVEElement: _setSelectedVEElement,
+    handleVisualEditorToggle: _handleVisualEditorToggle,
     // Dialog state
     projectSettingsOpen,
     setProjectSettingsOpen,
@@ -322,16 +322,16 @@ function UnifiedIDELayout({
     newArtifactName,
     setNewArtifactName,
     newArtifactType,
-    setNewArtifactType,
+    setNewArtifactType: _setNewArtifactType,
     // Framework
     frameworkCheckbox,
     setFrameworkCheckbox,
     frameworkDesc,
     setFrameworkDesc,
     frameworkCategory,
-    setFrameworkCategory,
+    setFrameworkCategory: _setFrameworkCategory,
     frameworkCoverUrl,
-    setFrameworkCoverUrl,
+    setFrameworkCoverUrl: _setFrameworkCoverUrl,
     // Deploy dialog
     deployIsPrivate,
     setDeployIsPrivate,
@@ -345,15 +345,15 @@ function UnifiedIDELayout({
     // Guests
     guestsQuery,
     // Workspace mode
-    workspaceMode,
-    setWorkspaceMode,
+    workspaceMode: _workspaceMode,
+    setWorkspaceMode: _setWorkspaceMode,
     // Split editor
     splitEditorFileId,
     setSplitEditorFileId,
     // Git blame
-    blameEnabled,
-    setBlameEnabled,
-    blameData,
+    blameEnabled: _blameEnabled,
+    setBlameEnabled: _setBlameEnabled,
+    blameData: _blameData,
     // Merge conflicts
     mergeConflicts,
     setMergeConflicts,
@@ -449,8 +449,8 @@ function UnifiedIDELayout({
   }, []);
   
   const [showCommandPalette, setShowCommandPalette] = useState(false);
-  const [enableShortcutHint, setEnableShortcutHint] = useState(false);
-  const [enableShortcutTester, setEnableShortcutTester] = useState(false);
+  const [enableShortcutHint, _setEnableShortcutHint] = useState(false);
+  const [enableShortcutTester, _setEnableShortcutTester] = useState(false);
   const [showMobileMoreMenu, setShowMobileMoreMenu] = useState(false);
   const [showTabSwitcher, setShowTabSwitcher] = useState(false);
   
@@ -579,7 +579,7 @@ function UnifiedIDELayout({
     return unsub;
   }, [deviceType, handleAddTool, handleAddOpenTab]);
 
-  const closePanel = useCallback((setter: (v: boolean) => void) => {
+  const _closePanel = useCallback((setter: (v: boolean) => void) => {
     setter(false);
     setActiveActivityItem('files');
   }, [setActiveActivityItem]);
@@ -1061,7 +1061,7 @@ function UnifiedIDELayout({
     }
   };
 
-  const renderTabletContent = () => {
+  const _renderTabletContent = () => {
     switch (tabletPanel) {
       case 'editor':
         if (renderBootstrapPlaceholder('files')) return renderBootstrapPlaceholder('files');

@@ -93,8 +93,8 @@ export function PreviewDeploymentPanel({
     ? new URLSearchParams(window.location.search).get('bootstrap')
     : null;
 
-  const { data: previewData, isLoading, refetch } = useQuery<{ 
-    status: string; 
+  const { data: previewData, isLoading, refetch: _refetch } = useQuery<{
+    status: string;
     runId?: string;
     ports?: number[];
     primaryPort?: number;
@@ -107,7 +107,7 @@ export function PreviewDeploymentPanel({
     enabled: !!projectId,
   });
 
-  const { data: previewUrlData, refetch: refetchPreviewUrl } = useQuery<PreviewUrlResponse>({
+  const { data: previewUrlData, refetch: _refetchPreviewUrl } = useQuery<PreviewUrlResponse>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId,
@@ -124,7 +124,7 @@ export function PreviewDeploymentPanel({
     lastHealthCheck: previewData.lastHealthCheck,
     frameworkType: previewData.frameworkType,
   } : null;
-  
+
   const isRunning = preview?.status === 'running';
   const previewRuntimeStatus = previewData?.status || previewUrlData?.status || '';
   const hasResolvedLivePreview = Boolean(
@@ -252,7 +252,7 @@ export function PreviewDeploymentPanel({
         </Badge>
       );
     }
-    
+
     switch (preview?.status) {
       case 'running':
         return (
@@ -324,7 +324,7 @@ export function PreviewDeploymentPanel({
                   Share
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => restartPreviewMutation.mutate()}
                   disabled={restartPreviewMutation.isPending}
                   data-testid="menu-restart"
@@ -332,7 +332,7 @@ export function PreviewDeploymentPanel({
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Restart
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => stopPreviewMutation.mutate()}
                   disabled={stopPreviewMutation.isPending}
                   className="text-destructive"
@@ -646,10 +646,10 @@ export function PreviewDeploymentButton({
   className?: string;
 }) {
   return (
-    <PreviewDeploymentPanel 
-      projectId={projectId} 
+    <PreviewDeploymentPanel
+      projectId={projectId}
       className={className}
-      compact 
+      compact
     />
   );
 }

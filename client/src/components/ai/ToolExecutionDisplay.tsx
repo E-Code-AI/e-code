@@ -100,7 +100,7 @@ function CompactToolExecution({
   status, 
   metadata,
   error,
-  timestamp
+  timestamp: _timestamp
 }: ToolExecutionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const Icon = toolIcons[tool] || Terminal;

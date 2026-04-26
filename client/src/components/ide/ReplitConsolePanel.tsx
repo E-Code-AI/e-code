@@ -110,13 +110,13 @@ export function ReplitConsolePanel({
   onCloseTab
 }: ReplitConsolePanelProps) {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
   
   const [logs, setLogs] = useState<ConsoleLog[]>([]);
   const [showOnlyLatest, setShowOnlyLatest] = useState(false);
   const [latestRunStartIndex, setLatestRunStartIndex] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [_selectedWorkflow, _setSelectedWorkflow] = useState<Workflow | null>(null);
   const [runningWorkflowIds, setRunningWorkflowIds] = useState<Set<string>>(new Set());
   
   const scrollRef = useRef<HTMLDivElement>(null);

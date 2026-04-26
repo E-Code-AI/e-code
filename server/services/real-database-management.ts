@@ -21,7 +21,7 @@ function escapeLiteral(str: string): string {
   return `$$${str.replace(/\$/g, '\\$')}$$`;
 }
 const logger = {
-  info: (message: string, ...args: any[]) => {},
+  info: (_message: string, ..._args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-database-management] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-database-management] WARN: ${message}`, ...args),
 };

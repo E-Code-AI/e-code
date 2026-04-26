@@ -197,7 +197,7 @@ export class AgentFileOperationsService extends EventEmitter {
       try {
         previousContent = await fs.readFile(absolutePath, 'utf-8');
         operationType = 'file_update';
-      } catch (err) {
+      } catch (_err) {
         // File doesn't exist, will create
       }
 

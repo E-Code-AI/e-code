@@ -789,7 +789,7 @@ export function generateDefaultCommands(callbacks: {
   onNavigate?: (path: string) => void;
   onClose?: () => void;
 }): CommandItem[] {
-  const { onToolSelect, onNavigate, onClose } = callbacks;
+  const { onToolSelect, onNavigate: _onNavigate, onClose } = callbacks;
   const close = () => onClose?.();
 
   return [

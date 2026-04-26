@@ -52,20 +52,20 @@ const MCP_CONFIG = {
 };
 
 // Input validation schemas
-const FileOperationSchema = z.object({
+const _FileOperationSchema = z.object({
   path: z.string(),
   content: z.string().optional(),
   encoding: z.enum(["utf8", "base64", "hex"]).default("utf8"),
 });
 
-const CommandExecutionSchema = z.object({
+const _CommandExecutionSchema = z.object({
   command: z.string(),
   cwd: z.string().optional(),
   timeout: z.number().optional().default(30000),
   env: z.record(z.string()).optional(),
 });
 
-const DatabaseQuerySchema = z.object({
+const _DatabaseQuerySchema = z.object({
   query: z.string(),
   params: z.array(z.any()).optional(),
   operation: z.enum(["select", "insert", "update", "delete", "raw"]),
@@ -1162,7 +1162,7 @@ export default class MCPServer {
   }
   
   private async handleAiEmbed(args: any) {
-    const { text, model = "text-embedding-ada-002" } = args;
+    const { text: _text, model: _model = "text-embedding-ada-002" } = args;
     
     // Implement embedding generation
     // This would typically use OpenAI or another embedding service
@@ -1420,7 +1420,7 @@ export default class MCPServer {
     this.fileWatchers.clear();
     
     // Kill active processes
-    for (const [id, process] of this.activeProcesses.entries()) {
+    for (const [_id, process] of this.activeProcesses.entries()) {
       process.kill("SIGTERM");
     }
     this.activeProcesses.clear();

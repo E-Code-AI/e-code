@@ -158,7 +158,7 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
         if (data.type === 'pong') {
           return;
         }
-      } catch (err) {
+      } catch (_err) {
       }
     };
 
@@ -167,7 +167,7 @@ export function useServerLogs(options: UseServerLogsOptions = {}): UseServerLogs
       onError?.(event);
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = (_event) => {
       if (!isMountedRef.current) {
         return;
       }

@@ -6,7 +6,7 @@ import { db } from '../db';
 import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
 import { createLogger } from '../utils/logger';
 
-const logger = createLogger('ab-testing');
+const _logger = createLogger('ab-testing');
 
 interface ABTestConfig {
     id: string;

@@ -552,10 +552,10 @@ export class AgentOrchestratorService extends EventEmitter {
 
         // Parse the user's message to provide a contextual response
         const userMessage = messages[messages.length - 1]?.content || '';
-        let fallbackResponse = '';
+        let _fallbackResponse = '';
         
         if (userMessage.toLowerCase().includes('hello') || userMessage.toLowerCase().includes('test')) {
-          fallbackResponse = `Hello! I'm GPT-4.1, the most advanced AI assistant running on the E-Code Platform. I'm fully operational and ready to help you build amazing applications!
+          _fallbackResponse = `Hello! I'm GPT-4.1, the most advanced AI assistant running on the E-Code Platform. I'm fully operational and ready to help you build amazing applications!
 
 I have autonomous capabilities including:
 • File system operations - Create, read, update, and delete files
@@ -570,7 +570,7 @@ I'm currently running in demonstration mode, but all my core functions are worki
 
 How can I assist you with your development today?`;
         } else if (userMessage.toLowerCase().includes('build') || userMessage.toLowerCase().includes('create')) {
-          fallbackResponse = `I understand you want to build something! As GPT-4.1 on the E-Code Platform, I can help you create:
+          _fallbackResponse = `I understand you want to build something! As GPT-4.1 on the E-Code Platform, I can help you create:
 
 • Full-stack web applications with React, Vue, or Angular
 • Backend APIs with Node.js, Python, or Go  
@@ -583,7 +583,7 @@ Just describe what you want to build, and I'll break it down into steps, generat
 
 What kind of application would you like to create?`;
         } else {
-          fallbackResponse = `I'm GPT-4.1, your autonomous AI assistant on the E-Code Platform. I've received your message and I'm ready to help!
+          _fallbackResponse = `I'm GPT-4.1, your autonomous AI assistant on the E-Code Platform. I've received your message and I'm ready to help!
 
 Your request: "${userMessage.substring(0, 100)}${userMessage.length > 100 ? '...' : ''}"
 
@@ -1049,7 +1049,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
     // - Rate limits
     const startTime = Date.now();
     let totalTokens = 0;
-    let functionCallBuffer = '';
+    let _functionCallBuffer = '';
     let currentFunction: any = null;
 
     try {
@@ -1248,7 +1248,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         const packageJsonPath = path.join(projectPath, 'package.json');
         const packageJson = await fs.readFile(packageJsonPath, 'utf-8');
         context.packageJson = JSON.parse(packageJson);
-      } catch (err) {
+      } catch (_err) {
         // No package.json
       }
 
@@ -1256,7 +1256,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       try {
         const readmePath = path.join(projectPath, 'README.md');
         context.readme = await fs.readFile(readmePath, 'utf-8');
-      } catch (err) {
+      } catch (_err) {
         // No README
       }
 

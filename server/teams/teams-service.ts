@@ -70,7 +70,7 @@ export class TeamsService {
     return this.storage.getUserTeams(userId);
   }
 
-  async getUserInvitations(userId: string): Promise<any[]> {
+  async getUserInvitations(_userId: string): Promise<any[]> {
     // Team invitations are managed through the addTeamMember method below
     // This method would return pending invitations once invite persistence is added
     return [];

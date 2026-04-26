@@ -11,16 +11,16 @@ const demoFiles: File[] = [
 ];
 
 export function SplitsDemoPage() {
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = (_file: File) => {
   };
 
-  const handleFileCreate = (name: string, isFolder: boolean, parentId?: number) => {
+  const handleFileCreate = (_name: string, _isFolder: boolean, _parentId?: number) => {
   };
 
-  const handleFileDelete = (fileId: number) => {
+  const handleFileDelete = (_fileId: number) => {
   };
 
-  const handleFileRename = (fileId: number, newName: string) => {
+  const handleFileRename = (_fileId: number, _newName: string) => {
   };
 
   // Demo content for panels

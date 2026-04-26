@@ -124,7 +124,7 @@ router.get('/sitemap-index.xml', (_req: Request, res: Response) => {
  * Generate blog sitemap (dynamic from database)
  */
 router.get('/sitemap-blog.xml', async (_req: Request, res: Response) => {
-  const now = new Date().toISOString();
+  const _now = new Date().toISOString();
 
   // In production, fetch blog posts from database
   const blogPosts = [

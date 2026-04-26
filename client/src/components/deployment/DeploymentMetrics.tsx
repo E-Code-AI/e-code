@@ -59,7 +59,7 @@ interface MetricData {
   healthScore: number;
 }
 
-interface HealthStatus {
+interface _HealthStatus {
   status: 'healthy' | 'warning' | 'critical' | 'unknown';
   score: number;
   issues: string[];
@@ -81,10 +81,10 @@ const COLORS = {
 export function DeploymentMetrics({ deploymentId, className }: DeploymentMetricsProps) {
   const [timeRange, setTimeRange] = useState<'hour' | 'day' | 'week' | 'month'>('hour');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [selectedMetric, setSelectedMetric] = useState<'all' | 'cpu' | 'memory' | 'network' | 'errors'>('all');
+  const [_selectedMetric, _setSelectedMetric] = useState<'all' | 'cpu' | 'memory' | 'network' | 'errors'>('all');
 
   // Fetch metrics data
-  const { data: metrics, isLoading, refetch } = useQuery({
+  const { data: metrics, isLoading: _isLoading, refetch } = useQuery({
     queryKey: ['/api/deployments', deploymentId, 'metrics', timeRange],
     queryFn: () => apiRequest('GET', `/api/deployments/${deploymentId}/metrics?range=${timeRange}`),
     refetchInterval: autoRefresh ? 30000 : false, // RATE LIMIT FIX: Increased from 5s to 30s
@@ -110,7 +110,7 @@ export function DeploymentMetrics({ deploymentId, className }: DeploymentMetrics
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const _getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy': return 'text-green-500';
       case 'warning': return 'text-yellow-500';

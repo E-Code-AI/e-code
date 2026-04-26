@@ -172,7 +172,7 @@ export default function Register() {
         } else {
           setErrors([errorText || 'Something went wrong. Please try again.']);
         }
-      } catch (parseError) {
+      } catch (_parseError) {
         setErrors(['Something went wrong. Please try again.']);
       }
     } finally {

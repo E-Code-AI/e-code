@@ -38,7 +38,7 @@ router.get('/system-status', async (req, res) => {
     let storageStats = { used: '0 GB', available: '0 GB' };
     
     try {
-      const stats = await fs.stat(storagePath);
+      const _stats = await fs.stat(storagePath);
       // This is a simple implementation - in production you'd check actual disk usage
       storageStats = {
         used: '0.5 GB',

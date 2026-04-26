@@ -106,7 +106,7 @@ export class PolyglotCoordinator {
       }
     }
     
-    for (const [serviceName, endpoint] of this.services.entries()) {
+    for (const [_serviceName, endpoint] of this.services.entries()) {
       if (endpoint.capabilities.includes(capability)) {
         return `${endpoint.protocol}://${endpoint.host}:${endpoint.port}`;
       }

@@ -35,11 +35,11 @@ interface ExecutionResult {
   error?: string;
 }
 
-export function ExecutionConsole({ 
-  projectId, 
+export function ExecutionConsole({
+  projectId: _projectId,
   executionId,
   isRunning,
-  className 
+  className
 }: ExecutionConsoleProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [output, setOutput] = useState<ExecutionOutput[]>([]);
@@ -58,7 +58,7 @@ export function ExecutionConsole({
   useEffect(() => {
     if (executionResult) {
       const newOutputs: ExecutionOutput[] = [];
-      
+
       if (executionResult.stdout) {
         newOutputs.push({
           type: 'stdout',
@@ -66,7 +66,7 @@ export function ExecutionConsole({
           timestamp: Date.now()
         });
       }
-      
+
       if (executionResult.stderr) {
         newOutputs.push({
           type: 'stderr',
@@ -74,7 +74,7 @@ export function ExecutionConsole({
           timestamp: Date.now()
         });
       }
-      
+
       if (executionResult.exitCode !== undefined && !isRunning) {
         newOutputs.push({
           type: 'system',
@@ -82,7 +82,7 @@ export function ExecutionConsole({
           timestamp: Date.now()
         });
       }
-      
+
       setOutput(prev => [...prev, ...newOutputs]);
     }
   }, [executionResult, isRunning]);
@@ -141,7 +141,7 @@ export function ExecutionConsole({
     : output;
 
   return (
-    <div 
+    <div
       className={cn(
         'flex flex-col bg-gray-900 border border-gray-700 rounded-lg overflow-hidden',
         isFullscreen ? 'fixed inset-4 z-50' : 'h-full',
@@ -161,7 +161,7 @@ export function ExecutionConsole({
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -172,7 +172,7 @@ export function ExecutionConsole({
           >
             <Search className="h-3.5 w-3.5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -182,7 +182,7 @@ export function ExecutionConsole({
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -192,7 +192,7 @@ export function ExecutionConsole({
           >
             <Download className="h-3.5 w-3.5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -202,7 +202,7 @@ export function ExecutionConsole({
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -216,7 +216,7 @@ export function ExecutionConsole({
               <Maximize2 className="h-3.5 w-3.5" />
             )}
           </Button>
-          
+
           {isFullscreen && (
             <Button
               variant="ghost"
@@ -251,7 +251,7 @@ export function ExecutionConsole({
       )}
 
       {/* Console Output */}
-      <div 
+      <div
         ref={consoleRef}
         className="flex-1 overflow-y-auto p-4 font-mono text-[13px]"
       >

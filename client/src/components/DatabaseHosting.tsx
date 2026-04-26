@@ -82,7 +82,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   const queryClient = useQueryClient();
   const [selectedDatabase, setSelectedDatabase] = useState<DatabaseInstance | null>(null);
   const [showNewDatabase, setShowNewDatabase] = useState(false);
-  const [showQueryConsole, setShowQueryConsole] = useState(false);
+  const [_showQueryConsole, setShowQueryConsole] = useState(false);
   const [query, setQuery] = useState('');
   const [databaseConfig, setDatabaseConfig] = useState({
     name: '',

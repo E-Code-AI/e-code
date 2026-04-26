@@ -110,7 +110,7 @@ export function ReplitPublishButton({
         (old) => ({ ...old, status: 'publishing' })
       );
     },
-    onSuccess: (data) => {
+    onSuccess: (_data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'publish', 'status'] });
       toast({
         title: 'Republished successfully!',

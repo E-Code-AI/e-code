@@ -74,7 +74,7 @@ const AI_MODELS: AIModel[] = [
 ];
 
 export default function AssistantPage() {
-  const [, navigate] = useLocation();
+  const [, _navigate] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('chat');
   const [conversations, setConversations] = useState<Conversation[]>([]);

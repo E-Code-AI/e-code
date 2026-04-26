@@ -139,7 +139,7 @@ class TokenRevocationManager {
     return false;
   }
 
-  isTokenRevokedSync(jti: string): boolean {
+  isTokenRevokedSync(_jti: string): boolean {
     return false;
   }
 

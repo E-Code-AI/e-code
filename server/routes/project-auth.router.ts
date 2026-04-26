@@ -18,7 +18,7 @@ router.get("/:projectId/config", ensureAuthenticated, async (req, res) => {
       requireVerifiedEmail: false,
       loginRedirectUrl: null,
     });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ error: "Failed to fetch auth config" });
   }
 });
@@ -37,7 +37,7 @@ router.put("/:projectId/config", ensureAuthenticated, async (req, res) => {
       loginRedirectUrl,
     });
     res.json(config);
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ error: "Failed to update auth config" });
   }
 });
@@ -50,7 +50,7 @@ router.get("/:projectId/users", ensureAuthenticated, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
     const users = await storage.getProjectAuthUsers(projectId, limit);
     res.json({ users, total: users.length });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ error: "Failed to fetch auth users" });
   }
 });
@@ -63,7 +63,7 @@ router.delete("/:projectId/users/:userId", ensureAuthenticated, async (req, res)
 
     const deleted = await storage.deleteProjectAuthUser(projectId, userId);
     res.json({ success: deleted });
-  } catch (err) {
+  } catch (_err) {
     res.status(500).json({ error: "Failed to delete auth user" });
   }
 });

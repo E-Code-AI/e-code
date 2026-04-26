@@ -30,7 +30,7 @@ interface TableInfo {
   }>;
 }
 
-interface QueryResult {
+interface _QueryResult {
   rows: any[];
   rowCount: number;
   executionTime: number;

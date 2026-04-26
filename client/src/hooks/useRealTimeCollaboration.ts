@@ -81,7 +81,7 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
   const connect = useCallback(() => {
     if (!user || !projectId || socketRef.current?.connected) return;
 
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const _protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${window.location.protocol}//${window.location.host}`;
 
     const socket = io(wsUrl, {
@@ -108,11 +108,11 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
       reconnectAttemptsRef.current = 0;
     });
 
-    socket.on('disconnect', (reason) => {
+    socket.on('disconnect', (_reason) => {
       setIsConnected(false);
     });
 
-    socket.on('connect_error', (err) => {
+    socket.on('connect_error', (_err) => {
       reconnectAttemptsRef.current++;
       if (reconnectAttemptsRef.current >= maxReconnectAttempts) {
         setError('Unable to connect to collaboration server');
@@ -178,10 +178,10 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
       }
     });
 
-    socket.on('file:changed', (data: FileChangeNotification) => {
+    socket.on('file:changed', (_data: FileChangeNotification) => {
     });
 
-    socket.on('follow:requested', (data: { followerId: string; followerName: string; targetUserId: string }) => {
+    socket.on('follow:requested', (_data: { followerId: string; followerName: string; targetUserId: string }) => {
     });
 
     socketRef.current = socket;

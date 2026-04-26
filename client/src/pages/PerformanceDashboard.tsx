@@ -34,7 +34,7 @@ Zap
 } from 'lucide-react';
 import { useCallback,useEffect,useMemo,useState } from 'react';
 
-const CHART_COLORS = {
+const _CHART_COLORS = {
   primary: '#F26207', // E-Code orange
   success: '#10B981',
   warning: '#F59E0B',

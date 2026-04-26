@@ -203,12 +203,12 @@ export class AdvancedDeploymentService {
     return parts.length === 5;
   }
 
-  private calculateNextRun(schedule: string): Date {
+  private calculateNextRun(_schedule: string): Date {
     // Simplified - in production use a proper cron parser
     return new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
   }
 
-  private scheduleCronJob(jobId: number, schedule: string, command: string): void {
+  private scheduleCronJob(_jobId: number, _schedule: string, _command: string): void {
     // In production, use a proper job scheduler like node-cron
   }
 

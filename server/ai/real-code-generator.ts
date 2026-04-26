@@ -449,7 +449,7 @@ ${context}`;
   }
 
   private patchesToChanges(patches: any[], originalContent: string): any[] {
-    const lines = originalContent.split('\n');
+    const _lines = originalContent.split('\n');
     const changes: any[] = [];
     
     for (const patch of patches) {

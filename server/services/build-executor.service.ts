@@ -7,7 +7,7 @@ import { type IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { type ExecutionPlan,type PlanTask } from './ai-plan-generator.service';
 
-const execAsync = promisify(exec);
+const _execAsync = promisify(exec);
 const logger = createLogger('BuildExecutorService');
 
 /**
@@ -356,7 +356,7 @@ export class BuildExecutorService {
   private async executeTask(
     buildId: string,
     task: PlanTask,
-    projectId: string
+    _projectId: string
   ): Promise<TaskExecutionResult> {
     logger.info('Executing task', { buildId, taskId: task.id, type: task.type });
 

@@ -44,9 +44,9 @@ export function SplitsPane({
   const {
     activePane,
     setActivePane,
-    addTab,
+    addTab: _addTab,
     closeTab,
-    moveTab,
+    moveTab: _moveTab,
     splitPane,
     floatPane,
     maximizePane,

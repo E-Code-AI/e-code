@@ -78,7 +78,7 @@ export function MobileDebugPanel({ projectId, className }: MobileDebugPanelProps
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   const { data: session, isLoading, refetch } = useQuery<DebugSession>({
     queryKey: ['/api/debug/session', projectId],

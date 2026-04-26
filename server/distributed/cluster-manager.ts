@@ -196,7 +196,7 @@ export class ClusterManager extends EventEmitter {
     });
   }
 
-  private handleNodeMessage(message: any, socket: net.Socket) {
+  private handleNodeMessage(message: any, _socket: net.Socket) {
     switch (message.type) {
       case 'HEARTBEAT':
         this.handleHeartbeat(message);

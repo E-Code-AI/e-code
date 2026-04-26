@@ -223,7 +223,7 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
         res.write(JSON.stringify({ type: 'error', content: data.toString() }) + '\n');
       });
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, _reject) => {
         gitProcess.on('close', (code) => {
           res.write(JSON.stringify({ type: 'done', exitCode: code }) + '\n');
           res.end();
@@ -673,7 +673,7 @@ interface GitBranchInfo {
 
 async function parseBranchInfo(branchLine: string, currentBranch: string): Promise<GitBranchInfo | null> {
   try {
-    const isCurrent = branchLine.startsWith('*');
+    const _isCurrent = branchLine.startsWith('*');
     const rawName = branchLine.replace(/^\*?\s+/, '').trim();
     
     if (!rawName || rawName.startsWith('(HEAD detached')) {
@@ -1157,7 +1157,7 @@ router.get('/blame/:filePath(*)', ensureAuthenticated, async (req: Request, res:
       return res.status(400).json({ error: 'Not a git repository' });
     }
     
-    const fullPath = path.join(PROJECT_ROOT, filePath);
+    const _fullPath = path.join(PROJECT_ROOT, filePath);
     
     const { stdout } = await execa('git', ['blame', '--porcelain', filePath], { 
       cwd: PROJECT_ROOT,

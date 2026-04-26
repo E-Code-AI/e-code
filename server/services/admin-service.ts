@@ -26,7 +26,7 @@ export class AdminService {
 
   // ✅ 40-YEAR SENIOR FIX: Sanitize user responses to prevent password/secret exposure
   private sanitizeUser(user: User): Omit<User, 'password' | 'twoFactorSecret' | 'passwordResetToken'> {
-    const { password, twoFactorSecret, passwordResetToken, ...safeUser } = user;
+    const { password: _password, twoFactorSecret: _twoFactorSecret, passwordResetToken: _passwordResetToken, ...safeUser } = user;
     return safeUser;
   }
 

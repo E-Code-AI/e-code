@@ -54,11 +54,11 @@ export default function Marketplace() {
     }
   };
 
-  const { data: extensions = [], isLoading: isExtensionsLoading } = useQuery<any[]>({
+  const { data: extensions = [], isLoading: _isExtensionsLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/extensions'],
   });
 
-  const { data: templatesData, isLoading: isTemplatesLoading } = useQuery<any>({
+  const { data: templatesData, isLoading: _isTemplatesLoading } = useQuery<any>({
     queryKey: ['/api/marketplace/templates'],
   });
   const templates = (Array.isArray(templatesData) ? templatesData : (templatesData as any)?.templates || []).filter(Boolean);

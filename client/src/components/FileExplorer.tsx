@@ -103,7 +103,7 @@ const FileNode: React.FC<FileNodeProps> = ({
     }
     
     // Return specific icon based on file extension
-    const extension = file.name.split('.').pop()?.toLowerCase();
+    const _extension = file.name.split('.').pop()?.toLowerCase();
     
     return <FileText className="h-4 w-4 mr-1.5" />;
   };

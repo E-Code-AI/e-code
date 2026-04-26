@@ -197,7 +197,7 @@ const adminValidationRegistry: Record<string, RouteValidation> = {
  * Automatically validates params/body/query based on registry
  * CRITICAL: Every admin mutation MUST go through this middleware
  */
-function withValidation(method: string, path: string) {
+function _withValidation(method: string, path: string) {
   const key = `${method} ${path}`;
   const validation = adminValidationRegistry[key];
   
@@ -1284,7 +1284,7 @@ router.get('/audit-logs', async (req, res) => {
       filters.endDate = new Date(req.query.to as string);
     }
 
-    const { logs, total } = await realAuditLogsService.query(filters);
+    const { logs, total: _total } = await realAuditLogsService.query(filters);
     
     const formattedLogs = logs.map(log => ({
       id: log.id,

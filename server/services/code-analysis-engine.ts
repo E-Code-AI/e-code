@@ -9,7 +9,7 @@ import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('code-analysis-engine');
-const execAsync = promisify(exec);
+const _execAsync = promisify(exec);
 
 export interface AnalysisMetrics {
   linesOfCode: number;

@@ -586,7 +586,7 @@ class AgentGridDataService {
     }
   }
 
-  private async getActionMetrics(sessionWhere: any) {
+  private async getActionMetrics(_sessionWhere: any) {
     try {
       const result = await db.select({
         totalActions: count(),
@@ -629,7 +629,7 @@ class AgentGridDataService {
     }
   }
 
-  private async getFileMetrics(sessionWhere: any) {
+  private async getFileMetrics(_sessionWhere: any) {
     try {
       const result = await db.select({
         totalOps: count(),
@@ -664,7 +664,7 @@ class AgentGridDataService {
     }
   }
 
-  private async getConversationMetrics(sessionWhere: any) {
+  private async getConversationMetrics(_sessionWhere: any) {
     try {
       const result = await db.select({
         totalMessages: count(),

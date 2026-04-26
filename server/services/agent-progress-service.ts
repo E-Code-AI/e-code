@@ -455,7 +455,7 @@ export class AgentProgressService extends EventEmitter {
     this.emit(`task:${taskId}`, event);
   }
 
-  private async updateTaskInDatabase(taskId: string): Promise<void> {
+  private async updateTaskInDatabase(_taskId: string): Promise<void> {
     // In-memory only for now
     // Database updates will be added when tables are created
   }

@@ -108,8 +108,8 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
   const hasMountedRef = useRef(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [_isConnected, setIsConnected] = useState(false);
+  const [_isConnecting, setIsConnecting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const { toast } = useToast();

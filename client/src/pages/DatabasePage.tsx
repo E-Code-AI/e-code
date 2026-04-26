@@ -83,7 +83,7 @@ const SAMPLE_QUERIES = [
 
 export default function DatabasePage() {
   const { toast } = useToast();
-  const [, navigate] = useLocation();
+  const [, _navigate] = useLocation();
   const [activeTab, setActiveTab] = useState('explorer');
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [query, setQuery] = useState('SELECT * FROM users LIMIT 10;');
@@ -95,7 +95,7 @@ export default function DatabasePage() {
   const [showConnectionSettings, setShowConnectionSettings] = useState(false);
   const [selectedKvProjectId, setSelectedKvProjectId] = useState<string>('');
 
-  const { data: schemasData, isLoading: schemasLoading, error: schemasError } = useQuery<{ tables: TableSchema[] }>({
+  const { data: schemasData, isLoading: _schemasLoading, error: schemasError } = useQuery<{ tables: TableSchema[] }>({
     queryKey: ['/api/admin/database/tables'],
     queryFn: async () => {
       return await apiRequest('GET', '/api/admin/database/tables');

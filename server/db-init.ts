@@ -181,7 +181,7 @@ export async function initializeDatabase() {
     // Create admin user
     const adminPlaintext = process.env.DB_INIT_ADMIN_PASSWORD || generateBootstrapPassword('DB_INIT_ADMIN_PASSWORD');
     const adminPassword = await hashPassword(adminPlaintext);
-    const [admin] = await db.insert(schema.users).values({
+    const [_admin] = await db.insert(schema.users).values({
       username: "admin",
       password: adminPassword,
       email: "admin@plot.local",

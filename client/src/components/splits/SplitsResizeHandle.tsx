@@ -13,7 +13,7 @@ interface SplitsResizeHandleProps {
 export function SplitsResizeHandle({ 
   splitId, 
   direction, 
-  index,
+  index: _index,
   className 
 }: SplitsResizeHandleProps) {
   const [isHovered, setIsHovered] = useState(false);

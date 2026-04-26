@@ -40,7 +40,7 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/tools/web-search', async (req, res) => {
     try {
-      const userId = req.user!.id;
+      const _userId = req.user!.id;
       const limit = parseInt(req.query.limit as string) || 20;
       const conversationId = req.query.conversationId ? parseInt(req.query.conversationId as string) : undefined;
 
@@ -501,8 +501,8 @@ export default function createAgentToolsRouter(): Router {
    */
   router.post('/thinking/analyze', async (req, res) => {
     try {
-      const userId = req.user!.id;
-      const { prompt, conversationId, model } = req.body;
+      const _userId = req.user!.id;
+      const { prompt, conversationId: _conversationId, model } = req.body;
 
       if (!prompt) {
         return res.status(400).json({ error: 'Prompt is required' });
@@ -713,7 +713,7 @@ export default function createAgentToolsRouter(): Router {
    */
   router.get('/workflows', async (req, res) => {
     try {
-      const userId = req.user!.id;
+      const _userId = req.user!.id;
       const { projectId, status, limit = 20 } = req.query;
       
       const { agentWorkflows } = await import('@shared/schema');

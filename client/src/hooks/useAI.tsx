@@ -2,7 +2,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useMutation } from '@tanstack/react-query';
 
-interface AiResponse {
+interface _AiResponse {
   completion?: string;
   explanation?: string;
   convertedCode?: string;

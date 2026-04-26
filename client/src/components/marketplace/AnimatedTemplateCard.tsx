@@ -32,7 +32,7 @@ export function AnimatedTemplateCard({
   className
 }: AnimatedTemplateCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
+  const [_isHovered, setIsHovered] = useState(false);
 
   const cardVariants = {
     hidden: { 
@@ -185,7 +185,7 @@ export function AnimatedTemplateCard({
                 
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex gap-2">
-                    {template.tags?.slice(0, 3).map((tag: string, i: number) => (
+                    {template.tags?.slice(0, 3).map((tag: string, _i: number) => (
                       <Badge key={tag} variant="outline" className="text-[11px]">
                         {tag}
                       </Badge>

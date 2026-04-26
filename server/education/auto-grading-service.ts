@@ -191,7 +191,7 @@ export class AutoGradingService {
   private async runTestCase(
     project: any,
     testCase: TestCase,
-    assignment: any
+    _assignment: any
   ): Promise<TestResult> {
     const startTime = Date.now();
 
@@ -263,7 +263,7 @@ export class AutoGradingService {
     fs.writeFileSync(testFilePath, testCode);
 
     // Execute test
-    const command = this.getTestCommand(language, testFileName);
+    const _command = this.getTestCommand(language, testFileName);
     const result = await this.executor.executeCode(
       language,
       testCode,
@@ -526,7 +526,7 @@ export class AutoGradingService {
 
   async getAssignmentSubmissions(
     assignmentId: number,
-    filters?: {
+    _filters?: {
       studentId?: number;
       status?: string;
     }

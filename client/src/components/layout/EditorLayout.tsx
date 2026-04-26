@@ -14,8 +14,8 @@ export default function EditorLayout({
   preview,
   bottomPanel,
 }: EditorLayoutProps) {
-  const [showPreview, setShowPreview] = useState(true);
-  const [showBottomPanel, setShowBottomPanel] = useState(true);
+  const [showPreview, _setShowPreview] = useState(true);
+  const [showBottomPanel, _setShowBottomPanel] = useState(true);
 
   return (
     <div className="h-full flex flex-col">

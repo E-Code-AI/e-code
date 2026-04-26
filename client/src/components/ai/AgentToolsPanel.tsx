@@ -91,11 +91,11 @@ export function AgentToolsPanel({
     isUpdating,
     isLoadingPreferences,
     videoReplayCount: hookVideoReplayCount,
-    effectiveModel,
+    effectiveModel: _effectiveModel,
     effectiveModelInfo,
-    toolsStatus,
-    isLoadingToolsStatus,
-    testSessionCount,
+    toolsStatus: _toolsStatus,
+    isLoadingToolsStatus: _isLoadingToolsStatus,
+    testSessionCount: _testSessionCount,
   } = hookData;
   
   // Choose which update function to use - but store in ref to avoid re-render loops

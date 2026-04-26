@@ -192,8 +192,8 @@ export default function ConsolePage() {
   const [showQuickCommands, setShowQuickCommands] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [activeTab, setActiveTab] = useState('terminal');
+  const [logs, _setLogs] = useState<LogEntry[]>([]);
+  const [_activeTab, _setActiveTab] = useState('terminal');
 
   useEffect(() => {
     if (!terminalRef.current) return;

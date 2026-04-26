@@ -151,7 +151,7 @@ export class AutoScalingService extends EventEmitter {
     }
 
     // Update cache
-    for (const [deploymentId, policies] of this.policies) {
+    for (const [_deploymentId, policies] of this.policies) {
       const policyIndex = policies.findIndex(p => p.id === policyId);
       if (policyIndex !== -1) {
         policies[policyIndex] = { ...policies[policyIndex], ...updates };
@@ -170,7 +170,7 @@ export class AutoScalingService extends EventEmitter {
     }
 
     // Update cache
-    for (const [deploymentId, policies] of this.policies) {
+    for (const [_deploymentId, policies] of this.policies) {
       const policyIndex = policies.findIndex(p => p.id === policyId);
       if (policyIndex !== -1) {
         const deleted = policies.splice(policyIndex, 1)[0];

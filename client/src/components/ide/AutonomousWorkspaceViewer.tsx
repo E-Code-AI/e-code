@@ -105,7 +105,7 @@ function toLogEntry(raw: string): Omit<ActivityLogEntry, 'id' | 'count'> {
 
 export function AutonomousWorkspaceViewer({
   bootstrapToken,
-  projectId,
+  projectId: _projectId,
   projectName,
   requestSummary,
   onComplete,
@@ -242,7 +242,7 @@ export function AutonomousWorkspaceViewer({
         }
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = (_event) => {
         setConnectionStatus('error');
         // ✅ FIX (Dec 1, 2025): Log more details about WebSocket errors
         // Browser WebSocket error events don't expose much detail, but we can log state

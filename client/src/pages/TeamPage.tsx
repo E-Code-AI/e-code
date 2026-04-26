@@ -661,7 +661,7 @@ export default function TeamPage() {
             <CardContent className="p-6">
               {recentActivity.length > 0 ? (
                 <div className="space-y-4">
-                  {recentActivity.map((entry, index) => (
+                  {recentActivity.map((entry, _index) => (
                     <div key={entry.id} className="flex items-start gap-3">
                       <div className="mt-0.5 rounded-full bg-muted p-2">
                         {entry.kind === 'member' && <Users className="h-4 w-4 text-muted-foreground" />}

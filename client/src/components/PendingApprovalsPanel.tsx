@@ -61,7 +61,7 @@ export function PendingApprovalsPanel({
   onActionRejected 
 }: PendingApprovalsPanelProps) {
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [rejectDialogAction, setRejectDialogAction] = useState<PendingAction | null>(null);
   const { toast } = useToast();

@@ -186,7 +186,7 @@ export class RolesPermissionsService {
   }
 
   async removeRole(userId: number, roleId: number, organizationId: number, removedBy: number): Promise<void> {
-    const result = await db.delete(userRoles)
+    const _result = await db.delete(userRoles)
       .where(and(
         eq(userRoles.userId, userId),
         eq(userRoles.roleId, roleId),
@@ -276,7 +276,7 @@ export class RolesPermissionsService {
 
   async createSystemRoles(organizationId: number): Promise<void> {
     // Create built-in roles for the organization
-    for (const [key, roleData] of Object.entries(SYSTEM_ROLES)) {
+    for (const [_key, roleData] of Object.entries(SYSTEM_ROLES)) {
       const existing = await db.select()
         .from(roles)
         .where(and(

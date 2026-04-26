@@ -330,7 +330,7 @@ export class RollbackService {
     return project?.currentCheckpointId || null;
   }
 
-  private async getBackwardCheckpoints(currentCheckpointId: number, projectId: number) {
+  private async getBackwardCheckpoints(currentCheckpointId: number, _projectId: number) {
     const backward: any[] = [];
     let currentId: number | null = currentCheckpointId;
 

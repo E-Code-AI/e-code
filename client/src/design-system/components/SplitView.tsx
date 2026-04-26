@@ -196,7 +196,7 @@ export const TripleSplitView: React.FC<TripleSplitViewProps> = ({
   const [leftSize, setLeftSize] = useState(defaultLeftSize);
   const [rightSize, setRightSize] = useState(defaultRightSize);
 
-  const centerSize = 100 - leftSize - rightSize;
+  const _centerSize = 100 - leftSize - rightSize;
 
   return (
     <SplitView
@@ -399,7 +399,7 @@ export const MultiEditorLayout: React.FC<MultiEditorLayoutProps> = ({
   const [leftFiles, setLeftFiles] = useState<EditorFile[]>([files[0]].filter(Boolean));
   const [rightFiles, setRightFiles] = useState<EditorFile[]>([]);
 
-  const toggleLayout = useCallback(() => {
+  const _toggleLayout = useCallback(() => {
     triggerHaptic('medium');
     if (layout === 'single') {
       // Split: move half files to right

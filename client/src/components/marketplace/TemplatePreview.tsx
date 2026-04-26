@@ -59,7 +59,7 @@ export function TemplatePreview({
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [_copied, setCopied] = useState(false);
 
   // Fetch template reviews
   const { data: reviews, isLoading: reviewsLoading } = useQuery({
@@ -115,7 +115,7 @@ export function TemplatePreview({
           text: template.description,
           url: `${window.location.origin}/templates/${template.slug || template.id}`,
         });
-      } catch (err) {
+      } catch (_err) {
         handleCopyLink();
       }
     } else {

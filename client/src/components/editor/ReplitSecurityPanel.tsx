@@ -55,7 +55,7 @@ export function ReplitSecurityPanel({ projectId, className }: ReplitSecurityPane
   const [showSettings, setShowSettings] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
-  const [wsConnectionState, setWsConnectionState] = useState<ConnectionState>('disconnected');
+  const [_wsConnectionState, setWsConnectionState] = useState<ConnectionState>('disconnected');
   const wsRef = useRef<ResilientWebSocket | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();

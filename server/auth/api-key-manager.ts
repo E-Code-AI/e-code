@@ -293,7 +293,7 @@ export class APIKeyManager {
     }
     
     // Check for partial wildcard (e.g., 'projects:*' matches 'projects:read')
-    const requiredParts = required.split(':');
+    const _requiredParts = required.split(':');
     for (const perm of permissions) {
       if (perm.endsWith(':*')) {
         const permBase = perm.slice(0, -2);
@@ -398,7 +398,7 @@ export class APIKeyManager {
    */
   async cleanupExpiredKeys(): Promise<void> {
     try {
-      const result = await db
+      const _result = await db
         .update(apiKeys)
         .set({ active: false })
         .where(

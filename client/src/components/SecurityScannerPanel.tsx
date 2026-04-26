@@ -223,8 +223,8 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   }
   const severityOrder = ["critical", "high", "medium", "low", "info"];
 
-  const hiddenCount = activeTab === "active" ? (hiddenFindingsQuery.data?.length ?? 0) : 0;
-  const activeCount = activeTab === "hidden" ? (activeFindingsQuery.data?.length ?? 0) : 0;
+  const _hiddenCount = activeTab === "active" ? (hiddenFindingsQuery.data?.length ?? 0) : 0;
+  const _activeCount = activeTab === "hidden" ? (activeFindingsQuery.data?.length ?? 0) : 0;
 
   return (
     <div className="flex flex-col h-full" data-testid="security-scanner-panel">

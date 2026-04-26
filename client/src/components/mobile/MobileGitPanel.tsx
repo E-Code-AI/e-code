@@ -130,7 +130,7 @@ function CommitListSkeleton() {
   );
 }
 
-function EmptyState({ onRefresh }: { onRefresh: () => void }) {
+function EmptyState({ onRefresh: _onRefresh }: { onRefresh: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4" data-testid="empty-state">
       <GitBranch className="w-10 h-10 text-muted-foreground mb-3" />
@@ -222,7 +222,7 @@ export function MobileGitPanel({ projectId, className }: MobileGitPanelProps) {
     },
   });
 
-  const fetchMutation = useMutation({
+  const _fetchMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/git/${projectId}/fetch`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/git/${projectId}/status`] });

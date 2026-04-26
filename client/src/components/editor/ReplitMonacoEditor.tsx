@@ -115,7 +115,7 @@ export function ReplitMonacoEditor({
   isRunning = false,
   showCollaborators = true,
   theme = "dark",
-  enableCollaboration = true,
+  enableCollaboration: _enableCollaboration = true,
   onEditorMount
 }: ReplitMonacoEditorProps) {
   const editorViewRef = useRef<EditorView | null>(null);

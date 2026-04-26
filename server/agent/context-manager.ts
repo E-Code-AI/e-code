@@ -224,7 +224,7 @@ function calculateSize(messages: Message[], provider: string, unit: 'bytes' | 't
  * Check if message is part of a tool call chain
  * Tool calls must be kept atomic (assistant request + tool result)
  */
-function isToolMessage(message: Message): boolean {
+function _isToolMessage(message: Message): boolean {
   return message.role === 'tool' || 
          (message.role === 'assistant' && !!message.tool_calls && message.tool_calls.length > 0);
 }

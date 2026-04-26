@@ -127,7 +127,7 @@ export async function sendGandiEmail(options: {
   }
 
   try {
-    const info = await transport.sendMail({
+    const _info = await transport.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to: options.to,
       subject: options.subject,

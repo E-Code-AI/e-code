@@ -67,10 +67,10 @@ interface ActivityMetrics {
 export class ProgressTrackingService {
   // Track student activity
   async trackActivity(
-    studentId: number,
-    projectId: number,
-    activityType: 'coding' | 'reading' | 'testing' | 'debugging',
-    duration: number
+    _studentId: number,
+    _projectId: number,
+    _activityType: 'coding' | 'reading' | 'testing' | 'debugging',
+    _duration: number
   ): Promise<void> {
     // Activity would be stored in activity tracking table
     // Implementation pending database schema update
@@ -253,8 +253,8 @@ export class ProgressTrackingService {
 
   // Calculate total time spent
   private async calculateTimeSpent(
-    studentId: number,
-    courseId?: number
+    _studentId: number,
+    _courseId?: number
   ): Promise<number> {
     // Query activity tracking table
     // For now, return simulated value

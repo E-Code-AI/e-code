@@ -215,7 +215,7 @@ export class ToolExecutor {
 
     } catch (error: any) {
       // ✅ Issue #37 FIX: Preserve error stack with cause for better debugging
-      const wrappedError = new Error(`Tool execution failed: ${toolName} - ${error.message}`, {
+      const _wrappedError = new Error(`Tool execution failed: ${toolName} - ${error.message}`, {
         cause: error // Preserve original error with stack trace
       });
       
@@ -572,7 +572,7 @@ export class ToolExecutor {
    */
   private async webSearch(params: { query: string; max_results?: number }): Promise<ToolExecutionResult> {
     const tavilyApiKey = process.env.TAVILY_API_KEY;
-    const perplexityApiKey = process.env.PERPLEXITY_API_KEY;
+    const _perplexityApiKey = process.env.PERPLEXITY_API_KEY;
     
     // If Tavily API key is configured, use it
     if (tavilyApiKey) {
@@ -664,7 +664,6 @@ export class ToolExecutor {
     return new Promise((resolve) => {
       try {
         let stdout = '';
-        let stderr = '';
         let resultCount = 0;
         let truncated = false;
         
@@ -694,10 +693,6 @@ export class ToolExecutor {
           }
         });
 
-        childProcess.stderr?.on('data', (data) => {
-          stderr += data.toString();
-        });
-
         childProcess.on('error', (error) => {
           resolve({
             success: false,
@@ -711,7 +706,7 @@ export class ToolExecutor {
           });
         });
 
-        childProcess.on('close', (code) => {
+        childProcess.on('close', (_code) => {
           // grep returns 1 if no matches found (not an error)
           const matches = stdout.trim().split('\n').filter(l => l);
           

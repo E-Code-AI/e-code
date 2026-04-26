@@ -132,17 +132,17 @@ const ProjectCard = optimizedMemo(({
 });
 
 export default function OptimizedDashboard() {
-  const [location, setLocation] = useLocation();
+  const [_location, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [_selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   
   // Use debounced search for performance
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const prefersReducedMotion = usePrefersReducedMotion();
+  const _prefersReducedMotion = usePrefersReducedMotion();
   
   // Optimized query with staleTime and cacheTime
   const { 
@@ -156,7 +156,7 @@ export default function OptimizedDashboard() {
   });
   
   // Prefetch project details on hover
-  const handleProjectHover = useCallback((project: Project) => {
+  const _handleProjectHover = useCallback((project: Project) => {
     prefetchQuery(['/api/projects', project.id]);
   }, []);
   

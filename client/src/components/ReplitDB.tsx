@@ -65,8 +65,8 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
   const [newValueType, setNewValueType] = useState<DBEntry['type']>('string');
   const [isLoading, setIsLoading] = useState(false);
   const [stats, setStats] = useState<DBStats | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
-  const [showJsonView, setShowJsonView] = useState(false);
+  const [_viewMode, _setViewMode] = useState<'list' | 'grid'>('list');
+  const [_showJsonView, _setShowJsonView] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {

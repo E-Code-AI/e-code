@@ -18,7 +18,7 @@ const logger = createLogger('docker-executor');
 // Lazy-load dockerode to avoid crashes in production where it may not be available
 let dockerInstance: InstanceType<typeof import('dockerode')> | null = null;
 
-async function getDocker(): Promise<InstanceType<typeof import('dockerode')>> {
+async function _getDocker(): Promise<InstanceType<typeof import('dockerode')>> {
   if (!dockerInstance) {
     try {
       const Docker = (await import('dockerode')).default;
@@ -79,7 +79,7 @@ let dockerAvailable: boolean | null = null;
  * Execute container with timeout enforcement
  * Kills and removes container if it exceeds the specified timeout
  */
-async function executeWithTimeout(container: Docker.Container, timeout: number): Promise<void> {
+async function _executeWithTimeout(container: Docker.Container, timeout: number): Promise<void> {
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(async () => {
       try {

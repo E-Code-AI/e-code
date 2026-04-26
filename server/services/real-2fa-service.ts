@@ -259,7 +259,7 @@ export class Real2FAService {
 
   async disableTwoFactor(
     userId: number, 
-    password: string
+    _password: string
   ): Promise<boolean> {
     // Verify password first
     const user = await storage.getUser(userId);

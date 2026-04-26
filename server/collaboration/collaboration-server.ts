@@ -47,7 +47,7 @@ export class CollaborationServer {
   private rooms: Map<string, CollaborationRoom> = new Map();
   private clientIdCounter = 0;
 
-  constructor(server: http.Server) {
+  constructor(_server: http.Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // Use noServer mode and register with central dispatcher to eliminate race conditions
     this.wss = new WebSocketServer({ noServer: true });

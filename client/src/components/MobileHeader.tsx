@@ -10,12 +10,12 @@ export function MobileHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   
-  const toggleMenu = () => {
+  const _toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
     if (isSearchOpen) setIsSearchOpen(false);
   };
   
-  const toggleSearch = () => {
+  const _toggleSearch = () => {
     setIsSearchOpen(!isSearchOpen);
     if (isMenuOpen) setIsMenuOpen(false);
   };

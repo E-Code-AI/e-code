@@ -69,7 +69,7 @@ interface ChatMessage {
   type: 'text' | 'system' | 'file-change';
 }
 
-interface TypingIndicator {
+interface _TypingIndicator {
   odUserId: string;
   username: string;
   isTyping: boolean;
@@ -739,7 +739,7 @@ export class UnifiedCollaborationService {
     this.io.to(`project-${projectId}`).emit(event, data);
   }
   
-  public async inviteToProject(projectId: number, inviterId: string, inviteeEmail: string): Promise<{ success: boolean; token?: string; error?: string }> {
+  public async inviteToProject(_projectId: number, _inviterId: string, _inviteeEmail: string): Promise<{ success: boolean; token?: string; error?: string }> {
     try {
       const inviteToken = nanoid(32);
       

@@ -64,7 +64,7 @@ interface PlatformStats {
 export default function AdminUsage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPlan, setSelectedPlan] = useState("all");
-  const [selectedPeriod, setSelectedPeriod] = useState("current");
+  const [selectedPeriod, _setSelectedPeriod] = useState("current");
   const { user } = useAuth();
 
   // Check if user is admin

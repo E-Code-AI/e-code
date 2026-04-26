@@ -187,7 +187,7 @@ export class PTYTerminalService {
 
   constructor() {}
 
-  async setup(server: Server): Promise<void> {
+  async setup(_server: Server): Promise<void> {
     // Always check Docker availability at startup
     dockerAvailable = await validateDockerAvailable();
     
@@ -705,13 +705,13 @@ export class PTYTerminalService {
 
   private async setupProjectDirectory(projectId: string): Promise<string> {
     try {
-      const { bulkSyncProjectFiles, getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      const { bulkSyncProjectFiles, getProjectWorkspacePath: _getProjectWorkspacePath } = await import('../utils/project-fs-sync');
       const files = await storage.getFilesByProjectId(projectId);
       const projectDir = await bulkSyncProjectFiles(projectId, files as any);
       return projectDir;
     } catch (error) {
       logger.error(`Failed to setup project directory:`, error);
-      const { getProjectWorkspacePath, ensureProjectDirectory } = await import('../utils/project-fs-sync');
+      const { getProjectWorkspacePath: _getProjectWorkspacePath, ensureProjectDirectory } = await import('../utils/project-fs-sync');
       return ensureProjectDirectory(projectId);
     }
   }

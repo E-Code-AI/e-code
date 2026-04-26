@@ -147,7 +147,7 @@ export function ReplitEditorLayout({
     activeRightPanelProp ?? (defaultRightPanel || rightPanels[0]?.id || null)
   );
   const [activeTool, setActiveTool] = useState('files');
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [_mobileSidebarOpen, _setMobileSidebarOpen] = useState(false);
   const [mobileBottomPanelOpen, setMobileBottomPanelOpen] = useState(false);
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -478,7 +478,7 @@ export function ReplitEditorLayout({
               <div className="h-full bg-[var(--ecode-surface)] border-l border-[var(--ecode-border)] flex flex-col">
                 {/* Right Panel Tab Headers - Replit Style */}
                 <div className="h-9 flex items-center border-b border-[var(--ecode-border)] bg-[var(--ecode-surface)] px-2.5">
-                  {enhancedRightPanels.map((panel, index) => {
+                  {enhancedRightPanels.map((panel, _index) => {
                     const isActive = activeRightPanel === panel.id;
                     return (
                       <button

@@ -218,7 +218,7 @@ router.post("/:projectId/mcp/servers/test-remote", async (req: Request, res: Res
     const projectId = await requireProjectAccess(req, res);
     if (projectId === null) return;
 
-    const { command, args, env, url, type } = req.body;
+    const { command, args, env: _env, url, type } = req.body;
 
     if (type === 'stdio' && command) {
       try {

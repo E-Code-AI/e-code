@@ -85,7 +85,7 @@ export function MobileAppDevelopment({ projectId }: MobileAppDevelopmentProps) {
     setBuildLogs([]);
     
     try {
-      const data = await apiRequest('POST', `/api/mobile/build`, {
+      const _data = await apiRequest('POST', `/api/mobile/build`, {
         projectId,
         platform,
         framework,

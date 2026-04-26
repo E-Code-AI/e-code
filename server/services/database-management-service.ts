@@ -241,7 +241,7 @@ export class DatabaseManagementService {
     }
   }
 
-  async createBackup(description?: string): Promise<{ id: string; timestamp: Date; size: number }> {
+  async createBackup(_description?: string): Promise<{ id: string; timestamp: Date; size: number }> {
     try {
       const timestamp = new Date();
       const backupId = `backup_${timestamp.getTime()}`;

@@ -172,7 +172,7 @@ class DeploymentWebSocketService extends EventEmitter {
   
   private pingInterval: NodeJS.Timeout | null = null;
   
-  initialize(server: Server) {
+  initialize(_server: Server) {
     // Use noServer mode with prependListener for priority (same pattern as agent-websocket-service)
     this.wss = new WebSocketServer({ noServer: true });
     
@@ -251,7 +251,7 @@ class DeploymentWebSocketService extends EventEmitter {
         logger.error(`[Deployment WebSocket] WebSocket error for ${clientId}: ${error.message}`);
       });
       
-      ws.on('close', (code, reason) => {
+      ws.on('close', (code, _reason) => {
         // Decrement active connection count for rate limiting
         decrementActiveConnections(clientIp);
         
@@ -424,7 +424,7 @@ class DeploymentWebSocketService extends EventEmitter {
       }
     }
     
-    for (const [clientId, connection] of this.connections.entries()) {
+    for (const [_clientId, connection] of this.connections.entries()) {
       if (connection.ws.readyState === WebSocket.CLOSED || 
           connection.ws.readyState === WebSocket.CLOSING) {
         this.cleanupConnection(connection);

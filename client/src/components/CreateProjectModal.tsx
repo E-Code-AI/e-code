@@ -226,7 +226,7 @@ export const CreateProjectModal = ({
   const [creationTab, setCreationTab] = useState<'template' | 'ai' | 'github'>('template');
   const [creationProgress, setCreationProgress] = useState<CreationProgress | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [createdProjectId, setCreatedProjectId] = useState<number | null>(null);
+  const [_createdProjectId, setCreatedProjectId] = useState<number | null>(null);
   const [lastFormValues, setLastFormValues] = useState<FormValues | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -290,7 +290,7 @@ export const CreateProjectModal = ({
     };
   }, []);
 
-  const subscribeToCreationProgress = useCallback((projectId: number): Promise<void> => {
+  const _subscribeToCreationProgress = useCallback((projectId: number): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
@@ -332,7 +332,7 @@ export const CreateProjectModal = ({
             eventSourceRef.current = null;
             reject(new Error(data.message || 'Project creation failed'));
           }
-        } catch (err) {
+        } catch (_err) {
           // Silent catch for SSE parsing issues
         }
       };

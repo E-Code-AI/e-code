@@ -43,7 +43,7 @@ export default function Editor(props: EditorProps = {}) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
-  const agentRef = useRef<any>(null);
+  const _agentRef = useRef<any>(null);
   const hasStartedAgent = useRef(false);
   const agentWebSocket = useRef<WebSocket | null>(null); // NEW: WebSocket for agent
 
@@ -60,7 +60,7 @@ export default function Editor(props: EditorProps = {}) {
   const [isProjectRunning, setIsProjectRunning] = useState(false);
   const [executionId, setExecutionId] = useState<string | undefined>();
   const [initialAgentPrompt, setInitialAgentPrompt] = useState<string | null>(null);
-  const [agentWebSocketConnected, setAgentWebSocketConnected] = useState(false); // Track WebSocket connection state
+  const [_agentWebSocketConnected, setAgentWebSocketConnected] = useState(false); // Track WebSocket connection state
   
   const [enableShortcutHint, setEnableShortcutHint] = useState(() => {
     if (typeof window === 'undefined') return true;

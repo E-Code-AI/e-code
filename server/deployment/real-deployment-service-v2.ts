@@ -244,7 +244,7 @@ export class RealDeploymentServiceV2 {
   private async setupCustomDomain(
     deploymentId: string,
     customDomain: string,
-    targetUrl: string
+    _targetUrl: string
   ): Promise<string> {
     // In a real implementation, this would:
     // 1. Update DNS records
@@ -257,7 +257,7 @@ export class RealDeploymentServiceV2 {
 
   private async verifyDeployment(
     deploymentId: string,
-    config: RealDeploymentConfig
+    _config: RealDeploymentConfig
   ): Promise<boolean> {
     const deployment = this.activeDeployments.get(deploymentId);
     if (!deployment) return false;

@@ -78,7 +78,7 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
     }
   });
   
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
 
   useEffect(() => {

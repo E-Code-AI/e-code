@@ -85,8 +85,8 @@ export default function Landing() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
-  const [chatOpen, setChatOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_chatOpen, setChatOpen] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [appDescription, setAppDescription] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -109,7 +109,7 @@ export default function Landing() {
   }, [user]);
 
   // Fetch real templates from database
-  const { data: templates = [], isLoading: templatesLoading } = useQuery<any[]>({
+  const { data: _templates = [], isLoading: _templatesLoading } = useQuery<any[]>({
     queryKey: ['/api/marketplace/templates'],
     enabled: true
   });
@@ -270,7 +270,7 @@ export default function Landing() {
     }
   };
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const _handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 

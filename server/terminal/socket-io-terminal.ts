@@ -447,7 +447,7 @@ export class SocketIOTerminalService {
       const lastSync = this.lastSyncedAt.get(projectId) || 0;
       const now = Date.now();
       
-      const { getProjectWorkspacePath, bulkSyncProjectFiles, ensureProjectDirectory } = await import('../utils/project-fs-sync');
+      const { getProjectWorkspacePath: _getProjectWorkspacePath, bulkSyncProjectFiles, ensureProjectDirectory } = await import('../utils/project-fs-sync');
 
       if (now - lastSync < PROJECT_SYNC_CACHE_TTL_MS) {
         const projectDir = await ensureProjectDirectory(projectId);

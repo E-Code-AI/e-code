@@ -71,7 +71,7 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
     visibility: "private" as "private" | "public" | "unlisted",
     language: "javascript" as any,
   });
-  const [savingProject, setSavingProject] = useState(false);
+  const [savingProject, _setSavingProject] = useState(false);
 
   // Delete Confirmation
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);

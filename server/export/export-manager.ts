@@ -423,7 +423,7 @@ build
 *.temp`;
   }
 
-  private generateDockerReadme(projectInfo: any): string {
+  private generateDockerReadme(_projectInfo: any): string {
     return `# Docker Deployment Guide
 
 This project has been exported with Docker support.

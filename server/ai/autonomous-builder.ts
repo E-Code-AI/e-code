@@ -1847,7 +1847,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async generateComprehensiveBuildActions(
     message: string, 
     buildingIntent: any, 
-    language: string = 'javascript'
+    _language: string = 'javascript'
   ): Promise<{ actions: BuildAction[]; response: string }> {
     
     // If we have a matched template, use it

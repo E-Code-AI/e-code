@@ -53,7 +53,7 @@ interface NeonDatabase {
   branch_id: string;
 }
 
-interface NeonApiResponse<T> {
+interface _NeonApiResponse<T> {
   data?: T;
   error?: {
     code: string;

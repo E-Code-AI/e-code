@@ -210,7 +210,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
     }
   };
 
-  const handleSaveEditorSettings = () => {
+  const _handleSaveEditorSettings = () => {
     if (resolvedProjectId && !isLoading) {
       saveThemeMutation.mutate({ 
         themeId: selectedTheme, 

@@ -275,7 +275,7 @@ export class SSHManager {
   private async initializeSSHConnection(session: SSHSession): Promise<void> {
     // Set up SSH connection for the project environment
     const projectPath = `/projects/${session.projectId}`;
-    const sshConfig = this.getSSHConfig(session.projectId);
+    const _sshConfig = this.getSSHConfig(session.projectId);
     
     try {
       const fs = require('fs').promises;

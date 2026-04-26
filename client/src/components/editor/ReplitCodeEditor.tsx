@@ -64,7 +64,7 @@ interface ReplitCodeEditorProps {
 
 function getLanguageFromFileName(fileName: string): string {
   const extension = fileName.split('.').pop()?.toLowerCase();
-  
+
   const languageMap: Record<string, string> = {
     js: 'javascript',
     jsx: 'javascript',
@@ -103,7 +103,7 @@ function getLanguageFromFileName(fileName: string): string {
     makefile: 'makefile',
     gitignore: 'gitignore',
   };
-  
+
   return languageMap[extension || ''] || 'plaintext';
 }
 
@@ -165,28 +165,28 @@ function SortableTab({ tab, isActive, onClick, onClose }: SortableTabProps) {
   );
 }
 
-export function ReplitCodeEditor({ 
-  files, 
-  activeFile, 
+export function ReplitCodeEditor({
+  files: _files,
+  activeFile,
   onFileUpdate,
-  className 
+  className
 }: ReplitCodeEditorProps) {
-  const isMobile = useMediaQuery('(max-width: 768px)');
+  const _isMobile = useMediaQuery('(max-width: 768px)');
   const [tabs, setTabs] = useState<EditorTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<number | null>(null);
-  const [editorContent, setEditorContent] = useState('');
+  const [_editorContent, setEditorContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [aiProcessing, setAiProcessing] = useState(false);
+  const [aiProcessing, _setAiProcessing] = useState(false);
   const editorRef = useRef<EditorView | null>(null);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSavingRef = useRef<boolean>(false);
   const pendingSaveRef = useRef<{ fileId: number; content: string; version: number } | null>(null);
   const fileVersionsRef = useRef<Map<number, number>>(new Map());
-  
+
   const {
     preferences: aiPreferences,
     toggleEnabled: toggleAIEnabled,
@@ -199,7 +199,7 @@ export function ReplitCodeEditor({
   useEffect(() => {
     if (activeFile && !activeFile.isDirectory) {
       const existingTab = tabs.find(tab => tab.fileId === activeFile.id);
-      
+
       if (existingTab) {
         setActiveTabId(activeFile.id);
       } else {
@@ -228,53 +228,53 @@ export function ReplitCodeEditor({
     }
   }, [activeTabId, tabs]);
 
-  const handleEditorChange = (value: string | undefined) => {
+  const _handleEditorChange = (value: string | undefined) => {
     if (value === undefined || activeTabId === null) return;
-    
+
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
-    
+
     const currentVersion = fileVersionsRef.current.get(activeTabId) || 0;
-    
-    setTabs(prevTabs => prevTabs.map(tab => 
-      tab.fileId === activeTabId 
+
+    setTabs(prevTabs => prevTabs.map(tab =>
+      tab.fileId === activeTabId
         ? { ...tab, content: value, isDirty: true, version: currentVersion }
         : tab
     ));
-    
+
     saveTimeoutRef.current = setTimeout(async () => {
       if (isSavingRef.current && pendingSaveRef.current?.fileId === activeTabId) {
         pendingSaveRef.current = { fileId: activeTabId, content: value, version: currentVersion };
         return;
       }
-      
+
       isSavingRef.current = true;
-      
+
       try {
         await onFileUpdate(activeTabId, value);
-        
+
         const newVersion = currentVersion + 1;
         fileVersionsRef.current.set(activeTabId, newVersion);
-        
+
         setTabs(prevTabs => prevTabs.map(tab => {
           if (tab.fileId === activeTabId) {
             if (tab.content === value) {
-              return { 
-                ...tab, 
-                isDirty: false, 
+              return {
+                ...tab,
+                isDirty: false,
                 version: newVersion,
-                lastSavedContent: value 
+                lastSavedContent: value
               };
             }
           }
           return tab;
         }));
-        
+
       } catch (error) {
         console.error('Failed to save file:', error);
-        
+
         setTabs(prevTabs => prevTabs.map(tab => {
           if (tab.fileId === activeTabId && tab.content === value) {
             return {
@@ -288,11 +288,11 @@ export function ReplitCodeEditor({
         }));
       } finally {
         isSavingRef.current = false;
-        
+
         if (pendingSaveRef.current && pendingSaveRef.current.fileId === activeTabId) {
           const pending = pendingSaveRef.current;
           pendingSaveRef.current = null;
-          handleEditorChange(pending.content);
+          _handleEditorChange(pending.content);
         }
       }
     }, 1000);
@@ -303,23 +303,23 @@ export function ReplitCodeEditor({
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
     }
-    
+
     fileVersionsRef.current.delete(fileId);
-    
+
     const newTabs = tabs.filter(tab => tab.fileId !== fileId);
     setTabs(newTabs);
-    
+
     if (activeTabId === fileId) {
       setActiveTabId(newTabs.length > 0 ? newTabs[newTabs.length - 1].fileId : null);
     }
   };
 
-  const handleEditorMount = (view: EditorView) => {
+  const _handleEditorMount = (view: EditorView) => {
     editorRef.current = view;
     setIsLoading(false);
     setHasError(false);
     setErrorMessage('');
-    
+
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
@@ -340,7 +340,7 @@ export function ReplitCodeEditor({
       }
     };
   }, [activeTabId]);
-  
+
   useEffect(() => {
     return () => {
       if (retryTimeoutRef.current) {
@@ -379,7 +379,7 @@ export function ReplitCodeEditor({
     }
   };
 
-  const activeTab = tabs.find(tab => tab.fileId === activeTabId);
+  const _activeTab = tabs.find(tab => tab.fileId === activeTabId);
 
   if (tabs.length === 0) {
     return (
@@ -420,7 +420,7 @@ export function ReplitCodeEditor({
             </div>
           </SortableContext>
         </DndContext>
-        
+
         {/* Tab menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -442,7 +442,7 @@ export function ReplitCodeEditor({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
         {/* AI Completion Controls */}
         <div className="ml-auto flex items-center px-2 gap-2">
           {/* AI Status Badge */}
@@ -452,7 +452,7 @@ export function ReplitCodeEditor({
               AI Processing...
             </Badge>
           )}
-          
+
           {/* AI Toggle Button */}
           <TooltipProvider>
             <Tooltip>
@@ -477,7 +477,7 @@ export function ReplitCodeEditor({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          
+
           {/* AI Settings Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -488,7 +488,7 @@ export function ReplitCodeEditor({
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel>AI Code Completion Settings</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              
+
               {/* Model Selection */}
               <DropdownMenuLabel className="text-[11px] text-muted-foreground">AI Model</DropdownMenuLabel>
               {getAvailableModels().map((model) => (
@@ -503,11 +503,11 @@ export function ReplitCodeEditor({
                   </div>
                 </DropdownMenuCheckboxItem>
               ))}
-              
+
               <DropdownMenuSeparator />
-              
+
               {/* Auto-trigger Toggle */}
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="flex items-center justify-between"
                 onSelect={(e) => e.preventDefault()}
               >
@@ -518,9 +518,9 @@ export function ReplitCodeEditor({
                   onCheckedChange={toggleAutoTrigger}
                 />
               </DropdownMenuItem>
-              
+
               {/* Confidence Threshold */}
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="flex flex-col gap-1"
                 onSelect={(e) => e.preventDefault()}
               >
@@ -585,26 +585,26 @@ export function ReplitCodeEditor({
             setTabs(prevTabs => prevTabs.map(tab =>
               tab.fileId === fileId ? { ...tab, content, isDirty: true } : tab
             ));
-            
+
             if (saveTimeoutRef.current) {
               clearTimeout(saveTimeoutRef.current);
             }
-            
+
             const currentVersion = fileVersionsRef.current.get(fileId) || 0;
-            
+
             saveTimeoutRef.current = setTimeout(async () => {
               if (isSavingRef.current && pendingSaveRef.current?.fileId === fileId) {
                 pendingSaveRef.current = { fileId, content, version: currentVersion };
                 return;
               }
-              
+
               isSavingRef.current = true;
-              
+
               try {
                 await onFileUpdate(fileId, content);
                 const newVersion = currentVersion + 1;
                 fileVersionsRef.current.set(fileId, newVersion);
-                
+
                 setTabs(prevTabs => prevTabs.map(tab => {
                   if (tab.fileId === fileId && tab.content === content) {
                     return {
@@ -620,7 +620,7 @@ export function ReplitCodeEditor({
                 console.error('Failed to save file:', error);
               } finally {
                 isSavingRef.current = false;
-                
+
                 if (pendingSaveRef.current && pendingSaveRef.current.fileId === fileId) {
                   const pending = pendingSaveRef.current;
                   pendingSaveRef.current = null;

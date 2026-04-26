@@ -516,7 +516,7 @@ export class CheckpointService {
     return fileCount;
   }
 
-  private async restoreProjectFiles(projectId: number, checkpointId: number, checkpointDir: string): Promise<void> {
+  private async restoreProjectFiles(projectId: number, checkpointId: number, _checkpointDir: string): Promise<void> {
     const checkpointFileRecords = await db.select()
       .from(checkpointFiles)
       .where(eq(checkpointFiles.checkpointId, checkpointId));
@@ -572,7 +572,7 @@ export class CheckpointService {
     }
   }
 
-  private async restoreDatabaseSnapshot(projectId: number, checkpointId: number, checkpointDir: string): Promise<boolean> {
+  private async restoreDatabaseSnapshot(projectId: number, checkpointId: number, _checkpointDir: string): Promise<boolean> {
     try {
       const [snapshot] = await db.select()
         .from(checkpointDatabase)
@@ -686,7 +686,7 @@ export class CheckpointService {
    * 🔥 REPLIT AGENT 3: Create Neon database branch for dev/prod separation
    * This allows independent database snapshots per checkpoint
    */
-  private async createNeonBranch(projectId: number, checkpointName: string): Promise<string | null> {
+  private async createNeonBranch(projectId: number, _checkpointName: string): Promise<string | null> {
     try {
       const neonApiKey = process.env.NEON_API_KEY;
       const neonProjectId = process.env.NEON_PROJECT_ID;

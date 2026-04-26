@@ -351,7 +351,7 @@ Generate EVERY file needed for a complete, working application. No placeholders 
   private async createFile(projectId: string, filePath: string, content: string): Promise<any> {
     try {
       const fileName = filePath.split('/').pop() || filePath;
-      const parentPath = filePath.substring(0, filePath.lastIndexOf('/')) || '/';
+      const _parentPath = filePath.substring(0, filePath.lastIndexOf('/')) || '/';
 
       // Convert projectId to number as required by storage interface
       const numericProjectId = parseInt(projectId, 10);

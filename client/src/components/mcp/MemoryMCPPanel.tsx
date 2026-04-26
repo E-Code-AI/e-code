@@ -42,7 +42,7 @@ interface Conversation {
   createdAt: string;
 }
 
-export function MemoryMCPPanel({ projectId }: { projectId?: number }) {
+export function MemoryMCPPanel({ projectId: _projectId }: { projectId?: number }) {
   const [activeTab, setActiveTab] = useState('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState<MemoryNode | null>(null);

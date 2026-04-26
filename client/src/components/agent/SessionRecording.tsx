@@ -56,8 +56,8 @@ interface SessionRecordingProps {
 
 export function SessionRecording({ sessionId, projectId, className }: SessionRecordingProps) {
   const [activeRecordingId, setActiveRecordingId] = useState<string | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, _setCurrentTime] = useState(0);
+  const [_isPlaying, _setIsPlaying] = useState(false);
   const [openRecordings, setOpenRecordings] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
@@ -67,7 +67,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
   });
 
   const recordings: SessionRecording[] = recordingsData?.recordings || [];
-  const activeRecording = activeRecordingId 
+  const _activeRecording = activeRecordingId
     ? recordings.find(r => r.id === activeRecordingId)
     : null;
 
@@ -266,10 +266,10 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
                       )}
                     </Button>
                     <Button
-                      onClick={() => addMarkerMutation.mutate({ 
-                        recordingId: activeRecordingId, 
-                        label: 'Event', 
-                        type: 'event' 
+                      onClick={() => addMarkerMutation.mutate({
+                        recordingId: activeRecordingId,
+                        label: 'Event',
+                        type: 'event'
                       })}
                       disabled={addMarkerMutation.isPending}
                       variant="outline"
@@ -341,7 +341,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
                   >
                     <Card>
                       <CollapsibleTrigger asChild>
-                        <button 
+                        <button
                           className="w-full p-4 text-left hover:bg-accent/50 transition-colors rounded-lg"
                           data-testid={`button-toggle-recording-${recording.id}`}
                         >

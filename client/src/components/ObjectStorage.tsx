@@ -67,7 +67,7 @@ interface StorageStats {
 
 export function ObjectStorage() {
   const [selectedBucket, setSelectedBucket] = useState<string>('repl-default-bucket');
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, _setCurrentPath] = useState('/');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
@@ -103,7 +103,7 @@ export function ObjectStorage() {
     totalBandwidth: 0,
   };
 
-  const isLoading = bucketsLoading || filesLoading || statsLoading;
+  const _isLoading = bucketsLoading || filesLoading || statsLoading;
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -124,7 +124,7 @@ export function ObjectStorage() {
     return <File className="h-5 w-5 text-gray-500" />;
   };
 
-  const handleGetUploadParameters = async (fileName: string, fileType: string) => {
+  const handleGetUploadParameters = async (fileName: string, _fileType: string) => {
     // This would normally call your backend to get a presigned URL with file metadata
     return {
       method: 'PUT' as const,
@@ -132,7 +132,7 @@ export function ObjectStorage() {
     };
   };
 
-  const handleUploadComplete = (result: any) => {
+  const handleUploadComplete = (_result: any) => {
     // Handle upload completion
     queryClient.invalidateQueries({ queryKey: ['/api/storage/files'] });
   };
@@ -147,7 +147,7 @@ export function ObjectStorage() {
     setSelectedFiles(newSelection);
   };
 
-  const handleBulkAction = (action: 'delete' | 'makePublic' | 'makePrivate') => {
+  const handleBulkAction = (_action: 'delete' | 'makePublic' | 'makePrivate') => {
     // Handle bulk actions on selected files
     setSelectedFiles(new Set());
   };

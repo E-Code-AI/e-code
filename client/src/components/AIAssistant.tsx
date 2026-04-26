@@ -76,8 +76,8 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [streamingMessage, setStreamingMessage] = useState('');
+  const [_isTyping, _setIsTyping] = useState(false);
+  const [streamingMessage, _setStreamingMessage] = useState('');
   const [suggestions, setSuggestions] = useState<CodeSuggestion[]>([]);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -160,7 +160,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     }
   }, [input]);
 
-  const scrollToBottom = useCallback(() => {
+  const _scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       isUserNearBottomRef.current = true;
       requestAnimationFrame(() => {
@@ -181,7 +181,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
     }
   };
 
-  const generateSuggestions = async () => {
+  const _generateSuggestions = async () => {
     if (!selectedCode) return;
 
     try {

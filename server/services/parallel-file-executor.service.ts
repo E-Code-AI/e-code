@@ -251,7 +251,7 @@ export class ParallelFileExecutor extends EventEmitter {
    * Find tasks with satisfied dependencies and add to queue
    */
   private queueReadyTasks(): void {
-    for (const [id, node] of this.taskGraph) {
+    for (const [_id, node] of this.taskGraph) {
       if (node.status !== 'pending') continue;
 
       const allDepsComplete = node.task.dependencies.every(depId => {
@@ -330,7 +330,7 @@ export class ParallelFileExecutor extends EventEmitter {
 
       if (allDepsComplete && this.runningCount < this.maxConcurrency) {
         // Execute immediately without waiting
-        const promise = this.executeTask(task).then(result => {
+        const _promise = this.executeTask(task).then(result => {
           results.push(result);
           this.emit('task-complete', result);
           this.queueReadyTasks();

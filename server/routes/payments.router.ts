@@ -397,7 +397,7 @@ router.post('/queue-retry', ensureAuthenticated, ensureAdmin, adminPaymentRateLi
 router.post('/subscribe', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
-    const { planId, tier, interval, paymentMethodId } = req.body;
+    const { planId, tier, interval: _interval, paymentMethodId } = req.body;
     const resolvedTier = tier || planId || 'core';
     const subscription = await paymentService.createSubscription(userId, resolvedTier, paymentMethodId);
     const clientSecret = (subscription.latest_invoice as any)?.payment_intent?.client_secret;

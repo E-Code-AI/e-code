@@ -75,15 +75,15 @@ function getTaskStatusIcon(status: string) {
   }
 }
 
-export function MaxAutonomyProgress({ 
-  sessionId, 
+export function MaxAutonomyProgress({
+  sessionId,
   projectId,
   onStop,
-  compact = false 
+  compact = false
 }: MaxAutonomyProgressProps) {
   const [isExpanded, setIsExpanded] = useState(!compact);
   const [showAllTasks, setShowAllTasks] = useState(false);
-  
+
   const {
     session,
     progress,
@@ -99,7 +99,7 @@ export function MaxAutonomyProgress({
 
   // ✅ FIX (Nov 30, 2025): Add null safety for tasks during session loading
   const safeTasks = tasks || [];
-  
+
   const isActive = session?.status === 'active';
   const isPaused = session?.status === 'paused';
   const isTerminal = ['completed', 'failed', 'cancelled'].includes(session?.status || '');
@@ -134,13 +134,13 @@ export function MaxAutonomyProgress({
   }
 
   return (
-    <div 
+    <div
       className="border border-border rounded-lg bg-background overflow-hidden"
       data-testid="autonomy-progress-container"
     >
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger asChild>
-          <div 
+          <div
             className="flex items-center justify-between p-3 cursor-pointer hover:bg-surface-hover-solid transition-colors"
             data-testid="autonomy-progress-header"
           >
@@ -153,11 +153,11 @@ export function MaxAutonomyProgress({
                 )}
                 <Zap className="h-4 w-4 text-amber-500" />
               </div>
-              
+
               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                 <span className="text-[13px] font-medium">Max Autonomy</span>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={cn("text-[10px] px-1.5 py-0 h-4", getStatusColor(session.status))}
                   data-testid="autonomy-status-badge"
                 >
@@ -171,7 +171,7 @@ export function MaxAutonomyProgress({
               <span className="text-[11px] text-muted-foreground hidden sm:inline">
                 {progressPercent}% • {progress?.tasksCompleted || 0}/{progress?.tasksTotal || 0} tasks
               </span>
-              
+
               {!isTerminal && (
                 <div className="flex items-center gap-1">
                   {isActive && (
@@ -190,7 +190,7 @@ export function MaxAutonomyProgress({
                       )}
                     </Button>
                   )}
-                  
+
                   {isPaused && (
                     <Button
                       variant="ghost"
@@ -207,13 +207,13 @@ export function MaxAutonomyProgress({
                       )}
                     </Button>
                   )}
-                  
+
                   <Button
                     variant="ghost"
                     size="sm"
                     className="h-7 w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-950"
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
+                    onClick={(e) => {
+                      e.stopPropagation();
                       stopSession();
                       onStop?.();
                     }}
@@ -303,10 +303,10 @@ export function MaxAutonomyProgress({
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="space-y-1 max-h-48 overflow-y-auto">
                   {visibleTasks.map((task) => (
-                    <div 
+                    <div
                       key={task.id}
                       className={cn(
                         "flex items-center gap-2 p-1.5 rounded text-[11px]",
@@ -360,10 +360,10 @@ interface MaxAutonomyStartFormProps {
   isStarting?: boolean;
 }
 
-export function MaxAutonomyStartForm({ 
-  projectId, 
-  onStart, 
-  isStarting = false 
+export function MaxAutonomyStartForm({
+  projectId: _projectId,
+  onStart,
+  isStarting = false
 }: MaxAutonomyStartFormProps) {
   const [goal, setGoal] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -446,10 +446,10 @@ export function MaxAutonomyStartForm({
               Auto-rollback on failure
             </label>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <label className="text-[11px]">Risk threshold:</label>
-            <select 
+            <select
               value={riskThreshold}
               onChange={(e) => setRiskThreshold(e.target.value as any)}
               className="text-[11px] bg-background border border-border rounded px-2 py-1"
@@ -464,7 +464,7 @@ export function MaxAutonomyStartForm({
 
           <div className="flex items-center gap-2">
             <label className="text-[11px]">Max duration:</label>
-            <select 
+            <select
               value={maxDuration}
               onChange={(e) => setMaxDuration(parseInt(e.target.value))}
               className="text-[11px] bg-background border border-border rounded px-2 py-1"

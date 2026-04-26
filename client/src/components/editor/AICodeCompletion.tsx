@@ -10,8 +10,8 @@ interface AICodeCompletionProps {
 }
 
 export function AICodeCompletion({
-  enabled,
-  onStatusChange,
+  enabled: _enabled,
+  onStatusChange: _onStatusChange,
 }: AICodeCompletionProps) {
   return null;
 }

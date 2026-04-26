@@ -21,7 +21,7 @@ interface FileExplorerPanelProps {
 }
 
 export function FileExplorerPanel({
-  files,
+  files: _files,
   selectedFile,
   onFileSelect,
   onClose,

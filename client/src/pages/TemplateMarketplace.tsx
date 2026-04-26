@@ -50,7 +50,7 @@ export default function TemplateMarketplace() {
   const [activeTab, setActiveTab] = useState('all');
 
   // Fetch categories
-  const { data: categories, isLoading: categoriesLoading } = useQuery({
+  const { data: categories, isLoading: _categoriesLoading } = useQuery({
     queryKey: ['/api/marketplace/categories'],
     queryFn: async () => {
       return apiRequest('GET', '/api/marketplace/categories');

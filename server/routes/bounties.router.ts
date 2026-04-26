@@ -54,7 +54,7 @@ const rateBountySchema = z.object({
   reviewType: z.enum(['hunter_review', 'poster_review']),
 });
 
-export function createBountiesRouter(storageInstance: IStorage = storage): Router {
+export function createBountiesRouter(_storageInstance: IStorage = storage): Router {
   const router = Router();
 
   router.post('/', async (req: Request, res: Response) => {

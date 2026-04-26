@@ -1,9 +1,9 @@
 /**
  * InlineBuildProgress - Replit-style inline chat components for autonomous workspace
- * 
+ *
  * Displays plan, build options, and progress directly in the chat stream
  * instead of a separate dialog (like Replit Agent does)
- * 
+ *
  * Features rich animated states: Working, Vibing, Thinking, Building, Styling
  */
 
@@ -44,14 +44,14 @@ import { useMemo,useState } from 'react';
 // =============================================================================
 // REPLIT-STYLE STATUS STATES
 // =============================================================================
-export type AgentStatus = 
-  | 'idle' 
-  | 'thinking' 
-  | 'vibing' 
-  | 'working' 
-  | 'building' 
-  | 'styling' 
-  | 'testing' 
+export type AgentStatus =
+  | 'idle'
+  | 'thinking'
+  | 'vibing'
+  | 'working'
+  | 'building'
+  | 'styling'
+  | 'testing'
   | 'deploying'
   | 'complete'
   | 'error';
@@ -182,9 +182,9 @@ interface ReplitStatusIndicatorProps {
   compact?: boolean;
 }
 
-export function ReplitStatusIndicator({ 
-  status, 
-  message, 
+export function ReplitStatusIndicator({
+  status,
+  message,
   subMessage,
   showEmoji = true,
   compact = false
@@ -192,12 +192,12 @@ export function ReplitStatusIndicator({
   const config = STATUS_CONFIGS[status];
   const Icon = config.icon;
   const prefersReducedMotion = useReducedMotion();
-  
+
   // Use simpler animations or none when reduced motion is preferred
   const shouldAnimate = !prefersReducedMotion;
-  
+
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10, scale: 0.95 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={shouldAnimate ? { opacity: 0, y: -10, scale: 0.95 } : { opacity: 0 }}
@@ -230,7 +230,7 @@ export function ReplitStatusIndicator({
             compact ? "h-4 w-4" : "h-5 w-5"
           )} />
         </div>
-        
+
         {/* Ripple effect for active states - only if animation is enabled */}
         {shouldAnimate && status !== 'idle' && status !== 'complete' && status !== 'error' && (
           <LazyMotionDiv
@@ -250,7 +250,7 @@ export function ReplitStatusIndicator({
           />
         )}
       </LazyMotionDiv>
-      
+
       {/* Text content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export function ReplitStatusIndicator({
           )}>
             {message || config.label}
           </span>
-          
+
           {/* Animated dots for active states - only if animation is enabled */}
           {shouldAnimate && (status === 'thinking' || status === 'working' || status === 'building') && (
             <span className="flex gap-0.5">
@@ -274,7 +274,7 @@ export function ReplitStatusIndicator({
                 <LazyMotionSpan
                   key={i}
                   className={cn("rounded-full", config.bgColor, compact ? "w-1 h-1" : "w-1.5 h-1.5")}
-                  animate={{ 
+                  animate={{
                     y: [0, -3, 0],
                     opacity: [0.4, 1, 0.4]
                   }}
@@ -289,7 +289,7 @@ export function ReplitStatusIndicator({
             </span>
           )}
         </div>
-        
+
         {subMessage && (
           <div className={cn("collapsible-content expanded")}>
             <div>
@@ -322,7 +322,7 @@ interface TaskProgressItemProps {
 export function TaskProgressItem({ name, status, index, isLast }: TaskProgressItemProps) {
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
+
   const getStatusIcon = () => {
     switch (status) {
       case 'completed':
@@ -362,12 +362,12 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
           status === 'completed' ? 'bg-green-200 dark:bg-green-800' : 'bg-border'
         )} />
       )}
-      
+
       {/* Status icon */}
       <div className="relative z-10 bg-background rounded-full p-0.5">
         {getStatusIcon()}
       </div>
-      
+
       {/* Task content */}
       <div className="flex-1 min-w-0 pb-3">
         <p className={cn(
@@ -379,7 +379,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
         )}>
           {name}
         </p>
-        
+
         {status === 'in_progress' && (
           <LazyMotionDiv
             className="flex items-center gap-1.5 mt-1"
@@ -426,10 +426,10 @@ interface InlineWorkingIndicatorProps {
   subMessage?: string;
 }
 
-export function InlineWorkingIndicator({ 
-  message = 'Working...', 
+export function InlineWorkingIndicator({
+  message = 'Working...',
   status = 'working',
-  subMessage 
+  subMessage
 }: InlineWorkingIndicatorProps) {
   // Use the status directly from props (authoritative server data)
   return (
@@ -448,7 +448,7 @@ interface InlineSearchIndicatorProps {
 
 export function InlineSearchIndicator({ query }: InlineSearchIndicatorProps) {
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-2 text-[13px] text-muted-foreground py-1"
@@ -465,7 +465,7 @@ interface InlineAppTypeProps {
 
 export function InlineAppType({ appType }: InlineAppTypeProps) {
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-2 text-[13px] py-1"
@@ -494,14 +494,14 @@ interface InlinePlanCardProps {
   onChangePlan?: () => void;
 }
 
-export function InlinePlanCard({ 
-  title, 
-  features, 
+export function InlinePlanCard({
+  title,
+  features,
   planText,
   phases,
-  isExpanded = true, 
+  isExpanded = true,
   onToggle,
-  onChangePlan 
+  onChangePlan
 }: InlinePlanCardProps) {
   const [expanded, setExpanded] = useState(isExpanded);
   const [showFullPlan, setShowFullPlan] = useState(false);
@@ -513,11 +513,11 @@ export function InlinePlanCard({
     const lines = text.split('\n').filter(line => line.trim());
     const parsedPhases: PlanPhase[] = [];
     let currentPhase: PlanPhase | null = null;
-    
+
     lines.forEach(line => {
       const phaseMatch = line.match(/^(?:Phase\s*)?(\d+)[.:\s-]+(.+)/i);
       const taskMatch = line.match(/^\s*[-•*]\s*(.+)/);
-      
+
       if (phaseMatch) {
         if (currentPhase) parsedPhases.push(currentPhase);
         currentPhase = {
@@ -535,7 +535,7 @@ export function InlinePlanCard({
         }
       }
     });
-    
+
     if (currentPhase) parsedPhases.push(currentPhase);
     return parsedPhases;
   };
@@ -544,13 +544,13 @@ export function InlinePlanCard({
   const hasPhases = displayPhases.length > 0;
 
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 overflow-hidden my-2"
       data-testid="inline-plan-card"
     >
-      <div 
+      <div
         className="p-3 cursor-pointer flex items-center justify-between"
         onClick={() => {
           setExpanded(!expanded);
@@ -573,7 +573,7 @@ export function InlinePlanCard({
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         )}
       </div>
-      
+
       <div className={cn("collapsible-content", expanded && "expanded")}>
         <div>
           {expanded && (
@@ -614,7 +614,7 @@ export function InlinePlanCard({
               ) : (
                 <ul className="space-y-1.5">
                   {features.map((feature, i) => (
-                    <LazyMotionLi 
+                    <LazyMotionLi
                       key={i}
                       initial={shouldAnimate ? { opacity: 0, x: -10 } : { opacity: 1 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -627,7 +627,7 @@ export function InlinePlanCard({
                   ))}
                 </ul>
               )}
-              
+
               {planText && (
                 <div className="pt-2 border-t border-blue-200 dark:border-blue-800">
                   <button
@@ -641,7 +641,7 @@ export function InlinePlanCard({
                     {showFullPlan ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                     {showFullPlan ? 'Hide full plan' : 'Show full plan'}
                   </button>
-                  
+
                   <div className={cn("collapsible-content", showFullPlan && "expanded")}>
                     <div>
                       {showFullPlan && (
@@ -656,7 +656,7 @@ export function InlinePlanCard({
                   </div>
                 </div>
               )}
-              
+
               {onChangePlan && (
                 <Button
                   variant="ghost"
@@ -688,7 +688,7 @@ interface InlineBuildOptionsProps {
 
 export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: InlineBuildOptionsProps) {
   const [hoveredOption, setHoveredOption] = useState<BuildMode | null>(null);
-  
+
   const options = [
     {
       id: 'full-app' as BuildMode,
@@ -709,7 +709,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
   ];
 
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-card p-4 my-3 space-y-4"
@@ -718,12 +718,12 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
         <p className="text-[13px] font-medium">I've created a feature list based on your request. If everything looks good, we can start building.</p>
         <p className="text-[13px] text-muted-foreground mt-1">How do you want to continue?</p>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {options.map((option) => {
           const isSelected = selectedMode === option.id;
-          const isHovered = hoveredOption === option.id;
-          
+          const _isHovered = hoveredOption === option.id;
+
           return (
             <LazyMotionDiv
               key={option.id}
@@ -747,7 +747,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
                   </div>
                 </div>
               )}
-              
+
               <div className="flex items-start gap-3">
                 <div className={cn(
                   "p-2 rounded-lg",
@@ -758,7 +758,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
                     option.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-400' : 'text-purple-600 dark:text-purple-400'
                   )} />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-[13px]">{option.title}</span>
@@ -776,9 +776,9 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
           );
         })}
       </div>
-      
-      <Button 
-        className="w-full gap-2" 
+
+      <Button
+        className="w-full gap-2"
         size="lg"
         disabled={disabled || !selectedMode}
         onClick={() => selectedMode && onSelectMode(selectedMode)}
@@ -787,7 +787,7 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
         Start building
         <Sparkles className="h-4 w-4" />
       </Button>
-      
+
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <Button variant="ghost" size="sm" className="text-[11px] h-7" data-testid="button-edit-plan">
           Edit plan
@@ -831,29 +831,29 @@ function mapPhaseToAgentStatus(phase: 'planning' | 'executing' | 'complete'): Ag
   }
 }
 
-export function InlineBuildProgressCard({ 
-  phase, 
-  currentTask, 
-  progress, 
+export function InlineBuildProgressCard({
+  phase,
+  currentTask,
+  progress,
   tasks,
   planText,
-  isStreaming 
+  isStreaming: _isStreaming
 }: InlineBuildProgressProps) {
   const [showTasks, setShowTasks] = useState(true);
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
+
   // Map phase to agent status using authoritative server data
   const currentStatus = useMemo(
     () => mapPhaseToAgentStatus(phase),
     [phase]
   );
-  
+
   // Calculate completed and total tasks
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
 
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={shouldAnimate ? { opacity: 0, y: 10 } : { opacity: 1 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-4 my-3 border rounded-xl bg-card/50 p-4"
@@ -863,18 +863,18 @@ export function InlineBuildProgressCard({
       <ReplitStatusIndicator
         status={currentStatus}
         message={
-          phase === 'planning' 
-            ? (planText ? 'Generating design guidelines...' : 'Analyzing your request...') 
+          phase === 'planning'
+            ? (planText ? 'Generating design guidelines...' : 'Analyzing your request...')
             : currentTask || STATUS_CONFIGS[currentStatus].label
         }
         subMessage={
-          phase === 'executing' 
-            ? `${completedTasks}/${tasks.length} tasks • ${Math.round(progress)}% complete` 
+          phase === 'executing'
+            ? `${completedTasks}/${tasks.length} tasks • ${Math.round(progress)}% complete`
             : undefined
         }
         compact={false}
       />
-      
+
       {/* Progress bar for executing phase - using scaleX for GPU acceleration */}
       {phase === 'executing' && (
         <div className="space-y-2">
@@ -894,7 +894,7 @@ export function InlineBuildProgressCard({
           </div>
         </div>
       )}
-      
+
       {/* Task list with timeline */}
       {phase === 'executing' && tasks.length > 0 && (
         <div className="space-y-2">
@@ -914,7 +914,7 @@ export function InlineBuildProgressCard({
               </div>
             )}
           </button>
-          
+
           <div className={cn("collapsible-content", showTasks && "expanded")}>
             <div>
               {showTasks && (
@@ -934,10 +934,10 @@ export function InlineBuildProgressCard({
           </div>
         </div>
       )}
-      
+
       {/* Complete phase with celebration - respects reduced motion */}
       {phase === 'complete' && (
-        <LazyMotionDiv 
+        <LazyMotionDiv
           initial={shouldAnimate ? { scale: 0.9, opacity: 0 } : { opacity: 1 }}
           animate={{ scale: 1, opacity: 1 }}
           className="flex items-center gap-3 py-2"
@@ -969,12 +969,12 @@ interface InlineStartBuildingButtonProps {
 
 export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBuildingButtonProps) {
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-3 my-2"
     >
-      <Button 
+      <Button
         onClick={onClick}
         className="bg-primary hover:bg-primary/90"
         data-testid="button-start-building-inline"
@@ -998,7 +998,7 @@ interface InlineCompleteIndicatorProps {
 
 export function InlineCompleteIndicator({ message = 'Build complete!', projectUrl }: InlineCompleteIndicatorProps) {
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800 p-4 my-2"
@@ -1014,10 +1014,10 @@ export function InlineCompleteIndicator({ message = 'Build complete!', projectUr
         </div>
       </div>
       {projectUrl && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-3 gap-2" 
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 gap-2"
           onClick={() => window.open(projectUrl, '_blank')}
           data-testid="button-open-project"
         >
@@ -1037,9 +1037,9 @@ interface InlineErrorIndicatorProps {
 
 export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorIndicatorProps) {
   const [showDetails, setShowDetails] = useState(false);
-  
+
   return (
-    <LazyMotionDiv 
+    <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="border rounded-lg bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800 p-4 my-2"
@@ -1053,7 +1053,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
           <p className="font-medium text-red-700 dark:text-red-300">{message}</p>
           {details && (
             <>
-              <button 
+              <button
                 onClick={() => setShowDetails(!showDetails)}
                 className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 hover:text-foreground"
               >
@@ -1074,10 +1074,10 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
         </div>
       </div>
       {onRetry && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-3 gap-2 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30" 
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3 gap-2 border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/30"
           onClick={onRetry}
           data-testid="button-retry-build"
         >
@@ -1102,47 +1102,47 @@ interface InlineFileOperationProps {
   status?: 'pending' | 'in_progress' | 'completed' | 'error';
 }
 
-const FILE_OPERATION_CONFIG: Record<FileOperationType, { 
-  label: string; 
-  icon: typeof FileCode; 
-  color: string; 
+const FILE_OPERATION_CONFIG: Record<FileOperationType, {
+  label: string;
+  icon: typeof FileCode;
+  color: string;
   bgColor: string;
 }> = {
-  create: { 
-    label: 'Created', 
-    icon: FileCode, 
+  create: {
+    label: 'Created',
+    icon: FileCode,
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100 dark:bg-green-900/30'
   },
-  edit: { 
-    label: 'Edited', 
-    icon: FileText, 
+  edit: {
+    label: 'Edited',
+    icon: FileText,
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30'
   },
-  delete: { 
-    label: 'Deleted', 
-    icon: FileCode, 
+  delete: {
+    label: 'Deleted',
+    icon: FileCode,
     color: 'text-red-600 dark:text-red-400',
     bgColor: 'bg-red-100 dark:bg-red-900/30'
   },
-  read: { 
-    label: 'Read', 
-    icon: FolderOpen, 
+  read: {
+    label: 'Read',
+    icon: FolderOpen,
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-100 dark:bg-amber-900/30'
   },
-  move: { 
-    label: 'Moved', 
-    icon: FolderOpen, 
+  move: {
+    label: 'Moved',
+    icon: FolderOpen,
     color: 'text-purple-600 dark:text-purple-400',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30'
   }
 };
 
-export function InlineFileOperation({ 
-  operation, 
-  filePath, 
+export function InlineFileOperation({
+  operation,
+  filePath,
   language,
   linesChanged,
   preview,
@@ -1153,7 +1153,7 @@ export function InlineFileOperation({
   const Icon = config.icon;
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
+
   const fileName = filePath.split('/').pop() || filePath;
   const dirPath = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
 
@@ -1181,7 +1181,7 @@ export function InlineFileOperation({
           <Icon className={cn("h-3.5 w-3.5", config.color)} />
         )}
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className={cn("text-[11px] font-medium", config.color)}>{config.label}</span>
@@ -1191,7 +1191,7 @@ export function InlineFileOperation({
           <p className="text-[10px] text-muted-foreground truncate">{dirPath}</p>
         )}
       </div>
-      
+
       <div className="flex items-center gap-2 flex-shrink-0">
         {language && (
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">{language}</Badge>
@@ -1205,8 +1205,8 @@ export function InlineFileOperation({
           </span>
         )}
         {preview && (
-          showPreview 
-            ? <ChevronUp className="h-3 w-3 text-muted-foreground" aria-hidden="true" /> 
+          showPreview
+            ? <ChevronUp className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
             : <ChevronDown className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
         )}
       </div>
@@ -1234,7 +1234,7 @@ export function InlineFileOperation({
           {contentRow}
         </button>
       ) : (
-        <div 
+        <div
           className="flex items-center gap-2 px-3 py-2"
           role="status"
           aria-label={`${config.label} ${fileName}`}
@@ -1243,8 +1243,8 @@ export function InlineFileOperation({
           {contentRow}
         </div>
       )}
-      
-      <div 
+
+      <div
         id={previewToggleId}
         className={cn("collapsible-content", showPreview && preview && "expanded")}
       >
@@ -1273,9 +1273,9 @@ interface InlineTerminalOutputProps {
   duration?: number;
 }
 
-export function InlineTerminalOutput({ 
-  command, 
-  output, 
+export function InlineTerminalOutput({
+  command,
+  output,
   status = 'success',
   exitCode,
   duration
@@ -1283,7 +1283,7 @@ export function InlineTerminalOutput({
   const [showOutput, setShowOutput] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
+
   const terminalOutputId = `terminal-output-${command.replace(/[^a-zA-Z0-9]/g, '-').substring(0, 40)}`;
 
   const handleToggleOutput = () => {
@@ -1311,11 +1311,11 @@ export function InlineTerminalOutput({
         )}
         <Terminal className="h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
       </div>
-      
+
       <code className="flex-1 text-[11px] font-mono text-zinc-200 truncate">
         $ {command}
       </code>
-      
+
       <div className="flex items-center gap-2 flex-shrink-0">
         {duration !== undefined && (
           <span className="text-[10px] text-zinc-500">{duration}ms</span>
@@ -1326,8 +1326,8 @@ export function InlineTerminalOutput({
           </Badge>
         )}
         {output && (
-          showOutput 
-            ? <ChevronUp className="h-3 w-3 text-zinc-500" aria-hidden="true" /> 
+          showOutput
+            ? <ChevronUp className="h-3 w-3 text-zinc-500" aria-hidden="true" />
             : <ChevronDown className="h-3 w-3 text-zinc-500" aria-hidden="true" />
         )}
       </div>
@@ -1355,7 +1355,7 @@ export function InlineTerminalOutput({
           {terminalContentRow}
         </button>
       ) : (
-        <div 
+        <div
           className="flex items-center gap-2 px-3 py-2"
           role="status"
           aria-label={`Terminal command: ${command}, ${status === 'running' ? 'running' : status === 'success' ? 'completed successfully' : 'completed with error'}`}
@@ -1364,8 +1364,8 @@ export function InlineTerminalOutput({
           {terminalContentRow}
         </div>
       )}
-      
-      <div 
+
+      <div
         id={terminalOutputId}
         className={cn("collapsible-content", showOutput && output && "expanded")}
       >
@@ -1481,8 +1481,8 @@ export function InlineThinkingStep({ step, isActive = false, index = 0 }: Inline
       transition={{ delay: index * 0.1 }}
       className={cn(
         "flex items-center gap-2 py-1.5 px-3 rounded-lg text-[13px]",
-        isActive 
-          ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300" 
+        isActive
+          ? "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300"
           : "text-muted-foreground"
       )}
       data-testid={`inline-thinking-step-${index}`}
@@ -1516,9 +1516,9 @@ interface InlineAgentActionProps {
   icon?: typeof Sparkles;
 }
 
-export function InlineAgentAction({ 
-  action, 
-  description, 
+export function InlineAgentAction({
+  action,
+  description,
   type = 'info',
   icon: CustomIcon
 }: InlineAgentActionProps) {
@@ -1562,8 +1562,8 @@ interface InlineDependencyInstallProps {
   manager?: 'npm' | 'yarn' | 'pnpm' | 'bun';
 }
 
-export function InlineDependencyInstall({ 
-  packages, 
+export function InlineDependencyInstall({
+  packages,
   status = 'success',
   manager = 'npm'
 }: InlineDependencyInstallProps) {
@@ -1586,7 +1586,7 @@ export function InlineDependencyInstall({
           <Package className="h-4 w-4 text-red-500" />
         )}
         <span className="text-[13px] font-medium">
-          {status === 'installing' ? 'Installing dependencies...' : 
+          {status === 'installing' ? 'Installing dependencies...' :
            status === 'success' ? 'Dependencies installed' : 'Installation failed'}
         </span>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-auto">{manager}</Badge>
@@ -1627,8 +1627,8 @@ interface InlineProgressTimelineProps {
   maxHeight?: string;
 }
 
-export function InlineProgressTimeline({ 
-  events, 
+export function InlineProgressTimeline({
+  events,
   onFileClick,
   maxHeight = '300px'
 }: InlineProgressTimelineProps) {
@@ -1650,7 +1650,7 @@ export function InlineProgressTimeline({
   const getEventColor = (type: ProgressEvent['type'], status?: ProgressEvent['status']) => {
     if (status === 'error') return 'text-red-500';
     if (status === 'in_progress') return 'text-blue-500';
-    
+
     switch (type) {
       case 'file_create': return 'text-green-500';
       case 'file_edit': return 'text-blue-500';
@@ -1685,15 +1685,15 @@ export function InlineProgressTimeline({
           {events.length} events
         </Badge>
       </div>
-      
-      <div 
+
+      <div
         className="overflow-y-auto px-3 py-2 space-y-1"
         style={{ maxHeight }}
       >
         {events.map((event, index) => {
           const Icon = getEventIcon(event.type);
           const color = getEventColor(event.type, event.status);
-          
+
           return (
             <LazyMotionDiv
               key={event.id}
@@ -1722,7 +1722,7 @@ export function InlineProgressTimeline({
                   <Icon className={cn("h-3.5 w-3.5", color)} />
                 )}
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-medium truncate">{event.title}</span>
@@ -1774,9 +1774,9 @@ export function InlineCheckpoint({
 }: InlineCheckpointProps) {
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
-  const progress = totalTasks && completedTasks !== undefined 
-    ? Math.round((completedTasks / totalTasks) * 100) 
+
+  const progress = totalTasks && completedTasks !== undefined
+    ? Math.round((completedTasks / totalTasks) * 100)
     : undefined;
 
   return (
@@ -1787,7 +1787,7 @@ export function InlineCheckpoint({
       data-testid={`inline-checkpoint-${checkpointNumber || 0}`}
     >
       <div className="absolute left-0 right-0 top-1/2 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
-      
+
       <div className="relative flex justify-center">
         <div className="bg-background px-4">
           <div className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-full px-3 py-1.5">
@@ -1813,7 +1813,7 @@ export function InlineCheckpoint({
           </div>
         </div>
       </div>
-      
+
       {(description || eta) && (
         <div className="flex justify-center mt-2">
           <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
@@ -1859,7 +1859,7 @@ export function InlineTaskListEnhanced({
 }: InlineTaskListEnhancedProps) {
   const prefersReducedMotion = useReducedMotion();
   const shouldAnimate = !prefersReducedMotion;
-  
+
   const completedCount = tasks.filter(t => t.status === 'completed').length;
   const inProgressCount = tasks.filter(t => t.status === 'in_progress').length;
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
@@ -1909,7 +1909,7 @@ export function InlineTaskListEnhanced({
           </Badge>
         </div>
       </div>
-      
+
       {showProgress && (
         <div className="px-3 py-2 border-b">
           <div className="flex items-center gap-2">
@@ -1920,7 +1920,7 @@ export function InlineTaskListEnhanced({
           </div>
         </div>
       )}
-      
+
       <div className={cn("divide-y divide-border/50", compact && "max-h-48 overflow-y-auto")}>
         {tasks.map((task, index) => (
           <LazyMotionDiv
@@ -2049,7 +2049,7 @@ export function InlinePreviewWindow({
           )}
         </div>
       </div>
-      
+
       <div className="relative aspect-video bg-muted/30">
         {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">

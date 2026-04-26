@@ -175,7 +175,7 @@ export class VoiceCommandService {
     // Initialize Whisper or other transcription service
     // For now, we'll simulate it
     this.transcriptionService = {
-      transcribe: async (audioBuffer: Buffer): Promise<TranscriptionResult> => {
+      transcribe: async (_audioBuffer: Buffer): Promise<TranscriptionResult> => {
         // In production, use actual Whisper API
         return {
           text: 'debug this code',
@@ -323,7 +323,7 @@ export class VoiceCommandService {
     return commonWords.length / Math.max(words1.length, words2.length);
   }
 
-  private extractParameters(text: string, command: VoiceCommand): any {
+  private extractParameters(text: string, _command: VoiceCommand): any {
     const params: any = {};
     
     // Extract numbers

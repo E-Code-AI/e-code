@@ -135,10 +135,10 @@ export function EnhancedMobileFileExplorer({
   const [renameDialog, setRenameDialog] = useState<{ file: FileItem; newName: string } | null>(null);
   const [deleteDialog, setDeleteDialog] = useState<FileItem | null>(null);
   const [newItemDialog, setNewItemDialog] = useState<{ type: 'file' | 'folder'; name: string; parentId: number | null } | null>(null);
-  const [contextMenuFile, setContextMenuFile] = useState<FileItem | null>(null);
+  const [_contextMenuFile, _setContextMenuFile] = useState<FileItem | null>(null);
 
   // Fetch files from API - use template literal as queryKey[0] for default fetcher
-  const { data: files = [], isLoading, refetch } = useQuery<FileItem[]>({
+  const { data: files = [], isLoading, refetch: _refetch } = useQuery<FileItem[]>({
     queryKey: [`/api/projects/${projectId}/files`],
     enabled: !!projectId && isOpen,
   });

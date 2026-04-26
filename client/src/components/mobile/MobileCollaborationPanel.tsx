@@ -150,7 +150,7 @@ MobileChatBubble.displayName = 'MobileChatBubble';
 
 export function MobileCollaborationPanel({
   projectId,
-  projectName,
+  projectName: _projectName,
   isOpen,
   onClose
 }: MobileCollaborationPanelProps) {
@@ -161,7 +161,7 @@ export function MobileCollaborationPanel({
     chatMessages,
     typingUsers,
     followingUserId,
-    activeCount,
+    activeCount: _activeCount,
     totalCount,
     sendChatMessage,
     setTyping,

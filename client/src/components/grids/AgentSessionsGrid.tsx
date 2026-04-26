@@ -131,7 +131,7 @@ export function AgentSessionsGrid({
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(25);
+  const [pageSize, _setPageSize] = useState(25);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [modelFilter, setModelFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');

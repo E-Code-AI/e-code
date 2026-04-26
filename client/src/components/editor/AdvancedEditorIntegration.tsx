@@ -66,7 +66,7 @@ export function AdvancedEditorIntegration({
     }
   };
 
-  const handleFileCreate = (path: string, type: "file" | "folder") => {
+  const handleFileCreate = (_path: string, _type: "file" | "folder") => {
   };
 
   const handleRunCode = () => {
@@ -83,7 +83,7 @@ export function AdvancedEditorIntegration({
     setIsRunning(false);
   };
 
-  const handleCommandExecute = (command: string) => {
+  const handleCommandExecute = (_command: string) => {
   };
 
   return (

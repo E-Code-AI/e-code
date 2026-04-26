@@ -6,7 +6,7 @@ import { SecurityPolicy,getPolicyByName } from './security-policy';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-const logger = createLogger('sandbox-executor');
+const _logger = createLogger('sandbox-executor');
 
 export interface ExecutionRequest {
   language: string;
@@ -508,7 +508,7 @@ export class SandboxExecutor {
     sandboxId: string,
     mainFile: string,
     langConfig: LanguageConfig,
-    workDir: string
+    _workDir: string
   ): Promise<SandboxResult> {
     if (!langConfig.compileCommand) {
       throw new Error('No compile command for language');

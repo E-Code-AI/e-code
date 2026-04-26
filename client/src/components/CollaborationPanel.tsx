@@ -340,7 +340,7 @@ InviteDialog.displayName = 'InviteDialog';
 export function CollaborationPanel({
   projectId,
   projectName,
-  currentUser,
+  currentUser: _currentUser,
   currentFile,
   onFollowUser,
   onFollowCursor,

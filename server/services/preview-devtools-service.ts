@@ -4,7 +4,7 @@ const logger = {
   error: (message: string, error?: any) => {
     console.error(`[preview-devtools] ERROR: ${message}`, error);
   },
-  info: (message: string, ...args: any[]) => {}
+  info: (_message: string, ..._args: any[]) => {}
 };
 
 interface DevToolsClient {
@@ -266,7 +266,7 @@ class PreviewDevToolsService extends EventEmitter {
 
   // Broadcast to all clients watching a project
   private broadcastToProject(projectId: number, data: any) {
-    Array.from(this.clients.entries()).forEach(([clientId, client]) => {
+    Array.from(this.clients.entries()).forEach(([_clientId, client]) => {
       if (client.projectId === projectId && client.ws.readyState === WebSocket.OPEN) {
         client.ws.send(JSON.stringify(data));
       }

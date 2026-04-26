@@ -28,7 +28,7 @@ interface EnvVarsManagerProps {
 
 export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [_editingId, setEditingId] = useState<string | null>(null);
   const [newVar, setNewVar] = useState({
     key: '',
     value: '',
@@ -37,7 +37,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading: _isLoading } = useQuery({
     queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
       return apiRequest<{ variables: EnvVar[] }>('GET', `/api/env-vars/${projectId}`);
@@ -62,7 +62,7 @@ export function EnvVarsManager({ projectId }: EnvVarsManagerProps) {
     }
   });
 
-  const updateMutation = useMutation({
+  const _updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: string; value?: string; isSecret?: boolean }) =>
       apiRequest('PATCH', `/api/env-vars/${id}`, data),
     onSuccess: () => {

@@ -30,7 +30,7 @@ export function ComparisonLayout({
   ecodeAdvantages,
   competitorAdvantages,
 }: ComparisonLayoutProps) {
-  const [location, navigate] = useLocation();
+  const [_location, navigate] = useLocation();
 
   const renderFeatureValue = (value: boolean | string) => {
     if (typeof value === "boolean") {

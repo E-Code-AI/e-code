@@ -317,7 +317,7 @@ export class SecurityScanner {
   }
 
   // Get security recommendations for a project
-  async getSecurityRecommendations(projectId: number): Promise<string[]> {
+  async getSecurityRecommendations(_projectId: number): Promise<string[]> {
     return [
       'Enable two-factor authentication for your account',
       'Use environment variables for sensitive configuration',
@@ -340,7 +340,7 @@ export class SecurityScanner {
     for (const pattern of this.secretPatterns.slice(0, 4)) { // Only check top 4 patterns
       const matches = [...code.matchAll(pattern.pattern)];
       
-      for (const match of matches) {
+      for (const _match of matches) {
         issues.push({
           id: `quick_${Date.now()}_${process.hrtime.bigint().toString(36).slice(0, 9)}`,
           type: 'secret',

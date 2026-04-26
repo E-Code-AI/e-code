@@ -85,7 +85,7 @@ interface VersionControlProps {
 
 export function ReplitVersionControl({ projectId, className }: VersionControlProps) {
   const [selectedCommit, setSelectedCommit] = useState<GitCommit | null>(null);
-  const [selectedFile, setSelectedFile] = useState<GitFile | null>(null);
+  const [_selectedFile, setSelectedFile] = useState<GitFile | null>(null);
   const [commitMessage, setCommitMessage] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const { toast } = useToast();

@@ -24,8 +24,8 @@ interface InlineCheckpointMarkerProps {
 
 export function InlineCheckpointMarker({
   checkpointId,
-  messageId,
-  projectId,
+  messageId: _messageId,
+  projectId: _projectId,
   cost = 0,
   tokens = 0,
   timestamp,

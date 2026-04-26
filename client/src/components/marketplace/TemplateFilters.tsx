@@ -102,7 +102,7 @@ export function TemplateFilters({
     { value: 'expert', label: 'Expert', icon: Shield, color: 'text-purple-500' },
   ];
 
-  const licenses = [
+  const _licenses = [
     { value: 'mit', label: 'MIT License' },
     { value: 'apache', label: 'Apache 2.0' },
     { value: 'gpl', label: 'GPL' },

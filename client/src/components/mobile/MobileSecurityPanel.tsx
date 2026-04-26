@@ -50,7 +50,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
   const [showSettings, setShowSettings] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [realtimeScans, setRealtimeScans] = useState<SecurityScan[]>([]);
-  const [wsConnectionState, setWsConnectionState] = useState<ConnectionState>('disconnected');
+  const [_wsConnectionState, setWsConnectionState] = useState<ConnectionState>('disconnected');
   const wsRef = useRef<ResilientWebSocket | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -59,7 +59,7 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
     queryKey: ['/api/workspace/projects', projectId, 'security-settings'],
   });
 
-  const { data: initialScans, isLoading: scansLoading } = useQuery<SecurityScan[]>({
+  const { data: initialScans, isLoading: _scansLoading } = useQuery<SecurityScan[]>({
     queryKey: ['/api/workspace/projects', projectId, 'security-scans'],
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s
     refetchIntervalInBackground: false,

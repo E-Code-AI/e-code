@@ -76,6 +76,6 @@ interface LocalCursorProps {
   position: CursorPosition;
 }
 
-export function LocalCursor({ position }: LocalCursorProps) {
+export function LocalCursor({ position: _position }: LocalCursorProps) {
   return null; // We don't need to render a local cursor since Monaco already shows one
 }

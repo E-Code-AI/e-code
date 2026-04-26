@@ -79,10 +79,10 @@ interface DeploymentPipelineProps {
 
 export function ReplitDeploymentPipeline({ projectId, className }: DeploymentPipelineProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
+  const [_selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(null);
   const [selectedStage, setSelectedStage] = useState<PipelineStage | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, _setAutoRefresh] = useState(true);
   const { toast } = useToast();
 
   const { data: currentPipeline } = useQuery<Pipeline>({

@@ -49,7 +49,7 @@ export function useSpringValue(
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const subscribersRef = useRef<Set<(value: number) => void>>(new Set());
-  const [, forceUpdate] = useState(0);
+  const [, _forceUpdate] = useState(0);
 
   const notifySubscribers = useCallback((value: number) => {
     subscribersRef.current.forEach(callback => callback(value));

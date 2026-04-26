@@ -215,7 +215,7 @@ export function ReplitToolsSheet({ open, onOpenChange, onToolSelect }: ReplitToo
                 </div>
                 <div className="space-y-0.5">
                   {filteredSearchTools.map((tool) => {
-                    const Icon = tool.icon;
+                    const _Icon = tool.icon;
                     return (
                       <button
                         key={tool.id}

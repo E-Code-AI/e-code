@@ -94,7 +94,7 @@ interface DatabaseInstance {
   };
 }
 
-interface TableInfo {
+interface _TableInfo {
   name: string;
   rowCount: number;
   size: string;
@@ -112,7 +112,7 @@ interface DatabaseManagementProps {
   projectId: string;
 }
 
-export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
+export function DatabaseManagement({ projectId: _projectId }: DatabaseManagementProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedDatabase, setSelectedDatabase] = useState<DatabaseInstance | null>(null);
@@ -120,7 +120,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
   const [queryInput, setQueryInput] = useState('');
   const [queryResults, setQueryResults] = useState<QueryResult | null>(null);
   const [isQueryLoading, setIsQueryLoading] = useState(false);
-  const [selectedTable, setSelectedTable] = useState<string | null>(null);
+  const [_selectedTable, setSelectedTable] = useState<string | null>(null);
 
   // Fetch databases - REAL BACKEND
   const { data: databases = [], isLoading } = useQuery({

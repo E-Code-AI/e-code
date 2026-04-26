@@ -566,8 +566,8 @@ router.get('/storage', ensureAuthenticated, async (req: Request, res: Response) 
     }).from(agentSessions)
       .where(eq(agentSessions.userId, userId!));
 
-    const projectCount = Number(projectsResult?.count || 0);
-    const sessionCount = Number(sessionsResult?.count || 0);
+    const _projectCount = Number(projectsResult?.count || 0);
+    const _sessionCount = Number(sessionsResult?.count || 0);
 
     const codeExts = ['.js', '.ts', '.jsx', '.tsx', '.py', '.go', '.rs', '.java', '.cpp', '.c', '.h', '.css', '.html', '.vue', '.svelte'];
     const mediaExts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.mp4', '.webp', '.ico', '.mp3', '.wav'];

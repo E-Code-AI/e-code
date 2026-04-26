@@ -146,7 +146,7 @@ const terminalThemes = {
 export function AdvancedTerminal({
   projectId,
   onClose,
-  minimized = false,
+  minimized: _minimized = false,
   onMinimize,
   onMaximize,
   className
@@ -161,7 +161,7 @@ export function AdvancedTerminal({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState<keyof typeof terminalThemes>('dark');
   const containerRef = useRef<HTMLDivElement>(null);
-  const { theme } = useTheme();
+  const { theme: _theme } = useTheme();
   const { toast } = useToast();
 
   // Create a new terminal session

@@ -52,7 +52,7 @@ interface PreviewDiagnostics {
 
 export function ResponsiveWebPreview({ 
   projectId, 
-  isRunning,
+  isRunning: _isRunning,
   className,
   onClose,
   isFullscreen,

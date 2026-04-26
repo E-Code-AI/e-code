@@ -204,7 +204,7 @@ export class ContextAwarenessService {
    */
   private suggestNextActions(memory: ConversationMemory): string[] {
     const suggestions: string[] = [];
-    const { currentIntent, messages } = memory;
+    const { currentIntent, messages: _messages } = memory;
 
     switch (currentIntent) {
       case 'build':
@@ -664,7 +664,7 @@ export class ContextAwarenessService {
   /**
    * Get smart suggestions based on full context
    */
-  async getSmartSuggestions(projectId: number, fileId?: number): Promise<string[]> {
+  async getSmartSuggestions(projectId: number, _fileId?: number): Promise<string[]> {
     const projectContext = await this.getProjectContext(projectId);
     const conversationContext = this.getConversationContext(projectId);
     

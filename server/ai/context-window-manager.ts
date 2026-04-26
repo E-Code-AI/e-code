@@ -268,7 +268,7 @@ export class ContextWindowManager {
     const userMessages = messages.filter(m => m.role === 'user');
     const assistantMessages = messages.filter(m => m.role === 'assistant');
     
-    const topics = new Set<string>();
+    const _topics = new Set<string>();
     const actions = new Set<string>();
     const files = new Set<string>();
     const errors = new Set<string>();

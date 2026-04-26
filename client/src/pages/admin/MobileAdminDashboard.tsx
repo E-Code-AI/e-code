@@ -140,7 +140,7 @@ export default function MobileAdminDashboard() {
                   {providerHealth?.providers.map((provider) => {
                     const isHealthy = provider.status === 'healthy';
                     const isTimeout = provider.status === 'timeout';
-                    const isMissing = provider.status === 'missing';
+                    const _isMissing = provider.status === 'missing';
                     const StatusIcon = isHealthy ? CheckCircle : isTimeout ? AlertCircle : XCircle;
                     const statusColor = isHealthy ? 'text-green-500' : isTimeout ? 'text-yellow-500' : 'text-red-500';
                     const bgColor = isHealthy ? 'bg-green-500/10' : isTimeout ? 'bg-yellow-500/10' : 'bg-red-500/10';

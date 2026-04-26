@@ -27,10 +27,10 @@ interface RuntimeStatus {
   executionId?: string;
 }
 
-export function RunButton({ 
-  projectId, 
-  language, 
-  onRunning, 
+export function RunButton({
+  projectId,
+  language: _language,
+  onRunning,
   className,
   variant = 'default',
   size = 'default'

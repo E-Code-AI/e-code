@@ -117,7 +117,7 @@ export class McpRouterService {
   private buildCommand(
     taskType: TaskType,
     operation: string,
-    projectPath?: string
+    _projectPath?: string
   ): string | null {
     // SECURITY: Never directly use operation string - always map to safe commands
     // Map task types to commands
@@ -230,7 +230,7 @@ export class McpRouterService {
     
     try {
       const fs = await import('fs/promises');
-      const path = await import('path');
+      const _path = await import('path');
       
       switch (params.operation) {
         case 'read':

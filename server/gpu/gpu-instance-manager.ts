@@ -13,7 +13,7 @@ export const gpuInstanceManager = {
   deprecated: true,
   message: 'GPU compute is now handled via AI providers directly',
   
-  async getInstance(id: string) {
+  async getInstance(_id: string) {
     logger.warn('GPU providers deprecated - use AI providers directly');
     return null;
   },
@@ -26,11 +26,11 @@ export const gpuInstanceManager = {
     return { success: false, message: 'GPU providers deprecated' };
   },
   
-  async deleteInstance(id: string) {
+  async deleteInstance(_id: string) {
     return { success: false, message: 'GPU providers deprecated' };
   },
   
-  async getInstanceStatus(id: string) {
+  async getInstanceStatus(_id: string) {
     return null;
   }
 };
@@ -40,7 +40,7 @@ export class GPUInstanceManager {
   deprecated = true;
   message = 'GPU compute is now handled via AI providers directly';
   
-  async getInstance(id: string) {
+  async getInstance(_id: string) {
     logger.warn('GPU providers deprecated - use AI providers directly');
     return null;
   }
@@ -53,11 +53,11 @@ export class GPUInstanceManager {
     return { success: false, message: 'GPU providers deprecated' };
   }
   
-  async deleteInstance(id: string) {
+  async deleteInstance(_id: string) {
     return { success: false, message: 'GPU providers deprecated' };
   }
   
-  async getInstanceStatus(id: string) {
+  async getInstanceStatus(_id: string) {
     return null;
   }
 }

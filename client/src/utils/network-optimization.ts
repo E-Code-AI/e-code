@@ -357,7 +357,7 @@ class NetworkOptimizer {
   optimisticUpdate<T>(
     key: string,
     updater: (current: T) => T,
-    rollback?: (error: Error) => void
+    _rollback?: (error: Error) => void
   ): T | undefined {
     if (!this.config.enableOptimisticUpdates) return undefined;
     

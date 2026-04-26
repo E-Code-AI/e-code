@@ -67,7 +67,7 @@ export function ReplitBreadcrumb({
 }: ReplitBreadcrumbProps) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  const toggleExpanded = (itemId: string) => {
+  const _toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems);
     if (newExpanded.has(itemId)) {
       newExpanded.delete(itemId);

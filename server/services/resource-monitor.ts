@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 // Import after the class is defined to avoid circular dependency
 let stripeBillingService: any;
 
-interface ResourceMetrics {
+interface _ResourceMetrics {
   cpuUsage: number;
   memoryUsage: number;
   diskUsage: number;
@@ -360,7 +360,7 @@ export class ResourceMonitor {
       'scheduled': 0.75      // $0.75 per deployment
     };
 
-    const cost = deploymentCosts[deploymentType] || 1.00;
+    const _cost = deploymentCosts[deploymentType] || 1.00;
 
     const timestamp = new Date();
     const billingPeriodStart = new Date(timestamp.getFullYear(), timestamp.getMonth(), 1);

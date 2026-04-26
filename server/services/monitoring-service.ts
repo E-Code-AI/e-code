@@ -113,7 +113,7 @@ export class MonitoringService {
   private async processMetrics(metrics: MonitoringEvent['metrics'], userId?: number, sessionId?: string): Promise<void> {
     for (const metric of metrics) {
       try {
-        const metadata: Record<string, any> = {
+        const _metadata: Record<string, any> = {
           userId,
           sessionId,
         };
@@ -325,7 +325,7 @@ export class MonitoringService {
     ipAddress?: string;
   }): Promise<{ id: number }> {
     try {
-      const metadata: Record<string, any> = {
+      const _metadata: Record<string, any> = {
         ...eventData.metadata,
         userId: eventData.userId,
         projectId: eventData.projectId,

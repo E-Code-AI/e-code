@@ -99,9 +99,9 @@ interface ReplitObjectStorageProps {
 export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorageProps) {
   const { toast } = useToast();
   const [selectedBucket, setSelectedBucket] = useState<StorageBucket | null>(null);
-  const [selectedObject, setSelectedObject] = useState<StorageObject | null>(null);
+  const [_selectedObject, _setSelectedObject] = useState<StorageObject | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentPath, setCurrentPath] = useState('/');
+  const [currentPath, _setCurrentPath] = useState('/');
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [showCreateBucket, setShowCreateBucket] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
@@ -110,12 +110,12 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
   const [newBucketPublic, setNewBucketPublic] = useState(false);
 
   // Fetch buckets
-  const { data: buckets = [], isLoading: bucketsLoading } = useQuery({
+  const { data: buckets = [], isLoading: _bucketsLoading } = useQuery({
     queryKey: [`/api/storage/${projectId}/buckets`],
   });
 
   // Fetch objects in current bucket
-  const { data: objects = [], isLoading: objectsLoading } = useQuery({
+  const { data: objects = [], isLoading: _objectsLoading } = useQuery({
     queryKey: [`/api/storage/${projectId}/buckets/${selectedBucket?.id}/objects`, currentPath],
     enabled: !!selectedBucket,
   });

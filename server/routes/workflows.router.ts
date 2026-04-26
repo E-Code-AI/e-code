@@ -676,17 +676,13 @@ function executeShellCommand(command: string, logs: string[], processes: ChildPr
     
     processes.push(proc);
     
-    let output = '';
-    
     proc.stdout?.on('data', (data) => {
       const text = data.toString();
-      output += text;
       logs.push(text.trim());
     });
     
     proc.stderr?.on('data', (data) => {
       const text = data.toString();
-      output += text;
       logs.push(`[stderr] ${text.trim()}`);
     });
     

@@ -155,7 +155,7 @@ export function useMaxAutonomy(sessionId: string | null, projectId?: number) {
       return apiRequest<ProgressResponse>("GET", `/api/autonomy/sessions/${sessionId}/progress`);
     },
     enabled: isSessionEnabled,
-    refetchInterval: (query) => {
+    refetchInterval: (_query) => {
       const session = sessionQuery.data?.session;
       if (!session || TERMINAL_STATUSES.includes(session.status)) return false;
       return ACTIVE_STATUSES.includes(session.status) ? POLLING_INTERVAL_MS : false;
@@ -169,7 +169,7 @@ export function useMaxAutonomy(sessionId: string | null, projectId?: number) {
       return apiRequest<TasksResponse>("GET", `/api/autonomy/sessions/${sessionId}/tasks`);
     },
     enabled: isSessionEnabled,
-    refetchInterval: (query) => {
+    refetchInterval: (_query) => {
       const session = sessionQuery.data?.session;
       if (!session || TERMINAL_STATUSES.includes(session.status)) return false;
       return ACTIVE_STATUSES.includes(session.status) ? POLLING_INTERVAL_MS : false;

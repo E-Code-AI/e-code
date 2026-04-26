@@ -141,7 +141,7 @@ class AgentWebSocketService {
   // Stores current build state so reconnecting clients get immediate state sync
   private buildStateCache = new Map<string, BuildStateCache>();
   
-  initialize(server: Server) {
+  initialize(_server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // PROBLEM: 16+ upgrade listeners cause race conditions - "Invalid frame header" errors
     // SOLUTION: Register with central dispatcher that routes ALL upgrades through ONE handler
@@ -407,7 +407,7 @@ class AgentWebSocketService {
       }
     });
     
-    ws.on('close', (code, reason) => {
+    ws.on('close', (code, _reason) => {
       // PRODUCTION SECURITY: Decrement active connection count for rate limiting
       const clientIp = 'unknown'; // Rate limiting tracking
       decrementActiveConnections(clientIp);
@@ -1339,7 +1339,7 @@ class AgentWebSocketService {
     }, projectId);
   }
 
-  broadcastPlanCompleted(projectId: string | number, sessionId: string, success: boolean) {
+  broadcastPlanCompleted(projectId: string | number, sessionId: string, _success: boolean) {
     this.broadcast({
       type: 'complete',
       projectId,
@@ -1388,7 +1388,7 @@ class AgentWebSocketService {
     let sentCount = 0;
 
     // Broadcast to ALL active connections
-    this.connections.forEach((devices, connectionKey) => {
+    this.connections.forEach((devices, _connectionKey) => {
       devices.forEach((device) => {
         if (device.ws.readyState === WebSocket.OPEN) {
           device.ws.send(messageStr);

@@ -52,7 +52,7 @@ interface CommentsPanelProps {
   className?: string;
 }
 
-export function CommentsPanel({ fileId, projectId, className }: CommentsPanelProps) {
+export function CommentsPanel({ fileId: _fileId, projectId: _projectId, className }: CommentsPanelProps) {
   const { toast } = useToast();
   const [comments, setComments] = useState<Comment[]>([
     {

@@ -20,7 +20,7 @@ export const ContextMenu = ({
   onCreateFile,
   onCreateFolder,
   onDelete,
-  onClose
+  onClose: _onClose
 }: ContextMenuProps) => {
   const [mode, setMode] = useState<'menu' | 'newFile' | 'newFolder'>('menu');
   const [name, setName] = useState("");

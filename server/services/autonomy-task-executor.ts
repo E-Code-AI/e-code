@@ -585,7 +585,7 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
   calculateGoalComplexity(goal: string, projectContext: string): GoalComplexityAnalysis {
     const categories = this.analyzeGoalKeywords(goal);
     const goalLength = goal.length;
-    const contextSize = projectContext.length;
+    const _contextSize = projectContext.length;
     
     let baseComplexity = 3;
     
@@ -967,7 +967,7 @@ Generate the task breakdown (aim for ${complexityAnalysis.suggestedTaskCount} ta
   /**
    * Execute database operation task
    */
-  private async executeDatabaseOperation(task: MaxAutonomyTask): Promise<TaskExecutionResult> {
+  private async executeDatabaseOperation(_task: MaxAutonomyTask): Promise<TaskExecutionResult> {
     return {
       success: true,
       output: { message: 'Database operation simulated' }

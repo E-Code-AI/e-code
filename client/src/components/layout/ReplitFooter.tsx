@@ -33,7 +33,7 @@ interface SystemStatus {
 }
 
 export function ReplitFooter() {
-  const [status, setStatus] = useState<SystemStatus>({
+  const [status, _setStatus] = useState<SystemStatus>({
     connection: "online",
     cpu: 45,
     memory: 67,

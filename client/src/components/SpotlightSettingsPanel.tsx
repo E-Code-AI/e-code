@@ -31,7 +31,7 @@ export function SpotlightSettingsPanel({ projectId, className }: SpotlightSettin
   const [enableComments, setEnableComments] = useState(true);
   const [allowForks, setAllowForks] = useState(true);
   const [description, setDescription] = useState('Building a fully polyglot Replit-style workspace with AI assistants.');
-  const [tags, setTags] = useState(['workspace', 'ai-assisted', 'typescript']);
+  const [tags, _setTags] = useState(['workspace', 'ai-assisted', 'typescript']);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {

@@ -13,10 +13,10 @@ const logger = createLogger('real-terminal');
 
 // Lazy-load native modules to avoid crashes in production
 let ptyModule: typeof import('node-pty') | null = null;
-let dockerModule: typeof import('dockerode') | null = null;
+let _dockerModule: typeof import('dockerode') | null = null;
 let dockerInstance: InstanceType<typeof import('dockerode')> | null = null;
 
-async function getPty(): Promise<typeof import('node-pty')> {
+async function _getPty(): Promise<typeof import('node-pty')> {
   if (!ptyModule) {
     try {
       ptyModule = await import('node-pty');
@@ -79,7 +79,7 @@ export class RealTerminalService {
     logger.info('Real terminal WebSocket server initialized');
   }
 
-  private async handleConnection(ws: WebSocket, request: any) {
+  private async handleConnection(ws: WebSocket, _request: any) {
     const sessionId = this.generateSessionId();
     logger.info(`New terminal connection: ${sessionId}`);
 
@@ -427,7 +427,7 @@ export class RealTerminalService {
 
   // Public API for external control
   async broadcastToProject(projectId: number, message: any) {
-    for (const [sessionId, session] of this.sessions) {
+    for (const [_sessionId, session] of this.sessions) {
       if (session.projectId === projectId && session.ws.readyState === WebSocket.OPEN) {
         session.ws.send(JSON.stringify(message));
       }

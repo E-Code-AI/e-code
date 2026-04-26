@@ -81,7 +81,7 @@ export class AdvancedCollaborationService {
       // Join collaboration room
       socket.on('join-collaboration', async (data) => {
         try {
-          const { projectId, userId, username, token } = data;
+          const { projectId, userId, username, token: _token } = data;
           
           // Verify user has access to project
           const project = await storage.getProject(projectId);

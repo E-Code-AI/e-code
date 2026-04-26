@@ -101,7 +101,7 @@ export default function AdminDashboard() {
     queryKey: ['/api/admin/dashboard/stats']
   });
 
-  const { data: monitoringStats } = useQuery({
+  const { data: _monitoringStats } = useQuery({
     queryKey: ['/api/admin/monitoring/rate-limit-stats'],
     refetchInterval: 60000
   });

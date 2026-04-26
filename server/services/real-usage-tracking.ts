@@ -4,7 +4,7 @@ import { and,desc,eq,gte,lte } from 'drizzle-orm';
 import { db } from '../db';
 
 const logger = {
-  info: (message: string, ...args: any[]) => {},
+  info: (_message: string, ..._args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-usage-tracking] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-usage-tracking] WARN: ${message}`, ...args),
 };
@@ -140,7 +140,7 @@ export class RealUsageTrackingService {
 
   private calculateStorageUsage(projects: any[]): number {
     // Calculate total storage in GB
-    return projects.reduce((total, project) => {
+    return projects.reduce((total, _project) => {
       // Simulate storage calculation (in production, check actual file system)
       return total + Math.random() * 5; // 0-5 GB per project
     }, 0);

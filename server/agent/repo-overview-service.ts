@@ -438,7 +438,7 @@ export class RepoOverviewService {
     return configFiles.includes(name) || name.endsWith('.config.ts') || name.endsWith('.config.js');
   }
 
-  private isMainFile(name: string, fullPath: string): boolean {
+  private isMainFile(name: string, _fullPath: string): boolean {
     const important = ['index', 'app', 'main', 'server'];
     const baseName = basename(name, extname(name));
     return important.includes(baseName.toLowerCase());

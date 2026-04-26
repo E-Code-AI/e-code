@@ -106,7 +106,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   };
 
   // Fetch templates from API
-  const { data: apiTemplates = [], isLoading } = useQuery<Template[]>({
+  const { data: apiTemplates = [], isLoading: _isLoading } = useQuery<Template[]>({
     queryKey: ['/api/marketplace/templates'],
   });
 

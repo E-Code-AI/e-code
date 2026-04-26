@@ -73,7 +73,7 @@ export class KubernetesDeploymentManager {
    * Create an isolated Kubernetes deployment for a user
    */
   async createUserEnvironment(userId: number, username: string): Promise<UserEnvironment> {
-    const deploymentId = `user-${userId}-${uuidv4().slice(0, 8)}`;
+    const _deploymentId = `user-${userId}-${uuidv4().slice(0, 8)}`;
     const namespace = `user-${userId}`;
     
     logger.info(`Creating isolated environment for user ${username} (ID: ${userId})`);
@@ -305,7 +305,7 @@ export class KubernetesDeploymentManager {
     return deploymentName;
   }
 
-  private async createService(namespace: string, userId: number, deploymentName: string): Promise<string> {
+  private async createService(namespace: string, userId: number, _deploymentName: string): Promise<string> {
     const serviceName = `user-svc-${userId}`;
     
     const service = {

@@ -166,7 +166,7 @@ export class AISecurityService {
    */
   extractValidActions(
     aiResponse: string,
-    projectId: string
+    _projectId: string
   ): { actions: ValidatedAction[]; rejected: Array<{ action: any; reason: string }> } {
     const actions: ValidatedAction[] = [];
     const rejected: Array<{ action: any; reason: string }> = [];
@@ -353,7 +353,7 @@ export class AISecurityService {
    * Shows all AI modifications for audit purposes
    * Note: Currently uses in-memory data - production should query database
    */
-  async getSecurityReport(projectId: string, limit: number = 100) {
+  async getSecurityReport(projectId: string, _limit: number = 100) {
     // Note: Full audit trail integration available via database-backed agent conversation logs
     // This service provides real-time rate limit data for immediate security monitoring
     // For historical audit data, query ai_conversations and ai_messages tables directly

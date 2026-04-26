@@ -165,7 +165,7 @@ function InteractiveRatingStars({
   );
 }
 
-function BountyCard({ bounty, onApply }: { bounty: Bounty; onApply: (id: number) => void }) {
+function BountyCard({ bounty, onApply: _onApply }: { bounty: Bounty; onApply: (id: number) => void }) {
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [showRateDialog, setShowRateDialog] = useState(false);
   const [proposal, setProposal] = useState('');
@@ -540,8 +540,8 @@ function BountyCardSkeleton() {
 }
 
 export default function BountiesMarketplace() {
-  const [, navigate] = useLocation();
-  const { toast } = useToast();
+  const [, _navigate] = useLocation();
+  const { toast: _toast } = useToast();
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<BountyFilters>({
     status: 'open',
@@ -580,7 +580,7 @@ export default function BountiesMarketplace() {
     },
   });
 
-  const handleApply = (bountyId: number) => {
+  const handleApply = (_bountyId: number) => {
     queryClient.invalidateQueries({ queryKey: ['/api/bounties'] });
   };
 

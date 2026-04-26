@@ -322,7 +322,7 @@ export class SimpleBackupManager {
     logger.info(`Scheduled ${settings.frequency} backups for project ${projectId}`);
   }
   
-  async getRestoreStatus(backupId: string): Promise<{ status: string; progress?: number }> {
+  async getRestoreStatus(_backupId: string): Promise<{ status: string; progress?: number }> {
     // Simulate restore progress
     return {
       status: 'in_progress',

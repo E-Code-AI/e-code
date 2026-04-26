@@ -423,7 +423,7 @@ export class RealKubernetesDeployment {
     namespace: string,
     config: K8sDeploymentConfig
   ) {
-    const hpaManifest = {
+    const _hpaManifest = {
       apiVersion: 'autoscaling/v2',
       kind: 'HorizontalPodAutoscaler',
       metadata: {

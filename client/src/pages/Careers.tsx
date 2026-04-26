@@ -52,7 +52,7 @@ interface Job {
 
 export default function Careers() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 

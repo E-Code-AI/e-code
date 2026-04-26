@@ -210,7 +210,7 @@ export class DistributedTaskScheduler extends EventEmitter {
 
   private handleTaskCompletion(task: DistributedTask) {
     // Remove from running tasks
-    for (const [queueName, runningSet] of this.runningTasks) {
+    for (const [_queueName, runningSet] of this.runningTasks) {
       runningSet.delete(task.id);
     }
 
@@ -239,7 +239,7 @@ export class DistributedTaskScheduler extends EventEmitter {
     this.emit('taskTimeout', taskId, queueName);
   }
 
-  private async checkDependencies(dependencies: string[]): Promise<boolean> {
+  private async checkDependencies(_dependencies: string[]): Promise<boolean> {
     // In a real implementation, this would check a persistent store
     // For now, we'll assume dependencies are task IDs that need to be completed
     return true; // Simplified for now

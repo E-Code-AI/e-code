@@ -49,7 +49,7 @@ interface CommunityPost {
   codeSnippet?: string;
 }
 
-interface CommunityReply {
+interface _CommunityReply {
   id: string;
   content: string;
   authorUsername: string;
@@ -58,7 +58,7 @@ interface CommunityReply {
   createdAt: string;
 }
 
-interface UserProfile {
+interface _UserProfile {
   username: string;
   displayName: string;
   bio: string;

@@ -4,7 +4,7 @@ import * as path from 'path';
 import { promisify } from 'util';
 import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 
-const execFileAsync = promisify(execFile);
+const _execFileAsync = promisify(execFile);
 
 // Helper function to validate and sanitize project ID
 function validateProjectId(projectId: string): boolean {

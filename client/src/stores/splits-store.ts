@@ -55,7 +55,7 @@ function getMinimumBottomPanelPercent(centerStackHeight: number | null): number 
 function normalizeLayout(root: LayoutNode | null, centerStackHeight: number | null): void {
   if (!root) return;
   
-  function walkAndNormalize(node: LayoutNode, parentSplit: Split | null = null): void {
+  function walkAndNormalize(node: LayoutNode, _parentSplit: Split | null = null): void {
     if (isSplit(node) && Array.isArray(node.children)) {
       // Check if this split contains center-bottom panel
       node.children.forEach((child, index) => {
@@ -156,7 +156,7 @@ interface SplitsStore {
 
 // Hydrate parent metadata for all panes in the tree
 // Ensures parentSplitId and collapsible flags are set correctly after layout load/init
-const hydrateParentMetadata = (node: LayoutNode | null, parentId: string | null = null): void => {
+const hydrateParentMetadata = (node: LayoutNode | null, _parentId: string | null = null): void => {
   if (!node) return;
   
   if (isSplit(node)) {

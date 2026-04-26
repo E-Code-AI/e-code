@@ -163,7 +163,7 @@ export class SubscriptionManager {
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
       );
-    } catch (err) {
+    } catch (_err) {
       throw new Error('Invalid webhook signature');
     }
 

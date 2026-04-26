@@ -353,7 +353,7 @@ const ToggleSettingItem: React.FC<{ item: ToggleItem }> = ({ item }) => {
 
 const SelectSettingItem: React.FC<{ item: SelectItem }> = ({ item }) => {
   const ds = useDesignSystem();
-  const [isOpen, setIsOpen] = useState(false);
+  const [_isOpen, _setIsOpen] = useState(false);
 
   return (
     <div>

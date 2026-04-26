@@ -31,9 +31,9 @@ interface PreviewStatus {
   frameworkType?: string;
 }
 
-export function PreviewPanel({ 
-  projectId, 
-  isRunning: externalIsRunning, 
+export function PreviewPanel({
+  projectId,
+  isRunning: _externalIsRunning,
   autoStart = true,
   autonomousBuildPhase,
   autonomousBuildProgress,
@@ -78,8 +78,8 @@ export function PreviewPanel({
       setTimeout(() => refetchStatus(), 2000);
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Failed to start preview', 
+      toast({
+        title: 'Failed to start preview',
         description: error.message || 'An error occurred',
         variant: 'destructive'
       });
@@ -113,8 +113,8 @@ export function PreviewPanel({
       refetchStatus();
     },
     onError: (error: any) => {
-      toast({ 
-        title: 'Failed to stop preview', 
+      toast({
+        title: 'Failed to stop preview',
         description: error.message || 'An error occurred',
         variant: 'destructive'
       });
@@ -150,8 +150,8 @@ export function PreviewPanel({
   const handleOpenInNewTab = useCallback(() => {
     if (previewStatus?.previewUrl) {
       // For relative URLs, construct full URL
-      const url = previewStatus.previewUrl.startsWith('http') 
-        ? previewStatus.previewUrl 
+      const url = previewStatus.previewUrl.startsWith('http')
+        ? previewStatus.previewUrl
         : `${window.location.origin}${previewStatus.previewUrl}`;
       window.open(url, '_blank');
     }
@@ -188,9 +188,9 @@ export function PreviewPanel({
   const isRefreshing = startPreviewMutation.isPending || stopPreviewMutation.isPending;
 
   // Get display URL for the toolbar
-  const displayUrl = previewStatus?.previewUrl 
-    ? (previewStatus.previewUrl.startsWith('http') 
-        ? previewStatus.previewUrl 
+  const displayUrl = previewStatus?.previewUrl
+    ? (previewStatus.previewUrl.startsWith('http')
+        ? previewStatus.previewUrl
         : `${window.location.origin}${previewStatus.previewUrl}`)
     : '';
 
@@ -227,7 +227,7 @@ export function PreviewPanel({
             </Badge>
           )}
         </div>
-        
+
         <div className="flex items-center gap-0.5">
           {/* Start/Stop buttons */}
           {!isPreviewRunning && !isPreviewStarting && previewStatus?.status !== 'no_runnable_files' && (
@@ -243,7 +243,7 @@ export function PreviewPanel({
               <span className="text-[10px]">Run</span>
             </Button>
           )}
-          
+
           {(canShowPreview || isPreviewStarting) && (
             <Button
               variant="ghost"
@@ -257,7 +257,7 @@ export function PreviewPanel({
               <span className="text-[10px]">Stop</span>
             </Button>
           )}
-          
+
           {canShowPreview && (
             <>
               <div className="text-[10px] text-[var(--ecode-text-muted)] truncate max-w-[120px] hidden sm:block">
@@ -301,7 +301,7 @@ export function PreviewPanel({
           )}
         </div>
       </div>
-      
+
       {/* Preview Content */}
       <div className="flex-1 relative bg-background dark:bg-background">
         {/* Preview server error — show before splash so user can recover from a failed start */}

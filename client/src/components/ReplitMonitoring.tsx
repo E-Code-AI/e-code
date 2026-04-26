@@ -98,7 +98,7 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
   });
   
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const metricsIntervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {

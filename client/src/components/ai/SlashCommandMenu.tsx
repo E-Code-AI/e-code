@@ -279,7 +279,7 @@ export function useSlashCommand() {
     setSelectedIndex(0);
   }, []);
 
-  const handleInputChange = useCallback((value: string, cursorPosition: number) => {
+  const handleInputChange = useCallback((value: string, _cursorPosition: number) => {
     // Check if user just typed "/"
     if (value.endsWith('/') && !isOpen) {
       open();

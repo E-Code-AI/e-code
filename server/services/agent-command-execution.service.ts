@@ -523,12 +523,12 @@ export class AgentCommandExecutionService extends EventEmitter {
   // Cleanup on service shutdown
   async cleanup() {
     // Kill all active processes
-    for (const [id, process] of this.activeProcesses) {
+    for (const [_id, process] of this.activeProcesses) {
       try {
         await new Promise<void>((resolve) => {
           kill(process.pid!, 'SIGTERM', () => resolve());
         });
-      } catch (err) {
+      } catch (_err) {
         // Ignore errors during cleanup
       }
     }

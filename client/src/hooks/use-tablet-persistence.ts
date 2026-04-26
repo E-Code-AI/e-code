@@ -123,7 +123,7 @@ export function useDrawerPersistence(projectId: string | number) {
 /**
  * Hook to persist active panel selection
  */
-export function usePanelPersistence(projectId: string | number, canSplitView: boolean) {
+export function usePanelPersistence(projectId: string | number, _canSplitView: boolean) {
   const [rightPanel, setRightPanelState] = useState<TabletPanel>(() => {
     const state = loadState(projectId);
     // Default to deploy for tablet/mobile as per IDE Tab Defaults (replit.md)

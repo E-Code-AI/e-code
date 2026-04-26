@@ -552,7 +552,7 @@ export class CreditsService {
     }
 
     const plan = getPlanByTier(tier);
-    const now = new Date();
+    const _now = new Date();
     
     // Preserve existing credits AND usage - only update allowances and monthly entitlement
     const currentBalance = parseFloat(user.creditsBalance || '0');

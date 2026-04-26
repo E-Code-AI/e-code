@@ -150,7 +150,7 @@ export class DatabaseQueryOptimizer extends EventEmitter {
     }
   }
 
-  private generateRecommendation(record: QueryRecord, values?: any[]) {
+  private generateRecommendation(record: QueryRecord, _values?: any[]) {
     const tableMatch = record.text.match(/from\s+([\w".]+)/i);
     const whereMatch = record.text.match(/where\s+([^;]+)/i);
 

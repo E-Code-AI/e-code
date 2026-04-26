@@ -82,7 +82,7 @@ export function StatusPage() {
   });
 
   // Fetch uptime metrics
-  const { data: uptimeMetrics = [] } = useQuery<Metric[]>({
+  const { data: _uptimeMetrics = [] } = useQuery<Metric[]>({
     queryKey: [`/api/status/uptime?range=${selectedTimeRange}`]
   });
 

@@ -41,7 +41,7 @@ import { createLogger } from '../utils/logger';
 import { AI_MODELS } from './ai-provider-manager';
 import { codeAnalyzer } from './code-analyzer';
 
-const logger = createLogger('ai-provider [DEPRECATED]');
+const _logger = createLogger('ai-provider [DEPRECATED]');
 
 export interface AIProvider {
   name: string;
@@ -77,7 +77,7 @@ export class OpenAIProvider implements AIProvider {
     this.model = OpenAIProvider.getDefaultModel();
   }
 
-  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, temperature = 0.2, userId?: number): Promise<string> {
+  async generateCompletion(prompt: string, systemPrompt: string, maxTokens = 1024, _temperature = 0.2, userId?: number): Promise<string> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: [
@@ -107,7 +107,7 @@ export class OpenAIProvider implements AIProvider {
     return result;
   }
 
-  async generateChat(messages: ChatMessage[], maxTokens = 1024, temperature = 0.5, userId?: number): Promise<string> {
+  async generateChat(messages: ChatMessage[], maxTokens = 1024, _temperature = 0.5, userId?: number): Promise<string> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: messages as any,
@@ -138,7 +138,7 @@ export class OpenAIProvider implements AIProvider {
     return !!process.env.OPENAI_API_KEY;
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, _userId?: number): Promise<string> {
     // Analyze the code using our sophisticated code analyzer
     const context = await codeAnalyzer.analyzeCode(code, language);
     
@@ -272,7 +272,7 @@ export class AnthropicProvider implements AIProvider {
     return !!process.env.ANTHROPIC_API_KEY;
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, _userId?: number): Promise<string> {
     // Analyze code using sophisticated analyzer
     const context = await codeAnalyzer.analyzeCode(code, language);
     
@@ -365,7 +365,7 @@ export class ECodeModelProvider implements AIProvider {
     return this.baseProvider.isAvailable();
   }
   
-  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, userId?: number): Promise<string> {
+  async generateCodeWithUnderstanding(code: string, language: string, instruction: string, _userId?: number): Promise<string> {
     // E-Code models have native sophisticated code understanding
     const context = await codeAnalyzer.analyzeCode(code, language);
     

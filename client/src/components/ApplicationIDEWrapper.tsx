@@ -33,7 +33,7 @@ interface ApplicationIDEWrapperProps {
 
 export function ApplicationIDEWrapper({
   projectName,
-  projectDescription,
+  projectDescription: _projectDescription,
   appComponent,
   projectId = 1
 }: ApplicationIDEWrapperProps) {
@@ -79,7 +79,7 @@ export function ApplicationIDEWrapper({
   });
 
   // Create file mutation - REAL BACKEND
-  const createFileMutation = useMutation({
+  const _createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
       return apiRequest('POST', `/api/files/${projectId}`, {
         name,

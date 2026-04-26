@@ -45,7 +45,7 @@ export default function Collaboration({
   fileId,
   currentUser,
   onToggle,
-  isCollapsed = false
+  isCollapsed: _isCollapsed = false
 }: CollaborationProps) {
   // State variables
   const [activeTab, setActiveTab] = useState<'collaborators' | 'chat'>('collaborators');

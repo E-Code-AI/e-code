@@ -98,7 +98,7 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
   }, [updateDrag]);
 
   // Handle drag end
-  const handleDragEnd = useCallback((event: any) => {
+  const handleDragEnd = useCallback((_event: any) => {
     setIsDragging(false);
     endDrag();
   }, [endDrag]);
@@ -110,7 +110,7 @@ export function SplitsLayout({ className, onLayoutChange, defaultLayout }: Split
   }, [endDrag]);
 
   // Render a layout node recursively
-  const renderNode = useCallback((node: LayoutNode, parentDirection?: 'horizontal' | 'vertical'): React.ReactNode => {
+  const renderNode = useCallback((node: LayoutNode, _parentDirection?: 'horizontal' | 'vertical'): React.ReactNode => {
     if (!node) return null;
 
     // Check if this pane is maximized

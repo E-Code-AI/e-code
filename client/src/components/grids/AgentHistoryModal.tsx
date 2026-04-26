@@ -47,11 +47,11 @@ interface AgentHistoryModalProps {
   initialSessionId?: string;
 }
 
-export function AgentHistoryModal({ 
-  open, 
-  onOpenChange, 
+export function AgentHistoryModal({
+  open,
+  onOpenChange,
   projectId,
-  initialSessionId 
+  initialSessionId: _initialSessionId
 }: AgentHistoryModalProps) {
   const [selectedSession, setSelectedSession] = useState<AgentSessionRow | null>(null);
   const [activeTab, setActiveTab] = useState('sessions');
@@ -75,11 +75,11 @@ export function AgentHistoryModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
+      <DialogContent
         className={cn(
           "gap-0 p-0 overflow-hidden",
-          isFullscreen 
-            ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none" 
+          isFullscreen
+            ? "max-w-[100vw] w-[100vw] h-[100vh] max-h-[100vh] rounded-none"
             : "max-w-[95vw] w-[1400px] h-[85vh] max-h-[900px]"
         )}
         data-testid="agent-history-modal"
@@ -146,24 +146,24 @@ export function AgentHistoryModal({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               <div className="border-b px-6">
                 <TabsList className="h-10 bg-transparent gap-2">
-                  <TabsTrigger 
-                    value="actions" 
+                  <TabsTrigger
+                    value="actions"
                     className="data-[state=active]:bg-muted"
                     data-testid="tab-actions"
                   >
                     <Activity className="h-4 w-4 mr-1.5" />
                     Actions
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="files" 
+                  <TabsTrigger
+                    value="files"
                     className="data-[state=active]:bg-muted"
                     data-testid="tab-files"
                   >
                     <FileCode className="h-4 w-4 mr-1.5" />
                     Files
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="messages" 
+                  <TabsTrigger
+                    value="messages"
                     className="data-[state=active]:bg-muted"
                     data-testid="tab-messages"
                   >
@@ -172,30 +172,30 @@ export function AgentHistoryModal({
                   </TabsTrigger>
                 </TabsList>
               </div>
-              
+
               <ScrollArea className="flex-1">
                 <div className="p-6">
                   <TabsContent value="actions" className="mt-0">
                     <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
-                      <LazyAgentActionsGrid 
+                      <LazyAgentActionsGrid
                         sessionId={selectedSession.id}
                         height={isFullscreen ? 'calc(100vh - 200px)' : 500}
                       />
                     </Suspense>
                   </TabsContent>
-                  
+
                   <TabsContent value="files" className="mt-0">
                     <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
-                      <LazyFileOperationsGrid 
+                      <LazyFileOperationsGrid
                         sessionId={selectedSession.id}
                         height={isFullscreen ? 'calc(100vh - 200px)' : 500}
                       />
                     </Suspense>
                   </TabsContent>
-                  
+
                   <TabsContent value="messages" className="mt-0">
                     <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 500} />}>
-                      <LazyConversationHistoryGrid 
+                      <LazyConversationHistoryGrid
                         sessionId={selectedSession.id}
                         height={isFullscreen ? 'calc(100vh - 200px)' : 500}
                       />
@@ -209,16 +209,16 @@ export function AgentHistoryModal({
             <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
               <div className="border-b px-6">
                 <TabsList className="h-10 bg-transparent gap-2">
-                  <TabsTrigger 
-                    value="sessions" 
+                  <TabsTrigger
+                    value="sessions"
                     className="data-[state=active]:bg-muted"
                     data-testid="tab-sessions"
                   >
                     <Table2 className="h-4 w-4 mr-1.5" />
                     Sessions
                   </TabsTrigger>
-                  <TabsTrigger 
-                    value="metrics" 
+                  <TabsTrigger
+                    value="metrics"
                     className="data-[state=active]:bg-muted"
                     data-testid="tab-metrics"
                   >
@@ -227,19 +227,19 @@ export function AgentHistoryModal({
                   </TabsTrigger>
                 </TabsList>
               </div>
-              
+
               <ScrollArea className="flex-1">
                 <div className="p-6">
                   <TabsContent value="sessions" className="mt-0">
                     <Suspense fallback={<GridFallback height={isFullscreen ? 'calc(100vh - 200px)' : 550} />}>
-                      <LazyAgentSessionsGrid 
+                      <LazyAgentSessionsGrid
                         projectId={projectId}
                         onSessionSelect={handleSessionSelect}
                         height={isFullscreen ? 'calc(100vh - 200px)' : 550}
                       />
                     </Suspense>
                   </TabsContent>
-                  
+
                   <TabsContent value="metrics" className="mt-0">
                     <Suspense fallback={<Skeleton className="h-96" />}>
                       <AgentMetricsDashboard projectId={projectId} />

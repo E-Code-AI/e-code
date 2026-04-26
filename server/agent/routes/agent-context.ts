@@ -21,7 +21,7 @@ router.get('/repo-overview/:projectId', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const { projectId } = req.params;
+    const { projectId: _projectId } = req.params;
     
     // ✅ SECURITY: Validate projectId and verify user access
     // NOTE: In Replit's single-project-per-repl architecture, process.cwd() is correct
@@ -68,7 +68,7 @@ router.get('/context/:projectId', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const { projectId } = req.params;
+    const { projectId: _projectId } = req.params;
     
     const projectPath = process.cwd();
     
@@ -112,7 +112,7 @@ router.post('/repo-overview/refresh/:projectId', async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
     
-    const { projectId } = req.params;
+    const { projectId: _projectId } = req.params;
     
     const projectPath = process.cwd();
     

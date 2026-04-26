@@ -460,7 +460,7 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
 
   const hasChanges = status && (status.staged.length > 0 || status.unstaged.length > 0 || status.untracked.length > 0);
   const unpushedCount = status?.ahead || 0;
-  const unpushedCommits = commits?.slice(0, unpushedCount) || [];
+  const _unpushedCommits = commits?.slice(0, unpushedCount) || [];
 
   const filteredBranches = branches.filter(b => 
     b.name.toLowerCase().includes(branchSearch.toLowerCase())

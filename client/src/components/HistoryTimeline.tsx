@@ -57,7 +57,7 @@ interface HistoryTimelineProps {
   className?: string;
 }
 
-export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) {
+export function HistoryTimeline({ projectId: _projectId, className }: HistoryTimelineProps) {
   const { toast } = useToast();
   const [history] = useState<HistoryEntry[]>([
     {

@@ -25,7 +25,7 @@ export const PerformanceWrapper = memo(({
   enableContainment = true,
   enableHardwareAcceleration = true,
   enableLazyRendering = false,
-  threshold = 0.1
+  threshold: _threshold = 0.1
 }: PerformanceWrapperProps) => {
   const containerClasses = cn(
     className,
@@ -68,8 +68,8 @@ export function OptimizedList<T>({
   keyExtractor,
   className,
   enableVirtualization = false,
-  itemHeight = 100,
-  overscan = 3
+  itemHeight: _itemHeight = 100,
+  overscan: _overscan = 3
 }: OptimizedListProps<T>) {
   const memoizedItems = useMemo(() => items, [items]);
   

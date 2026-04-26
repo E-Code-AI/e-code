@@ -40,7 +40,7 @@ const CACHE_CONFIGS: Record<string, CacheConfig> = {
 /**
  * Determines cache configuration based on request path
  */
-function getCacheConfig(path: string, contentType?: string): CacheConfig {
+function getCacheConfig(path: string, _contentType?: string): CacheConfig {
   if (path.startsWith('/assets/')) {
     return CACHE_CONFIGS.immutable;
   }

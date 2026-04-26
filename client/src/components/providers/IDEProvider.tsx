@@ -38,7 +38,7 @@ const IDEProviderInner: React.FC<IDEProviderProps> = ({
   projectId,
   onThemeChange,
 }) => {
-  const ds = useDesignSystem();
+  const _ds = useDesignSystem();
   const toast = useToast();
   const commandPalette = useCommandPalette();
   const keyboardShortcuts = useKeyboardShortcuts();

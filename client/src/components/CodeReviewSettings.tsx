@@ -110,7 +110,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
   const [newIgnorePattern, setNewIgnorePattern] = useState('');
   const { toast } = useToast();
 
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading: _isLoading } = useQuery({
     queryKey: ['/api/code-review/settings'],
     queryFn: () => apiRequest<ReviewSettings>('GET', '/api/code-review/settings')
   });
@@ -838,7 +838,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
   );
 }
 
-function getCheckDescription(check: string): string {
+function _getCheckDescription(check: string): string {
   const descriptions: Record<string, string> = {
     security: 'Detect potential security vulnerabilities',
     performance: 'Identify performance bottlenecks',

@@ -55,7 +55,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function StepIcon({ type, status }: { type: TestStep['type']; status: TestStep['status'] }) {
+function StepIcon({ type: _type, status }: { type: TestStep['type']; status: TestStep['status'] }) {
   if (status === 'failed') return <XCircle className="h-4 w-4 text-red-500" />;
   if (status === 'pending') return <Loader2 className="h-4 w-4 text-muted-foreground animate-spin" />;
   return <CheckCircle2 className="h-4 w-4 text-green-500" />;

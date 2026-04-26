@@ -179,7 +179,7 @@ async function setupWSConnection(ws: WebSocket, req: any) {
   (ws as any).__wsId = wsId;
   
   // Track awareness updates from this connection
-  const awarenessUpdateHandler = ({ added, updated, removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any) => {
+  const awarenessUpdateHandler = ({ added, updated, removed: _removed }: { added: number[]; updated: number[]; removed: number[] }, origin: any) => {
     // Track IDs that came from this connection
     if (origin && (origin as any).__wsId === wsId) {
       added.forEach((id: number) => trackedClientIds.add(id));
@@ -289,7 +289,7 @@ export class RealCollaborationService {
 
   constructor() {}
 
-  setupWebSocket(server: Server) {
+  setupWebSocket(_server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // Use noServer mode and register with central dispatcher to eliminate race conditions
     
@@ -742,7 +742,7 @@ export class RealCollaborationService {
   private broadcast(session: CollaborationSession, message: any, exclude?: WebSocket) {
     const messageStr = JSON.stringify(message);
     
-    for (const [peerId, peer] of session.peers) {
+    for (const [_peerId, peer] of session.peers) {
       if (peer.ws !== exclude && peer.ws.readyState === WebSocket.OPEN) {
         peer.ws.send(messageStr);
       }

@@ -196,7 +196,7 @@ router.get('/export/sessions', requireAuth, asyncHandler(async (req: Request, re
 /**
  * Error handler for this router
  */
-router.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+router.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Agent Grid API error:', err);
   res.status(500).json({ 
     error: 'Internal server error',

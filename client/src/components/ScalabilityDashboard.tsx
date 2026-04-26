@@ -104,20 +104,20 @@ export const ScalabilityDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   // Fetch cluster status
-  const { data: clusterStatus, isLoading: clusterLoading, refetch: refetchCluster } = useQuery<ClusterStatus>({
+  const { data: clusterStatus, isLoading: _clusterLoading, refetch: refetchCluster } = useQuery<ClusterStatus>({
     queryKey: ['/api/scalability/cluster/status'],
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,
   });
 
   // Fetch database pool stats
-  const { data: poolStats, isLoading: poolLoading } = useQuery<DatabasePoolStats>({
+  const { data: poolStats, isLoading: _poolLoading } = useQuery<DatabasePoolStats>({
     queryKey: ['/api/scalability/database/pool/stats'],
     refetchInterval: 10000
   });
 
   // Fetch CDN status
-  const { data: cdnStatus, isLoading: cdnLoading } = useQuery<CDNStatus>({
+  const { data: cdnStatus, isLoading: _cdnLoading } = useQuery<CDNStatus>({
     queryKey: ['/api/scalability/cdn/status'],
     refetchInterval: 30000
   });

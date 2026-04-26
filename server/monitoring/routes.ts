@@ -28,7 +28,7 @@ monitoringRouter.get('/health', (req, res) => {
 monitoringRouter.get('/health/db', async (req, res) => {
   try {
     // Perform a simple database query to check connectivity
-    const result = await req.app.locals.db.raw('SELECT 1');
+    const _result = await req.app.locals.db.raw('SELECT 1');
     res.json({
       status: 'ok',
       database: 'connected',

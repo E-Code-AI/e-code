@@ -499,7 +499,7 @@ class PerformanceBudgetMonitor {
     if (report.violations.length > 0) {
       console.group('🚫 Budget Violations:');
       report.violations.forEach(violation => {
-        const icon = violation.severity === ViolationSeverity.CRITICAL ? '🔴' :
+        const _icon = violation.severity === ViolationSeverity.CRITICAL ? '🔴' :
                     violation.severity === ViolationSeverity.ERROR ? '🟠' : '🟡';
       });
       console.groupEnd();

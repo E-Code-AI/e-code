@@ -48,9 +48,9 @@ export function TestResultsPanel({
 
   const {
     isConnected,
-    isAuthenticated,
+    isAuthenticated: _isAuthenticated,
     isSubscribed,
-    connectionError,
+    connectionError: _connectionError,
     testQueue,
     runningTests,
     completedTests,

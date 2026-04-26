@@ -15,7 +15,7 @@ import { deploymentWebSocketService } from './deployment-websocket-service';
 const execAsync = promisify(exec);
 const logger = createLogger('deployment-rollback');
 
-interface RollbackOperation {
+interface _RollbackOperation {
   id: string;
   deploymentId: string;
   steps: RollbackStep[];
@@ -417,7 +417,7 @@ export class DeploymentRollbackService extends EventEmitter {
         `);
         migrations = migrationsResult.rows?.map((r: any) => r.name as string) || [];
         version = migrations.length > 0 ? `1.${migrations.length}.0` : '1.0.0';
-      } catch (migrationError) {
+      } catch (_migrationError) {
         logger.debug('Could not query migrations table', { deploymentId });
       }
 
@@ -1944,7 +1944,7 @@ export class DeploymentRollbackService extends EventEmitter {
 
       try {
         await fs.rm(backupDir, { recursive: true, force: true });
-      } catch (cleanupError) {
+      } catch (_cleanupError) {
         logger.warn('Could not cleanup backup directory', { rollbackId, backupDir });
       }
 

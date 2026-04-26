@@ -30,7 +30,7 @@ import { useLocation } from "wouter";
 export default function Usage() {
   const [, navigate] = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('ai');
+  const [_activeTab, _setActiveTab] = useState('ai');
   
   // Fetch real usage data
   const { data: usageData, isLoading } = useQuery({
@@ -210,7 +210,7 @@ export default function Usage() {
     navigate('/support?topic=sales');
   };
 
-  const handleUpgradeNow = () => {
+  const _handleUpgradeNow = () => {
     // Navigate to subscription page
     navigate('/subscribe');
   };

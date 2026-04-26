@@ -21,7 +21,7 @@ interface OpenAIModel {
   maxOutput: number;
 }
 
-interface ModelPricing {
+interface _ModelPricing {
   input: number;
   output: number;
   creditsPerThousand: number;

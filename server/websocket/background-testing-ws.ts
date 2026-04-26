@@ -196,7 +196,7 @@ class BackgroundTestingWebSocketService {
    * Initialize the background testing WebSocket service
    * Registers with the central upgrade dispatcher
    */
-  initialize(server: Server): void {
+  initialize(_server: Server): void {
     // W-H11: Add maxPayload to prevent DoS via large messages
     this.wss = new WebSocketServer({ noServer: true, maxPayload: 10 * 1024 * 1024 });
 
@@ -229,7 +229,7 @@ class BackgroundTestingWebSocketService {
 
     logger.info('[BackgroundTestingWS] ✅ Service initialized with central dispatcher (noServer mode)');
 
-    this.wss.on('connection', (ws: AuthenticatedWebSocket, req: IncomingMessage) => {
+    this.wss.on('connection', (ws: AuthenticatedWebSocket, _req: IncomingMessage) => {
       logger.info('[BackgroundTestingWS] New client connected via central dispatcher - authentication required');
       
       ws.subscribedProjects = new Set();

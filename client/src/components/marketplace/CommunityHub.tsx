@@ -287,7 +287,7 @@ export function CommunityHub() {
                 <p className="text-[13px] text-muted-foreground text-center py-8">No developers yet</p>
               ) : (
                 <div className="space-y-3">
-                  {topDevelopers.map((dev, index) => (
+                  {topDevelopers.map((dev, _index) => (
                     <div
                       key={dev.id}
                       className="flex items-center justify-between p-2 rounded-lg hover:bg-accent cursor-pointer transition-colors"

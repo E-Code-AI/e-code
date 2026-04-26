@@ -197,7 +197,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     enabled: !!projectId
   });
 
-  const { data: credentials, isLoading: credentialsLoading, refetch: refetchCredentials } = useQuery<DatabaseCredentials>({
+  const { data: credentials, isLoading: _credentialsLoading, refetch: _refetchCredentials } = useQuery<DatabaseCredentials>({
     queryKey: ['/api/database/project', projectId, 'credentials'],
     queryFn: async () => {
       const response = await apiRequest('GET', `/api/database/project/${projectId}/credentials`);

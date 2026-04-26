@@ -77,9 +77,9 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
       {/* Thinking Steps - Collapsible */}
       {isExpanded && (
         <div className="px-4 pb-3 space-y-2 border-t border-[var(--ecode-border)] pt-3">
-          {safeSteps.map((step, index) => {
+          {safeSteps.map((step, _index) => {
           const config = STEP_TYPE_CONFIG[step.type];
-          const Icon = config.icon;
+          const _Icon = config.icon;
           
           return (
             <div

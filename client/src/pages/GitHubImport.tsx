@@ -73,7 +73,7 @@ export default function GitHubImport() {
   const [importMethod, setImportMethod] = useState<'url' | 'oauth'>('url');
   const [repoUrl, setRepoUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
+  const [_selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
   const [userRepos, setUserRepos] = useState<Repository[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isImporting, setIsImporting] = useState(false);

@@ -302,7 +302,7 @@ export class RealObjectStorageService {
     return buffer;
   }
 
-  async deleteFile(key: string, projectId?: number): Promise<void> {
+  async deleteFile(key: string, _projectId?: number): Promise<void> {
     logger.info(`[ObjectStorage] Deleting file: ${key}`);
 
     if (this.useReplitStorage) {
@@ -541,7 +541,7 @@ export class RealObjectStorageService {
 
   async createMultipartUpload(
     key: string,
-    contentType?: string
+    _contentType?: string
   ): Promise<string> {
     const uploadId = crypto.randomUUID();
     logger.info(`Created multipart upload for ${key}: ${uploadId}`);
@@ -561,8 +561,8 @@ export class RealObjectStorageService {
 
   async completeMultipartUpload(
     key: string,
-    uploadId: string,
-    parts: Array<{ partNumber: number; etag: string }>
+    _uploadId: string,
+    _parts: Array<{ partNumber: number; etag: string }>
   ): Promise<StorageObject> {
     return {
       key,

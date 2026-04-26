@@ -315,7 +315,7 @@ export class EnhancedAutonomousAgent {
     this.tokensUsed = Math.ceil(totalContent / 4); // ~4 chars per token
   }
   
-  private async analyzeRequest(message: string, options?: { extendedThinking?: boolean; highPowerMode?: boolean }): Promise<any> {
+  private async analyzeRequest(message: string, _options?: { extendedThinking?: boolean; highPowerMode?: boolean }): Promise<any> {
     this.thinkingProcess.push('🤔 Analyzing user request...');
     
     // Extract key information from the message
@@ -401,7 +401,7 @@ export class EnhancedAutonomousAgent {
     return 'modern';
   }
   
-  private async planApplication(analysis: any, context: AgentContext): Promise<any> {
+  private async planApplication(analysis: any, _context: AgentContext): Promise<any> {
     this.thinkingProcess.push('📋 Planning application structure...');
     
     const plan = {
@@ -642,7 +642,7 @@ export class EnhancedAutonomousAgent {
     }, null, 2);
   }
   
-  private generateIndexHtml(plan: any): string {
+  private generateIndexHtml(_plan: any): string {
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -657,9 +657,9 @@ export class EnhancedAutonomousAgent {
 </html>`;
   }
   
-  private async generateComponent(componentName: string, plan: any, context: AgentContext): Promise<string> {
+  private async generateComponent(componentName: string, plan: any, _context: AgentContext): Promise<string> {
     // Use AI to generate component code based on the component type and plan
-    const prompt = `Generate a React component named ${componentName} for a ${plan.appType} application with ${plan.styling.theme.style} styling.`;
+    const _prompt = `Generate a React component named ${componentName} for a ${plan.appType} application with ${plan.styling.theme.style} styling.`;
     
     // For now, return a template
     return `import React from 'react';
@@ -678,7 +678,7 @@ export const ${componentName}: React.FC<${componentName}Props> = (props) => {
 };`;
   }
   
-  private async generateAppComponent(plan: any, context: AgentContext): Promise<string> {
+  private async generateAppComponent(plan: any, _context: AgentContext): Promise<string> {
     // Generate the main App component that ties everything together
     return `import React from 'react';
 import './App.css';

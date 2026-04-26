@@ -319,7 +319,7 @@ export class StripeBillingService {
     // #137 FIXED: Wrap invoice creation in a database transaction for consistency
     const { db } = await import('../db');
     
-    return await db.transaction(async (tx) => {
+    return await db.transaction(async (_tx) => {
       try {
         const user = await storage.getUser(String(userId));
         if (!user?.stripeCustomerId) {

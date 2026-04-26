@@ -122,7 +122,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
   const [newName, setNewName] = useState("");
   const [newCommand, setNewCommand] = useState("");
   const [newArgs, setNewArgs] = useState("");
-  const [expandedServer, setExpandedServer] = useState<string | null>(null);
+  const [expandedServer, _setExpandedServer] = useState<string | null>(null);
   const [expandedTools, setExpandedTools] = useState<string | null>(null);
   const [editingServer, setEditingServer] = useState<string | null>(null);
   const [showLogsServer, setShowLogsServer] = useState<string | null>(null);
@@ -377,7 +377,7 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
                 const status = statusColors[server.status] || statusColors.stopped;
                 const StatusIcon = status.icon;
                 const serverTools = toolsByServer[server.id] || [];
-                const isExpanded = expandedServer === server.id;
+                const _isExpanded = expandedServer === server.id;
                 const isToolsExpanded = expandedTools === server.id;
 
                 return (

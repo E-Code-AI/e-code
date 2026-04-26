@@ -385,7 +385,7 @@ export class StripePaymentService {
       throw new Error('No active subscription found');
     }
 
-    const subscription = await requireStripe().subscriptions.update(
+    const _subscription = await requireStripe().subscriptions.update(
       user.stripeSubscriptionId,
       { cancel_at_period_end: true },
       {

@@ -111,7 +111,7 @@ export class RealTimeMonitoringService {
     // Disk usage (approximate for project directory)
     let diskStats = { total: 0, used: 0, available: 0 };
     try {
-      const stats = await fs.stat('./');
+      const _stats = await fs.stat('./');
       const projectSize = await this.getDirectorySize('./');
       diskStats = {
         total: 50 * 1024 * 1024 * 1024, // 50GB default
@@ -196,13 +196,13 @@ export class RealTimeMonitoringService {
 
   private getNetworkStatsViaOsModule(): { bytesReceived: number; bytesSent: number; packetsReceived: number; packetsSent: number } {
     const interfaces = os.networkInterfaces();
-    let activeAddresses = 0;
+    let _activeAddresses = 0;
     for (const name in interfaces) {
       if (name === 'lo' || name === 'lo0') continue;
       const addrs = interfaces[name];
       if (addrs) {
         for (const addr of addrs) {
-          if (!addr.internal) activeAddresses++;
+          if (!addr.internal) _activeAddresses++;
         }
       }
     }
@@ -228,7 +228,7 @@ export class RealTimeMonitoringService {
   }
 
   // Store system metrics
-  private async storeSystemMetrics(metrics: SystemMetrics): Promise<void> {
+  private async storeSystemMetrics(_metrics: SystemMetrics): Promise<void> {
     // Store in database for historical analysis
     try {
       // This would store system-wide metrics for admin monitoring

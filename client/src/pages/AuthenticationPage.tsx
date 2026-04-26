@@ -39,7 +39,7 @@ import { useLocation } from 'wouter';
 // Icon aliases for providers that don't have SI icons
 const SiMicrosoft = Building2;
 const SiOkta = KeyRound;
-const SiAuth0 = ShieldCheck;
+const _SiAuth0 = ShieldCheck;
 
 interface SSOProvider {
   id: string;
@@ -87,7 +87,7 @@ export default function AuthenticationPage() {
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [showAddProviderDialog, setShowAddProviderDialog] = useState(false);
 
-  const [ssoProviders, setSsoProviders] = useState<SSOProvider[]>([
+  const [ssoProviders, _setSsoProviders] = useState<SSOProvider[]>([
     {
       id: '1',
       name: 'Okta',
@@ -136,7 +136,7 @@ export default function AuthenticationPage() {
     { id: '3', device: 'Windows PC', browser: 'Firefox 121', location: 'New York, NY', ip: '172.16.0.***', lastActive: new Date(Date.now() - 86400000), current: false },
   ]);
 
-  const [passwordlessEnabled, setPasswordlessEnabled] = useState(true);
+  const [_passwordlessEnabled, _setPasswordlessEnabled] = useState(true);
   const [magicLinkEnabled, setMagicLinkEnabled] = useState(true);
   const [passkeyEnabled, setPasskeyEnabled] = useState(false);
 
@@ -182,7 +182,7 @@ export default function AuthenticationPage() {
     );
   };
 
-  const handleRevokeSession = (id: string) => {
+  const handleRevokeSession = (_id: string) => {
     toast({
       title: 'Session revoked',
       description: 'The session has been terminated.',

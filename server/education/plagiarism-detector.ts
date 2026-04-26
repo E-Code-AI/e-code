@@ -128,8 +128,8 @@ export class PlagiarismDetector {
     files1: any[],
     files2: any[]
   ): Promise<{ score: number; matches: MatchedSegment[] }> {
-    const tokens1 = this.tokenizeFiles(files1);
-    const tokens2 = this.tokenizeFiles(files2);
+    const _tokens1 = this.tokenizeFiles(files1);
+    const _tokens2 = this.tokenizeFiles(files2);
     
     const matches: MatchedSegment[] = [];
     let totalSimilarity = 0;
@@ -204,8 +204,8 @@ export class PlagiarismDetector {
   private findMatchingSegments(
     file1: any,
     file2: any,
-    tokens1: string[],
-    tokens2: string[]
+    _tokens1: string[],
+    _tokens2: string[]
   ): MatchedSegment[] {
     const segments: MatchedSegment[] = [];
     const lines1 = file1.content.split('\n');

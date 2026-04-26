@@ -21,7 +21,7 @@ class BoltImportService {
     this.apiUrl = process.env.BOLT_API_URL;
   }
 
-  async importFromBolt(options: BoltImportOptions): Promise<BoltImportResponse> {
+  async importFromBolt(_options: BoltImportOptions): Promise<BoltImportResponse> {
     if (!this.apiUrl) {
       logger.info('Bolt import requested but BOLT_API_URL is not configured - feature planned for future release');
       

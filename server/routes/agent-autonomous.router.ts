@@ -257,7 +257,7 @@ router.post('/build', async (req, res) => {
     
     const storage = getStorage();
     const aiService = new ProjectAIAgentService(storage);
-    const fileOps = new AgentFileOperationsService();
+    const _fileOps = new AgentFileOperationsService();
     
     // Generate build actions using AI with optional model selection
     logger.info(`Starting autonomous build for project ${projectId} using model ${modelId || 'claude-sonnet-4-6'}`);

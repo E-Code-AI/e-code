@@ -81,7 +81,7 @@ export function NotificationCenter() {
   const { toast } = useToast();
 
   // Fetch notifications from API
-  const { data: notifications = [], isLoading } = useQuery<Notification[]>({
+  const { data: notifications = [], isLoading: _isLoading } = useQuery<Notification[]>({
     queryKey: ['/api/notifications'],
     refetchInterval: 60000, // Refetch every minute
   });
@@ -119,7 +119,7 @@ export function NotificationCenter() {
   });
 
   // Delete notification mutation
-  const deleteNotificationMutation = useMutation({
+  const _deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: number) => {
       await apiRequest('DELETE', `/api/notifications/${notificationId}`);
     },

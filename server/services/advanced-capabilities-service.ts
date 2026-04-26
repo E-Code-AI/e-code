@@ -124,7 +124,7 @@ class CodeRefactoringCapability extends BaseCapability {
     }
   }
 
-  async validate(config: Record<string, any>): Promise<boolean> {
+  async validate(_config: Record<string, any>): Promise<boolean> {
     return true; // Basic validation
   }
 
@@ -132,7 +132,7 @@ class CodeRefactoringCapability extends BaseCapability {
     return ['code:read', 'code:write'];
   }
 
-  private simulateRefactoring(code: string, language: string): string {
+  private simulateRefactoring(code: string, _language: string): string {
     // Simple simulation - in production would use proper AST transformation
     return code
       .replace(/var /g, 'const ')
@@ -188,7 +188,7 @@ class TestGenerationCapability extends BaseCapability {
     }
   }
 
-  async validate(config: Record<string, any>): Promise<boolean> {
+  async validate(_config: Record<string, any>): Promise<boolean> {
     return true;
   }
 
@@ -196,7 +196,7 @@ class TestGenerationCapability extends BaseCapability {
     return ['code:read', 'test:write'];
   }
 
-  private generateTests(code: string, framework: string): string {
+  private generateTests(code: string, _framework: string): string {
     // Simplified test generation
     const functionMatch = code.match(/function\s+(\w+)|const\s+(\w+)\s*=/g);
     const functionNames = functionMatch?.map(match => {
@@ -259,7 +259,7 @@ class DocumentationGeneratorCapability extends BaseCapability {
     }
   }
 
-  async validate(config: Record<string, any>): Promise<boolean> {
+  async validate(_config: Record<string, any>): Promise<boolean> {
     return true;
   }
 
@@ -315,7 +315,7 @@ class SecurityScannerCapability extends BaseCapability {
     const startTime = Date.now();
     
     try {
-      const { code, language } = context.input;
+      const { code, language: _language } = context.input;
       
       if (!code) {
         throw new Error('Code is required');
@@ -344,7 +344,7 @@ class SecurityScannerCapability extends BaseCapability {
     }
   }
 
-  async validate(config: Record<string, any>): Promise<boolean> {
+  async validate(_config: Record<string, any>): Promise<boolean> {
     return true;
   }
 
@@ -736,7 +736,7 @@ export class AdvancedCapabilitiesService extends EventEmitter {
   async getProjectPlugins(projectId: number): Promise<CapabilityPlugin[]> {
     const plugins: CapabilityPlugin[] = [];
 
-    for (const [pluginId, plugin] of Array.from(this.plugins)) {
+    for (const [_pluginId, plugin] of Array.from(this.plugins)) {
       if (plugin.projectId === projectId) {
         plugins.push(plugin);
       }

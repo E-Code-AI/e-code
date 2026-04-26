@@ -174,10 +174,10 @@ class ServiceWorkerManager {
 // Create singleton instance
 const serviceWorkerManager = new ServiceWorkerManager({
   enableInDevelopment: false,
-  onSuccess: (registration) => {
+  onSuccess: (_registration) => {
     // Service worker registered successfully
   },
-  onUpdate: (registration) => {
+  onUpdate: (_registration) => {
     // Update available
   },
   onError: (error) => {

@@ -1873,19 +1873,19 @@ async function seedTemplates() {
     await db.delete(templates);
     
     // Insert all templates with duplicate handling
-    let successCount = 0;
-    let failCount = 0;
+    let _successCount = 0;
+    let _failCount = 0;
     
     for (const template of REPLIT_TEMPLATES) {
       try {
         await db.insert(templates).values(template);
-        successCount++;
+        _successCount++;
       } catch (error: any) {
         if (error.code === '23505') {
           // Template already exists
         } else {
           logger.error(`❌ Failed to add template ${template.name}:`, error.message);
-          failCount++;
+          _failCount++;
         }
       }
     }

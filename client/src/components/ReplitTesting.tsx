@@ -73,7 +73,7 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
   const { toast } = useToast();
   const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
   const [testRuns, setTestRuns] = useState<TestRun[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [filter, setFilter] = useState<'all' | 'passed' | 'failed' | 'pending'>('all');
   const [selectedSuite, setSelectedSuite] = useState<TestSuite | null>(null);

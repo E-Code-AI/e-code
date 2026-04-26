@@ -118,7 +118,7 @@ export class CollaborativeEditingService {
   ): Promise<{ sessionId: string; ydoc: Y.Doc; color: string; participants: AwarenessState[] }> {
     let sessionId = this.fileToSession.get(fileId);
     let session: CollaborativeSession;
-    let isNewSession = false;
+    let _isNewSession = false;
 
     if (!sessionId || !this.sessions.has(sessionId)) {
       // Create new session
@@ -137,7 +137,7 @@ export class CollaborativeEditingService {
 
       this.sessions.set(sessionId, session);
       this.fileToSession.set(fileId, sessionId);
-      isNewSession = true;
+      _isNewSession = true;
 
       // Store session in database
       await db.insert(collaborationSessions).values({
@@ -450,7 +450,7 @@ export class CollaborativeEditingService {
   /**
    * Generate a shareable collaboration link
    */
-  async generateCollaborationLink(projectId: string, fileId: number): Promise<string> {
+  async generateCollaborationLink(projectId: string, _fileId: number): Promise<string> {
     const baseUrl = (process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5000').replace(/\/$/, '');
     const token = crypto.randomBytes(32).toString('hex');
     

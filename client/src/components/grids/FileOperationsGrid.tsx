@@ -95,8 +95,8 @@ export function FileOperationsGrid({
 }: FileOperationsGridProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  const [page, _setPage] = useState(1);
+  const [pageSize, _setPageSize] = useState(50);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [languageFilter, setLanguageFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');

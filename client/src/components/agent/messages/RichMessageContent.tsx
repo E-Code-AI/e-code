@@ -83,7 +83,7 @@ export function RichMessageContent({ content, className }: RichMessageContentPro
             </em>
           ),
           
-          code: ({ inline, className, children, ...props }: any) => {
+          code: ({ inline, className, children, ..._props }: any) => {
             if (inline) {
               return (
                 <code className="px-1.5 py-0.5 rounded bg-muted text-violet-500 font-mono text-[11px]">

@@ -195,7 +195,7 @@ export class BackgroundTestingService extends EventEmitter {
     }
   }
   
-  private async runTests(projectId: number): Promise<TestResults> {
+  private async runTests(_projectId: number): Promise<TestResults> {
     // 🔥 CRITICAL: Check Playwright availability before running tests
     const pw = await loadPlaywright().catch((error) => {
       logger.error(`Cannot run tests: ${error.message}`);

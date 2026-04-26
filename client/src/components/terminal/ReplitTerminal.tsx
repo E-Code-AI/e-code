@@ -62,7 +62,7 @@ export function ReplitTerminal({
   projectId,
   className = "",
   defaultCommand,
-  onCommandExecute,
+  onCommandExecute: _onCommandExecute,
   maxHeight = 400,
   theme = "dark",
   allowMultipleSessions = true,

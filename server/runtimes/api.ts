@@ -257,7 +257,7 @@ export async function startProjectRuntime(req: Request, res: Response) {
     
     // Bridge runtime → preview: set up the proxy to the runtime's port
     try {
-      const preview = await previewService.startPreview(projectId, { port: result.port, runId: executionId });
+      const _preview = await previewService.startPreview(projectId, { port: result.port, runId: executionId });
       logger.info(`Preview started for project ${projectId}, proxying to runtime port: ${result.port}`);
     } catch (previewErr: any) {
       logger.warn(`Preview service start failed for project ${projectId}: ${previewErr.message} — runtime continues without preview proxy`);

@@ -124,7 +124,7 @@ export function ReplitMultiplayer({ projectId }: ReplitMultiplayerProps) {
     };
   }, [projectId, handleMultiplayerEvent]);
 
-  const sendCursorPosition = (x: number, y: number, file?: string, line?: number) => {
+  const _sendCursorPosition = (x: number, y: number, file?: string, line?: number) => {
     if (wsRef.current && wsRef.current.getState() === 'connected') {
       wsRef.current.send(JSON.stringify({
         type: 'cursor-move',

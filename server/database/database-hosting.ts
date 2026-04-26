@@ -873,7 +873,7 @@ export class DatabaseHostingService {
     
     // Execute actual migration
     const { promisify } = require('util');
-    const execAsync = promisify(exec);
+    const _execAsync = promisify(exec);
     
     try {
       // Connect to database and execute migration

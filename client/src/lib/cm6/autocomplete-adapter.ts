@@ -64,7 +64,7 @@ const aiLoadingField = StateField.define<boolean>({
   },
 });
 
-const aiLoadingIndicator = EditorView.decorations.compute([aiLoadingField], (state) => {
+const aiLoadingIndicator = EditorView.decorations.compute([aiLoadingField], (_state) => {
   return Decoration.none;
 });
 
@@ -266,7 +266,7 @@ export function createAICompletionSource(
   options: AICompletionOptions = {}
 ): CompletionSource {
   const {
-    projectId,
+    projectId: _projectId,
     modelId,
     debounceMs = 300,
     maxContextLength = 5000,

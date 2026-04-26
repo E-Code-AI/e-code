@@ -79,7 +79,7 @@ export function BottomSheet({
   title,
   snapPoints = [0.5, 1]
 }: BottomSheetProps) {
-  const [dragY, setDragY] = useState(0);
+  const [_dragY, _setDragY] = useState(0);
   const [currentSnapPoint, setCurrentSnapPoint] = useState(0);
 
   const handleDragEnd = (event: any, info: PanInfo) => {
@@ -246,7 +246,7 @@ export function HapticButton({
   children,
   className,
   onClick,
-  ...props
+  ..._props
 }: HapticButtonProps) {
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     // Simulate haptic feedback with animation

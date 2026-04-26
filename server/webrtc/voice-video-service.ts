@@ -174,7 +174,7 @@ export class VoiceVideoService extends EventEmitter {
     if (!peerId) return;
 
     let room: Room | undefined;
-    for (const [roomId, r] of this.rooms) {
+    for (const [_roomId, r] of this.rooms) {
       if (r.peers.has(peerId)) {
         room = r;
         break;

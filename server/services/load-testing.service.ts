@@ -86,7 +86,7 @@ export class LoadTestingService extends EventEmitter {
     this.errors.clear();
 
     const tasks: Promise<void>[] = [];
-    const totalRequests = config.concurrency * Math.ceil(config.duration / 1000);
+    const _totalRequests = config.concurrency * Math.ceil(config.duration / 1000);
     
     logger.info(`Starting AI streaming load test: ${config.concurrency} concurrent streams for ${config.duration}ms`);
     
@@ -301,8 +301,8 @@ export class LoadTestingService extends EventEmitter {
   }
 
   private async createMockWebSocketConnection(): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
+    return new Promise((resolve, _reject) => {
+      const _timeout = setTimeout(() => {
         resolve({ 
           id: Math.random().toString(36),
           close: () => {},
@@ -313,7 +313,7 @@ export class LoadTestingService extends EventEmitter {
   }
 
   private captureSystemMetrics(): SystemMetrics {
-    const memUsage = process.memoryUsage();
+    const _memUsage = process.memoryUsage();
     const totalMem = require('os').totalmem();
     const freeMem = require('os').freemem();
     const usedMem = totalMem - freeMem;

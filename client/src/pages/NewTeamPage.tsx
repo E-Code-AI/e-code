@@ -200,7 +200,7 @@ export default function NewTeamPage() {
   });
 
   const [emailInput, setEmailInput] = useState('');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [_avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 

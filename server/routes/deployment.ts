@@ -259,7 +259,7 @@ const deploymentConfigSchema = z.object({
 router.post('/projects/:projectId/deploy', async (req, res) => {
   try {
     const projectId = req.params.projectId;
-    const userId = req.user!.id;
+    const _userId = req.user!.id;
 
     // Get project to validate it exists
     const project = await storage.getProject(projectId);
@@ -467,7 +467,7 @@ router.get('/projects/:projectId/deployments/stats', async (req, res) => {
               uptime = Math.min(uptime, metrics.uptime);
             }
           }
-        } catch (metricsError) {
+        } catch (_metricsError) {
           // Metrics not available for this deployment, continue
         }
       }
@@ -940,7 +940,7 @@ router.get('/deployment/types', async (req, res) => {
 router.post('/projects/:projectId/publish', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
-    const userId = req.user!.id;
+    const _userId = req.user!.id;
 
     // Validate project exists and user owns it
     const project = await getOwnedProject(req, res, projectId);
@@ -1034,7 +1034,7 @@ router.post('/projects/:projectId/publish', ensureAuthenticated, async (req: Req
 router.post('/projects/:projectId/republish', ensureAuthenticated, async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
-    const userId = req.user!.id;
+    const _userId = req.user!.id;
 
     // Validate project exists and user owns it
     const project = await getOwnedProject(req, res, projectId);

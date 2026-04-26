@@ -19,7 +19,7 @@ export function useAgentDockNotifications() {
   };
 
   useEffect(() => {
-    const unsubComplete = AgentEventBus.on('agent:complete', (event) => {
+    const unsubComplete = AgentEventBus.on('agent:complete', (_event) => {
       if (!shouldNotify('complete')) return;
       
       toast({
@@ -41,7 +41,7 @@ export function useAgentDockNotifications() {
       });
     });
 
-    const unsubDatabase = AgentEventBus.on('agent:database-created', (event) => {
+    const unsubDatabase = AgentEventBus.on('agent:database-created', (_event) => {
       if (!shouldNotify('database')) return;
       
       toast({

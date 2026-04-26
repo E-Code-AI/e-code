@@ -38,7 +38,7 @@ export class RuntimeLogsService {
     this.storage = storage;
   }
 
-  setup(server: Server): void {
+  setup(_server: Server): void {
     // Use noServer mode - central dispatcher handles all upgrade routing
     this.wss = new WebSocketServer({ noServer: true });
 

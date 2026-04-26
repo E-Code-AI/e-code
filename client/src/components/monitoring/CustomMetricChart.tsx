@@ -8,7 +8,7 @@ interface CustomMetricChartProps {
   customMetrics?: Record<string, number>;
 }
 
-export function CustomMetricChart({ data, customMetrics }: CustomMetricChartProps) {
+export function CustomMetricChart({ data: _data, customMetrics }: CustomMetricChartProps) {
   const chartData = useMemo(() => {
     if (!customMetrics) return [];
     

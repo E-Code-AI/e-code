@@ -134,7 +134,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
   });
 
   // Update deployment
-  const updateDeploymentMutation = useMutation({
+  const _updateDeploymentMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest('PATCH', `/api/deployment/${projectId}/advanced/${id}`, data),
     onSuccess: () => {
@@ -149,7 +149,7 @@ export function AdvancedDeployments({ projectId }: AdvancedDeploymentsProps) {
   });
 
   // Create cron job
-  const createCronJobMutation = useMutation({
+  const _createCronJobMutation = useMutation({
     mutationFn: (data: { deploymentId: number; name: string; schedule: string; command: string }) =>
       apiRequest('POST', `/api/deployment/${projectId}/cron-jobs`, data),
     onSuccess: () => {

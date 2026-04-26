@@ -215,7 +215,7 @@ export class LoadBalancerService {
       const proxy = httpProxy.createProxyMiddleware({
         target: backend.url,
         changeOrigin: true,
-        onProxyReq: (proxyReq, req, res) => {
+        onProxyReq: (proxyReq, req, _res) => {
           // Add load balancer headers
           proxyReq.setHeader('X-Forwarded-For', req.ip);
           proxyReq.setHeader('X-Real-IP', req.ip);
@@ -297,7 +297,7 @@ export class LoadBalancerService {
    */
   private startHealthChecks(): void {
     setInterval(() => {
-      for (const [serviceId, backends] of this.backends) {
+      for (const [_serviceId, backends] of this.backends) {
         for (const backend of backends) {
           this.healthCheck(backend);
         }
@@ -310,7 +310,7 @@ export class LoadBalancerService {
    */
   private startPerformanceMonitoring(): void {
     setInterval(() => {
-      for (const [serviceId, backends] of this.backends) {
+      for (const [_serviceId, backends] of this.backends) {
         for (const backend of backends) {
           if (backend.responseTime.length > 0) {
             const avgResponseTime = backend.responseTime.reduce((a, b) => a + b, 0) / backend.responseTime.length;

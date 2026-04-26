@@ -132,7 +132,7 @@ export const SearchReplace: React.FC<SearchReplaceProps> = ({
   const handleReplaceAll = useCallback(() => {
     if (query && replacement !== undefined) {
       triggerHaptic('medium');
-      const count = onReplaceAll(query, replacement, options);
+      const _count = onReplaceAll(query, replacement, options);
       // Clear results after replace all
       setResults([]);
       setQuery('');

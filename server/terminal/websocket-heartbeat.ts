@@ -10,7 +10,7 @@ const logger = createLogger('ws-heartbeat');
 
 // Heartbeat configuration
 const HEARTBEAT_INTERVAL_MS = 30000; // 30 seconds
-const HEARTBEAT_TIMEOUT_MS = 35000; // 35 seconds (slightly longer than interval)
+const _HEARTBEAT_TIMEOUT_MS = 35000; // 35 seconds (slightly longer than interval)
 
 interface HeartbeatClient {
   ws: WebSocket;

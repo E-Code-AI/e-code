@@ -49,7 +49,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location, navigate] = useLocation();
+  const [_location, navigate] = useLocation();
 
   useEffect(() => {
     if (user) {

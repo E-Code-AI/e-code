@@ -52,7 +52,7 @@ export default function IDEPage() {
   
   // For query purposes, still extract from URL each time
   const searchParams = new URLSearchParams(window.location.search);
-  const urlBootstrapToken = searchParams.get('bootstrap');
+  const _urlBootstrapToken = searchParams.get('bootstrap');
   
   // Use stable token for AutonomousWorkspaceViewer, URL token for queries
   const bootstrapToken = stableBootstrapToken;
@@ -103,7 +103,7 @@ export default function IDEPage() {
   // ✅ FIX (Dec 25, 2025): Use stable query key without bootstrap flag
   // The bootstrap token is only needed for the initial fetch - once we have the project,
   // we don't want clearing the token to invalidate the cache and cause "Project not found"
-  const { data: project, isLoading: isLoadingProject, fetchStatus } = useQuery<Project>({
+  const { data: project, isLoading: _isLoadingProject, fetchStatus } = useQuery<Project>({
     queryKey: ['/api/projects', projectId],
     queryFn: async () => {
       return apiRequest<Project>(

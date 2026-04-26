@@ -360,7 +360,7 @@ export function useAutonomousChatIntegration({
   // Critical for mobile WebView where useEffect may not run reliably
   useLayoutEffect(() => {
     // ✅ FIX (Jan 2026): Track enabled transitions for cleanup decisions
-    const wasEnabled = prevEnabledRef.current;
+    const _wasEnabled = prevEnabledRef.current;
     prevEnabledRef.current = enabled;
     
     // Note: We no longer use debounced cleanup - instead we skip cleanup entirely during active bootstrap
@@ -459,7 +459,7 @@ export function useAutonomousChatIntegration({
       try {
         const data = JSON.parse(event.data);
         handleProgressEventRef.current?.(data);
-      } catch (err) {
+      } catch (_err) {
       }
     };
     
@@ -1702,7 +1702,7 @@ export function useAutonomousChatIntegration({
             const data = JSON.parse(event.data);
             // Use ref to call handler to avoid stale closure issues
             handleProgressEventRef.current?.(data as AutonomousProgressEvent);
-          } catch (err) {
+          } catch (_err) {
           }
         };
 

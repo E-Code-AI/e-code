@@ -6,7 +6,7 @@ interface GitPanelProps {
   mode?: 'desktop' | 'tablet' | 'mobile';
 }
 
-export function GitPanel({ projectId, onBranchChange, mode = 'desktop' }: GitPanelProps) {
+export function GitPanel({ projectId, onBranchChange: _onBranchChange, mode = 'desktop' }: GitPanelProps) {
   return (
     <div className="h-full">
       <ReplitGitPanel projectId={projectId} mode={mode} />

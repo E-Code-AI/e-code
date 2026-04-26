@@ -57,7 +57,7 @@ const PROVIDER_ORDER: ModelCategory[] = ['openai', 'anthropic', 'google', 'xai',
 export function ModelSelector({ selectedModel, onModelChange, className }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
 
-  const { data: modelsData, isLoading } = useQuery({
+  const { data: modelsData, isLoading: _isLoading } = useQuery({
     queryKey: ['/api/agent/models'],
   });
 

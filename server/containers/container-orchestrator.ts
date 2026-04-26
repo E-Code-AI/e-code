@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import { promisify } from 'util';
 import { createLogger } from '../utils/logger';
 
-const execAsync = promisify(exec);
+const _execAsync = promisify(exec);
 const logger = createLogger('container-orchestrator');
 
 export interface ContainerConfig {
@@ -327,7 +327,7 @@ export class ContainerOrchestrator {
         };
         
         try {
-          const containerId = await this.deployContainer(containerConfig);
+          const _containerId = await this.deployContainer(containerConfig);
           // Container will auto-stop after job completion
         } catch (error) {
           logger.error(`Failed to execute scheduled job ${config.name}:`, String(error));

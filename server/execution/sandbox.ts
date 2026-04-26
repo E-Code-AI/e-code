@@ -20,7 +20,7 @@ export class Sandbox {
   }
 
   async execute(options: SandboxOptions): Promise<ExecutionResult> {
-    const { code, language, timeout = 5000, memoryLimit = 128, stdin } = options;
+    const { code, language, timeout = 5000, memoryLimit: _memoryLimit = 128, stdin } = options;
     const startTime = Date.now();
 
     if (language === 'javascript' || language === 'nodejs') {

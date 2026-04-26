@@ -94,7 +94,7 @@ export function BranchManager({
   const [searchQuery, setSearchQuery] = useState('');
   const [newBranchName, setNewBranchName] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
+  const [_selectedBranch, _setSelectedBranch] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 

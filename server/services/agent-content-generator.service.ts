@@ -124,7 +124,7 @@ class AgentContentGeneratorService {
         return null;
       }
       
-      const { path, outline: description, language } = outline;
+      const { path, outline: description, language: _language } = outline;
       const fileName = path.split('/').pop() || 'file';
       const ext = fileName.split('.').pop()?.toLowerCase() || '';
       
@@ -872,7 +872,7 @@ DATABASE_URL=
     // Dockerfile
     if (fileName === 'dockerfile' || fileName.endsWith('/dockerfile')) {
       const isPython = description.toLowerCase().includes('python');
-      const isNode = description.toLowerCase().includes('node');
+      const _isNode = description.toLowerCase().includes('node');
       const isGo = description.toLowerCase().includes('go');
       
       if (isPython) {

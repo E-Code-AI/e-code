@@ -108,7 +108,7 @@ interface PostsResponse {
 
 export default function ThreadsPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('all');
+  const [_activeTab, _setActiveTab] = useState('all');
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');

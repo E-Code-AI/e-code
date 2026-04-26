@@ -27,20 +27,20 @@ export function ReplitLayout({
   className = "",
   onRefresh
 }: ReplitLayoutProps) {
-  const [location, navigate] = useLocation();
+  const [_location, navigate] = useLocation();
   // Use improved mobile detection that considers both width AND height
   // This correctly identifies phone landscape vs tablet portrait
   const isMobile = useIsMobile();
   const deviceInfo = useDeviceInfo();
   const isTablet = deviceInfo.isTablet;
   const isLandscape = deviceInfo.isLandscape;
-  const isMobileLandscape = deviceInfo.isMobileLandscape;
+  const _isMobileLandscape = deviceInfo.isMobileLandscape;
   const [showFileExplorer, setShowFileExplorer] = useState(false);
   const [showToolsPanel, setShowToolsPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [touchStartX, setTouchStartX] = useState(0);
   const [touchStartY, setTouchStartY] = useState(0);
-  const [orientation, setOrientation] = useState(window.orientation || 0);
+  const [_orientation, setOrientation] = useState(window.orientation || 0);
 
   // Viewport meta tag management for mobile scaling
   useEffect(() => {
@@ -137,11 +137,11 @@ export function ReplitLayout({
     setShowCreateModal(true);
   };
 
-  const handleFileSelect = (file: any) => {
+  const handleFileSelect = (_file: any) => {
     // Handle file selection
   };
 
-  const handleCreateProject = (template: any) => {
+  const handleCreateProject = (_template: any) => {
     navigate('/ide/new');
   };
 

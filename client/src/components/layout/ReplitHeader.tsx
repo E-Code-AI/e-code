@@ -61,9 +61,9 @@ import { MobileMenu } from "./MobileMenu";
 export function ReplitHeader() {
   const { user, logoutMutation } = useAuth();
   const [location, navigate] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [_searchQuery, _setSearchQuery] = useState("");
   const [spotlightOpen, setSpotlightOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [_mobileMenuOpen, _setMobileMenuOpen] = useState(false);
   const [projectInfo, setProjectInfo] = useState<any>(null);
   const [projectInfoLoading, setProjectInfoLoading] = useState(false);
   const [projectInfoError, setProjectInfoError] = useState<string | null>(null);

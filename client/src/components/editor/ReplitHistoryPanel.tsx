@@ -105,7 +105,7 @@ interface CheckpointsAPIResponse {
   count: number;
 }
 
-interface FileHistoryAPIResponse {
+interface _FileHistoryAPIResponse {
   success: boolean;
   history: FileVersion[];
   groupedByFile: Record<string, FileVersion[]>;
@@ -216,7 +216,7 @@ function DiffViewer({ oldContent, newContent, fileName }: { oldContent: string; 
     const newLines = newContent.split('\n');
     const result: Array<{ type: 'unchanged' | 'added' | 'removed'; line: string; lineNumber: number }> = [];
     
-    const maxLen = Math.max(oldLines.length, newLines.length);
+    const _maxLen = Math.max(oldLines.length, newLines.length);
     let oldIdx = 0;
     let newIdx = 0;
     
@@ -298,7 +298,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const [expandedCheckpoints, setExpandedCheckpoints] = useState<Set<string>>(new Set());
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoreTarget, setRestoreTarget] = useState<Checkpoint | null>(null);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const [_autoSaveEnabled, _setAutoSaveEnabled] = useState(true);
   const [activeTab, setActiveTab] = useState<'checkpoints' | 'files'>('files');
   const [selectedFile, setSelectedFile] = useState<FileWithHistory | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<FileVersion | null>(null);

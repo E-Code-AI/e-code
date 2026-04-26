@@ -197,7 +197,7 @@ export class WebImportService {
 
     if (data.codeBlocks.length > 0) {
       formatted += `### Code Snippets Found\n\n`;
-      data.codeBlocks.forEach((code, index) => {
+      data.codeBlocks.forEach((code, _index) => {
         formatted += `\`\`\`\n${code}\n\`\`\`\n\n`;
       });
     }

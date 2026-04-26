@@ -233,7 +233,7 @@ export default function SEOManagement() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedPage, setSelectedPage] = useState<PageSEO | null>(null);
+  const [_selectedPage, _setSelectedPage] = useState<PageSEO | null>(null);
   const [copied, setCopied] = useState(false);
 
   const { data: analyticsData, isLoading, error } = useQuery<SEOAnalyticsResponse>({
@@ -241,7 +241,7 @@ export default function SEOManagement() {
   });
 
   const pages = analyticsData?.pages ?? [];
-  const hasRealAnalytics = analyticsData?.hasRealAnalytics ?? false;
+  const _hasRealAnalytics = analyticsData?.hasRealAnalytics ?? false;
 
   const filteredPages = pages.filter(page => {
     const matchesSearch = page.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -265,7 +265,7 @@ export default function SEOManagement() {
 
   const trendData = [65, 72, 68, 80, 75, 82, 78, 85, 88, 92, 89, stats.averageScore];
 
-  const getStatusColor = (status: string) => {
+  const _getStatusColor = (status: string) => {
     switch (status) {
       case 'excellent': return 'text-green-500';
       case 'good': return 'text-blue-500';

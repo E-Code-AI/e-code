@@ -60,7 +60,7 @@ import { centralUpgradeDispatcher } from './websocket/central-upgrade-dispatcher
 import { installFinalUpgradeGuard } from './websocket/upgrade-guard';
 
 const logger = createLogger('server');
-const serverLogger = createCentralizedLogger('server');
+const _serverLogger = createCentralizedLogger('server');
 const app = express();
 const runtimeDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -565,7 +565,7 @@ app.get('/health/components', (_req, res) => {
 });
 
 // Helper to track service loading (registers and marks ready)
-const trackServiceLoad = (serviceName: string) => {
+const _trackServiceLoad = (serviceName: string) => {
   markServiceReady(serviceName);
   const { total, ready } = getServiceCounts();
   logger.info(`[Startup] ✅ ${serviceName} (${ready}/${total})`);
@@ -1566,7 +1566,7 @@ httpServer.listen(port, "0.0.0.0", () => {
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
   process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-  process.on('unhandledRejection', (reason: unknown, promise: Promise<unknown>) => {
+  process.on('unhandledRejection', (reason: unknown, _promise: Promise<unknown>) => {
     logger.error('[Process] Unhandled promise rejection — this would have crashed the process', {
       reason: reason instanceof Error ? reason.message : String(reason),
       stack: reason instanceof Error ? reason.stack : undefined,

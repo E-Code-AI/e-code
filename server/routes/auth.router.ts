@@ -28,7 +28,7 @@ function sanitizeError(error: unknown): string {
 
 // Define a UserForAuth type that includes password for authentication
 // User already has password as a required field, so no override needed
-type UserForAuth = User;
+type _UserForAuth = User;
 
 export class AuthRouter {
   private router: Router;
@@ -155,7 +155,7 @@ export class AuthRouter {
         expiresAt.setHours(expiresAt.getHours() + 6);
         
         // Create user with emailVerified set to false (exclude plain password from storage)
-        const { password, ...userDataWithoutPassword } = validatedData;
+        const { password: _password, ...userDataWithoutPassword } = validatedData;
         
         // Use transaction to ensure user creation and verification token are atomic
         const user = await withTransaction(async (tx) => {
@@ -503,7 +503,7 @@ export class AuthRouter {
         expiresAt.setHours(expiresAt.getHours() + 6);
         
         // Create user with emailVerified set to false (exclude plain password from storage)
-        const { password, ...userDataWithoutPassword } = validatedData;
+        const { password: _password, ...userDataWithoutPassword } = validatedData;
         
         // Use transaction to ensure user creation and verification token are atomic
         const user = await withTransaction(async (tx) => {

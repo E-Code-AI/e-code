@@ -45,7 +45,7 @@ export function CheckpointCard({
   aiSummary, 
   filesCount, 
   createdAt, 
-  type = 'auto',
+  type: _type = 'auto',
   status = 'complete',
   commitId,
   stats,

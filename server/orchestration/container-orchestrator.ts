@@ -655,7 +655,7 @@ export class ContainerOrchestrator extends EventEmitter {
   /**
    * Get default command for language
    */
-  private getDefaultCommand(language: string, code: string): string[] {
+  private getDefaultCommand(language: string, _code: string): string[] {
     const mainFile = this.getMainFileName(language);
     
     switch (language) {
@@ -746,7 +746,7 @@ export class ContainerOrchestrator extends EventEmitter {
   /**
    * Extract stderr from logs
    */
-  private extractStderr(logs: string): string {
+  private extractStderr(_logs: string): string {
     // In a real implementation, we'd separate stdout/stderr
     return '';
   }
@@ -819,7 +819,7 @@ export class ContainerOrchestrator extends EventEmitter {
     }
     
     // Stop running tasks
-    for (const [taskId, task] of Array.from(this.runningTasks)) {
+    for (const [taskId, _task] of Array.from(this.runningTasks)) {
       await this.cancelTask(taskId);
     }
     

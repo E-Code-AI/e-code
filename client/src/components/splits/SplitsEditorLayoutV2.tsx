@@ -144,7 +144,7 @@ function ProjectEditorPane({ projectId }: { projectId: string }) {
   );
 }
 
-function EditorBreadcrumbs({ projectId, files }: { projectId: string; files: File[] }) {
+function EditorBreadcrumbs({ projectId: _projectId, files }: { projectId: string; files: File[] }) {
   const { activeFileId } = useLayoutStore();
   const activeFilePath = files.find((file) => file.id === activeFileId)?.path || '';
 
@@ -185,9 +185,9 @@ export function SplitsEditorLayoutV2({
   files = [],
   activeFileId,
   onFileSelect,
-  onFileCreate,
-  onFileDelete,
-  onFileRename,
+  onFileCreate: _onFileCreate,
+  onFileDelete: _onFileDelete,
+  onFileRename: _onFileRename,
   projectName = 'Untitled Project',
   projectId,
   className,
@@ -203,7 +203,7 @@ export function SplitsEditorLayoutV2({
   const {
     root,
     initializeLayout,
-    findNode,
+    findNode: _findNode,
     setActivePane,
     setActiveTab,
     setCenterStackHeight,
@@ -290,7 +290,7 @@ export function SplitsEditorLayoutV2({
           <PanelShell title="Problems">
             <ReplitProblemsPanel 
               projectId={effectiveProjectId}
-              onFileNavigate={(file, line, column) => {}}
+              onFileNavigate={(_file, _line, _column) => {}}
             />
           </PanelShell>
         ),
@@ -356,7 +356,7 @@ export function SplitsEditorLayoutV2({
   // Command palette commands
   const commands = useMemo(() => generateDefaultCommands({
     onToolSelect: handleToolChange,
-    onNavigate: (path) => {},
+    onNavigate: (_path) => {},
   }), [handleToolChange]);
 
   return (

@@ -1148,7 +1148,7 @@ export class AIProviderManager {
     const chatMessages = messages.filter(m => m.role !== 'system');
     
     // ✅ PROMPT CACHING: Format messages for Gemini and cache system prompt
-    const { systemInstruction, contents } = promptCacheManager.formatMessagesForGemini(messages, systemMessage);
+    const { systemInstruction: _systemInstruction, contents: _contents } = promptCacheManager.formatMessagesForGemini(messages, systemMessage);
     
     // Cache system prompt for metrics tracking
     if (systemMessage) {
@@ -1336,7 +1336,7 @@ class LegacyProviderAdapter {
     systemPrompt: string,
     maxTokens = 1024,
     temperature = 0.2,
-    userId?: number
+    _userId?: number
   ): Promise<string> {
     const messages = [
       { role: 'system' as const, content: systemPrompt },
@@ -1353,7 +1353,7 @@ class LegacyProviderAdapter {
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     maxTokens = 1024,
     temperature = 0.5,
-    userId?: number
+    _userId?: number
   ): Promise<string> {
     return this.manager.generateChat(this.modelId, messages, {
       max_tokens: maxTokens,
@@ -1373,7 +1373,7 @@ class LegacyProviderAdapter {
     return this.generateCompletion(prompt, systemPrompt, 2048, 0.3, userId);
   }
   
-  async analyzeCode(code: string, language: string): Promise<any> {
+  async analyzeCode(_code: string, _language: string): Promise<any> {
     // Delegate to code analyzer if needed
     return { suggestions: [] };
   }

@@ -138,7 +138,7 @@ export class UsageTrackingService {
     }
   }
 
-  async createUsageAlert(userId: number, alert: {
+  async createUsageAlert(userId: number, _alert: {
     resource: string;
     threshold: number;
     type: 'percentage' | 'absolute';

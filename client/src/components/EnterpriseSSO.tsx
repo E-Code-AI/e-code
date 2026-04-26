@@ -72,7 +72,7 @@ interface SCIMGroup {
 
 export function EnterpriseSSO() {
   const [showCreateProvider, setShowCreateProvider] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<SSOProvider | null>(null);
+  const [_editingProvider, setEditingProvider] = useState<SSOProvider | null>(null);
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();

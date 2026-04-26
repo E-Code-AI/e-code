@@ -630,7 +630,7 @@ ${context?.file ? `The user is working on file: ${context.file}` : ''}`;
       content: m.content
     }));
 
-    const messages: ChatMessage[] = [
+    const _messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...history,
       { role: 'user', content: context?.code
@@ -676,7 +676,7 @@ export async function getProjectHistory(req: Request, res: Response) {
 export async function generateProjectSuggestions(req: Request, res: Response) {
   try {
     const { projectId } = req.params;
-    const { code, file, context } = req.body;
+    const { code, file, context: _context } = req.body;
 
     const provider = aiProviderManager.getDefaultProvider();
     if (!provider) {

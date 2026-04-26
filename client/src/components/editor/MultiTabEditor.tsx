@@ -259,7 +259,7 @@ export function MultiTabEditor({
     };
   }, []);
 
-  const handleCloseTab = useCallback((fileId: number, e: React.MouseEvent) => {
+  const _handleCloseTab = useCallback((fileId: number, e: React.MouseEvent) => {
     e.stopPropagation();
 
     const instance = editorsRef.current.get(fileId);
@@ -281,7 +281,7 @@ export function MultiTabEditor({
     }
   }, [currentActiveFileId, openTabs, files, onFileSelect, closeFile]);
 
-  const handleTabClick = useCallback((file: File) => {
+  const _handleTabClick = useCallback((file: File) => {
     if (file.id) {
       openFile(file.id);
     }
@@ -321,7 +321,7 @@ export function MultiTabEditor({
           fileName={files.find(f => f.id === currentActiveFileId)?.name}
           minimapEnabled={minimapEnabled}
           onToggleMinimap={toggleMinimap}
-          onBreadcrumbClick={(segment, index) => {
+          onBreadcrumbClick={(_segment, _index) => {
           }}
         />
       )}

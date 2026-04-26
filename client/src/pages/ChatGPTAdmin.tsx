@@ -466,7 +466,7 @@ export default function ChatGPTAdmin() {
         const data = await apiRequest<ProjectFile>('GET', `/api/admin/chatgpt/projects/${file.projectId}/files/${file.id}`);
         setFileContent(data.content || '');
         setSelectedFile(data);
-      } catch (err) {
+      } catch (_err) {
         toast({ title: 'Failed to load file', variant: 'destructive' });
       }
     }
@@ -479,7 +479,7 @@ export default function ChatGPTAdmin() {
       await apiRequest('PUT', `/api/admin/chatgpt/projects/${selectedProject.id}/files/${selectedFile.id}`, { content: fileContent });
       toast({ title: 'File saved' });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/chatgpt/projects', selectedProject.id, 'files'] });
-    } catch (err) {
+    } catch (_err) {
       toast({ title: 'Failed to save file', variant: 'destructive' });
     } finally {
       setIsSavingFile(false);

@@ -92,7 +92,7 @@ export function PlanApprovalModal({
       <div className="flex-1 overflow-y-auto">
         <PlanVisualizer
           plan={plan}
-          onTaskClick={(taskId) => {
+          onTaskClick={(_taskId) => {
           }}
         />
       </div>

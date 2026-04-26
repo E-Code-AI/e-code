@@ -439,7 +439,7 @@ const integration = new gitReviewIntegration('${this.projectPath}');
       }
 
       // Get diff summary
-      const { stdout: diffStat } = await execAsync(
+      const { stdout: _diffStat } = await execAsync(
         'git diff --cached --stat',
         { cwd: this.projectPath }
       );
@@ -684,7 +684,7 @@ const integration = new gitReviewIntegration('${this.projectPath}');
   async analyzeCommitQuality(commitHash: string, projectId: string): Promise<any> {
     try {
       // Get commit details
-      const { stdout: commitInfo } = await execAsync(
+      const { stdout: _commitInfo } = await execAsync(
         `git show --stat ${commitHash}`,
         { cwd: this.projectPath }
       );

@@ -112,7 +112,7 @@ export function oauthAuthorize(req: Request, res: Response) {
     scope,
     state,
     code_challenge,
-    code_challenge_method
+    code_challenge_method: _code_challenge_method
   } = req.query as Record<string, string>;
   
   // Validate required parameters

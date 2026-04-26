@@ -147,7 +147,7 @@ describe('Environment File Persistence - E2E Tests', () => {
   });
 
   it('should handle concurrent writes to an initially absent env file without losing keys', async () => {
-    const results = await Promise.all([
+    const _results = await Promise.all([
       service.upsertEnvVariable(testProjectId, '.env', 'CONC_A', 'va'),
       service.upsertEnvVariable(testProjectId, '.env', 'CONC_B', 'vb'),
       service.upsertEnvVariable(testProjectId, '.env', 'CONC_C', 'vc'),
@@ -165,7 +165,7 @@ describe('Environment File Persistence - E2E Tests', () => {
   });
 
   it('should support custom env file names like .env.local', async () => {
-    const content = await service.upsertEnvVariable(testProjectId, '.env.local', 'LOCAL_KEY', 'local_val');
+    const _content = await service.upsertEnvVariable(testProjectId, '.env.local', 'LOCAL_KEY', 'local_val');
 
     const [record] = await db.select()
       .from(files)

@@ -134,7 +134,7 @@ const languageColors: Record<string, string> = {
   other: 'bg-gray-500',
 };
 
-const containerVariants = {
+const _containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -145,7 +145,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const _itemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } }
 };
@@ -294,7 +294,7 @@ const ProjectsPage = () => {
     },
   });
 
-  const deleteProjectMutation = useMutation({
+  const _deleteProjectMutation = useMutation({
     mutationFn: async (projectId: string) => {
       return await apiRequest('DELETE', `/api/projects/${projectId}`);
     },

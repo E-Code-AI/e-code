@@ -92,7 +92,7 @@ export function LazyCM6Editor({
   file, 
   onChange, 
   onSelectionChange, 
-  collaboration,
+  collaboration: _collaboration,
   readOnly = false,
   height = '100%',
   theme = 'dark',

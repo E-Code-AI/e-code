@@ -132,7 +132,7 @@ export default function SolarTechAIChatApp() {
     }, 2000);
   };
 
-  const generateAIResponse = (userInput: string): string => {
+  const generateAIResponse = (_userInput: string): string => {
     const responses = [
       "Based on current solar technology and market trends, here's my analysis...",
       "Let me calculate the optimal solution for your specific requirements...",

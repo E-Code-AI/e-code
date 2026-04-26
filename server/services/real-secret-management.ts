@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import { getSessionSecret } from '../utils/secrets-manager';
 
 const logger = {
-  info: (message: string, ...args: any[]) => {},
+  info: (_message: string, ..._args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-secret-management] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-secret-management] WARN: ${message}`, ...args),
 };
@@ -134,7 +134,7 @@ export class RealSecretManagementService {
   async getSecretsByProject(projectId: number): Promise<Secret[]> {
     const projectSecrets: Secret[] = [];
     
-    for (const [key, secret] of Array.from(this.secrets.entries())) {
+    for (const [_key, secret] of Array.from(this.secrets.entries())) {
       if (secret.projectId === projectId) {
         projectSecrets.push(this.sanitizeSecret(secret));
       }

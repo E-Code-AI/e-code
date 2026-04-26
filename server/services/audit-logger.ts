@@ -315,7 +315,7 @@ export class AuditLogger {
     const cutoffDate = new Date(Date.now() - (daysToKeep * 24 * 3600000));
     
     try {
-      const result = await db
+      const _result = await db
         .delete(securityLogs)
         .where(gte(cutoffDate, securityLogs.timestamp));
       

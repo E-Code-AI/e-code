@@ -42,7 +42,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
   const { toast } = useToast();
   const [packages, setPackages] = useState<PackageInfo[]>([]);
   const [searchResults, setSearchResults] = useState<PackageInfo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [installing, setInstalling] = useState<string[]>([]);
@@ -149,7 +149,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const _getStatusColor = (status: string) => {
     switch (status) {
       case 'installed': return 'text-green-600 bg-green-50 border-green-200';
       case 'outdated': return 'text-orange-600 bg-orange-50 border-orange-200';
@@ -158,7 +158,7 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const _getStatusIcon = (status: string) => {
     switch (status) {
       case 'installed': return <CheckCircle className="h-4 w-4" />;
       case 'outdated': return <AlertCircle className="h-4 w-4" />;

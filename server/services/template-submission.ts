@@ -547,7 +547,7 @@ export class TemplateSubmissionService {
   /**
    * Notify author about review result
    */
-  private async notifyAuthor(templateId: string, review: SubmissionReview) {
+  private async notifyAuthor(templateId: string, _review: SubmissionReview) {
     // Author notifications will be sent via email when email service is configured
     // Current implementation logs the notification for audit purposes
     logger.info(`Author notified about review: ${templateId}`);

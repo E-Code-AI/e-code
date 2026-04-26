@@ -52,7 +52,7 @@ Zap
 import React,{ useState } from 'react';
 import { ECodeSpinner } from './ECodeLoading';
 
-interface Environment {
+interface _Environment {
   id: string;
   projectId: number;
   port: number;
@@ -175,7 +175,7 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
     }
   };
 
-  const formatBytes = (bytes: number) => {
+  const _formatBytes = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;

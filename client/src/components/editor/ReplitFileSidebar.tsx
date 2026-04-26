@@ -110,7 +110,7 @@ function FileTreeItem({
   const [isRenaming, setIsRenaming] = useState(false);
 
   const children = files.filter(f => f.parentId === file.id);
-  const hasChildren = children.length > 0;
+  const _hasChildren = children.length > 0;
 
   const handleCreate = () => {
     if (inputValue.trim()) {
@@ -298,17 +298,17 @@ export function ReplitFileSidebar({
   onFileCreate,
   onFileDelete,
   onFileRename,
-  projectName = "Project",
+  projectName: _projectName = "Project",
   projectId,
   onClose
 }: ReplitFileSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, _setSearchQuery] = useState('');
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [showNewInput, setShowNewInput] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemType, setNewItemType] = useState<'file' | 'folder'>('file');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 1024px)');
+  const _isMobile = useMediaQuery('(max-width: 1024px)');
 
   const rootFiles = files.filter(f => !f.parentId);
   

@@ -74,7 +74,7 @@ export default function Analytics() {
   const [timeRange, setTimeRange] = useState('7d');
   
   // Fetch real analytics data from API
-  const { data: analyticsData, isLoading } = useQuery<AnalyticsData>({
+  const { data: analyticsData, isLoading: _isLoading } = useQuery<AnalyticsData>({
     queryKey: ['/api/analytics', timeRange],
     queryFn: async () => {
       return await apiRequest('GET', `/api/analytics?timeRange=${timeRange}`);

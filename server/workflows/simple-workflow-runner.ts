@@ -71,7 +71,7 @@ export class SimpleWorkflowRunner {
     this.workflows.set(cicdWorkflow.id, cicdWorkflow);
   }
   
-  async getWorkflows(projectId: string): Promise<WorkflowConfig[]> {
+  async getWorkflows(_projectId: string): Promise<WorkflowConfig[]> {
     return Array.from(this.workflows.values());
   }
   

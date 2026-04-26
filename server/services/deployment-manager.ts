@@ -234,7 +234,7 @@ export class DeploymentManager {
     }
   }
 
-  private async setupSSLCertificate(deploymentId: string, domain: string) {
+  private async setupSSLCertificate(deploymentId: string, _domain: string) {
     const deployment = this.deployments.get(deploymentId);
     if (!deployment) return;
 
@@ -258,8 +258,8 @@ export class DeploymentManager {
       deployment.deploymentLog.push('✅ SSL certificate issued successfully');
     } catch (error) {
       // Fall back to self-signed certificate for development
-      const { generateKeyPairSync, createSign } = await import('crypto');
-      const { privateKey, publicKey } = generateKeyPairSync('rsa', {
+      const { generateKeyPairSync, createSign: _createSign } = await import('crypto');
+      const { privateKey: _privateKey, publicKey: _publicKey } = generateKeyPairSync('rsa', {
         modulusLength: 2048,
         publicKeyEncoding: { type: 'spki', format: 'pem' },
         privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
@@ -643,7 +643,7 @@ export class DeploymentManager {
     pushAndBroadcast('✅ Monitoring configured');
   }
 
-  private async deployToRegion(deploymentId: string, region: string, config: DeploymentConfig): Promise<void> {
+  private async deployToRegion(deploymentId: string, region: string, _config: DeploymentConfig): Promise<void> {
     // Stub implementation for regional deployment
     // In production, this would deploy to actual edge infrastructure
     const deployment = this.deployments.get(deploymentId);
@@ -706,7 +706,7 @@ export class DeploymentManager {
     (deployment as any).healthCheckInterval = healthCheckInterval;
   }
 
-  private async setupMonitoring(deploymentId: string, config: DeploymentConfig): Promise<void> {
+  private async setupMonitoring(deploymentId: string, _config: DeploymentConfig): Promise<void> {
     const deployment = this.deployments.get(deploymentId);
     if (!deployment) return;
     

@@ -65,7 +65,7 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
   const { 
     data: gitStatus,
     isLoading: gitStatusLoading,
-    error: gitStatusError,
+    error: _gitStatusError,
     refetch: refetchGitStatus
   } = useQuery<GitStatus>({
     queryKey: ['/api/git/repositories', projectId],

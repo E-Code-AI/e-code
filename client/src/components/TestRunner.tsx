@@ -74,7 +74,7 @@ export function TestRunner({ projectId }: { projectId: string }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'passed' | 'failed' | 'skipped'>('all');
   const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
-  const [consoleOutput, setConsoleOutput] = useState<string[]>([]);
+  const [consoleOutput, _setConsoleOutput] = useState<string[]>([]);
 
   // Fetch test run status - REAL BACKEND
   const { data: testRun, refetch: refetchTestRun } = useQuery<TestRun>({

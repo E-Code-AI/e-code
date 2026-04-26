@@ -50,7 +50,7 @@ export class ContainerBuilder {
     }
   }
 
-  private generateDockerfile(language: string, project: any): string {
+  private generateDockerfile(language: string, _project: any): string {
     const dockerfiles: Record<string, string> = {
       nodejs: `
 FROM node:20-alpine

@@ -64,9 +64,9 @@ export default function VideoEditor({ projectId }: VideoEditorProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
-  const prevSceneRef = useRef<ImageData | null>(null);
-  const transitionProgressRef = useRef<number>(0);
-  const prevSceneIndexRef = useRef<number>(0);
+  const _prevSceneRef = useRef<ImageData | null>(null);
+  const _transitionProgressRef = useRef<number>(0);
+  const _prevSceneIndexRef = useRef<number>(0);
 
   const videoQuery = useQuery<{ scenes: VideoScene[]; audioTracks: VideoAudioTrack[]; resolution: { width: number; height: number }; fps: number }>({
     queryKey: [`/api/projects/${projectId}/video`],

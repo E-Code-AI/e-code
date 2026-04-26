@@ -51,7 +51,7 @@ export function ReplitMinimap({
     ctx.fillRect(0, 0, containerWidth, containerHeight);
 
     // Calculate total height needed for all lines
-    const totalHeight = lines.length * lineHeight + padding * 2;
+    const _totalHeight = lines.length * lineHeight + padding * 2;
     const scale = Math.min(1, (containerHeight - padding * 2) / (lines.length * lineHeight));
 
     // Draw lines

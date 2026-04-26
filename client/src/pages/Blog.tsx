@@ -33,7 +33,7 @@ interface BlogPost {
 
 export default function Blog() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

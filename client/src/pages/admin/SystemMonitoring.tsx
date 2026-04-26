@@ -143,7 +143,7 @@ interface CapacityForecast {
   }>;
 }
 
-function getStatusColor(percent: number): string {
+function _getStatusColor(percent: number): string {
   if (percent < 60) return 'bg-green-500';
   if (percent < 80) return 'bg-yellow-500';
   return 'bg-red-500';

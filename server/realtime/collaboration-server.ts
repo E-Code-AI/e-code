@@ -103,7 +103,7 @@ export class CollaborationServer {
   private autoSaveInterval: NodeJS.Timeout | null = null;
   private pendingSaves: Map<string, boolean> = new Map();
 
-  initialize(server: Server) {
+  initialize(_server: Server) {
     // ✅ 40-YEAR SENIOR ENGINEER FIX (Dec 6, 2025): Use Central Upgrade Dispatcher
     // Use noServer mode and register with central dispatcher to eliminate race conditions
     // W-H12: Add maxPayload to prevent DoS via large messages
@@ -173,7 +173,7 @@ export class CollaborationServer {
     });
   }
 
-  private handleConnection(ws: WebSocket, req: any) {
+  private handleConnection(ws: WebSocket, _req: any) {
     wsMetrics.recordConnection('collaboration');
     
     // Initialize client info
@@ -653,7 +653,7 @@ export class CollaborationServer {
     });
   }
 
-  private async handleRequestSync(ws: WebSocket, message: CollaborationMessage) {
+  private async handleRequestSync(ws: WebSocket, _message: CollaborationMessage) {
     const client = this.clients.get(ws);
     if (!client || !client.fileId) return;
 
@@ -701,7 +701,7 @@ export class CollaborationServer {
       if (this.pendingSaves.get(fileKey)) continue;
       
       try {
-        const [projectId, fileIdStr] = fileKey.split('-');
+        const [_projectId, fileIdStr] = fileKey.split('-');
         const fileId = parseInt(fileIdStr, 10);
         if (isNaN(fileId)) continue;
         

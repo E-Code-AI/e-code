@@ -110,7 +110,7 @@ interface FileAttachment {
   preview?: string;
 }
 
-type WorkflowPhase = 
+type _WorkflowPhase =
   | 'generating_features'
   | 'selecting_build_option'
   | 'building_design'
@@ -171,12 +171,12 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
         <Loader2 className="h-4 w-4 animate-spin text-primary" />
         <span className="text-[13px] font-medium">Post-Build Validation</span>
       </div>
-      
+
       <div className="flex items-center gap-2">
         {steps.map((step, idx) => {
           const status = getStepStatus(step.key);
           const Icon = step.icon;
-          
+
           return (
             <div key={step.key} className="flex items-center">
               <div className={cn(
@@ -208,7 +208,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
           );
         })}
       </div>
-      
+
       {qaResult && currentStep === 'qa_complete' && (
         <div className="mt-2 text-[11px] text-muted-foreground">
           {qaResult.passedTests}/{qaResult.totalTests} responsive tests passed
@@ -220,7 +220,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
 }
 
 
-interface AgentCapability {
+interface _AgentCapability {
   id: string;
   label: string;
   icon: React.ElementType;
@@ -307,8 +307,8 @@ function categorizeError(error: unknown): { title: string; message: string } {
     errorMessage = String(error);
   }
   errorMessage = errorMessage.toLowerCase();
-  
-  // Handle "Load failed" and similar fetch errors  
+
+  // Handle "Load failed" and similar fetch errors
   if (errorMessage.includes('load failed') || errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('econnrefused') || errorMessage.includes('failed to fetch')) {
     return {
       title: 'Connection Error',
@@ -339,25 +339,25 @@ function categorizeError(error: unknown): { title: string; message: string } {
       message: 'The server encountered an error. Please try again in a moment.'
     };
   }
-  
+
   return {
     title: 'AI Assistant Error',
     message: 'Something went wrong. Please try again.'
   };
 }
 
-export function ReplitAgentPanelV3({ 
-  projectId, 
+export function ReplitAgentPanelV3({
+  projectId,
   className,
-  onMinimize,
+  onMinimize: _onMinimize,
   mode = 'desktop',
   selectedFile,
   selectedCode,
   initialPrompt,
-  websocket: externalWebsocket,
+  websocket: _externalWebsocket,
   onBuildComplete,
   sessionId: externalSessionId,
-  externalConversationId,
+  externalConversationId: _externalConversationId,
   autoStart = true,
   agentToolsSettings: externalAgentToolsSettings,
   onAgentToolsSettingsChange,
@@ -371,41 +371,41 @@ export function ReplitAgentPanelV3({
   const projectIdNum = typeof projectId === 'string' ? parseInt(projectId) : projectId;
   // Toast notifications - must be declared early before any callbacks that use it
   const { toast } = useToast();
-  
+
   // AI Model preference hook
   const { modelId, provider, supportsExtendedThinking: modelSupportsExtendedThinking, model, setPreferredModel } = useAgentModelPreference();
-  
+
   // Autonomous build store for inline chat integration
   const autonomousBuildStore = useAutonomousBuildStore();
-  
+
   // State for model selector dropdown (CurrentModelChip click)
   const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
-  
+
   // Conversation state
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [agentMode, setAgentMode] = useState<AgentMode>('build');
   const [autonomySessionId, setAutonomySessionId] = useState<string | null>(null);
-  
+
   // ✅ FIX (Jan 2026): Replit-style always-ready chat
   // Use temp conversationId (-projectId) when real ID not yet available
   // This ensures the Send button is NEVER blocked by bootstrap delays
   const effectiveConversationId = conversationId ?? -projectIdNum;
-  const isUsingTempConversation = conversationId === null;
-  
+  const _isUsingTempConversation = conversationId === null;
+
   // ✅ FIX (Jan 2026): Use Zustand store for bootstrap failure state - survives component remounts
   // This prevents mobile users from being stuck on "Initializing Agent" forever
   const { bootstrapTimedOut, bootstrapWarning, startBootstrapTimer, setBootstrapTimedOut, setBootstrapWarning, clearBootstrapTimers } = useAutonomousBuildStore();
-  const bootstrapFailed = bootstrapTimedOut;
-  
+  const _bootstrapFailed = bootstrapTimedOut;
+
   // DEBUG: Render state log — DISABLED. Was firing every render and drowning console
   // (10000+ log lines/sec obscured real errors). Re-enable behind a URL flag if needed.
-  
+
   // Zustand store for message persistence across tab switches
-  const { 
-    setMessages: setStoreMessages, 
+  const {
+    setMessages: setStoreMessages,
     addMessage: addStoreMessage,
     setLastSyncedAt,
-    hasConversation,
+    hasConversation: _hasConversation,
     migrateMessages
   } = useAgentConversationStore();
   const conversationMessages = useAgentConversationStore(
@@ -420,19 +420,19 @@ export function ReplitAgentPanelV3({
       [conversationId]
     )
   );
-  
+
   // ✅ FIX (Dec 25, 2025): Track if we're in an active build session for WebSocket streaming
   // Keep WebSocket connected after conversation is created, not just during bootstrap
   const [isActiveBuildSession, setIsActiveBuildSession] = useState(false);
-  
+
   // Autonomous chat integration - bridges WebSocket events to inline chat messages
   // This hook connects to the autonomous workspace WebSocket and pushes messages to the chat
   // MUST be called before messages retrieval to use effectiveConversationId
   // ✅ FIX (Jan 2026): Don't extract effectiveConversationId from hook - use local definition
   // The hook just returns conversationId, but we need conversationId ?? -projectIdNum
-  const { 
-    sendBuildModeSelection, 
-    requestPlanChange, 
+  const {
+    sendBuildModeSelection,
+    requestPlanChange,
     manualReconnect,
     isConnected: wsIsConnected,
     connectionError,
@@ -449,29 +449,29 @@ export function ReplitAgentPanelV3({
     bootstrapToken,
     initialPrompt
   });
-  
+
   // Replit-style notifications: Audio, Favicon, and Dock notifications
   const { isEnabled: isAudioEnabled, setEnabled: setAudioEnabled } = useAgentAudioNotifications();
   useAgentDockNotifications();
   useAgentFavicon();
-  
+
   // Schema warming store - background data structure pre-drafting while user chats
-  const { 
-    startWarming: triggerSchemaWarming, 
-    isWarming: isSchemaWarming, 
+  const {
+    startWarming: triggerSchemaWarming,
+    isWarming: isSchemaWarming,
     isReady: isSchemaReady,
-    progress: schemaProgress
+    progress: _schemaProgress
   } = useSchemaWarmingStore();
-  
+
   // ✅ FIX (Jan 2026): Use effectiveConversationId directly for Replit-style always-ready chat
   // This is always defined (conversationId or -projectIdNum as temp ID)
   // Get messages from store - effectiveConversationId is never null so always has messages
   const messages = conversationMessages && conversationMessages.length > 0
     ? conversationMessages
     : [DEFAULT_AGENT_WELCOME_MESSAGE];
-  
+
   // DEBUG: Messages log — DISABLED. Same reason as the Component render log above.
-  
+
   // ✅ FIX (Jan 2026): Wrapper to update messages in zustand store
   // Uses effectiveConversationId to support Replit-style always-ready chat
   // Messages are stored with temp ID (-projectId) and migrated when real ID is available
@@ -492,32 +492,32 @@ export function ReplitAgentPanelV3({
   const [isPendingResponse, setIsPendingResponse] = useState(false); // True when waiting for first AI response chunk
   const [streamingContent, setStreamingContent] = useState('');
   const [activeThinking, setActiveThinking] = useState<ThinkingStep[]>([]);
-  
+
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [videoReplayViewerOpen, setVideoReplayViewerOpen] = useState(false);
-  const [showPricing, setShowPricing] = useState(false);
-  const [showCheckpoints, setShowCheckpoints] = useState(false);
-  
+  const [_showPricing, _setShowPricing] = useState(false);
+  const [_showCheckpoints, _setShowCheckpoints] = useState(false);
+
   // Fast Mode state - quick mode for 10-60 second targeted changes
   const [fastMode, setFastMode] = useState(false);
-  
+
   // Fast Mode toggle handler with toast notification
   const handleFastModeToggle = useCallback(() => {
     const newState = !fastMode;
     setFastMode(newState);
     toast({
       title: newState ? '⚡ Fast Mode Enabled' : 'Fast Mode Disabled',
-      description: newState 
-        ? 'Using fast model for quick 10-60s targeted edits' 
+      description: newState
+        ? 'Using fast model for quick 10-60s targeted edits'
         : 'Switched back to standard model',
     });
   }, [fastMode, toast]);
-  
+
   // Slash command menu state (Replit-style "/" to show integrations)
   const slashCommand = useSlashCommand();
   const [slashSearchQuery, setSlashSearchQuery] = useState('');
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
-  
+
   // External input handler for mobile - allows external input bar to trigger submit
   const handleExternalSubmit = useCallback((value: string) => {
     if (!value.trim() || isWorking) return;
@@ -529,14 +529,14 @@ export function ReplitAgentPanelV3({
     const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
     if (submitBtn) submitBtn.click();
   }, [isWorking]);
-  
+
   // Optimistic UI updates and debounced streaming for faster perceived response
-  const { addOptimisticMessage, hasPendingMessages } = useOptimisticMessages(messages, setMessages);
+  const { addOptimisticMessage, hasPendingMessages: _hasPendingMessages } = useOptimisticMessages(messages, setMessages);
   // Note: debouncedStreaming hook removed - using direct setStreamingContent for simplicity
-  
+
   // Use virtualized list for long conversations (>20 messages)
   const useVirtualization = messages.length > 20;
-  
+
   // Agent Tools Panel settings (Replit Agent 3 exact toggles)
   // Use external settings if provided (lifted state pattern), otherwise use internal state
   const defaultSettings: AgentToolsSettings = {
@@ -546,48 +546,48 @@ export function ReplitAgentPanelV3({
     highPowerModels: false,
     webSearch: true
   };
-  
+
   const [internalAgentToolsSettings, setInternalAgentToolsSettings] = useState<AgentToolsSettings>(defaultSettings);
-  
+
   // Use external settings if provided, otherwise use internal state
   const agentToolsSettings = externalAgentToolsSettings ?? internalAgentToolsSettings;
   const setAgentToolsSettings = onAgentToolsSettingsChange ?? setInternalAgentToolsSettings;
   const extendedThinkingEnabled = agentToolsSettings.extendedThinking;
   const webSearchEnabled = agentToolsSettings.webSearch;
   const highPowerEnabled = agentToolsSettings.highPowerModels;
-  
+
   // Ref to track previous settings for toast comparison (avoids stale closure issues)
   const agentToolsSettingsRef = useRef<AgentToolsSettings>(agentToolsSettings);
-  
+
   // Element Editor state
   const [elementEditorActive, setElementEditorActive] = useState(false);
   const [selectedElement, setSelectedElement] = useState<ElementSelection | null>(null);
-  const [videoReplayCount, setVideoReplayCount] = useState(0);
-  
+  const [videoReplayCount, _setVideoReplayCount] = useState(0);
+
   // Build/Install/QA validation progress state (Task 6)
   const [validationStep, setValidationStep] = useState<ValidationStep>('idle');
   const [depsResult, setDepsResult] = useState<{ success: boolean; installed: number; failed: number; total: number } | undefined>();
   const [buildResult, setBuildResult] = useState<{ success: boolean; errorCount: number; warningCount: number } | undefined>();
   const [qaResult, setQaResult] = useState<{ score: number; passedTests: number; totalTests: number } | undefined>();
-  
+
   // RAG (Retrieval-Augmented Generation) state
-  const [ragEnabled, setRagEnabled] = useState(true);
-  const [showRAGContext, setShowRAGContext] = useState(false);
-  const { data: ragStats } = useRAGStats();
-  
+  const [_ragEnabled, _setRagEnabled] = useState(true);
+  const [_showRAGContext, _setShowRAGContext] = useState(false);
+  const { data: _ragStats } = useRAGStats();
+
   // ✅ Memory Bank works 100% transparently - no UI needed
   // Context auto-injected into AI prompts on server side
-  
+
   // Replit-style "Show Previous Messages" feature
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [totalMessageCount, setTotalMessageCount] = useState(0);
   const [isLoadingPrevious, setIsLoadingPrevious] = useState(false);
-  
+
   // Derive validation step from autonomousBuildStore current task (Task 6)
   useEffect(() => {
     const currentTask = autonomousBuildStore.currentTask?.toLowerCase() || '';
     const phase = autonomousBuildStore.phase;
-    
+
     if (currentTask.includes('post-build validation') || currentTask.includes('running post-build')) {
       setValidationStep('post_validation');
     } else if (currentTask.includes('installing dependencies')) {
@@ -617,7 +617,7 @@ export function ReplitAgentPanelV3({
       setTimeout(() => setValidationStep('idle'), 5000);
     }
   }, [autonomousBuildStore.currentTask, autonomousBuildStore.phase, validationStep]);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -630,8 +630,8 @@ export function ReplitAgentPanelV3({
   // The backend will return existing conversation if one exists for this projectId
   useEffect(() => {
     let isMounted = true;
-    let bootstrapCompleted = false;
-    
+    let _bootstrapCompleted = false;
+
     const bootstrapConversation = async () => {
       try {
         devLog('[ReplitAgentPanelV3] Starting conversation bootstrap for projectId:', projectId);
@@ -641,13 +641,13 @@ export function ReplitAgentPanelV3({
         }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
 
         if (!isMounted) return;
-        
+
         devLog('[ReplitAgentPanelV3] Bootstrap successful:', response);
 
         // ✅ FIX (Dec 12, 2025): Migrate messages from temp conversationId to real conversationId
         const tempConversationId = -parseInt(projectId.toString(), 10);
         const realConversationId = response.conversationId;
-        
+
         if (realConversationId && tempConversationId && realConversationId !== tempConversationId) {
           devLog('[ReplitAgentPanelV3] Migrating messages from temp', tempConversationId, 'to real', realConversationId);
           migrateMessages(tempConversationId, realConversationId);
@@ -655,30 +655,30 @@ export function ReplitAgentPanelV3({
 
         setConversationId(realConversationId);
         setAgentMode(response.agentMode);
-        bootstrapCompleted = true;
-        
+        _bootstrapCompleted = true;
+
         clearBootstrapTimers();
         setBootstrapTimedOut(false);
         setBootstrapWarning(false);
-        
+
         // ✅ FIX (Dec 25, 2025): Enable active build session for WebSocket streaming
         // This keeps the WebSocket connected for real-time progress updates
         setIsActiveBuildSession(true);
       } catch (error: unknown) {
         if (!isMounted) return;
-        
+
         console.error('[ReplitAgentPanelV3] Bootstrap conversation failed:', error);
-        bootstrapCompleted = true;
-        
+        _bootstrapCompleted = true;
+
         clearBootstrapTimers();
         setBootstrapTimedOut(true);
         // ✅ FIX (Dec 25, 2025): Notify parent to clear bootstrap token
         onBootstrapFailure?.();
-        
+
         // Only show toast for non-401 errors (401 is expected during bootstrap with token)
-        const isAuthError = error instanceof Error && 
+        const isAuthError = error instanceof Error &&
           (error.message.includes('401') || error.message.toLowerCase().includes('unauthorized'));
-        
+
         if (!isAuthError) {
           toast({
             title: "Conversation Setup Failed",
@@ -690,12 +690,12 @@ export function ReplitAgentPanelV3({
     };
 
     bootstrapConversation();
-    
+
     // ✅ FIX (Jan 2026): Use global timer that survives component remounts
     // This prevents mobile users from being stuck on "Initializing Agent" forever
     // The timer runs in Zustand store, not in this component's lifecycle
     startBootstrapTimer();
-    
+
     return () => {
       isMounted = false;
       // Note: We DON'T clear the global timer here - it survives remounts intentionally
@@ -710,14 +710,14 @@ export function ReplitAgentPanelV3({
   useEffect(() => {
     if (bootstrapTimedOut && !conversationId) {
       devLog('[ReplitAgentPanelV3] Bootstrap timeout detected - seeding fallback message');
-      
+
       // Notify parent to clear bootstrap token and isBootstrapping state
       onBootstrapFailure?.();
-      
+
       // ✅ FIX (Mar 2026): Also call markReady so preview/deploy tabs unlock even on timeout
       // The build may still be running in the background; don't block the user forever
       useSchemaWarmingStore.getState().markReady();
-      
+
       // Seed a system message so the chat isn't empty
       // Use the temp conversationId (negative projectId) for offline/degraded mode
       const tempConvId = -projectIdNum;
@@ -727,7 +727,7 @@ export function ReplitAgentPanelV3({
         content: "I'm ready to help! The connection took a moment, but you can start chatting now. Type your request below.",
         timestamp: new Date(),
       };
-      
+
       // Only add if we don't already have messages
       const existingMessages = useAgentConversationStore.getState().getMessages(tempConvId);
       if (existingMessages.length === 0) {
@@ -738,18 +738,18 @@ export function ReplitAgentPanelV3({
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
-  
+
   // Load existing messages from backend when conversationId is available
   // ✅ FIX (Dec 10, 2025): Always fetch when conversationId is available
   // Previously used `!hasConversation(conversationId)` which prevented fetching
   // when localStorage had rehydrated stale data
-  const { data: backendMessages, isLoading: isLoadingMessages } = useQuery({
+  const { data: backendMessages, isLoading: _isLoadingMessages } = useQuery({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
     enabled: !!conversationId,
   });
 
   // Fetch decomposed tasks for autonomy session
-  const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
+  const { data: orchestratorTasks, isLoading: _isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'tasks'],
     queryFn: async () => apiRequest('GET', `/api/autonomy/sessions/${autonomySessionId}/tasks`),
     enabled: Boolean(autonomySessionId),
@@ -757,7 +757,7 @@ export function ReplitAgentPanelV3({
   });
 
   // Fetch progress/ETA for autonomy session
-  const { data: orchestratorProgress, isLoading: isLoadingProgress } = useQuery<{
+  const { data: orchestratorProgress, isLoading: _isLoadingProgress } = useQuery<{
     progress: SessionProgressData & {
       metadata?: {
         delegation?: DelegationInfo
@@ -811,18 +811,18 @@ export function ReplitAgentPanelV3({
       }
     }
   }, [backendMessages, conversationId, setStoreMessages, setLastSyncedAt]);
-  
+
   // Handler for "Show Previous Messages" button (Replit-style incremental loading)
   const handleLoadPreviousMessages = useCallback(async () => {
     if (!conversationId || isLoadingPrevious) return;
-    
+
     setIsLoadingPrevious(true);
     try {
       // Calculate how many more messages to load (20 at a time)
       const currentCount = messages.length;
       const batchSize = 20;
       const newLimit = currentCount + batchSize;
-      
+
       // Load incrementally by increasing the limit
       const data = await apiRequest<{ messages?: Message[]; totalCount?: number }>(
         'GET',
@@ -832,7 +832,7 @@ export function ReplitAgentPanelV3({
       if (data.messages && Array.isArray(data.messages)) {
         // Prepend older messages to the existing list (backend returns chronologically ordered)
         setStoreMessages(conversationId, data.messages as Message[]);
-        
+
         // Update hasMore based on whether there are still more messages
         const remainingCount = (data.totalCount || 0) - data.messages.length;
         setHasMoreMessages(remainingCount > 0);
@@ -847,7 +847,7 @@ export function ReplitAgentPanelV3({
 
   // Track context injection to prevent duplicates
   const contextInjectedRef = useRef<string | null>(null);
-  
+
   // ✅ FIX (Dec 9, 2025): REMOVED first auto-start effect
   // The second auto-start effect (lines 588-883) is the authoritative one.
   // This first effect was clearing sessionStorage before the second effect could use it,
@@ -858,11 +858,11 @@ export function ReplitAgentPanelV3({
   // Handle selected file/code context injection - with idempotent check using content hash
   useEffect(() => {
     if (!selectedFile || !selectedCode) return;
-    
+
     // Create a unique key using file name and content length + first/last chars for better uniqueness
     const codeHash = `${selectedCode.length}-${selectedCode.substring(0, 50)}-${selectedCode.substring(selectedCode.length - 50)}`;
     const contextKey = `${selectedFile}:${codeHash}`;
-    
+
     if (contextInjectedRef.current !== contextKey) {
       contextInjectedRef.current = contextKey;
       // Add context to the input
@@ -873,9 +873,9 @@ export function ReplitAgentPanelV3({
 
   // Max Autonomy hook
   const {
-    startSession: startAutonomySession,
-    isStartingSession: isStartingAutonomy,
-    session: autonomySession
+    startSession: _startAutonomySession,
+    isStartingSession: _isStartingAutonomy,
+    session: _autonomySession
   } = useMaxAutonomy(autonomySessionId, projectIdNum);
 
   // Handler for agent tools settings changes (Replit Agent 3 toggles)
@@ -883,13 +883,13 @@ export function ReplitAgentPanelV3({
   const handleAgentToolsChange = useCallback((newSettings: AgentToolsSettings) => {
     // Get previous settings from ref for toast comparison
     const prevSettings = agentToolsSettingsRef.current;
-    
+
     // Update ref to track current settings
     agentToolsSettingsRef.current = newSettings;
-    
+
     // Update state (either parent's state via callback or internal state)
     setAgentToolsSettings(newSettings);
-    
+
     // Show toasts for newly enabled features
     if (newSettings.maxAutonomy && !prevSettings.maxAutonomy) {
       toast({
@@ -897,28 +897,28 @@ export function ReplitAgentPanelV3({
         description: "Agent will supervise itself for up to 200 minutes"
       });
     }
-    
+
     if (newSettings.appTesting && !prevSettings.appTesting) {
       toast({
         title: "App Testing Enabled",
         description: "Agent will test using browser automation with video replays"
       });
     }
-    
+
     if (newSettings.extendedThinking && !prevSettings.extendedThinking) {
       toast({
         title: "Extended Thinking Enabled",
         description: "Deeper reasoning for harder problems"
       });
     }
-    
+
     if (newSettings.highPowerModels && !prevSettings.highPowerModels) {
       toast({
         title: "High Power Models Enabled",
         description: "Using sophisticated AI for complex tasks"
       });
     }
-    
+
     if (newSettings.webSearch && !prevSettings.webSearch) {
       toast({
         title: "Web Search Enabled",
@@ -926,9 +926,9 @@ export function ReplitAgentPanelV3({
       });
     }
   }, [setAgentToolsSettings, toast]);
-  
+
   // Handler for Element Editor save
-  const handleElementSave = useCallback((changes: Partial<ElementSelection['styles']> & { text?: string }) => {
+  const handleElementSave = useCallback((_changes: Partial<ElementSelection['styles']> & { text?: string }) => {
     setSelectedElement(null);
     setElementEditorActive(false);
     toast({
@@ -936,7 +936,7 @@ export function ReplitAgentPanelV3({
       description: "Element styles updated successfully"
     });
   }, [toast]);
-  
+
   // Handler for viewing video replays
   const handleViewVideoReplays = useCallback(() => {
     setVideoReplayViewerOpen(true);
@@ -951,14 +951,14 @@ export function ReplitAgentPanelV3({
   const handleModeChange = async (newMode: AgentMode) => {
     // Always update local state immediately (optimistic update)
     setAgentMode(newMode);
-    
+
     const modeDescriptions: Record<AgentMode, string> = {
       build: "Agent will autonomously make changes",
       plan: "Agent will brainstorm without making code changes",
       edit: "Targeted changes to specific files with precise control",
       fast: "Quick responses with reduced reasoning for speed"
     };
-    
+
     toast({
       title: `Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`,
       description: modeDescriptions[newMode],
@@ -980,21 +980,21 @@ export function ReplitAgentPanelV3({
   };
 
   // Handler for starting autonomy session
-  const handleStartAutonomy = async (goal: string, options: any) => {
+  const _handleStartAutonomy = async (goal: string, options: any) => {
     try {
       const response = await apiRequest<{ success: boolean; session: { id: string } }>(
-        'POST', 
-        '/api/autonomy/sessions', 
+        'POST',
+        '/api/autonomy/sessions',
         {
           projectId: projectIdNum,
           goal,
           ...options
         }
       );
-      
+
       if (response?.success && response?.session?.id) {
         setAutonomySessionId(response.session.id);
-        
+
         // Add a system message about the autonomous session starting
         const systemMessage: Message = {
           id: `autonomy-start-${Date.now()}`,
@@ -1030,15 +1030,15 @@ export function ReplitAgentPanelV3({
   const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
+
     setIsUploadingFiles(true);
-    
+
     try {
       const formData = new FormData();
       Array.from(files).forEach(file => {
         formData.append('files', file);
       });
-      
+
       const attachCsrf = await getCSRFToken();
       const response = await fetch('/api/agent/attachments', {
         method: 'POST',
@@ -1046,14 +1046,14 @@ export function ReplitAgentPanelV3({
         headers: withBootstrapHeaders('/api/agent/attachments', { 'X-CSRF-Token': attachCsrf }),
         body: formData
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to upload files');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.attachments && data.attachments.length > 0) {
         setPendingAttachments(prev => [...prev, ...data.attachments]);
         toast({
@@ -1281,7 +1281,7 @@ export function ReplitAgentPanelV3({
   const autoStartExecutedRef = useRef(false);
   // ✅ FORTUNE 500 FIX: Track pending auto-start state for WebSocket readiness
   const [pendingAutoStart, setPendingAutoStart] = useState<{ prompt: string; startTime: number } | null>(null);
-  
+
   // ✅ FORTUNE 500 FIX (Dec 25, 2025): CONSOLIDATED auto-start effect with WebSocket readiness
   // Uses state (pendingAutoStart) instead of ref to trigger re-renders when WS connects
   useEffect(() => {
@@ -1289,46 +1289,46 @@ export function ReplitAgentPanelV3({
     if (!conversationId) {
       return;
     }
-    
+
     // Prevent double execution
     if (autoStartExecutedRef.current) {
       return;
     }
-    
+
     // Check URL params for prompt and bootstrap token
     const urlParams = new URLSearchParams(window.location.search);
     const promptFromUrl = urlParams.get('prompt');
     const agentEnabled = urlParams.get('agent') === 'true';
     const hasBootstrapToken = !!urlParams.get('bootstrap');
-    
+
     // Check session storage for prompt (IDEPage.tsx stores bootstrap prompt here)
     const promptFromSession = window.sessionStorage.getItem(`agent-prompt-${projectId}`);
-    
+
     // Priority order for prompt sources:
     // 1. initialPrompt prop (passed from parent component)
     // 2. URL param (?prompt=...)
     // 3. sessionStorage (bootstrap flow)
     const resolvedPrompt = initialPrompt || promptFromUrl || promptFromSession;
-    
+
     // Trigger auto-start when prompt exists in sessionStorage
     // This handles the Replit-like flow: landing page → login → IDE with preserved prompt
     const hasStoredPrompt = !!promptFromSession;
     const shouldAutoStart = (agentEnabled || hasBootstrapToken || autoStart || hasStoredPrompt) && resolvedPrompt && !isWorking;
-    
+
     if (!shouldAutoStart) {
       return;
     }
-    
+
     // ✅ FORTUNE 500 FIX: Check WebSocket readiness before streaming
     const WS_READY_TIMEOUT = 5000; // 5 seconds max wait for WebSocket
-    
+
     // If WS not connected and not pending, set pending state (triggers re-render when WS connects)
     if (!wsIsConnected && !pendingAutoStart) {
       setPendingAutoStart({ prompt: resolvedPrompt, startTime: Date.now() });
       devLog('[AutoStart] Waiting for WebSocket connection before streaming...', { conversationId });
       return;
     }
-    
+
     // Check if we've been waiting too long
     if (pendingAutoStart) {
       const waitTime = Date.now() - pendingAutoStart.startTime;
@@ -1341,28 +1341,28 @@ export function ReplitAgentPanelV3({
         devLog('[AutoStart] WebSocket timeout - proceeding without WS', { waitTime });
       }
     }
-    
+
     // Mark as executed to prevent re-runs
     autoStartExecutedRef.current = true;
     setPendingAutoStart(null);
-    
+
     // Set the prompt in the input
     setInput(resolvedPrompt);
-    
+
     // Clear session storage
     if (promptFromSession) {
       window.sessionStorage.removeItem(`agent-prompt-${projectId}`);
     }
-    
-    devLog('[AutoStart] ✅ Starting build with prompt', { 
-      conversationId, 
-      wsIsConnected, 
-      promptLength: resolvedPrompt.length 
+
+    devLog('[AutoStart] ✅ Starting build with prompt', {
+      conversationId,
+      wsIsConnected,
+      promptLength: resolvedPrompt.length
     });
-    
+
     // ✅ FORTUNE 500: Activate build session BEFORE streaming to ensure WS is ready
     setIsActiveBuildSession(true);
-    
+
     // Auto-start building after a brief delay to ensure state propagation
     setTimeout(() => {
         const userMessage: Message = {
@@ -1374,14 +1374,14 @@ export function ReplitAgentPanelV3({
         };
 
         setMessages(prev => [...prev, userMessage]);
-        
+
         // ✅ FIX (Dec 10, 2025): Persist user message to backend database
         persistMessageToBackend({
           role: 'user',
           content: userMessage.content,
           timestamp: userMessage.timestamp,
         });
-        
+
         setInput('');
         setIsWorking(true);
         setIsPendingResponse(true); // Show skeleton until first chunk
@@ -1394,19 +1394,19 @@ export function ReplitAgentPanelV3({
 
         // Track assistant message ID for error handling
         let autoStartAssistantMessageId: string | null = null;
-        
+
         // Call the AI streaming API
         (async () => {
           try {
             // Use selected provider from model preference (fallback to openai)
             const selectedProvider = provider || 'openai';
-            
+
             // ✅ FIX (Dec 7, 2025): Only send conversationId if it's a valid numeric ID
             // The backend expects an integer, not a string like "conv-123456"
-            const chatConversationId = conversationId && !isNaN(Number(conversationId)) 
-              ? String(conversationId) 
+            const chatConversationId = conversationId && !isNaN(Number(conversationId))
+              ? String(conversationId)
               : undefined; // Let backend create conversation if needed
-            
+
             // Use raw fetch for SSE streaming - apiRequest consumes the body
             // CSRF token must be included manually since we can't use apiRequest for streaming
             const streamCsrf = await getCSRFToken();
@@ -1457,12 +1457,12 @@ export function ReplitAgentPanelV3({
               devLog('[AutoStart] ❌ Streaming error:', { status: response.status, errorMessage });
               throw new Error(errorMessage);
             }
-            
+
             devLog('[AutoStart] ✅ Stream connected, first chunk timestamp:', Date.now());
 
             const reader = response.body?.getReader();
             const decoder = new TextDecoder();
-            
+
             autoStartAssistantMessageId = (Date.now() + 1).toString();
             const assistantMessage: Message = {
               id: autoStartAssistantMessageId,
@@ -1475,74 +1475,74 @@ export function ReplitAgentPanelV3({
                 extendedThinking: extendedThinkingEnabled
               }
             };
-            
+
             // Add assistant message to state BEFORE streaming to support live updates
             setMessages(prev => [...prev, assistantMessage]);
 
             let fullContent = '';
             const thinkingSteps: ThinkingStep[] = [];
             const toolExecutions: ToolExecution[] = [];
-            
+
             // ✅ FORTUNE 500 FIX: Buffer for partial SSE frames
             // SSE events can be split across network chunks - we need to buffer until we get complete frames
             let sseBuffer = '';
-            
+
             while (reader) {
               const { done, value } = await reader.read();
-              
+
               if (done) break;
-              
+
               const chunk = decoder.decode(value, { stream: true }); // stream: true for proper multi-byte handling
               // ✅ FORTUNE 500 FIX: Normalize line endings (handle \r\n and \r from different servers)
               sseBuffer += chunk.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-              
+
               // ✅ FORTUNE 500 FIX: Parse complete SSE events (delimited by \n\n)
               // This ensures we only process complete events, not partial frames
               const eventBoundary = '\n\n';
               let boundaryIndex;
-              
+
               while ((boundaryIndex = sseBuffer.indexOf(eventBoundary)) !== -1) {
                 const eventText = sseBuffer.slice(0, boundaryIndex);
                 sseBuffer = sseBuffer.slice(boundaryIndex + eventBoundary.length);
-                
+
                 // Parse the complete event
                 const lines = eventText.split('\n');
-                
+
                 for (const line of lines) {
                   if (line.startsWith('event: ')) {
                     continue;
                   }
-                  
+
                   if (line.startsWith('data: ')) {
                     try {
                       const data = JSON.parse(line.slice(6));
-                    
+
                       if (data.content) {
                         fullContent += data.content;
                         setStreamingContent(fullContent);
                         setIsPendingResponse(false); // First chunk received
                       }
-                    
+
                       if (data.step) {
                         setIsPendingResponse(false); // Thinking step received
                         const step: ThinkingStep = {
                           ...data.step,
                           timestamp: new Date(data.step.timestamp)
                         };
-                      
+
                         const existingIndex = thinkingSteps.findIndex(s => s.id === step.id);
                         if (existingIndex >= 0) {
                           thinkingSteps[existingIndex] = step;
                         } else {
                           thinkingSteps.push(step);
                         }
-                      
+
                         setActiveThinking([...thinkingSteps]);
                       }
-                    
+
                       if (data.toolCallId) {
                         const toolId = data.toolCallId;
-                      
+
                         if (data.tool && data.parameters && !data.result) {
                           const toolExecution: ToolExecution = {
                             id: toolId,
@@ -1552,7 +1552,7 @@ export function ReplitAgentPanelV3({
                           };
                           toolExecutions.push(toolExecution);
                         }
-                      
+
                         if (data.result !== undefined) {
                           const index = toolExecutions.findIndex(t => t.id === toolId);
                           if (index >= 0) {
@@ -1565,7 +1565,7 @@ export function ReplitAgentPanelV3({
                             };
                           }
                         }
-                      
+
                         if (data.error) {
                           const index = toolExecutions.findIndex(t => t.id === toolId);
                           if (index >= 0) {
@@ -1576,7 +1576,7 @@ export function ReplitAgentPanelV3({
                             };
                           }
                         }
-                      
+
                         assistantMessage.toolExecutions = [...toolExecutions];
                         setMessages(prev => {
                           const newMessages = [...prev];
@@ -1607,7 +1607,7 @@ export function ReplitAgentPanelV3({
                   }
                 : msg
             ));
-            
+
             // ✅ FIX (Dec 10, 2025): Persist assistant message to backend database
             // Use current timestamp (not the one captured before streaming) to reflect completion time
             persistMessageToBackend({
@@ -1617,27 +1617,27 @@ export function ReplitAgentPanelV3({
               metadata: assistantMessage.metadata,
               extendedThinking: thinkingSteps.length > 0 ? { steps: thinkingSteps } : undefined,
             });
-            
+
             setStreamingContent('');
             setActiveThinking([]);
-            
+
           } catch (error) {
             // Better error logging with full details
-            const errorDetails = error instanceof Error 
+            const errorDetails = error instanceof Error
               ? { message: error.message, stack: error.stack, name: error.name }
               : { raw: error };
-            
+
             console.error('AI chat error - Full details:', errorDetails);
-            
+
             const { title, message: userFriendlyError } = categorizeError(error);
             const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
-            
+
             toast({
               title,
               description: userFriendlyError || 'An unknown error occurred. Please check the console for details.',
               variant: 'destructive',
             });
-            
+
             setMessages(prev => {
               // Find and update the streaming assistant message by tracked ID
               if (autoStartAssistantMessageId) {
@@ -1645,9 +1645,9 @@ export function ReplitAgentPanelV3({
                 if (existingMessage) {
                   return prev.map(msg =>
                     msg.id === autoStartAssistantMessageId
-                      ? { 
-                          ...msg, 
-                          content: errorContent, 
+                      ? {
+                          ...msg,
+                          content: errorContent,
                           isStreaming: false,
                           status: 'error' as const,
                           metadata: { ...msg.metadata, error: true }
@@ -1682,7 +1682,7 @@ export function ReplitAgentPanelV3({
           }
         })();
       }, 100); // Minimal delay for state propagation - speed is priority
-      
+
     // Remove URL params to clean up the URL
     const newUrl = window.location.pathname;
     window.history.replaceState({}, '', newUrl);
@@ -1764,11 +1764,11 @@ export function ReplitAgentPanelV3({
     if (!input.trim() || isWorking) return;
 
     const userContent = input.trim();
-    
+
     // Build message content with attachments context
     let messageWithAttachments = userContent;
     const currentAttachments = [...pendingAttachments];
-    
+
     if (currentAttachments.length > 0) {
       const attachmentContext = currentAttachments.map(att => {
         if (att.type === 'text' && att.content) {
@@ -1779,31 +1779,31 @@ export function ReplitAgentPanelV3({
           return `\n\n[Attached file: ${att.name} (${(att.size / 1024).toFixed(1)} KB)]`;
         }
       }).join('');
-      
+
       messageWithAttachments = userContent + attachmentContext;
     }
-    
+
     // Trigger schema warming on first message for faster deploy (background process)
     // Uses proper Zustand hook subscription for reactive updates
     if (projectId && messages.length <= 1 && !isSchemaWarming && !isSchemaReady) {
       triggerSchemaWarming(String(projectId), userContent);
     }
-    
+
     // Use optimistic updates for faster perceived response
     const optimisticResult = addOptimisticMessage({
       role: 'user',
-      content: currentAttachments.length > 0 
+      content: currentAttachments.length > 0
         ? `${userContent}\n\n📎 ${currentAttachments.length} file(s) attached`
         : userContent,
     });
-    
+
     // Persist user message immediately (fire-and-forget)
     persistMessageToBackend({
       role: 'user',
       content: messageWithAttachments,
       timestamp: new Date(),
     });
-    
+
     // Clear input and attachments
     setInput('');
     setPendingAttachments([]);
@@ -1822,11 +1822,11 @@ export function ReplitAgentPanelV3({
     try {
       // Use selected provider from model preference (fallback to openai)
       const selectedProvider = provider || 'openai';
-      
+
       // ✅ FIX (Jan 2026): Use effectiveConversationId for Replit-style always-ready chat
       // This uses -projectId as temp ID when real conversation not yet created
       const chatConversationId = String(effectiveConversationId);
-      
+
       // Prepare image attachments for vision-capable models
       const imageAttachments = currentAttachments
         .filter(att => att.type === 'image' && att.base64)
@@ -1836,7 +1836,7 @@ export function ReplitAgentPanelV3({
           base64: att.base64,
           name: att.name
         }));
-      
+
       // Use raw fetch for SSE streaming - apiRequest consumes the body
       // CSRF token must be included manually since we can't use apiRequest for streaming
       const csrfHeader = await getCSRFToken();
@@ -1875,7 +1875,7 @@ export function ReplitAgentPanelV3({
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
-      
+
       assistantMessageId = (Date.now() + 1).toString();
       const assistantMessage: Message = {
         id: assistantMessageId,
@@ -1894,29 +1894,29 @@ export function ReplitAgentPanelV3({
       const toolExecutions: ToolExecution[] = [];
       const warningMessages: Message[] = []; // Accumulate warnings during streaming
       let messageMetadata: { cost?: string; tokens?: number; model?: string; provider?: string } = {};
-      
+
       // Add assistant message to state BEFORE streaming to support live tool/thinking updates
       setMessages(prev => [...prev, assistantMessage]);
-      
+
       while (reader) {
         const { done, value } = await reader.read();
-        
+
         if (done) break;
-        
+
         const chunk = decoder.decode(value);
         const lines = chunk.split('\n');
-        
+
         for (const line of lines) {
           // Handle SSE events
           if (line.startsWith('event: ')) {
-            const eventType = line.slice(7).trim();
+            const _eventType = line.slice(7).trim();
             continue;
           }
-          
+
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
-              
+
               // Handle context truncation warnings (check for presence of warning-specific fields)
               if (data.message && typeof data.message === 'string' && !data.content && !data.step && !data.toolCallId) {
                 const warningResult = handleSSEWarning(data as SSEWarningData, { toast });
@@ -1932,14 +1932,14 @@ export function ReplitAgentPanelV3({
                 }
                 continue;
               }
-              
+
               // Regular content tokens
               if (data.content) {
                 fullContent += data.content;
                 setStreamingContent(fullContent);
                 setIsPendingResponse(false); // First chunk received
               }
-              
+
               // Handle thinking events from backend
               if (data.step) {
                 setIsPendingResponse(false); // Thinking step received
@@ -1948,7 +1948,7 @@ export function ReplitAgentPanelV3({
                   ...data.step,
                   timestamp: new Date(data.step.timestamp)
                 };
-                
+
                 // Find existing step or add new one
                 const existingIndex = thinkingSteps.findIndex(s => s.id === step.id);
                 if (existingIndex >= 0) {
@@ -1956,16 +1956,16 @@ export function ReplitAgentPanelV3({
                 } else {
                   thinkingSteps.push(step);
                 }
-                
+
                 setActiveThinking([...thinkingSteps]);
               }
-              
+
               // Handle RAG status events from backend
               if (data.enabled !== undefined && data.nodesRetrieved !== undefined) {
                 // RAG context is automatically injected by the backend
                 // This event is for UI feedback only
               }
-              
+
               // Handle 'done' event with cost and token data (Replit-style)
               if (data.totalTokens !== undefined || data.cost !== undefined) {
                 messageMetadata = {
@@ -1975,11 +1975,11 @@ export function ReplitAgentPanelV3({
                   provider: data.provider
                 };
               }
-              
+
               // Handle tool execution events
               if (data.toolCallId) {
                 const toolId = data.toolCallId;
-                
+
                 // Tool start event
                 if (data.tool && data.parameters && !data.result) {
                   const toolExecution: ToolExecution = {
@@ -1990,7 +1990,7 @@ export function ReplitAgentPanelV3({
                   };
                   toolExecutions.push(toolExecution);
                 }
-                
+
                 // Tool result event
                 if (data.result !== undefined) {
                   const index = toolExecutions.findIndex(t => t.id === toolId);
@@ -2004,7 +2004,7 @@ export function ReplitAgentPanelV3({
                     };
                   }
                 }
-                
+
                 // Tool error event
                 if (data.error) {
                   const index = toolExecutions.findIndex(t => t.id === toolId);
@@ -2016,7 +2016,7 @@ export function ReplitAgentPanelV3({
                     };
                   }
                 }
-                
+
                 // Update assistant message with tool executions
                 assistantMessage.toolExecutions = [...toolExecutions];
                 setMessages(prev => {
@@ -2037,17 +2037,17 @@ export function ReplitAgentPanelV3({
 
       assistantMessage.content = fullContent || "I'll help you with that. Let me analyze your request...";
       assistantMessage.isStreaming = false;
-      
+
       // Confirm optimistic user message on successful stream completion
       optimisticResult.confirm();
-      
+
       // Update existing assistant message with content, metadata, and append any accumulated warnings
       setMessages(prev => [
-        ...prev.map(msg => 
-          msg.id === assistantMessage.id 
-            ? { 
-                ...msg, 
-                content: assistantMessage.content, 
+        ...prev.map(msg =>
+          msg.id === assistantMessage.id
+            ? {
+                ...msg,
+                content: assistantMessage.content,
                 isStreaming: false,
                 metadata: {
                   ...msg.metadata,
@@ -2059,7 +2059,7 @@ export function ReplitAgentPanelV3({
         ),
         ...warningMessages
       ]);
-      
+
       // Persist assistant message after streaming completes (fire-and-forget)
       persistMessageToBackend({
         role: 'assistant',
@@ -2068,30 +2068,30 @@ export function ReplitAgentPanelV3({
         metadata: assistantMessage.metadata,
         extendedThinking: thinkingSteps.length > 0 ? { steps: thinkingSteps } : undefined,
       });
-      
+
       setStreamingContent('');
       setActiveThinking([]);
-      
+
       // Call onBuildComplete callback when streaming completes in build mode
       if (agentMode === 'build' && onBuildComplete) {
         onBuildComplete();
       }
-      
+
     } catch (error) {
       console.error('AI chat error:', error);
-      
+
       const { title, message: userFriendlyError } = categorizeError(error);
       const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
-      
+
       // Rollback optimistic user message on error
       optimisticResult.rollback(userFriendlyError);
-      
+
       toast({
         title,
         description: userFriendlyError,
         variant: 'destructive',
       });
-      
+
       setMessages(prev => {
         // Find and update the streaming assistant message by tracked ID
         if (assistantMessageId) {
@@ -2099,9 +2099,9 @@ export function ReplitAgentPanelV3({
           if (existingMessage) {
             return prev.map(msg =>
               msg.id === assistantMessageId
-                ? { 
-                    ...msg, 
-                    content: errorContent, 
+                ? {
+                    ...msg,
+                    content: errorContent,
                     isStreaming: false,
                     status: 'error' as const,
                     metadata: { ...msg.metadata, error: true }
@@ -2141,14 +2141,14 @@ export function ReplitAgentPanelV3({
     server.name.toLowerCase().includes(slashSearchQuery.toLowerCase()) ||
     server.description?.toLowerCase().includes(slashSearchQuery.toLowerCase())
   );
-  
+
   // Clamp selected index when filtered list shrinks to prevent out-of-range
   useEffect(() => {
     if (slashSelectedIndex >= filteredMCPServers.length && filteredMCPServers.length > 0) {
       setSlashSelectedIndex(filteredMCPServers.length - 1);
     }
   }, [filteredMCPServers.length, slashSelectedIndex]);
-  
+
   // Handle MCP server selection from slash command menu
   const handleSlashCommandSelect = (server: MCPServer) => {
     // Insert the server reference into input (like @mention)
@@ -2162,15 +2162,15 @@ export function ReplitAgentPanelV3({
     setSlashSearchQuery('');
     setSlashSelectedIndex(0);
     textareaRef.current?.focus();
-    
+
     toast({
       title: `${server.name} selected`,
-      description: server.connected 
-        ? `Using ${server.name} integration` 
+      description: server.connected
+        ? `Using ${server.name} integration`
         : `Connect ${server.name} in settings to use this integration`,
     });
   };
-  
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     // Handle slash command navigation when menu is open
     if (slashCommand.isOpen) {
@@ -2204,7 +2204,7 @@ export function ReplitAgentPanelV3({
         return;
       }
     }
-    
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -2264,7 +2264,7 @@ export function ReplitAgentPanelV3({
     });
     setMessages(prev => prev.map(msg => ({
       ...msg,
-      actions: msg.actions?.map(a => 
+      actions: msg.actions?.map(a =>
         a.id === action.id ? { ...a, status: 'approved' as const } : a
       )
     })));
@@ -2277,7 +2277,7 @@ export function ReplitAgentPanelV3({
     });
     setMessages(prev => prev.map(msg => ({
       ...msg,
-      actions: msg.actions?.map(a => 
+      actions: msg.actions?.map(a =>
         a.id === action.id ? { ...a, status: 'rejected' as const } : a
       )
     })));
@@ -2308,11 +2308,11 @@ export function ReplitAgentPanelV3({
   }, [toast]);
 
   const isCompactMode = mode === 'mobile' || mode === 'tablet';
-  
+
   const hasUserMessages = messages.some(m => m.role === 'user');
-  const showEmptyState = !hasUserMessages 
-    && messages.length <= 1 
-    && !isPendingResponse 
+  const showEmptyState = !hasUserMessages
+    && messages.length <= 1
+    && !isPendingResponse
     && !isWorking;
 
   // ✅ FIX (Jan 2026): NEVER block the UI - Replit-style always-ready pattern
@@ -2334,7 +2334,7 @@ export function ReplitAgentPanelV3({
               </Badge>
             )}
             {/* ✅ Memory Bank is 100% TRANSPARENT - no visible badge like Replit */}
-            
+
             {/* Fast Mode Toggle - Quick mode for 10-60s targeted changes */}
             <TooltipProvider>
               <Tooltip>
@@ -2343,8 +2343,8 @@ export function ReplitAgentPanelV3({
                     onClick={handleFastModeToggle}
                     className={cn(
                       "flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all flex-shrink-0",
-                      fastMode 
-                        ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30" 
+                      fastMode
+                        ? "bg-yellow-500/20 text-yellow-600 dark:text-yellow-400 border border-yellow-500/30"
                         : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
                     )}
                     data-testid="fast-mode-toggle"
@@ -2358,18 +2358,18 @@ export function ReplitAgentPanelV3({
                 <TooltipContent>
                   <p className="font-medium">{fastMode ? 'Fast Mode Active' : 'Enable Fast Mode'}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    {fastMode 
-                      ? 'Using fast model for quick 10-60s edits' 
+                    {fastMode
+                      ? 'Using fast model for quick 10-60s edits'
                       : 'Quick mode for single-file targeted changes'}
                   </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            
+
             {/* Model chip with dropdown for quick model selection */}
             <DropdownMenu open={isModelSelectorOpen} onOpenChange={setIsModelSelectorOpen}>
               <DropdownMenuTrigger asChild>
-                <button 
+                <button
                   className="focus:outline-none focus:ring-2 focus:ring-primary/50 rounded-md flex-shrink-0 relative z-10"
                   data-testid="model-selector-button"
                 >
@@ -2384,8 +2384,8 @@ export function ReplitAgentPanelV3({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 p-2">
-                <AIModelSelector 
-                  variant="inline" 
+                <AIModelSelector
+                  variant="inline"
                   onModelChange={(newModelId) => {
                     setPreferredModel(newModelId);
                     setIsModelSelectorOpen(false);
@@ -2413,7 +2413,7 @@ export function ReplitAgentPanelV3({
                 </Tooltip>
               </TooltipProvider>
             )}
-            
+
             {/* Settings dropdown - simplified (model selector moved to AgentToolsPanel) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -2427,8 +2427,8 @@ export function ReplitAgentPanelV3({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem 
-                  onClick={() => setAudioEnabled(!isAudioEnabled)} 
+                <DropdownMenuItem
+                  onClick={() => setAudioEnabled(!isAudioEnabled)}
                   data-testid="dropdown-toggle-audio"
                 >
                   {isAudioEnabled ? (
@@ -2484,12 +2484,12 @@ export function ReplitAgentPanelV3({
             )}
           </div>
         </div>
-        
+
       </div>
 
       {/* Bootstrap Warning Banner */}
       {bootstrapWarning && !bootstrapTimedOut && isBootstrapping && !conversationId && (
-        <div 
+        <div
           className="mx-3 sm:mx-4 mt-2 px-4 py-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-2 text-[13px] text-yellow-700 dark:text-yellow-400"
           data-testid="bootstrap-warning-banner"
         >
@@ -2506,14 +2506,14 @@ export function ReplitAgentPanelV3({
         <ConversationSyncIndicator
           lastSyncedAt={conversationLastSyncedAt}
         />
-        
+
         {/* Connection Error/Reconnecting Banner with Retry Button */}
         {(connectionError || (reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts)) && (
-          <div 
+          <div
             className={cn(
               "mx-3 sm:mx-4 mb-3 px-4 py-3 rounded-lg flex items-center justify-between gap-3",
-              connectionError 
-                ? "bg-destructive/10 border border-destructive/20" 
+              connectionError
+                ? "bg-destructive/10 border border-destructive/20"
                 : "bg-warning/10 border border-warning/20"
             )}
             data-testid="connection-error-banner"
@@ -2547,10 +2547,10 @@ export function ReplitAgentPanelV3({
             )}
           </div>
         )}
-        
+
         <ScrollArea ref={scrollRef} className="flex-1 min-h-0 px-3 sm:px-4 py-3 overflow-x-hidden">
           <div className="space-y-4 sm:space-y-5 w-full min-w-0">
-          
+
           {/* Build/Install/QA Validation Progress (Task 6) */}
           <LazyAnimatePresence>
             {validationStep !== 'idle' && (
@@ -2562,7 +2562,7 @@ export function ReplitAgentPanelV3({
               />
             )}
           </LazyAnimatePresence>
-          
+
           {/* Replit-style "Show Previous Messages" button */}
           {hasMoreMessages && totalMessageCount > messages.length && (
             <div className="flex justify-center py-2 mb-2">
@@ -2587,7 +2587,7 @@ export function ReplitAgentPanelV3({
               </Button>
             </div>
           )}
-          
+
           {/* Empty state when no real user/assistant messages exist (only default welcome) */}
           {showEmptyState && (
             <EmptyConversation
@@ -2617,7 +2617,7 @@ export function ReplitAgentPanelV3({
             />
           ) : (
             <LazyAnimatePresence mode="popLayout">
-              {messages.map((message, index) => (
+              {messages.map((message, _index) => (
                 <div key={message.id}>
                   <EnhancedChatMessage
                     message={message}
@@ -2632,7 +2632,7 @@ export function ReplitAgentPanelV3({
                   />
                   {/* Replit-style: Checkpoint marker after each assistant message */}
                   {message.role === 'assistant' && !isPendingResponse && (
-                    <CheckpointDivider 
+                    <CheckpointDivider
                       cost={message.metadata?.cost}
                       tokens={message.metadata?.tokens}
                     />
@@ -2644,12 +2644,12 @@ export function ReplitAgentPanelV3({
 
           {/* Active Thinking Steps (while streaming) */}
           {isWorking && activeThinking.length > 0 && (
-            <LazyMotionDiv 
+            <LazyMotionDiv
               key="active-thinking"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex gap-3" 
+              className="flex gap-3"
               data-testid="active-thinking-container"
             >
               <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="active-thinking-avatar">
@@ -2676,12 +2676,12 @@ export function ReplitAgentPanelV3({
 
           {/* Streaming message with enhanced styling and optimized text animation */}
           {isWorking && streamingContent && !useVirtualization && (
-            <LazyMotionDiv 
+            <LazyMotionDiv
               key="streaming"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex gap-3" 
+              className="flex gap-3"
               data-testid="streaming-message-container"
             >
               <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="streaming-avatar">
@@ -2690,23 +2690,23 @@ export function ReplitAgentPanelV3({
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0 overflow-hidden">
-                <LazyMotionDiv 
-                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[95%] sm:max-w-[85%] shadow-md border border-border/50" 
+                <LazyMotionDiv
+                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[95%] sm:max-w-[85%] shadow-md border border-border/50"
                   data-testid="streaming-content"
                   initial={{ scale: 0.95 }}
                   animate={{ scale: 1 }}
                 >
                   <div className="text-[13px] whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
-                    <StreamingText 
-                      content={streamingContent} 
+                    <StreamingText
+                      content={streamingContent}
                       isComplete={false}
                       className="text-foreground"
                     />
-                    <LazyMotionSpan 
+                    <LazyMotionSpan
                       className="inline-block w-0.5 h-4 bg-primary ml-1 align-middle"
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.8, repeat: Infinity }}
-                      data-testid="streaming-cursor" 
+                      data-testid="streaming-cursor"
                     />
                   </div>
                 </LazyMotionDiv>
@@ -2719,7 +2719,7 @@ export function ReplitAgentPanelV3({
           {!useVirtualization && isPendingResponse && !streamingContent && activeThinking.length === 0 && (
             <StreamingSkeleton key="skeleton" />
           )}
-          
+
           {/* Scroll sentinel - always at the bottom */}
           <div ref={lastMessageRef} className="h-0" />
           </div>
@@ -2739,8 +2739,8 @@ export function ReplitAgentPanelV3({
           {!hideInput && (
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <ModeSelector 
-                mode={agentMode} 
+              <ModeSelector
+                mode={agentMode}
                 onChange={handleModeChange}
               />
               <span className="hidden sm:inline text-[10px] text-muted-foreground">
@@ -2750,7 +2750,7 @@ export function ReplitAgentPanelV3({
                 {(!isBootstrapping || conversationId) && agentMode === 'fast' && "Quick, precise changes in seconds"}
               </span>
             </div>
-            
+
             {/* Element Editor toggle - Replit Nov 2025 feature */}
             <div className="relative">
               <ElementEditor
@@ -2766,7 +2766,7 @@ export function ReplitAgentPanelV3({
             </div>
           </div>
           )}
-          
+
           {/* Max Autonomy Progress with Orchestrator Display - shown when toggle is on */}
           {agentToolsSettings.maxAutonomy && autonomySessionId && (
             <div className="space-y-3">
@@ -2810,7 +2810,7 @@ export function ReplitAgentPanelV3({
                   etaConfidence={orchestratorProgress?.progress?.etaConfidence}
                 />
               </div>
-              
+
               {/* Orchestrator Progress - shows task progress, ETA, and controls */}
               {orchestratorProgress?.progress && (
                 <OrchestratorProgress
@@ -2824,7 +2824,7 @@ export function ReplitAgentPanelV3({
                   onStop={handleStopAutonomy}
                 />
               )}
-              
+
               {/* Task Decomposition Display - shows breakdown of tasks */}
               {orchestratorTasks?.tasks && orchestratorTasks.tasks.length > 0 && (
                 <TaskDecompositionDisplay
@@ -2833,7 +2833,7 @@ export function ReplitAgentPanelV3({
                   isExpanded={true}
                 />
               )}
-              
+
               {/* Message Queue - shows pending follow-up messages */}
               {autonomySessionId && queuedMessagesData?.messages && (
                 <MessageQueue
@@ -2842,7 +2842,7 @@ export function ReplitAgentPanelV3({
                   isLoading={isLoadingQueuedMessages}
                 />
               )}
-              
+
               {/* Legacy MaxAutonomyProgress for compatibility */}
               <MaxAutonomyProgress
                 sessionId={autonomySessionId}
@@ -2851,7 +2851,7 @@ export function ReplitAgentPanelV3({
               />
             </div>
           )}
-          
+
           {/* Hidden file input for attachment button - ALWAYS rendered (required for mobile) */}
           <input
             type="file"
@@ -2862,7 +2862,7 @@ export function ReplitAgentPanelV3({
             accept="image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.sql,.sh,.go,.rs,.java,.cpp,.c,.rb,.php"
             data-testid="input-file-hidden"
           />
-          
+
           {/* Chat input with inline toolbar - Replit-style with attachment/voice/send */}
           {/* Hidden when hideInput=true (mobile uses external ReplitMobileInputBar) */}
           {!hideInput && (
@@ -2881,7 +2881,7 @@ export function ReplitAgentPanelV3({
               onSearchChange={setSlashSearchQuery}
               selectedIndex={slashSelectedIndex}
             />
-            
+
             {/* Pending attachments display */}
             {pendingAttachments.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2 p-2 bg-muted/30 rounded-lg border border-border/50">
@@ -2892,7 +2892,7 @@ export function ReplitAgentPanelV3({
                   >
                     {attachment.type === 'image' ? (
                       <div className="w-6 h-6 rounded overflow-hidden bg-muted flex-shrink-0">
-                        <img 
+                        <img
                           src={`data:${attachment.mimeType};base64,${attachment.base64}`}
                           alt={attachment.name}
                           className="w-full h-full object-cover"
@@ -2925,21 +2925,21 @@ export function ReplitAgentPanelV3({
                 )}
               </div>
             )}
-            
+
             <Textarea
               ref={textareaRef}
               value={input}
               onChange={(e) => {
                 const newValue = e.target.value;
                 const prevValue = input;
-                
+
                 // Detect if user just typed "/" at end of input
                 if (newValue.endsWith('/') && !prevValue.endsWith('/') && !slashCommand.isOpen) {
                   slashCommand.open();
                   setSlashSearchQuery('');
                   setSlashSelectedIndex(0);
                 }
-                
+
                 // Update search query if menu is open and user is typing after "/"
                 if (slashCommand.isOpen && newValue.includes('/')) {
                   const slashIndex = newValue.lastIndexOf('/');
@@ -2947,14 +2947,14 @@ export function ReplitAgentPanelV3({
                   setSlashSearchQuery(afterSlash);
                   setSlashSelectedIndex(0);
                 }
-                
+
                 // Close menu if "/" is deleted
                 if (slashCommand.isOpen && !newValue.includes('/')) {
                   slashCommand.close();
                   setSlashSearchQuery('');
                   setSlashSelectedIndex(0);
                 }
-                
+
                 setInput(newValue);
               }}
               onKeyDown={handleKeyPress}
@@ -2993,7 +2993,7 @@ export function ReplitAgentPanelV3({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -3003,8 +3003,8 @@ export function ReplitAgentPanelV3({
                       onClick={handleVoiceClick}
                       className={cn(
                         "h-7 w-7 rounded-lg transition-all duration-200",
-                        isRecording 
-                          ? "text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse" 
+                        isRecording
+                          ? "text-red-500 bg-red-500/10 hover:bg-red-500/20 animate-pulse"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       )}
                       data-testid="button-voice"
@@ -3043,7 +3043,7 @@ export function ReplitAgentPanelV3({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
+
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -3063,8 +3063,8 @@ export function ReplitAgentPanelV3({
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              
-              <LazyMotionDiv 
+
+              <LazyMotionDiv
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -3075,8 +3075,8 @@ export function ReplitAgentPanelV3({
                   className={cn(
                     "h-7 w-7 rounded-lg",
                     "transition-all duration-200",
-                    input.trim() && !isWorking 
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground" 
+                    input.trim() && !isWorking
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                       : "bg-muted text-muted-foreground"
                   )}
                   data-testid="button-send"
@@ -3092,7 +3092,7 @@ export function ReplitAgentPanelV3({
             </div>
           </div>
           )}
-          
+
           {/* Chat Toolbar - Replit Agent 3 inline icons for quick toggle access */}
           {/* Hidden on mobile when external input bar is used (has its own toolbar) */}
           {!hideInput && (
@@ -3116,10 +3116,10 @@ export function ReplitAgentPanelV3({
               />
             )
           )}
-          
+
           {/* RAG Context - Automatic (Replit-style: no visible toggle, always enabled) */}
           {/* Knowledge retrieval happens automatically behind the scenes like Replit's Agent */}
-          
+
           {/* Agent Tools Panel - Replit Agent 3 toggles: Max Autonomy, App Testing, Extended Thinking, High Power Models, Web Search */}
           {/* Hidden on mobile when external input bar is used (has its own Agent Tools trigger) */}
           {!hideInput && (
@@ -3150,7 +3150,7 @@ export function ReplitAgentPanelV3({
           }}
         />
       )}
-      
+
       {/* Video Replay Viewer - For viewing test session recordings */}
       <VideoReplayViewer
         open={videoReplayViewerOpen}

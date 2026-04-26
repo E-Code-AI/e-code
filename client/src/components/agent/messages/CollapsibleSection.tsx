@@ -22,7 +22,7 @@ export function CollapsibleSection({
   title,
   children,
   defaultOpen = false,
-  previewLines,
+  previewLines: _previewLines,
   icon,
   badge,
   className

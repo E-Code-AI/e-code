@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 const logger = {
-  info: (message: string, ...args: any[]) => {},
+  info: (_message: string, ..._args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-custom-roles] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-custom-roles] WARN: ${message}`, ...args),
 };
@@ -484,7 +484,7 @@ export class RealCustomRolesService {
   }
 
   // Audit and compliance
-  async getRoleAuditLog(roleId: number): Promise<any[]> {
+  async getRoleAuditLog(_roleId: number): Promise<any[]> {
     // In production, this would query an audit log table
     return [];
   }

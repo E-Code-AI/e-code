@@ -60,7 +60,7 @@ interface FileGroup {
 }
 
 export default function ProblemsPage() {
-  const [, navigate] = useLocation();
+  const [, _navigate] = useLocation();
   const { toast } = useToast();
   const [problems] = useState<Problem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -123,7 +123,7 @@ export default function ProblemsPage() {
     setExpandedFiles(newExpanded);
   };
 
-  const applyQuickFix = (fix: QuickFix, problem: Problem) => {
+  const applyQuickFix = (fix: QuickFix, _problem: Problem) => {
     toast({
       title: 'Quick fix applied',
       description: `Applied: ${fix.title}`,

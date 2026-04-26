@@ -44,7 +44,7 @@ export async function seedDatabase() {
   try {
     // Check if test user already exists
     let testUser = await storage.getUserByUsername("testuser");
-    let isNewUser = false;
+    let _isNewUser = false;
     
     if (!testUser) {
       // Create test user with secure password handling
@@ -62,7 +62,7 @@ export async function seedDatabase() {
         emailVerified: true
       });
       
-      isNewUser = true;
+      _isNewUser = true;
     }
 
     // Create test project with sample files for E2E testing (always check)

@@ -14,14 +14,14 @@
 import { NextFunction,Request,Response,Router } from 'express';
 import os from 'os';
 
-interface RequestMetric {
+interface _RequestMetric {
   route: string;
   method: string;
   status: number;
   count: number;
 }
 
-interface HistogramBucket {
+interface _HistogramBucket {
   le: number;
   count: number;
 }

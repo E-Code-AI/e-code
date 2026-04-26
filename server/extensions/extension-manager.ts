@@ -363,20 +363,20 @@ export class ExtensionManager {
     return snippets;
   }
 
-  private async getUserExtension(userId: number, extensionId: string): Promise<InstalledExtension | null> {
+  private async getUserExtension(_userId: number, _extensionId: string): Promise<InstalledExtension | null> {
     // In real implementation, this would fetch from database
     return null;
   }
 
   private async saveUserExtension(
-    userId: number,
-    extensionId: string,
-    data: Partial<InstalledExtension>
+    _userId: number,
+    _extensionId: string,
+    _data: Partial<InstalledExtension>
   ): Promise<void> {
     // In real implementation, this would save to database
   }
 
-  private async removeUserExtension(userId: number, extensionId: string): Promise<void> {
+  private async removeUserExtension(_userId: number, _extensionId: string): Promise<void> {
     // In real implementation, this would remove from database
   }
 

@@ -354,7 +354,7 @@ export const NetworkIndicator: React.FC = () => {
     };
   }, []);
 
-  const ds = useDesignSystem();
+  const _ds = useDesignSystem();
 
   return (
     <StatusItem
@@ -407,7 +407,7 @@ export const BatteryIndicator: React.FC = () => {
     getBattery();
   }, []);
 
-  const ds = useDesignSystem();
+  const _ds = useDesignSystem();
 
   if (!battery) return null;
 

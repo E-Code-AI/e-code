@@ -112,7 +112,7 @@ class SchemaWarmingService extends EventEmitter {
   /**
    * Phase 1: Analyze prompt for data structure hints
    */
-  private async analyzePrompt(projectId: string, prompt: string): Promise<void> {
+  private async analyzePrompt(projectId: string, _prompt: string): Promise<void> {
     const cache = warmingCache.get(projectId);
     if (!cache) return;
 

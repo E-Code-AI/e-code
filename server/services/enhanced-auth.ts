@@ -138,7 +138,7 @@ export class EnhancedAuthService {
   }
 
   // Hardware key support
-  async registerHardwareKey(userId: number, credentialId: string, publicKey: string) {
+  async registerHardwareKey(userId: number, credentialId: string, _publicKey: string) {
     // Store hardware key credentials
     return await this.storage.createApiKey({
       userId,
@@ -149,19 +149,19 @@ export class EnhancedAuthService {
     });
   }
 
-  async verifyHardwareKey(credentialId: string, signature: string): Promise<boolean> {
+  async verifyHardwareKey(_credentialId: string, _signature: string): Promise<boolean> {
     // Verify hardware key signature
     // This would integrate with WebAuthn API
     return true;
   }
 
   // Session management
-  async getActiveSessions(userId: number): Promise<any[]> {
+  async getActiveSessions(_userId: number): Promise<any[]> {
     // Get all active sessions for a user
     return [];
   }
 
-  async revokeSession(userId: number, sessionId: string): Promise<boolean> {
+  async revokeSession(_userId: number, _sessionId: string): Promise<boolean> {
     // Revoke a specific session
     return true;
   }
@@ -172,7 +172,7 @@ export class EnhancedAuthService {
     return { userId, ip, description };
   }
 
-  async checkIPAllowed(userId: number, ip: string): Promise<boolean> {
+  async checkIPAllowed(_userId: number, _ip: string): Promise<boolean> {
     // Check if IP is allowed for user
     return true;
   }

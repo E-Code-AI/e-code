@@ -14,7 +14,7 @@ import { RedisCache } from '../services/redis-cache';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('health-checks');
-const fsPromises = {
+const _fsPromises = {
   statfs: promisify(fs.statfs || ((path: string, cb: (err: Error | null, stats: any) => void) => cb(new Error('statfs not available'), null))),
 };
 
@@ -149,7 +149,7 @@ function checkMemory(): HealthCheck {
 async function checkDisk(): Promise<HealthCheck> {
   try {
     // Get disk usage for root partition
-    const diskPath = '/';
+    const _diskPath = '/';
     
     // This is a simplified check - in production, you might want to use a library
     // like 'diskusage' for more accurate results

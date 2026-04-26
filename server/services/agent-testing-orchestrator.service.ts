@@ -452,7 +452,7 @@ export class AgentTestingOrchestrator extends EventEmitter {
   private async runTestScript(
     page: Page,
     testScript: string,
-    options: TestExecutionOptions
+    _options: TestExecutionOptions
   ): Promise<TestExecutionResult> {
     // SECURITY: Network restrictions are enforced at BrowserContext level (see executeTest)
     // Scripts cannot bypass context-level routing regardless of what methods they call

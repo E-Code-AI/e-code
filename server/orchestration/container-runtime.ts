@@ -742,7 +742,7 @@ class Container {
       usage.memoryUsage = parseInt(memoryCurrent) / 1024 / 1024; // Convert to MB
       
       // Read CPU usage
-      const cpuStat = await fs.readFile(
+      const _cpuStat = await fs.readFile(
         path.join(this.cgroupPath, 'cpu.stat'),
         'utf-8'
       );

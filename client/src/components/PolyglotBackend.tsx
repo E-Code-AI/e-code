@@ -57,9 +57,9 @@ interface BenchmarkResult {
 export function PolyglotBackend() {
   const [activeTab, setActiveTab] = useState('overview');
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
-  const { data: healthData, isLoading: healthLoading } = useQuery({
+  const { data: healthData, isLoading: _healthLoading } = useQuery({
     queryKey: ['polyglot-health'],
     queryFn: () => apiRequest('GET', '/api/polyglot/health'),
     refetchInterval: 30000

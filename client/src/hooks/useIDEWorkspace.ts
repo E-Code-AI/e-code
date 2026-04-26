@@ -347,8 +347,8 @@ export function useIDEWorkspace(projectId: string) {
   }, [promptParam, autoStartAgent, storedPrompt, persistedBootstrapPrompt, bootstrapToken, project?.description]);
 
   // Null safety for project object usage
-  const isOwner = project && user ? project.ownerId === user.id : false;
-  const projectTitle = project?.name || 'Loading...';
+  const _isOwner = project && user ? project.ownerId === user.id : false;
+  const _projectTitle = project?.name || 'Loading...';
   const hasRunnableFiles = useMemo(() => {
     return files.some((file) => {
       if (file.isDirectory) return false;
@@ -586,7 +586,7 @@ export function useIDEWorkspace(projectId: string) {
     });
   }, [toast]);
 
-  const handleSplitRight = useCallback((tabId: string) => {
+  const handleSplitRight = useCallback((_tabId: string) => {
     toast({
       title: "Split view",
       description: "Split view feature coming soon.",

@@ -226,7 +226,7 @@ export function AutonomyControlPanel({ projectId, onBack }: AutonomyControlPanel
   const hasActiveSession = session && ['active', 'paused', 'pending'].includes(session.status);
   const isSessionRunning = session?.status === 'active';
   const isSessionPaused = session?.status === 'paused';
-  const isLoading = isLoadingSession || isLoadingProgress;
+  const _isLoading = isLoadingSession || isLoadingProgress;
   const error = sessionError || progressError;
   const isBusy = isStartingSession || isPausingSession || isResumingSession || isStoppingSession;
 

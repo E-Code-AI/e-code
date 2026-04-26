@@ -26,7 +26,7 @@ import { useLocation } from 'wouter';
 
 export default function ContactSales() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

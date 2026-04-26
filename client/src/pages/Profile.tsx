@@ -39,7 +39,7 @@ export default function Profile() {
   });
   
   // Fetch user's projects
-  const { data: projectsData, isLoading: projectsLoading } = useQuery({
+  const { data: projectsData, isLoading: _projectsLoading } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username, 'projects'],
     queryFn: async () => {
       const res = await apiRequest('GET', '/api/projects');
@@ -95,7 +95,7 @@ export default function Profile() {
   };
 
   // Fetch user activity data
-  const { data: activityData = [], isLoading: activityLoading } = useQuery({
+  const { data: activityData = [], isLoading: _activityLoading } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username, 'activity'],
     queryFn: async () => {
       return [];

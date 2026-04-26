@@ -30,7 +30,7 @@ export default function NewsletterUnsubscribe() {
     setIsSubmitting(true);
 
     try {
-      const data = await apiRequest('POST', '/api/newsletter/unsubscribe', { email });
+      const _data = await apiRequest('POST', '/api/newsletter/unsubscribe', { email });
       
       toast({
         title: "Unsubscribed",

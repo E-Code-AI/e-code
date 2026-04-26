@@ -85,7 +85,7 @@ export class RealPackageManager {
 
     // Ruby / gem
     this.packageManagers.set('ruby', {
-      install: (packages, options) => {
+      install: (packages, _options) => {
         const cmd = ['gem', 'install'];
         return [...cmd, ...packages];
       },
@@ -98,7 +98,7 @@ export class RealPackageManager {
 
     // Go modules
     this.packageManagers.set('go', {
-      install: (packages, options) => ['go', 'get', ...packages],
+      install: (packages, _options) => ['go', 'get', ...packages],
       uninstall: (packages) => ['go', 'mod', 'edit', ...packages.map(p => `-droprequire=${p}`)],
       list: () => ['go', 'list', '-m', 'all'],
       search: (query) => ['go', 'list', '-m', '-versions', query],

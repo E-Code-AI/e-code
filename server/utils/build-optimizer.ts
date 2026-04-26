@@ -37,7 +37,7 @@ export class BuildOptimizer {
 
   private static async optimizeJavaScript(): Promise<void> {
     // Use terser for advanced JavaScript minification
-    const terserOptions = {
+    const _terserOptions = {
       compress: {
         drop_console: true,
         drop_debugger: true,

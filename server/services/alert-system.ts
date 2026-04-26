@@ -504,27 +504,27 @@ export class AlertSystem extends EventEmitter {
     });
   }
 
-  private async sendEmailNotification(alert: ActiveAlert, config: Record<string, any>) {
+  private async sendEmailNotification(alert: ActiveAlert, _config: Record<string, any>) {
     // Implement email sending logic
     logger.info(`Would send email notification for alert: ${alert.id}`);
   }
 
-  private async sendWebhookNotification(alert: ActiveAlert, config: Record<string, any>) {
+  private async sendWebhookNotification(alert: ActiveAlert, _config: Record<string, any>) {
     // Implement webhook calling logic
     logger.info(`Would call webhook for alert: ${alert.id}`);
   }
 
-  private async sendSlackNotification(alert: ActiveAlert, config: Record<string, any>) {
+  private async sendSlackNotification(alert: ActiveAlert, _config: Record<string, any>) {
     // Implement Slack notification logic
     logger.info(`Would send Slack notification for alert: ${alert.id}`);
   }
 
-  private async sendPagerDutyNotification(alert: ActiveAlert, config: Record<string, any>) {
+  private async sendPagerDutyNotification(alert: ActiveAlert, _config: Record<string, any>) {
     // Implement PagerDuty integration
     logger.info(`Would trigger PagerDuty for alert: ${alert.id}`);
   }
 
-  private scheduleEscalation(rule: AlertRule, alert: ActiveAlert) {
+  private scheduleEscalation(rule: AlertRule, _alert: ActiveAlert) {
     if (!rule.escalation) return;
 
     rule.escalation.levels.forEach((level, index) => {

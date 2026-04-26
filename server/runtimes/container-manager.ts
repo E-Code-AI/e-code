@@ -327,7 +327,7 @@ export function streamContainerLogs(containerId: string, callback: (log: string)
  * Prepare the project directory for container use
  */
 async function prepareProjectDir(projectDir: string, language: Language): Promise<void> {
-  const languageConfig = languageConfigs[language];
+  const _languageConfig = languageConfigs[language];
   
   // Create Dockerfile based on language
   const dockerfile = getDockerfile(language);
@@ -575,11 +575,8 @@ export async function installDependencies(containerId: string, language: Languag
     return new Promise<boolean>((resolve) => {
       const installProcess = spawn('sh', ['-c', execCommand]);
       
-      let output = '';
-      
       installProcess.stdout.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
-        output += logEntry + '\n';
         
         if (activeContainers.has(containerId)) {
           activeContainers.get(containerId)!.logs.push(logEntry);
@@ -590,7 +587,6 @@ export async function installDependencies(containerId: string, language: Languag
       
       installProcess.stderr.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();
-        output += 'ERROR: ' + logEntry + '\n';
         
         if (activeContainers.has(containerId)) {
           activeContainers.get(containerId)!.logs.push(`ERROR: ${logEntry}`);

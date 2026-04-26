@@ -39,7 +39,7 @@ export class ProjectContextProvider {
     '.env.local'
   ];
 
-  constructor(projectId: string) {
+  constructor(_projectId: string) {
     // In production, map projectId to actual project directory
     this.projectRoot = process.cwd();
   }

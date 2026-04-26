@@ -49,7 +49,7 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
     isRestoringCheckpoint,
     className,
     autoScrollToBottom = true,
-  }, ref) {
+  }, _ref) {
     const parentRef = useRef<HTMLDivElement>(null);
     const lastMessageRef = useRef<string | null>(null);
     const isUserScrollingRef = useRef(false);
@@ -228,7 +228,7 @@ export const StreamingText = memo(function StreamingText({
   content,
   isComplete = false,
   className,
-  typingSpeed = 20,
+  typingSpeed: _typingSpeed = 20,
 }: StreamingTextProps) {
   const displayedRef = useRef<string>('');
   const indexRef = useRef(0);
@@ -341,7 +341,7 @@ export function useOptimisticMessages(
   };
 }
 
-export function useDebouncedStreamingContent(initialContent: string = '', delay: number = 50) {
+export function useDebouncedStreamingContent(initialContent: string = '', _delay: number = 50) {
   const contentRef = useRef(initialContent);
   const displayedRef = useRef(initialContent);
   const frameRef = useRef<number | null>(null);

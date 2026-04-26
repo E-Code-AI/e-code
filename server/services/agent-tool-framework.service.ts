@@ -124,7 +124,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         content: z.string().describe('Content to write')
       }),
       execute: async (input, context) => {
-        const result = await agentFileOperations.createOrUpdateFile(
+        const _result = await agentFileOperations.createOrUpdateFile(
           context.sessionId,
           input.path,
           input.content,
@@ -379,7 +379,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         query: z.string().describe('SQL query to execute'),
         database: z.string().optional().default('default')
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const { db } = await import('../db');
         const { sql } = await import('drizzle-orm');
         
@@ -585,7 +585,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         headers: z.record(z.string()).optional(),
         body: z.any().optional()
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const response = await fetch(input.url, {
           method: input.method,
           headers: input.headers,
@@ -619,7 +619,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         code: z.string().describe('Code to analyze'),
         analysisType: z.enum(['review', 'explain', 'optimize', 'debug', 'security'])
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         type AnalysisType = 'review' | 'explain' | 'optimize' | 'debug' | 'security';
         
         const prompts: Record<AnalysisType, string> = {
@@ -695,7 +695,7 @@ export class AgentToolFrameworkService extends EventEmitter {
       }),
       rateLimit: 2,
       requiresAuth: true,
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const logger = await this.getLogger();
         logger.info(`[ToolFramework] Opening browser for URL: ${input.url}`);
         
@@ -799,7 +799,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         extractAttribute: z.string().optional().describe('Attribute to extract (default: text content)')
       }),
       rateLimit: 1,
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const logger = await this.getLogger();
         logger.info(`[ToolFramework] Scraping URL: ${input.url}`);
         
@@ -877,7 +877,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         packageName: z.string().describe('Package name to inspect'),
         registry: z.enum(['npm', 'pypi']).default('npm')
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const url = input.registry === 'npm'
           ? `https://registry.npmjs.org/${encodeURIComponent(input.packageName)}`
           : `https://pypi.org/pypi/${encodeURIComponent(input.packageName)}/json`;
@@ -912,7 +912,7 @@ export class AgentToolFrameworkService extends EventEmitter {
         duration: z.number().optional().default(60).describe('Collection duration in seconds'),
         includeProcess: z.boolean().optional().default(true).describe('Include process metrics')
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         const logger = await this.getLogger();
         logger.info('[ToolFramework] Collecting system metrics');
         
@@ -993,7 +993,7 @@ export class AgentToolFrameworkService extends EventEmitter {
           
           const changes: Array<{ event: string; path: string; time: string }> = [];
           
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve, _reject) => {
             const watcher = chokidar.watch(watchPath, {
               ignored: /(^|[\/\\])\../, // ignore dotfiles
               persistent: true,
@@ -1174,7 +1174,7 @@ export class AgentToolFrameworkService extends EventEmitter {
                   });
                 }
               }
-            } catch (parseError) {
+            } catch (_parseError) {
               results.dependencies = {
                 error: 'Could not parse npm audit output',
                 exitCode: auditResult.exitCode
@@ -1254,7 +1254,7 @@ export class AgentToolFrameworkService extends EventEmitter {
       inputSchema: z.object({
         key: z.string().describe('Environment variable key')
       }),
-      execute: async (input, context) => {
+      execute: async (input, _context) => {
         // Only allow-listed variables
         const allowList = ['NODE_ENV', 'PORT', 'DATABASE_URL', 'VITE_'];
         const isAllowed = allowList.some(prefix => 

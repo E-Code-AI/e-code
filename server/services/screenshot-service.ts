@@ -6,7 +6,7 @@ import { createLogger } from '../utils/logger';
 import { storageService,type StorageObject } from './storage.service';
 
 type Browser = any;
-type Page = any;
+type _Page = any;
 
 const logger = createLogger('ScreenshotService');
 

@@ -32,7 +32,7 @@ const requireAuth = (req: Request, res: Response, next: NextFunction) => {
 /**
  * Validation schemas
  */
-const invalidateSchema = z.object({
+const _invalidateSchema = z.object({
   stepTypes: z.array(z.enum(['SPECIFICATION', 'ARCHITECTURE_PLAN', 'FILE_LAYOUT', 'INITIAL_SCAFFOLD'])).optional(),
   reason: z.string().optional()
 });

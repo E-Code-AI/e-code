@@ -257,7 +257,7 @@ export default function AICodeReview({
     mutationFn: async ({ issueId, fixCode }: { issueId: number; fixCode: string }) => {
       return apiRequest('POST', `/api/code-review/fix/${issueId}`, { fixCode });
     },
-    onSuccess: (_, { issueId }) => {
+    onSuccess: (_, { issueId: _issueId }) => {
       toast({
         title: 'Fix Applied',
         description: 'The suggested fix has been applied successfully.'

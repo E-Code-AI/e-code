@@ -102,7 +102,7 @@ export default function CodeReviewPanel({
   const [viewMode, setViewMode] = useState<'list' | 'metrics' | 'history'>('list');
   const { toast } = useToast();
 
-  const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
+  const { data: reviewsData, isLoading: _reviewsLoading } = useQuery({
     queryKey: ['/api/code-review/issues', projectId],
     queryFn: () => apiRequest('GET', `/api/code-review/issues/${projectId}?limit=50`)
   });

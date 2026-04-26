@@ -236,7 +236,7 @@ export class SecurityScannerService {
     // Handle incoming messages (for future interactivity)
     ws.on('message', (data) => {
       try {
-        const message = JSON.parse(data.toString());
+        const _message = JSON.parse(data.toString());
         // Handle commands like requesting rescan, marking vulnerabilities, etc.
       } catch (error) {
         console.error('[SecurityScanner] Error parsing message:', error);

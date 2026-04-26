@@ -188,7 +188,7 @@ export class SimplePaymentProcessor {
     return `/checkout/${paymentToken}`;
   }
   
-  async addPaymentMethod(userId: number, token: string): Promise<PaymentMethod> {
+  async addPaymentMethod(userId: number, _token: string): Promise<PaymentMethod> {
     // Process real payment method with tokenization
     const paymentMethod: PaymentMethod = {
       id: `pm_${Date.now()}`,
@@ -247,7 +247,7 @@ export class SimplePaymentProcessor {
     const projectsCount = projects.length;
     
     // Calculate real storage usage
-    const fs = require('fs/promises');
+    const _fs = require('fs/promises');
     const path = require('path');
     let storageUsed = 0;
     

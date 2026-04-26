@@ -32,7 +32,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
   const [autoRefresh, setAutoRefresh] = useState(false);
   const { toast } = useToast();
 
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading, refetch: _refetch } = useQuery({
     queryKey: ['/api/logs', { deploymentId, buildId, projectId, level, search }],
     queryFn: async () => {
       const params = new URLSearchParams();

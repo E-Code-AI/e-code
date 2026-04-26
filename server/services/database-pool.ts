@@ -42,19 +42,19 @@ export class DatabasePoolManager {
       const pool = new Pool(this.config);
       
       // Error handling
-      pool.on('error', (err, client) => {
+      pool.on('error', (err, _client) => {
         logger.error('Unexpected database pool error:', err);
       });
 
       // Connection monitoring
-      pool.on('connect', (client) => {
+      pool.on('connect', (_client) => {
         const poolName = 'primary';
         const current = this.activeConnections.get(poolName) || 0;
         this.activeConnections.set(poolName, current + 1);
         logger.debug(`New connection established. Active: ${current + 1}`);
       });
 
-      pool.on('remove', (client) => {
+      pool.on('remove', (_client) => {
         const poolName = 'primary';
         const current = this.activeConnections.get(poolName) || 0;
         this.activeConnections.set(poolName, Math.max(0, current - 1));

@@ -22,7 +22,7 @@ export class NixEnvironmentBuilder {
   private buildCache: Map<string, BuiltEnvironment> = new Map();
 
   async buildEnvironment(options: BuildEnvironmentOptions): Promise<BuiltEnvironment> {
-    const { projectId, language, packages = [], customShellNix } = options;
+    const { projectId, language, packages = [], customShellNix: _customShellNix } = options;
     
     logger.info(`Building Nix environment for project ${projectId}, language: ${language}`);
     

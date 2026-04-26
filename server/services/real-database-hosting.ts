@@ -182,7 +182,7 @@ export class RealDatabaseHostingService extends EventEmitter {
             socket.on('error', reject);
             socket.on('timeout', () => { socket.destroy(); reject(new Error('timeout')); });
           });
-        } catch (connErr) {
+        } catch (_connErr) {
           logger.warn(`Health check failed for database instance ${instanceId}: port not reachable`);
           instance.status = 'error';
           await this.saveInstance(instance);
@@ -214,7 +214,7 @@ export class RealDatabaseHostingService extends EventEmitter {
           if (config.status === 'running') {
             await this.startDatabaseProcess(config);
           }
-        } catch (err) {
+        } catch (_err) {
           // Config file doesn't exist, skip
         }
       }
@@ -365,17 +365,17 @@ export class RealDatabaseHostingService extends EventEmitter {
     }
   }
 
-  private async startMySQL(instance: DatabaseInstance, dataDir: string): Promise<void> {
+  private async startMySQL(instance: DatabaseInstance, _dataDir: string): Promise<void> {
     logger.info(`Starting MySQL instance ${instance.id} on port ${instance.endpoints.port}`);
     // Similar implementation for MySQL
   }
 
-  private async startMongoDB(instance: DatabaseInstance, dataDir: string): Promise<void> {
+  private async startMongoDB(instance: DatabaseInstance, _dataDir: string): Promise<void> {
     logger.info(`Starting MongoDB instance ${instance.id} on port ${instance.endpoints.port}`);
     // Similar implementation for MongoDB
   }
 
-  private async startRedis(instance: DatabaseInstance, dataDir: string): Promise<void> {
+  private async startRedis(instance: DatabaseInstance, _dataDir: string): Promise<void> {
     logger.info(`Starting Redis instance ${instance.id} on port ${instance.endpoints.port}`);
     // Similar implementation for Redis
   }

@@ -690,7 +690,7 @@ function replaceInContent(
     searchRegex = new RegExp(pattern, options.caseSensitive ? 'g' : 'gi');
   }
 
-  const newContent = content.replace(searchRegex, (match) => {
+  const newContent = content.replace(searchRegex, (_match) => {
     count++;
     return replacement;
   });

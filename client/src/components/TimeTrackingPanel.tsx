@@ -13,7 +13,7 @@ interface TimeTrackingPanelProps {
   userId: number;
 }
 
-export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps) {
+export function TimeTrackingPanel({ projectId, userId: _userId }: TimeTrackingPanelProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [elapsedTime, setElapsedTime] = useState(0);

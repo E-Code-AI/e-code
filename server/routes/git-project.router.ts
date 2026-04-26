@@ -411,12 +411,12 @@ router.post('/:projectId/pull', async (req: Request, res: Response) => {
     const { stdout: statusOut } = await execa('git', ['status', '--porcelain'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
     const hasLocalChanges = statusOut.trim().length > 0;
 
-    let stashApplied = false;
+    let _stashApplied = false;
     if (hasLocalChanges) {
       // Stash local changes so pull can proceed cleanly
       const { stdout: stashOut } = await execa('git', ['stash', 'push', '--include-untracked', '-m', 'e-code-auto-stash'], { cwd: projectDir }).catch(() => ({ stdout: '' }));
-      stashApplied = stashOut.includes('Saved') || stashOut.includes('No local changes');
-      if (!stashOut.includes('No local changes')) stashApplied = true;
+      _stashApplied = stashOut.includes('Saved') || stashOut.includes('No local changes');
+      if (!stashOut.includes('No local changes')) _stashApplied = true;
     }
 
     const { stdout } = await execa('git', ['pull', pullUrl, branch], { cwd: projectDir });
@@ -733,7 +733,7 @@ router.post('/:projectId/backup', async (req: Request, res: Response) => {
 // POST /:projectId/backup/restore
 router.post('/:projectId/backup/restore', async (req: Request, res: Response) => {
   const { projectId } = req.params;
-  const { version } = req.body; // or id
+  const { version: _version } = req.body; // or id
   try {
     const projectDir = await getProjectDir(projectId);
     // Find latest tag if no version specified

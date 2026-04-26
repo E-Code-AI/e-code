@@ -39,36 +39,36 @@ router.get('/models', async (req, res) => {
 router.post('/generate', async (req, res) => {
   try {
     const userId = req.user?.id;
-    const { 
-      model = 'mixtral-8x7b', 
-      messages, 
-      temperature = 0.7, 
+    const {
+      model = 'mixtral-8x7b',
+      messages,
+      temperature = 0.7,
       max_tokens = 2048,
-      stream = false 
+      stream: _stream = false
     } = req.body;
-    
+
     if (!messages || !Array.isArray(messages)) {
       return res.status(400).json({ error: 'Messages array is required' });
     }
-    
+
     // Check if model exists
     const modelConfig = OPENSOURCE_MODELS[model as keyof typeof OPENSOURCE_MODELS];
     if (!modelConfig) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: `Model ${model} not found`,
         availableModels: Object.keys(OPENSOURCE_MODELS)
       });
     }
-    
+
     // Check if model is configured
     if (!openSourceModelsProvider.isConfigured(model)) {
-      return res.status(503).json({ 
+      return res.status(503).json({
         error: `Model ${model} requires API key configuration`,
         provider: modelConfig.provider,
         requiredKey: `${modelConfig.provider.toUpperCase()}_API_KEY`
       });
     }
-    
+
     // Generate response
     const startTime = Date.now();
     const response = await openSourceModelsProvider.generateChat(messages, {
@@ -77,12 +77,12 @@ router.post('/generate', async (req, res) => {
       max_tokens
     });
     const duration = Date.now() - startTime;
-    
+
     // Track usage for billing
     if (userId) {
       const inputTokens = Math.ceil(JSON.stringify(messages).length / 4);
       const outputTokens = Math.ceil(response.length / 4);
-      
+
       await aiBillingService.trackAIUsage(userId, {
         model: modelConfig.name,
         provider: modelConfig.provider,
@@ -95,7 +95,7 @@ router.post('/generate', async (req, res) => {
         timestamp: new Date()
       });
     }
-    
+
     res.json({
       model: modelConfig.name,
       content: response,
@@ -113,9 +113,9 @@ router.post('/generate', async (req, res) => {
     });
   } catch (error: any) {
     logger.error('Open-source model generation error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to generate response',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -124,19 +124,19 @@ router.post('/generate', async (req, res) => {
 router.post('/code', async (req, res) => {
   try {
     const userId = req.user?.id;
-    const { 
-      model = 'deepseek-coder-33b', 
+    const {
+      model = 'deepseek-coder-33b',
       prompt,
       language = 'javascript',
       context,
       temperature = 0.5,
       max_tokens = 4096
     } = req.body;
-    
+
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
-    
+
     // Build code-specific messages
     const messages = [
       {
@@ -148,7 +148,7 @@ router.post('/code', async (req, res) => {
         content: prompt
       }
     ];
-    
+
     // Generate code
     const startTime = Date.now();
     const response = await openSourceModelsProvider.generateCodeWithUnderstanding(
@@ -157,13 +157,13 @@ router.post('/code', async (req, res) => {
       { model, temperature, max_tokens }
     );
     const duration = Date.now() - startTime;
-    
+
     // Track usage
     if (userId) {
       const modelConfig = OPENSOURCE_MODELS[model as keyof typeof OPENSOURCE_MODELS];
       const inputTokens = Math.ceil(JSON.stringify(messages).length / 4);
       const outputTokens = Math.ceil(response.length / 4);
-      
+
       await aiBillingService.trackAIUsage(userId, {
         model: modelConfig.name,
         provider: modelConfig.provider,
@@ -176,7 +176,7 @@ router.post('/code', async (req, res) => {
         timestamp: new Date()
       });
     }
-    
+
     res.json({
       code: response,
       model: OPENSOURCE_MODELS[model as keyof typeof OPENSOURCE_MODELS]?.name || model,
@@ -189,9 +189,9 @@ router.post('/code', async (req, res) => {
     });
   } catch (error: any) {
     logger.error('Code generation error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to generate code',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -210,7 +210,7 @@ router.get('/pricing', async (req, res) => {
       currency: 'USD',
       available: openSourceModelsProvider.isConfigured(id)
     }));
-    
+
     res.json({
       models: pricing,
       tiers: {
@@ -230,13 +230,13 @@ router.get('/status/:modelId', async (req, res) => {
   try {
     const { modelId } = req.params;
     const modelConfig = OPENSOURCE_MODELS[modelId as keyof typeof OPENSOURCE_MODELS];
-    
+
     if (!modelConfig) {
       return res.status(404).json({ error: 'Model not found' });
     }
-    
+
     const isAvailable = openSourceModelsProvider.isConfigured(modelId);
-    
+
     res.json({
       id: modelId,
       name: modelConfig.name,

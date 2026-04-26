@@ -147,7 +147,7 @@ export class GamificationService {
     
     // Calculate level from XP
     const level = Math.floor(Math.sqrt(stats.xp / 100)) + 1;
-    const xpForCurrentLevel = Math.pow(level - 1, 2) * 100;
+    const _xpForCurrentLevel = Math.pow(level - 1, 2) * 100;
     const xpForNextLevel = Math.pow(level, 2) * 100;
     const xpToNextLevel = xpForNextLevel - stats.xp;
     

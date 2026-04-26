@@ -56,7 +56,7 @@ function getAllowedOrigins(): string[] {
 
 const ALLOWED_ORIGINS = getAllowedOrigins();
 
-function isAllowedOrigin(origin: string | undefined): boolean {
+function _isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
 
   try {
@@ -208,7 +208,7 @@ export function csrfTokenEndpoint(req: Request, res: Response) {
 // Legacy export kept for any callers that imported csrfService directly
 // ---------------------------------------------------------------------------
 export const csrfService = {
-  generate: (sessionId: string) => generateCSRFToken(),
+  generate: (_sessionId: string) => generateCSRFToken(),
   verify: (_sessionId: string, _token: string) => false, // Always use session-based now
   getToken: (_sessionId: string) => null,
   deleteToken: (_sessionId: string) => {},

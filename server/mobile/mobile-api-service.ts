@@ -118,7 +118,7 @@ export class MobileAPIService {
   // Get mobile-optimized project list
   async getMobileProjects(req: Request, res: Response) {
     try {
-      const userId = (req as any).user?.id || 1; // Demo user ID
+      const _userId = (req as any).user?.id || 1; // Demo user ID
 
       // Return demo mobile projects data
       const mobileProjects: MobileProject[] = [
@@ -460,7 +460,7 @@ export class MobileAPIService {
   // Push notification support
   async sendPushNotification(req: Request, res: Response) {
     try {
-      const { deviceId, title, body, data } = req.body;
+      const { deviceId, title, body: _body, data: _data } = req.body;
       const userId = (req as any).user?.id;
 
       const session = Array.from(this.activeSessions.values())

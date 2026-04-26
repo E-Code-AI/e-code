@@ -76,7 +76,7 @@ export class DatabasePool {
         client.query('SET idle_in_transaction_session_timeout = 60000'); // 60 seconds
       });
 
-      this.pool.on('error', (err, client) => {
+      this.pool.on('error', (err, _client) => {
         logger.error('Database pool error:', err);
         this.performanceMetrics.totalErrors++;
         
@@ -87,7 +87,7 @@ export class DatabasePool {
         }
       });
 
-      this.pool.on('remove', (client) => {
+      this.pool.on('remove', (_client) => {
         logger.debug('Database connection removed from pool');
       });
 
@@ -276,7 +276,7 @@ export class DatabasePool {
     try {
       const client = await this.pool.connect();
       try {
-        const result = await client.query('SELECT 1');
+        const _result = await client.query('SELECT 1');
         return { 
           status: 'healthy',
           details: {

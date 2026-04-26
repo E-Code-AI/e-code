@@ -57,7 +57,7 @@ export function MobileApp() {
   const [selectedProject, setSelectedProject] = useState<MobileProject | null>(null);
   const [executionResult, setExecutionResult] = useState<ExecutionResult | null>(null);
   const [codeInput, setCodeInput] = useState('');
-  const queryClient = useQueryClient();
+  const _queryClient = useQueryClient();
 
   // Fetch mobile projects
   const { data: projectsData, isLoading: projectsLoading } = useQuery({

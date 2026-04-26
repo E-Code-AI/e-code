@@ -161,7 +161,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         }
       });
 
-      socket.on('connected', (data: { message: string }) => {
+      socket.on('connected', (_data: { message: string }) => {
       });
 
       socket.on('ready', (data: { message: string }) => {

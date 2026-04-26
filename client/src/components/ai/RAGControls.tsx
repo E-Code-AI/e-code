@@ -101,7 +101,7 @@ export function useRAGSessionConfig(sessionId?: string) {
 }
 
 export function useRAGContext(sessionId?: string, query?: string) {
-  const queryParams = query ? `?query=${encodeURIComponent(query)}` : '';
+  const _queryParams = query ? `?query=${encodeURIComponent(query)}` : '';
   return useQuery<{ sessionId: string; contexts: RAGContext[]; totalCount: number; retrievedAt: string }>({
     queryKey: ['/api/rag/context', sessionId, query],
     enabled: !!sessionId,

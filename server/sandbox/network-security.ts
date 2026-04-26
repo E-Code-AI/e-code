@@ -217,8 +217,8 @@ export class NetworkSecurityManager {
       
       // Parse the output to extract statistics
       const lines = stats.split('\n');
-      const rxLine = lines.find(l => l.includes('RX:'))?.trim() || '';
-      const txLine = lines.find(l => l.includes('TX:'))?.trim() || '';
+      const _rxLine = lines.find(l => l.includes('RX:'))?.trim() || '';
+      const _txLine = lines.find(l => l.includes('TX:'))?.trim() || '';
       
       // This is a simplified parser - actual implementation would need more robust parsing
       return {

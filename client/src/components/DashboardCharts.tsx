@@ -29,7 +29,7 @@ interface StorageData {
   color: string;
 }
 
-const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: any[] }) {
+const DashboardCharts = memo(function DashboardCharts({ projects: _projects }: { projects: any[] }) {
   const prefersReducedMotion = usePrefersReducedMotion();
   
   // Real API calls - no mock data

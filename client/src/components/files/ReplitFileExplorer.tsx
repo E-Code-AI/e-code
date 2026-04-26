@@ -89,7 +89,7 @@ interface ReplitFileExplorerProps {
 export function ReplitFileExplorer({
   projectId,
   onFileSelect,
-  onFileCreate,
+  onFileCreate: _onFileCreate,
   selectedFile,
   className = "",
   showHidden = false,
@@ -154,7 +154,7 @@ export function ReplitFileExplorer({
     },
   });
 
-  const renameFileMutation = useMutation({
+  const _renameFileMutation = useMutation({
     mutationFn: async ({ file, newName }: { file: FileNode; newName: string }) => {
       return apiRequest('PATCH', `/api/projects/${file.id}`, { name: newName });
     },

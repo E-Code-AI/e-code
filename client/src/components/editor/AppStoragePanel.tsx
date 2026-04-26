@@ -159,7 +159,7 @@ function FileTreeItem({
 }: FileTreeItemProps) {
   const isExpanded = expandedFolders.has(node.path);
   const isSelected = selectedFile === node.path;
-  const isImage = node.type === 'file' && isImageFile(node.contentType, node.name);
+  const _isImage = node.type === 'file' && isImageFile(node.contentType, node.name);
 
   if (node.name === '.placeholder') return null;
 

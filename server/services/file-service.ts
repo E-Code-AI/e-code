@@ -208,7 +208,7 @@ const fileTypeValidator = new FileTypeValidator();
  * Runs files in isolated environment
  */
 class SandboxExecutor {
-  async executeInSandbox(filePath: string, timeout: number = 5000): Promise<{
+  async executeInSandbox(filePath: string, _timeout: number = 5000): Promise<{
     safe: boolean;
     output?: string;
     error?: string;

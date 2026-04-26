@@ -70,7 +70,7 @@ interface ScalingEvent {
   reason: string;
 }
 
-interface CostEstimate {
+interface _CostEstimate {
   currentCost: number;
   estimatedCost: number;
   savingsOrIncrease: number;
@@ -99,7 +99,7 @@ const METRIC_LABELS = {
 };
 
 export function AutoScalingConfig({ deploymentId, className }: AutoScalingConfigProps) {
-  const [selectedPolicy, setSelectedPolicy] = useState<ScalingPolicy | null>(null);
+  const [_selectedPolicy, _setSelectedPolicy] = useState<ScalingPolicy | null>(null);
   const [showPolicyDialog, setShowPolicyDialog] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<ScalingPolicy | null>(null);
   const [previewInstances, setPreviewInstances] = useState(1);

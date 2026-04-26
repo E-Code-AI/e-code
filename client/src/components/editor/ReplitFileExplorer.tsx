@@ -89,7 +89,7 @@ export function ReplitFileExplorer({
   const [showHidden, setShowHidden] = useState(false);
   const [draggedFile, setDraggedFile] = useState<FileNode | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<Set<number>>(new Set());
+  const [selectedFiles, _setSelectedFiles] = useState<Set<number>>(new Set());
   const [clipboard, setClipboard] = useState<{ file: FileNode; operation: "copy" | "cut" } | null>(null);
   const [renameDialog, setRenameDialog] = useState<{ file: FileNode; newName: string } | null>(null);
   const [newItemDialog, setNewItemDialog] = useState<{ parentId: number | null; type: "file" | "folder"; name: string } | null>(null);

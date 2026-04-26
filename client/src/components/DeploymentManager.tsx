@@ -88,7 +88,7 @@ const REGIONS = [
   { value: 'ap-southeast-1', label: 'Asia Pacific (Singapore)' }
 ];
 
-export function DeploymentManager({ projectId, project, isOpen = true, onClose, className }: DeploymentManagerProps) {
+export function DeploymentManager({ projectId, project, isOpen: _isOpen = true, onClose: _onClose, className }: DeploymentManagerProps) {
   // Extract projectId from project if provided
   const actualProjectId = projectId || project?.id;
   const [deployments, setDeployments] = useState<Deployment[]>([]);
@@ -101,7 +101,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const [deploymentName, setDeploymentName] = useState('');
   const [selectedBranch, setSelectedBranch] = useState('main');
   const [selectedRegion, setSelectedRegion] = useState('us-east-1');
-  const [selectedEnvironment, setSelectedEnvironment] = useState('production');
+  const [_selectedEnvironment, _setSelectedEnvironment] = useState('production');
   const [isDeploying, setIsDeploying] = useState(false);
   const [autoScaling, setAutoScaling] = useState(true);
   const [customDomain, setCustomDomain] = useState('');
@@ -189,8 +189,8 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         
         // Update deployment status based on container status
         if (status.pods && status.pods.length > 0) {
-          const running = status.pods.filter((p: any) => p.status === 'Running').length;
-          const total = status.pods.length;
+          const _running = status.pods.filter((p: any) => p.status === 'Running').length;
+          const _total = status.pods.length;
         }
       }
     } catch (error) {
@@ -226,7 +226,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     }
   };
 
-  const loadEnvVars = async (deploymentId: number) => {
+  const loadEnvVars = async (_deploymentId: number) => {
     if (!actualProjectId) return;
     
     try {
@@ -260,10 +260,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       // This runs async and doesn't block deployment
       setTimeout(() => {
         apiRequest('POST', `/api/projects/${actualProjectId}/container`, {})
-          .then(response => {
+          .then(_response => {
             // Container environment created successfully
           })
-          .catch(err => {
+          .catch(_err => {
             // Silently handle errors - deployment handles container creation if needed
           });
       }, 0);
@@ -334,7 +334,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     }
   };
 
-  const handleStop = async (deployment: Deployment) => {
+  const _handleStop = async (deployment: Deployment) => {
     try {
       // First stop the container
       await apiRequest('POST', `/api/projects/${actualProjectId}/container/stop`, {});

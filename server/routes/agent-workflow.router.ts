@@ -33,7 +33,7 @@ const extendedBuildSchema = z.object({
  */
 router.post('/features/generate', requireAuth, async (req, res) => {
   try {
-    const { projectId, prompt } = generateFeaturesSchema.parse(req.body);
+    const { projectId: _projectId, prompt } = generateFeaturesSchema.parse(req.body);
 
     // Intelligent keyword-based feature generation
     // Provides instant results without AI API dependency
@@ -58,7 +58,7 @@ router.post('/features/generate', requireAuth, async (req, res) => {
  */
 router.post('/build/full', requireAuth, async (req, res) => {
   try {
-    const { projectId, features, prompt } = buildFullSchema.parse(req.body);
+    const { projectId: _projectId, features, prompt: _prompt } = buildFullSchema.parse(req.body);
 
     // Generate intelligent task list from feature set
     // Note: Autonomous build system integration available via agent endpoints
@@ -84,7 +84,7 @@ router.post('/build/full', requireAuth, async (req, res) => {
  */
 router.post('/build/from-design', requireAuth, async (req, res) => {
   try {
-    const { projectId, designUrl, features } = buildFromDesignSchema.parse(req.body);
+    const { projectId: _projectId, designUrl: _designUrl, features: _features } = buildFromDesignSchema.parse(req.body);
 
     // Generate standard design-to-code task list
     // Note: Figma integration available via MCP for automated conversion
@@ -119,7 +119,7 @@ router.post('/build/from-design', requireAuth, async (req, res) => {
  */
 router.post('/build/extended', requireAuth, async (req, res) => {
   try {
-    const { projectId, taskList } = extendedBuildSchema.parse(req.body);
+    const { projectId: _projectId, taskList: _taskList } = extendedBuildSchema.parse(req.body);
 
     // Extended autonomous build available via /api/agent/autonomous endpoints
     // This endpoint provides task list structure for UI preview

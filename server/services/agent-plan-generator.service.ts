@@ -209,8 +209,8 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   /**
    * Calculate critical path through task dependency graph
    */
-  private calculateCriticalPath(tasks: Task[], dependencies: Map<string, string[]>): string[] {
-    const path: string[] = [];
+  private calculateCriticalPath(tasks: Task[], _dependencies: Map<string, string[]>): string[] {
+    const _path: string[] = [];
     const visited = new Set<string>();
     
     // Find tasks with no dependencies (entry points)
@@ -265,7 +265,7 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
    */
   private findParallelizableTasks(tasks: Task[], dependencies: Map<string, string[]>): string[][] {
     const groups: string[][] = [];
-    const processed = new Set<string>();
+    const _processed = new Set<string>();
     
     // Group tasks by dependency depth
     const depthMap = new Map<number, string[]>();
@@ -344,7 +344,7 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   private async generateAlternatives(
     goal: string,
     tasks: Task[],
-    context: any
+    _context: any
   ): Promise<string[]> {
     try {
       const response = await this.openai.chat.completions.create({

@@ -122,7 +122,7 @@ export function MultiStepProgressBar({ steps, className }: MultiStepProgressBarP
 
       {/* Step Indicators */}
       <div className="flex items-center justify-between gap-1">
-        {steps.map((step, index) => (
+        {steps.map((step, _index) => (
           <div
             key={step.id}
             className={cn(

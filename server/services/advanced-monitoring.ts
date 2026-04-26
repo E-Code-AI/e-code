@@ -242,7 +242,7 @@ export class AdvancedMonitoringService extends EventEmitter {
     }
   }
 
-  private executeAlertAction(action: AlertAction, alert: any) {
+  private executeAlertAction(action: AlertAction, _alert: any) {
     switch (action.type) {
       case 'email':
         // Would send email via email service
@@ -285,7 +285,7 @@ export class AdvancedMonitoringService extends EventEmitter {
     return Array.from(this.dashboards.values());
   }
 
-  getMetrics(name: string, timeRange: string, aggregation?: string): MetricPoint[] {
+  getMetrics(name: string, timeRange: string, _aggregation?: string): MetricPoint[] {
     const points = this.metrics.get(name) || [];
     const now = new Date();
     let cutoff: Date;

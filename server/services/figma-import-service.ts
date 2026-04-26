@@ -434,7 +434,7 @@ ${indent}</${tag}>`;
     return `#${toHex(color.r)}${toHex(color.g)}${toHex(color.b)}`;
   }
 
-  private generateGlobalStyles(figmaData: FigmaFile): string {
+  private generateGlobalStyles(_figmaData: FigmaFile): string {
     return `* {
   margin: 0;
   padding: 0;

@@ -21,7 +21,7 @@ const router = Router();
 // JWT secrets now managed by secrets-manager.ts with proper dev fallbacks and prod enforcement
 
 // Token expiration times
-const MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
+const _MOBILE_TOKEN_MAX_AGE = 1000 * 60 * 60 * 24; // 24 hours
 const ACCESS_TOKEN_EXPIRY = '24h'; // Mobile devices need longer sessions
 const REFRESH_TOKEN_EXPIRY = '30d'; // Refresh tokens last 30 days
 
@@ -381,7 +381,7 @@ router.put('/mobile/projects/:projectId/files/:fileId', mobileEnsureAuthenticate
 router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async (req, res) => {
   try {
     const projectId = parseInt(req.params.projectId);
-    const { fileId, code } = req.body;
+    const { fileId: _fileId, code } = req.body;
     
     // Execute code in container
     const result = await mobileContainerService.executeCode({
@@ -407,7 +407,7 @@ router.post('/mobile/projects/:projectId/run', mobileEnsureAuthenticated, async 
 // ✅ Uses client-specified model - backend enforces correct Kimi K2 params (temp=1.0, max>=16384)
 router.post('/mobile/ai/chat', mobileEnsureAuthenticated, async (req, res) => {
   try {
-    const { projectId, message, model, messages, context } = req.body;
+    const { projectId: _projectId, message, model, messages, context } = req.body;
     
     const modelId = model || 'gpt-4.1';
     const chatMessages = messages || [{ role: 'user', content: message }];

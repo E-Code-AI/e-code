@@ -35,11 +35,11 @@ export function AgentWorkflowOrchestrator({
   const [featureList, setFeatureList] = useState<string[]>([]);
   const [taskList, setTaskList] = useState<string[]>([]);
   const [designPreviewUrl, setDesignPreviewUrl] = useState<string>('');
-  const [buildChoice, setBuildChoice] = useState<'full' | 'design' | null>(null);
+  const [_buildChoice, setBuildChoice] = useState<'full' | 'design' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
-  const [conversationId, setConversationId] = useState<number | null>(null);
-  const [planId, setPlanId] = useState<string | null>(null);
+  const [_conversationId, setConversationId] = useState<number | null>(null);
+  const [_planId, setPlanId] = useState<string | null>(null);
 
   // Fetch user's preferred AI model
   const { data: preferredData } = useQuery<{ preferredModel: string | null }>({

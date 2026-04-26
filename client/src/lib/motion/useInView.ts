@@ -21,20 +21,20 @@ interface UseInViewResult {
   isInView: boolean;
 }
 
-function prefersReducedMotion(): boolean {
+function _prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
 export function useInView({
-  threshold = 0.1,
-  rootMargin = '0px',
-  once = true
+  threshold: _threshold = 0.1,
+  rootMargin: _rootMargin = '0px',
+  once: _once = true
 }: UseInViewOptions = {}): UseInViewResult {
   const ref = useRef<HTMLDivElement>(null);
   // ALWAYS return true to ensure content is never hidden
   // This is a safe fallback that prioritizes content visibility over animations
-  const [isInView, setIsInView] = useState(true);
+  const [isInView, _setIsInView] = useState(true);
 
   // No animation logic - content is always visible
   // This prevents any CSS animation issues from hiding content

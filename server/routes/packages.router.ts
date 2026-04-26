@@ -348,7 +348,7 @@ router.post('/:projectId/uninstall', ensureAuthenticated, ensureProjectAccess, a
       }
     }
     
-    const { stdout, stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
     
     res.json({
       success: true,
@@ -373,7 +373,7 @@ router.post('/:projectId/uninstall', ensureAuthenticated, ensureProjectAccess, a
 router.get('/installed', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
     // Use the validated numeric projectId from middleware
-    const projectId = req.validatedProjectId || parseInt(req.query.projectId as string);
+    const _projectId = req.validatedProjectId || parseInt(req.query.projectId as string);
     
     // Validate project ID string format for filesystem access
     const projectIdStr = req.query.projectId as string;
@@ -465,7 +465,7 @@ router.get('/installed', ensureAuthenticated, ensureProjectAccess, async (req, r
  */
 router.get('/:projectId/search/:query?', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const projectId = req.params.projectId || req.query.projectId;
+    const _projectId = req.params.projectId || req.query.projectId;
     const query = (req.params.query || req.query.q) as string;
     const language = req.query.language as string || 'nodejs';
     
@@ -594,7 +594,7 @@ router.post('/:projectId/update', ensureAuthenticated, ensureProjectAccess, asyn
       }
     }
     
-    const { stdout, stderr } = await spawnPackageManager(packageManager, updateArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, updateArgs, workingDir);
     
     res.json({
       success: true,
@@ -771,7 +771,7 @@ router.delete('/:projectId/:packageName', ensureAuthenticated, ensureProjectAcce
       }
     }
     
-    const { stdout, stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
     
     res.json({
       success: true,

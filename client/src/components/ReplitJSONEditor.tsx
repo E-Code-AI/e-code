@@ -45,7 +45,7 @@ interface ReplitJSONEditorProps {
 }
 
 export function ReplitJSONEditor({
-  projectId,
+  projectId: _projectId,
   initialData = {},
   onSave,
   className,
@@ -54,7 +54,7 @@ export function ReplitJSONEditor({
   const [jsonData, setJsonData] = useState<any>(initialData);
   const [jsonString, setJsonString] = useState(JSON.stringify(initialData, null, 2));
   const [viewMode, setViewMode] = useState<'visual' | 'code'>('visual');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [_searchQuery, _setSearchQuery] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const [jsonTree, setJsonTree] = useState<JSONNode[]>([]);
@@ -239,10 +239,10 @@ export function ReplitJSONEditor({
 
     const handleSaveEdit = () => {
       // Update the JSON data
-      let newValue: any = editValue;
-      if (node.type === 'number') newValue = Number(editValue);
-      if (node.type === 'boolean') newValue = editValue === 'true';
-      if (node.type === 'null') newValue = null;
+      let _newValue: any = editValue;
+      if (node.type === 'number') _newValue = Number(editValue);
+      if (node.type === 'boolean') _newValue = editValue === 'true';
+      if (node.type === 'null') _newValue = null;
 
       // Update the JSON string
       const updatedData = { ...jsonData };

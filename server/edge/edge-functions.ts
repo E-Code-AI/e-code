@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { CacheKeys,CacheTTL,redisCache } from '../services/redis-cache.service';
 import { createLogger } from '../utils/logger';
 
-const logger = createLogger('edge-functions');
+const _logger = createLogger('edge-functions');
 
 interface EdgeFunction {
   id: string;
@@ -198,7 +198,7 @@ export class EdgeFunctionsService extends EventEmitter {
       request,
       env: func.env,
       console: {
-        log: (msg: string) => {},
+        log: (_msg: string) => {},
         error: (msg: string) => console.error(`[EdgeFunction ${func.id}] ${msg}`),
       },
       fetch: global.fetch,
@@ -338,7 +338,7 @@ export class EdgeFunctionsService extends EventEmitter {
   }
 
   private processDeploymentQueue(): void {
-    for (const [functionId, func] of Array.from(this.deploymentQueue)) {
+    for (const [functionId, _func] of Array.from(this.deploymentQueue)) {
       this.deploymentQueue.delete(functionId);
     }
   }

@@ -44,7 +44,7 @@ export function ReplitResourcesPanel({ projectId, className }: ReplitResourcesPa
   });
 
   // Use realtime data if available, fallback to initial data
-  const metrics = realtimeMetrics.length > 0 ? realtimeMetrics : (initialMetrics || []);
+  const _metrics = realtimeMetrics.length > 0 ? realtimeMetrics : (initialMetrics || []);
   const latest = latestMetric || initialLatest;
 
   // WebSocket connection for real-time updates

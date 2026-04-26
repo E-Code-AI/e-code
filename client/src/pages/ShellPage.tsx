@@ -145,7 +145,7 @@ export default function ShellPage() {
   const [activeTab, setActiveTab] = useState('shell');
   const [currentPath, setCurrentPath] = useState('/home/user/project');
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
-  const [fileTree, setFileTree] = useState<FileNode[]>([]);
+  const [fileTree, _setFileTree] = useState<FileNode[]>([]);
   const [envVars, setEnvVars] = useState<EnvVariable[]>([]);
   const [showSecrets, setShowSecrets] = useState<Set<string>>(new Set());
   const [sshConnections, setSshConnections] = useState<SSHConnection[]>([]);

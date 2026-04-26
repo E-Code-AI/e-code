@@ -26,7 +26,7 @@ interface MobileMenuProps {
   onOpenSpotlight?: () => void;
 }
 
-export function MobileMenu({ onOpenSpotlight }: MobileMenuProps) {
+export function MobileMenu({ onOpenSpotlight: _onOpenSpotlight }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const [location, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();

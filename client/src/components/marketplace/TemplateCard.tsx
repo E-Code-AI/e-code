@@ -74,7 +74,7 @@ export function TemplateCard({
           text: template.description,
           url: `${window.location.origin}/templates/${template.slug || template.id}`,
         });
-      } catch (err) {
+      } catch (_err) {
         handleCopyLink();
       }
     } else {

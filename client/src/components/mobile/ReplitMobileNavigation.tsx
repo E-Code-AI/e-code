@@ -173,7 +173,7 @@ export const ReplitMobileNavigation = memo(function ReplitMobileNavigation({
     onPlayStop?.();
   }, [onPlayStop]);
 
-  const handlePanelToggle = useCallback(() => {
+  const _handlePanelToggle = useCallback(() => {
     if ('vibrate' in navigator) {
       navigator.vibrate(10);
     }

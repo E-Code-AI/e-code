@@ -100,7 +100,7 @@ export function BottomSheet({
   showHandle = true,
   closeOnSwipeDown = true
 }: BottomSheetProps) {
-  const [isDragging, setIsDragging] = useState(false);
+  const [_isDragging, setIsDragging] = useState(false);
   const [dragY, setDragY] = useState(0);
 
   const handleDragEnd = (_: any, info: any) => {

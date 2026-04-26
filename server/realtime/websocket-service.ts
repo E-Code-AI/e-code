@@ -315,7 +315,7 @@ export class WebSocketService {
     }
   }
 
-  private async saveFileChanges(projectId: number, fileId: string, changes: any) {
+  private async saveFileChanges(_projectId: number, _fileId: string, _changes: any) {
     // Implement file change saving logic
     // This would integrate with the file system service
     try {
@@ -325,7 +325,7 @@ export class WebSocketService {
     }
   }
 
-  private async saveChatMessage(projectId: number, message: any) {
+  private async saveChatMessage(_projectId: number, _message: any) {
     // Implement chat message persistence
     try {
       // await storage.saveChatMessage(projectId, message);

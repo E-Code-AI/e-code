@@ -320,7 +320,7 @@ export class AgentElementSelectorService {
     await page.waitForTimeout(500);
 
     // Capture screenshot
-    const screenshot = await page.screenshot({ fullPage: false });
+    const _screenshot = await page.screenshot({ fullPage: false });
     
     // In production, upload to S3/object storage
     const screenshotUrl = `/element-screenshots/${Date.now()}.png`;

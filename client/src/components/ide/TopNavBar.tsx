@@ -87,10 +87,10 @@ interface TopNavBarProps {
 export function TopNavBar({
   projectName,
   projectDescription,
-  projectSlug,
-  ownerUsername,
+  projectSlug: _projectSlug,
+  ownerUsername: _ownerUsername,
   projectId,
-  isDeployed,
+  isDeployed: _isDeployed,
   onRun,
   isRunning,
   tabs,
@@ -98,11 +98,11 @@ export function TopNavBar({
   onTabChange,
   onTabClose,
   onTabReorder,
-  onAddTab,
+  onAddTab: _onAddTab,
   onOpenToolsSheet,
   availableTools,
   onAddTool,
-  showFileExplorer,
+  showFileExplorer: _showFileExplorer,
   onToggleFileExplorer,
   showCollaboration,
   onToggleCollaboration,
@@ -110,8 +110,8 @@ export function TopNavBar({
   onOpenDeployLogs,
   onOpenDeployAnalytics,
   showTabs = true,
-  onOpenCommandPalette,
-  onOpenGlobalSearch,
+  onOpenCommandPalette: _onOpenCommandPalette,
+  onOpenGlobalSearch: _onOpenGlobalSearch,
 }: TopNavBarProps) {
   const { user, logoutMutation } = useAuth();
   const { theme, setTheme } = useTheme();

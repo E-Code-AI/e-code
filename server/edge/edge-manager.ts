@@ -173,7 +173,7 @@ export class EdgeManager extends EventEmitter {
 
   private startHealthChecks() {
     setInterval(() => {
-      this.locations.forEach((location, id) => {
+      this.locations.forEach((location, _id) => {
         // Simulate health checks
         const now = new Date();
         const timeSinceLastHeartbeat = now.getTime() - location.lastHeartbeat.getTime();
@@ -263,7 +263,7 @@ export class EdgeManager extends EventEmitter {
     );
   }
 
-  private selectOptimalLocations(projectId: string): string[] {
+  private selectOptimalLocations(_projectId: string): string[] {
     // Select optimal edge locations based on load and geography
     const activeLocations = Array.from(this.locations.values())
       .filter(loc => loc.status === 'active')

@@ -472,7 +472,7 @@ class SecurityMonitoringService extends EventEmitter {
    */
   async getDashboardData(): Promise<any> {
     const oneHourAgo = new Date(Date.now() - 3600000);
-    const oneDayAgo = new Date(Date.now() - 86400000);
+    const _oneDayAgo = new Date(Date.now() - 86400000);
 
     try {
       // Get recent events

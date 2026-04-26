@@ -86,11 +86,11 @@ interface Plan {
   };
 }
 
-const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
+const _COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'];
 
 export default function Billing() {
   const [, navigate] = useLocation();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [_selectedPlan, _setSelectedPlan] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -100,7 +100,7 @@ export default function Billing() {
     queryFn: async () => {
       try {
         return await apiRequest('GET', '/api/payments/subscription-status');
-      } catch (err) {
+      } catch (_err) {
         return {
           hasSubscription: false,
           subscriptionId: null,
@@ -118,7 +118,7 @@ export default function Billing() {
     queryFn: async () => {
       try {
         return await apiRequest('GET', '/api/payments/credits-status');
-      } catch (err) {
+      } catch (_err) {
         return {
           balance: 0,
           monthlyAllowance: 0,
@@ -136,7 +136,7 @@ export default function Billing() {
     queryFn: async () => {
       try {
         return await apiRequest('GET', '/api/payments/billing-history');
-      } catch (err) {
+      } catch (_err) {
         return { invoices: [] };
       }
     },
@@ -148,7 +148,7 @@ export default function Billing() {
     queryFn: async () => {
       try {
         return await apiRequest('GET', '/api/payments/plans');
-      } catch (err) {
+      } catch (_err) {
         return [];
       }
     },
@@ -159,7 +159,7 @@ export default function Billing() {
     queryFn: async () => {
       try {
         return await apiRequest('GET', '/api/usage/current');
-      } catch (err) {
+      } catch (_err) {
         return {
           compute_hours: 0,
           storage: 0,

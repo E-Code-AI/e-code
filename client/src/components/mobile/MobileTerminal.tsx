@@ -37,7 +37,7 @@ export function MobileTerminal({
   const commandBufferRef = useRef<string>('');
   const [showKeyboard, setShowKeyboard] = useState(true);
   const [canPaste, setCanPaste] = useState(false);
-  const [currentLine, setCurrentLine] = useState('');
+  const [_currentLine, setCurrentLine] = useState('');
   const [historyIndex, setHistoryIndex] = useState(-1);
   const { toast } = useToast();
   

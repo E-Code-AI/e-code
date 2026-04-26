@@ -75,7 +75,7 @@ export function ReplitSearchBox({
     }
   }, [query, options, onSearch]);
 
-  const handleSearch = () => {
+  const _handleSearch = () => {
     if (query.trim() && onSearch) {
       onSearch(query, options);
     }

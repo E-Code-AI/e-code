@@ -159,7 +159,7 @@ export class DockerExecutor extends EventEmitter {
 
       // Handle output
       stream.on('data', (chunk) => {
-        const output = chunk.toString();
+        const _output = chunk.toString();
         // Docker multiplexes stdout/stderr, first byte indicates stream type
         const streamType = chunk[0];
         const message = chunk.slice(8).toString();
@@ -492,7 +492,7 @@ export class DockerExecutor extends EventEmitter {
           try {
             const content = await fs.readFile(path.join(currentDir, entry.name), 'utf8');
             files.set(entryRelativePath, content);
-          } catch (readError) {
+          } catch (_readError) {
             // Try reading as binary and encode as base64 for binary files
             try {
               const buffer = await fs.readFile(path.join(currentDir, entry.name));
@@ -504,7 +504,7 @@ export class DockerExecutor extends EventEmitter {
               } else {
                 logger.warn(`Skipping large binary file: ${entryRelativePath} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
               }
-            } catch (binaryError) {
+            } catch (_binaryError) {
               logger.debug(`Skipping unreadable file: ${entryRelativePath}`);
             }
           }
@@ -903,8 +903,8 @@ export class DockerExecutor extends EventEmitter {
   async executeCode(
     language: string,
     code: string,
-    input?: string,
-    workDir?: string
+    _input?: string,
+    _workDir?: string
   ): Promise<{ output: string; error: string; exitCode: number }> {
     const mainFiles: Record<string, string> = {
       'python': 'main.py',

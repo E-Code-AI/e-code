@@ -195,7 +195,7 @@ export class AgentV2Service {
     
     Provide a step-by-step plan with specific actions.`;
 
-    const response = await provider.generateChat([
+    const _response = await provider.generateChat([
       { role: 'system', content: 'You are an expert software architect creating implementation plans.' },
       { role: 'user', content: prompt }
     ]);
@@ -212,7 +212,7 @@ export class AgentV2Service {
     };
   }
 
-  private async executeStep(task: AgentV2Task, step: any) {
+  private async executeStep(_task: AgentV2Task, _step: any) {
     // Simulate step execution with real metrics
     const startTokens = await this.getCurrentTokenUsage();
     

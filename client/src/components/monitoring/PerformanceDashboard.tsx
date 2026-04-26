@@ -44,13 +44,13 @@ interface Bottleneck {
   percentage?: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+const _COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 export function PerformanceDashboard() {
   const [realTimeMetrics, setRealTimeMetrics] = useState<PerformanceMetrics | null>(null);
 
   // Fetch real-time metrics
-  const { data: metrics } = useQuery({
+  const { data: _metrics } = useQuery({
     queryKey: ['/api/monitoring/metrics'],
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,

@@ -26,11 +26,11 @@ interface MobileNavigationProps {
 }
 
 export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNavigationProps) {
-  const [location, navigate] = useLocation();
+  const [location, _navigate] = useLocation();
   const [activeTab, setActiveTab] = useState(location);
   const [lastTapTime, setLastTapTime] = useState(0);
   const [showPulse, setShowPulse] = useState(true);
-  const activeIndicatorRef = useRef<HTMLDivElement>(null);
+  const _activeIndicatorRef = useRef<HTMLDivElement>(null);
   
   const isMobile = useIsMobile();
 
@@ -80,7 +80,7 @@ export function MobileNavigation({ onCreateClick, notifications = 0 }: MobileNav
       <div className="absolute inset-0 bg-[var(--mobile-ide-bg)] border-t border-[var(--ecode-border)]" />
       
       <nav className="relative flex items-center justify-around h-14">
-        {navItems.map((item, index) => {
+        {navItems.map((item, _index) => {
           const Icon = item.icon;
           const isActive = activeTab === item.path;
           const isCenter = item.isCenter;

@@ -25,7 +25,7 @@ export function TerminalMetricsIndicator({
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 10s to 30s (hook sets refetchIntervalInBackground: false internally)
   });
   
-  const { data: metricsData, isLoading: metricsLoading } = useTerminalMetrics({
+  const { data: metricsData, isLoading: _metricsLoading } = useTerminalMetrics({
     enabled: showDetailed,
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s (hook sets refetchIntervalInBackground: false internally)
   });

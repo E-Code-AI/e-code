@@ -450,7 +450,7 @@ router.delete('/sessions/:sessionId', ensureAuthenticated, (req, res) => {
 // API endpoint to generate shell command with AI
 router.post('/generate-command', ensureAuthenticated, async (req, res) => {
   try {
-    const { prompt, projectId } = req.body;
+    const { prompt, projectId: _projectId } = req.body;
     
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });

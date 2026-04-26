@@ -75,7 +75,7 @@ const initialState = {
 
 export const useLayoutStore = create<LayoutState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       ...initialState,
       
       setDeviceType: (type) => set({ deviceType: type }),
@@ -114,7 +114,7 @@ export const useLayoutStore = create<LayoutState>()(
       
       closeOtherTabs: (fileId) => set((state) => {
         // Preserve all pinned tabs + the selected tab
-        const pinnedSet = new Set(state.pinnedTabs);
+        const _pinnedSet = new Set(state.pinnedTabs);
         const newTabs = [fileId, ...state.pinnedTabs.filter(id => id !== fileId)];
         
         return {
@@ -128,7 +128,7 @@ export const useLayoutStore = create<LayoutState>()(
         if (currentIndex === -1) return state;
         
         // Keep tabs to the left + current tab + all pinned tabs
-        const tabsToLeft = state.openTabs.slice(0, currentIndex + 1);
+        const _tabsToLeft = state.openTabs.slice(0, currentIndex + 1);
         const tabsToRight = state.openTabs.slice(currentIndex + 1);
         
         // Only close non-pinned tabs to the right

@@ -172,7 +172,7 @@ export function AIModelSelector({
                 sideOffset={4}
               >
                 {availableModels.map((model) => {
-                  const ProviderIcon = getProviderIcon(model.provider);
+                  const _ProviderIcon = getProviderIcon(model.provider);
                   const providerColor = getProviderColor(model.provider);
                   const isAvailable = model.available !== false;
                   return (
@@ -226,7 +226,7 @@ export function AIModelSelector({
   // ✅ MOBILE-RESPONSIVE (Nov 24, 2025): Stack header on mobile, adjust sizes, hide descriptions on xs screens
   if (variant === 'hero') {
     const currentModelData = availableModels.find(m => m.id === currentModel);
-    const ProviderIcon = currentModelData ? getProviderIcon(currentModelData.provider) : Sparkles;
+    const _ProviderIcon = currentModelData ? getProviderIcon(currentModelData.provider) : Sparkles;
     const providerColor = currentModelData ? getProviderColor(currentModelData.provider) : 'bg-orange-500';
 
     return (

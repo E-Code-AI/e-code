@@ -92,7 +92,7 @@ class FigmaImportService {
     }
   }
   
-  private async generateReactComponents(designData: any) {
+  private async generateReactComponents(_designData: any) {
     return [
       {
         name: 'Button',

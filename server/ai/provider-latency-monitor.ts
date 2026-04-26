@@ -295,7 +295,7 @@ class ProviderLatencyMonitor {
     const primary = stats[0];
     const fallbacks = stats.slice(1).map(s => s.provider);
 
-    const avgHealthScore = stats.reduce((sum, s) => sum + s.healthScore, 0) / stats.length;
+    const _avgHealthScore = stats.reduce((sum, s) => sum + s.healthScore, 0) / stats.length;
     const confidence = Math.min(100, Math.round(
       (primary.healthScore / 100) * 
       (Math.min(primary.totalRequests, 50) / 50) * 

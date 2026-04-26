@@ -19,7 +19,7 @@ import * as nixManager from './nix-manager';
 
 const execAsync = promisify(exec);
 const logger = createLogger('runtime');
-const codeExecutor = new CodeExecutor();
+const _codeExecutor = new CodeExecutor();
 
 // Check if Docker daemon is available.
 // On Replit Cloud Run, the Docker CLI is installed but the daemon socket is not
@@ -28,7 +28,7 @@ const codeExecutor = new CodeExecutor();
 let dockerAvailable: boolean | null = null;
 const _dockerProbe: Promise<boolean> = (async () => {
   try {
-    const result = await Promise.race([
+    const _result = await Promise.race([
       execAsync('docker ps --quiet'),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('docker probe timeout')), 3000)
@@ -238,7 +238,7 @@ export async function startProject(
           fs.rmSync(projectDir, { recursive: true, force: true });
           logger.info(`Cleaned up project directory after language detection failure: ${projectDir}`);
         }
-      } catch (cleanupErr) {
+      } catch (_cleanupErr) {
         logger.warn(`Failed to cleanup project directory: ${projectDir}`);
       }
       
@@ -534,7 +534,7 @@ export async function startProject(
                 fs.rmSync(projectDir, { recursive: true, force: true });
                 logger.info(`Cleaned up project directory after compile error: ${projectDir}`);
               }
-            } catch (cleanupErr) {
+            } catch (_cleanupErr) {
               logger.warn(`Failed to cleanup project directory after compile error: ${projectDir}`);
             }
             
@@ -718,7 +718,7 @@ export async function startProject(
           if (fs.existsSync(projectDir)) {
             fs.rmSync(projectDir, { recursive: true, force: true });
           }
-        } catch (cleanupErr) {
+        } catch (_cleanupErr) {
           // Ignore cleanup errors
         }
         
@@ -761,7 +761,7 @@ export async function startProject(
             fs.rmSync(projectDir, { recursive: true, force: true });
             logger.info(`Cleaned up project directory after Nix config failure: ${projectDir}`);
           }
-        } catch (cleanupErr) {
+        } catch (_cleanupErr) {
           logger.warn(`Failed to cleanup project directory: ${projectDir}`);
         }
         
@@ -789,7 +789,7 @@ export async function startProject(
             fs.rmSync(projectDir, { recursive: true, force: true });
             logger.info(`Cleaned up project directory after Nix apply failure: ${projectDir}`);
           }
-        } catch (cleanupErr) {
+        } catch (_cleanupErr) {
           logger.warn(`Failed to cleanup project directory: ${projectDir}`);
         }
         
@@ -827,7 +827,7 @@ export async function startProject(
           fs.rmSync(projectDir, { recursive: true, force: true });
           logger.info(`Cleaned up project directory after container failure: ${projectDir}`);
         }
-      } catch (cleanupErr) {
+      } catch (_cleanupErr) {
         logger.warn(`Failed to cleanup project directory: ${projectDir}`);
       }
       
@@ -886,7 +886,7 @@ export async function startProject(
           fs.rmSync(projectDir, { recursive: true, force: true });
           logger.info(`Cleaned up project directory on error: ${projectDir}`);
         }
-      } catch (cleanupErr) {
+      } catch (_cleanupErr) {
         logger.warn(`Failed to cleanup project directory on error: ${projectDir}`);
       }
     }
@@ -948,7 +948,7 @@ export async function stopProject(projectId: string): Promise<boolean> {
         try {
           fs.rmSync(runtime.projectDir, { recursive: true, force: true });
           logger.info(`Cleaned up temp directory: ${runtime.projectDir}`);
-        } catch (cleanupError) {
+        } catch (_cleanupError) {
           logger.warn(`Failed to cleanup temp dir: ${runtime.projectDir}`);
         }
       }

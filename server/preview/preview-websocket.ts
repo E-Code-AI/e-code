@@ -39,7 +39,7 @@ class PreviewWebSocketService {
   private readonly PING_INTERVAL_MS = 30000;
   private readonly CLIENT_TIMEOUT_MS = 90000;
 
-  initialize(server: Server) {
+  initialize(_server: Server) {
     this.wss = new WebSocketServer({ 
       noServer: true
     });
@@ -124,7 +124,7 @@ class PreviewWebSocketService {
   
   private startPingInterval() {
     this.pingInterval = setInterval(() => {
-      for (const [clientId, client] of this.clients.entries()) {
+      for (const [_clientId, client] of this.clients.entries()) {
         if (client.ws.readyState === WebSocket.OPEN) {
           client.ws.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
         }

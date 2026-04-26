@@ -285,11 +285,11 @@ export function useAgentWebSocket({
           
           setLastUpdate(update);
           onUpdate?.(update);
-        } catch (err) {
+        } catch (_err) {
         }
       };
       
-      ws.onerror = (event) => {
+      ws.onerror = (_event) => {
         setError(new Error('WebSocket connection error'));
         setIsConnected(false);
       };

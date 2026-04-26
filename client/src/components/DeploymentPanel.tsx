@@ -62,7 +62,7 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
   const { toast } = useToast();
 
   // Fetch deployment data from the backend
-  const { data: deploymentResponse, isLoading, refetch } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
+  const { data: deploymentResponse, isLoading, refetch: _refetch } = useQuery<{ deployment?: DeploymentData; deployments?: DeploymentData[] }>({
     queryKey: [`/api/projects/${projectId}/deployments`],
     refetchInterval: (query) => {
       // If deployment is in progress, poll more frequently

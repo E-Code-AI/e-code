@@ -203,7 +203,7 @@ export class CDNOptimizationService {
   }
 
   // Get nearest edge location based on request
-  private getNearestEdgeLocation(req: Request): string {
+  private getNearestEdgeLocation(_req: Request): string {
     // On Replit, the platform handles edge location automatically
     if (this.config.isReplitEnvironment) {
       return 'replit-global-cdn';

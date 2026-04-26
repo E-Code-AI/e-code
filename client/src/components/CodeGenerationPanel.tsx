@@ -97,7 +97,7 @@ export function CodeGenerationPanel() {
     setProgress({ chunks: 0, length: 0 });
     
     // Build SSE URL with query params (EventSource only supports GET)
-    const params = new URLSearchParams({
+    const _params = new URLSearchParams({
       prompt,
       language,
       modelId: selectedModel,

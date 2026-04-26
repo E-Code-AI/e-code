@@ -72,7 +72,7 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const [gitStatus, setGitStatus] = useState<GitStatus | null>(null);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [commits, setCommits] = useState<Commit[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [_selectedFiles, _setSelectedFiles] = useState<Set<string>>(new Set());
   const [commitMessage, setCommitMessage] = useState('');
   const [isCommitting, setIsCommitting] = useState(false);
   const [isPushing, setIsPushing] = useState(false);

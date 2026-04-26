@@ -111,7 +111,7 @@ export class SimpleGitManager {
       await execAsync(`cd ${projectDir} && git add .`);
       
       // Commit
-      const { stdout } = await execAsync(
+      const { stdout: _stdout } = await execAsync(
         `cd ${projectDir} && git commit -m "${message.replace(/"/g, '\\"')}"`
       );
       

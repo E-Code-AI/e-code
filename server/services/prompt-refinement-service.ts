@@ -198,7 +198,7 @@ export class PromptRefinementService {
 
   private performBasicAnalysis(prompt: string): PromptAnalysis {
     const words = prompt.split(/\s+/);
-    const sentences = prompt.split(/[.!?]+/).filter(s => s.trim());
+    const _sentences = prompt.split(/[.!?]+/).filter(s => s.trim());
 
     const analysis: PromptAnalysis = {
       clarity: 0,
@@ -264,7 +264,7 @@ export class PromptRefinementService {
     return analysis;
   }
 
-  private async performAIAnalysis(prompt: string, context?: any): Promise<PromptAnalysis | null> {
+  private async performAIAnalysis(prompt: string, _context?: any): Promise<PromptAnalysis | null> {
     try {
       const systemPrompt = `Analyze the following user prompt for an AI coding assistant and provide scores (0-100) for:
 1. Clarity: How clear and unambiguous is the prompt?
@@ -349,7 +349,7 @@ Also list specific issues and strengths. Return as JSON.`;
     return { refined, suggestions };
   }
 
-  private async applyAIRefinements(prompt: string, options?: any): Promise<{
+  private async applyAIRefinements(prompt: string, _options?: any): Promise<{
     refined: string;
     suggestions: RefinementSuggestion[];
   }> {
@@ -427,7 +427,7 @@ Return a JSON object with: { refined: "improved prompt", suggestions: [{type, or
     };
   }
 
-  private async generateAIAlternatives(prompt: string, count: number): Promise<Array<{
+  private async generateAIAlternatives(_prompt: string, _count: number): Promise<Array<{
     prompt: string;
     focus: string;
     strength: string;

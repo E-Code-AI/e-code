@@ -70,7 +70,7 @@ export default function Explore() {
   }
 
   // Fetch public projects from API
-  const { data: publicRepls = [], isLoading, error: exploreError } = useQuery<ExploreProject[]>({
+  const { data: publicRepls = [], isLoading, error: _exploreError } = useQuery<ExploreProject[]>({
     queryKey: ['/api/explore/projects', { category: selectedCategory, sort: sortBy, search: searchQuery }],
     queryFn: async ({ queryKey }) => {
       const [, params] = queryKey as [string, any];

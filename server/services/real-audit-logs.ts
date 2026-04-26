@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 
 const logger = {
-  info: (message: string, ...args: any[]) => {},
+  info: (_message: string, ..._args: any[]) => {},
   error: (message: string, ...args: any[]) => console.error(`[real-audit-logs] ERROR: ${message}`, ...args),
   warn: (message: string, ...args: any[]) => console.warn(`[real-audit-logs] WARN: ${message}`, ...args),
 };

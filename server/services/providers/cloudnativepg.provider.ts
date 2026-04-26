@@ -127,7 +127,7 @@ export class CloudNativePGProvider implements IDatabaseProvider {
   private generateClusterManifest(
     projectId: number,
     options: ProvisioningOptions,
-    password: string
+    _password: string
   ): K8sCluster {
     const plan = (options.plan || 'free') as PlanType;
     const planLimits = PLAN_LIMITS[plan];
@@ -503,7 +503,7 @@ export class CloudNativePGProvider implements IDatabaseProvider {
 
   async pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void> {
     const clusterName = `ecode-db-${databaseId}`;
-    const namespace = this.k8sNamespace;
+    const _namespace = this.k8sNamespace;
     
     logger.info(`Initiating CloudNativePG PITR for database ${databaseId}`, { timestamp, timezone, clusterName });
     logger.warn('CloudNativePG PITR uses barman - operation logged');

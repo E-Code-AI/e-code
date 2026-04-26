@@ -31,7 +31,7 @@ import { Link,useLocation } from 'wouter';
 // Import stock images
 const modernSoftwareImg = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop';
 
-const fadeInUp = {
+const _fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5 }
@@ -40,7 +40,7 @@ const fadeInUp = {
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading: authLoading, loginMutation } = useAuth();
+  const { user, isLoading: authLoading, loginMutation: _loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [formData, setFormData] = useState({

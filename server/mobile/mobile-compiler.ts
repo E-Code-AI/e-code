@@ -435,7 +435,7 @@ export class MobileCompiler {
     return workspace || 'App.xcworkspace';
   }
 
-  private async findXcodeScheme(buildDir: string): Promise<string> {
+  private async findXcodeScheme(_buildDir: string): Promise<string> {
     return 'App'; // Default scheme name
   }
 
@@ -445,12 +445,12 @@ export class MobileCompiler {
     return artifactPath;
   }
 
-  private async saveBuildResult(result: MobileBuildResult): Promise<void> {
+  private async saveBuildResult(_result: MobileBuildResult): Promise<void> {
     // Save build result to storage
     // Implementation pending database schema update
   }
 
-  async getBuildStatus(buildId: string): Promise<MobileBuildResult | null> {
+  async getBuildStatus(_buildId: string): Promise<MobileBuildResult | null> {
     // Retrieve build status from storage
     return null;
   }

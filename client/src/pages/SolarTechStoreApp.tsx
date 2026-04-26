@@ -178,7 +178,7 @@ export default function SolarTechStoreApp() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [_selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   const categories = [

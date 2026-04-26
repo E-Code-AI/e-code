@@ -24,7 +24,7 @@ function contentHash(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-function hasRunnableFiles(files: any[]): boolean {
+function _hasRunnableFiles(files: any[]): boolean {
   return files.some((file) => {
     if (file.isDirectory || file.isFolder) return false;
     const filePath = String(file.path || file.name || '');
@@ -246,7 +246,7 @@ function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: numbe
  * Only these variables will be passed to child processes to prevent API key exposure
  * IMPORTANT: Never include DATABASE_URL, API keys, or secrets in this list
  */
-const SAFE_ENV_WHITELIST = [
+const _SAFE_ENV_WHITELIST = [
   // System paths and shell
   'PATH',
   'HOME',
@@ -1019,7 +1019,7 @@ export class PreviewService {
 
     try {
       const syncStart = Date.now();
-      const previewPath = path.join('/tmp', `preview-${projectId}`);
+      const _previewPath = path.join('/tmp', `preview-${projectId}`);
       const nonDirectoryFiles = files.filter((file) => !file.isDirectory && !file.isFolder);
       const projectCache = fileHashCache.get(projectId) ?? new Map<string, string>();
       const beforeCount = projectCache.size;
@@ -1181,7 +1181,7 @@ export class PreviewService {
     return false;
   }
 
-  private async detectFramework(files: any[], previewPath: string) {
+  private async detectFramework(files: any[], _previewPath: string) {
     const packageJsonFile = selectPackageJsonFile(files);
     const hasIndexHtml = files.some(f => f.name === 'index.html');
     const hasPythonFiles = files.some(f => f.name.endsWith('.py'));
@@ -1659,7 +1659,7 @@ http.createServer((req, res) => {
 
   private startHealthChecks() {
     this.healthCheckInterval = setInterval(async () => {
-      for (const [projectId, preview] of this.previews) {
+      for (const [_projectId, preview] of this.previews) {
         if (preview.status === 'running') {
           await this.performHealthChecks(preview);
         }

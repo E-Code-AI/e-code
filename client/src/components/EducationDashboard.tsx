@@ -91,8 +91,8 @@ interface EducationDashboardProps {
 
 export function EducationDashboard({ userId, isTeacher = false }: EducationDashboardProps) {
   const queryClient = useQueryClient();
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
+  const [_selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [_selectedClassroom, setSelectedClassroom] = useState<Classroom | null>(null);
 
   // Fetch courses
   const { data: courses = [] } = useQuery<Course[]>({
@@ -128,7 +128,7 @@ export function EducationDashboard({ userId, isTeacher = false }: EducationDashb
   });
 
   // Complete lesson
-  const completeLessonMutation = useMutation({
+  const _completeLessonMutation = useMutation({
     mutationFn: ({ courseId, lessonId }: { courseId: number; lessonId: number }) =>
       apiRequest('POST', `/api/education/courses/${courseId}/lessons/${lessonId}/complete`),
     onSuccess: () => {

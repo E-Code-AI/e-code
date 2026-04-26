@@ -8,7 +8,7 @@ import { Cloud,Cpu,Database,Rocket,Shield,Star,Timer,Zap } from 'lucide-react';
 
 export default function PowerUps() {
   const { toast } = useToast();
-  const { data: powerUps, isLoading, error } = useQuery({
+  const { data: _powerUps, isLoading, error } = useQuery({
     queryKey: ['/api/powerups']
   });
 

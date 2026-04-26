@@ -59,7 +59,7 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
   const [showSearch, setShowSearch] = useState(false);
   const [showKeyboardToolbar, setShowKeyboardToolbar] = useState(true);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
-  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
+  const [connectionStatus, _setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
   const [content, setContent] = useState(props.initialContent || '');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const editorViewRef = useRef<EditorView | null>(null);

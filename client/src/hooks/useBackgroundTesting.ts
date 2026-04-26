@@ -294,7 +294,7 @@ export function useBackgroundTesting({
         setConnectionError('WebSocket connection error');
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = (_event) => {
         if (!isMountedRef.current) {
           return;
         }

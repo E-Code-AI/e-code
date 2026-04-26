@@ -130,7 +130,7 @@ router.get('/sessions/:sessionId/participants', requireAuth, async (req: Request
 // Join a session with token (for share links)
 router.post('/join', requireAuth, async (req: Request, res: Response) => {
   try {
-    const { token, sessionId } = req.body;
+    const { token: _token, sessionId } = req.body;
     const userId = req.user?.id;
     const username = req.user?.username || 'Anonymous';
     

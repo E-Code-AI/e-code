@@ -211,7 +211,7 @@ export class PerformanceMonitor {
     return end - start;
   }
   
-  logMeasure(startMark: string, endMark?: string, label?: string) {
+  logMeasure(startMark: string, endMark?: string, _label?: string) {
     const duration = this.measure(startMark, endMark);
     return duration;
   }

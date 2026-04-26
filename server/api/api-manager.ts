@@ -135,7 +135,7 @@ export class APIManager {
   async getUserAPIKeys(userId: number): Promise<Array<Omit<APIKey, 'key' | 'hashedKey'>>> {
     const keys = await this.loadUserAPIKeys(userId);
     
-    return keys.map(({ key, hashedKey, ...keyInfo }) => keyInfo);
+    return keys.map(({ key: _key, hashedKey: _hashedKey, ...keyInfo }) => keyInfo);
   }
 
   async revokeAPIKey(userId: number, keyId: string): Promise<boolean> {
@@ -255,47 +255,47 @@ export class APIManager {
   // Storage methods (in real implementation, these would use database)
   private async saveAPIKey(apiKey: APIKey): Promise<void> {
     // Save to database (without plain key)
-    const { key, ...keyData } = apiKey;
+    const { key: _key, ..._keyData } = apiKey;
     // await storage.saveAPIKey(keyData);
   }
 
-  private async loadAPIKey(keyId: string): Promise<APIKey | null> {
+  private async loadAPIKey(_keyId: string): Promise<APIKey | null> {
     // Load from database
     // return await storage.getAPIKey(keyId);
     return null;
   }
 
-  private async loadAPIKeyByHash(hashedKey: string): Promise<APIKey | null> {
+  private async loadAPIKeyByHash(_hashedKey: string): Promise<APIKey | null> {
     // Load from database by hashed key
     // return await storage.getAPIKeyByHash(hashedKey);
     return null;
   }
 
-  private async loadUserAPIKeys(userId: number): Promise<APIKey[]> {
+  private async loadUserAPIKeys(_userId: number): Promise<APIKey[]> {
     // Load all keys for user
     // return await storage.getUserAPIKeys(userId);
     return [];
   }
 
-  private async deleteAPIKey(keyId: string): Promise<void> {
+  private async deleteAPIKey(_keyId: string): Promise<void> {
     // Delete from database
     // await storage.deleteAPIKey(keyId);
   }
 
-  private async updateAPIKeyLastUsed(keyId: string, lastUsedAt: Date): Promise<void> {
+  private async updateAPIKeyLastUsed(_keyId: string, _lastUsedAt: Date): Promise<void> {
     // Update last used timestamp
     // await storage.updateAPIKeyLastUsed(keyId, lastUsedAt);
   }
 
-  private async saveAPIUsage(usage: APIUsage): Promise<void> {
+  private async saveAPIUsage(_usage: APIUsage): Promise<void> {
     // Save usage record
     // await storage.saveAPIUsage(usage);
   }
 
   private async loadAPIUsage(
-    userId: number,
-    keyId?: string,
-    startDate?: Date
+    _userId: number,
+    _keyId?: string,
+    _startDate?: Date
   ): Promise<APIUsage[]> {
     // Load usage records
     // return await storage.getAPIUsage(userId, keyId, startDate);

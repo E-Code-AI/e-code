@@ -242,7 +242,7 @@ ${config.startCommand || 'python app.py'}
     }
   }
 
-  private async configureReverseProxy(subdomain: string, port: number, deploymentPath: string): Promise<void> {
+  private async configureReverseProxy(subdomain: string, port: number, _deploymentPath: string): Promise<void> {
     const nginxConfig = `
 server {
     listen 80;
@@ -276,7 +276,7 @@ server {
     // In production, would reload nginx: sudo nginx -s reload
   }
 
-  private async configureCustomDomain(customDomain: string, targetSubdomain: string): Promise<void> {
+  private async configureCustomDomain(_customDomain: string, _targetSubdomain: string): Promise<void> {
     // In production, this would:
     // 1. Update DNS records
     // 2. Configure SSL with Let's Encrypt

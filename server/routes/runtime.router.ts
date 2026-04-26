@@ -172,8 +172,8 @@ router.get('/projects/:id/runtime', ensureAuthenticated, ensureProjectAccess, ge
  */
 router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectAccess, async (req, res) => {
   try {
-    const { command, args, input } = req.body;
-    const projectId = req.params.id;
+    const { command, args: _args, input: _input } = req.body;
+    const _projectId = req.params.id;
 
     if (!command) {
       return res.status(400).json({ error: 'Command is required' });
@@ -415,7 +415,7 @@ router.post('/execute', ensureAuthenticated, async (req, res) => {
  * SECURITY: Requires authentication, rate limited, feature-flagged
  * Body: { language: string, code: string }
  */
-router.post('/projects/:id/execute-direct', ensureAuthenticated, async (req, res, next) => {
+router.post('/projects/:id/execute-direct', ensureAuthenticated, async (req, res, _next) => {
   const projectId = req.params.id;
   req.params.id = projectId;
   

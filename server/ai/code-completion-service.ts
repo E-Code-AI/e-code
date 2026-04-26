@@ -252,9 +252,9 @@ Only provide completions that are highly relevant and would actually help the de
 
   // Method to train/improve completions based on user acceptance
   async recordCompletionFeedback(
-    completion: string,
-    accepted: boolean,
-    context: CompletionRequest
+    _completion: string,
+    _accepted: boolean,
+    _context: CompletionRequest
   ): Promise<void> {
     // This could be used to improve future completions
     // Feedback data could be stored in database for analysis

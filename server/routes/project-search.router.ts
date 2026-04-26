@@ -71,7 +71,7 @@ function searchInContent(
   return matches;
 }
 
-function isSymbolMatch(lineText: string, match: string): boolean {
+function isSymbolMatch(lineText: string, _match: string): boolean {
   const symbolPatterns = [
     /^(export\s+)?(async\s+)?function\s+/,
     /^(export\s+)?(const|let|var)\s+\w+\s*=/,

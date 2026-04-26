@@ -266,7 +266,7 @@ export class LocalProvider implements IDatabaseProvider {
       }
     }
     
-    const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
+    const _schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
     const roleName = this.sanitizeIdentifier(`proj_user_${databaseId}`);
     const newPassword = this.generatePassword();
     
@@ -508,7 +508,7 @@ export class LocalProvider implements IDatabaseProvider {
     }
   }
 
-  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<{
+  async executeQuery(databaseId: number, query: string, _credentials: DatabaseCredentials): Promise<{
     rows: any[];
     rowCount: number;
     fields: Array<{ name: string; dataTypeID?: number }>;

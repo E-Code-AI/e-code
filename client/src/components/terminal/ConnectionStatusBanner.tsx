@@ -32,7 +32,7 @@ export const ConnectionStatusBanner = memo(function ConnectionStatusBanner({
   maxAttempts,
   nextRetryMs,
   error,
-  latency,
+  latency: _latency,
   onForceReconnect,
   className,
 }: ConnectionStatusBannerProps) {

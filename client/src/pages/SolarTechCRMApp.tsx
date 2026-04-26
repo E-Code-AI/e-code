@@ -58,7 +58,7 @@ interface Deal {
 }
 
 export default function SolarTechCRMApp() {
-  const [customers, setCustomers] = useState<Customer[]>([
+  const [customers, _setCustomers] = useState<Customer[]>([
     {
       id: '1',
       name: 'John Smith',
@@ -106,7 +106,7 @@ export default function SolarTechCRMApp() {
     }
   ]);
 
-  const [deals, setDeals] = useState<Deal[]>([
+  const [deals, _setDeals] = useState<Deal[]>([
     {
       id: '1',
       customerId: '1',
@@ -135,7 +135,7 @@ export default function SolarTechCRMApp() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const { toast } = useToast();
+  const { toast: _toast } = useToast();
 
   const getStatusColor = (status: Customer['status']) => {
     switch (status) {

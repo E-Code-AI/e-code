@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { AdminLayout } from './AdminLayout';
 
 export default function AIModels() {
-  const [activeProvider, setActiveProvider] = useState('all');
+  const [_activeProvider, _setActiveProvider] = useState('all');
 
   // Get usage statistics
   const { data: stats } = useQuery({

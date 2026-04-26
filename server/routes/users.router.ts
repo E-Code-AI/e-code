@@ -29,7 +29,7 @@ export class UsersRouter {
         if (!user) {
           return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
         }
-        const { passwordHash, ...safeUser } = user as any;
+        const { passwordHash: _passwordHash, ...safeUser } = user as any;
         res.json(safeUser);
       } catch (error) {
         console.error('Error fetching current user:', error);

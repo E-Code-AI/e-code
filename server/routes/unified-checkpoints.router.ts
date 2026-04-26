@@ -48,7 +48,7 @@ async function verifyProjectOwnership(projectId: number, userId: number): Promis
 /**
  * SECURITY: Verify user owns the checkpoint's project
  */
-async function verifyCheckpointOwnership(checkpointId: number, userId: number): Promise<{ valid: boolean; projectId?: number; error?: string }> {
+async function _verifyCheckpointOwnership(checkpointId: number, userId: number): Promise<{ valid: boolean; projectId?: number; error?: string }> {
   try {
     const [checkpoint] = await db
       .select({ projectId: autoCheckpoints.projectId })

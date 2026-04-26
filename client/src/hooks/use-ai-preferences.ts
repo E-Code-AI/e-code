@@ -29,7 +29,7 @@ const STORAGE_KEY = 'ai-code-completion-preferences';
  * Hook to manage AI code completion preferences
  */
 export function useAIPreferences() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [preferences, setPreferences] = useState<AIPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -145,7 +145,7 @@ export function useAIPreferences() {
   }, []);
 
   // Check if a specific model is available (could be extended to check API keys)
-  const isModelAvailable = useCallback((model: string) => {
+  const isModelAvailable = useCallback((_model: string) => {
     // This could check for API keys or user permissions
     // For now, all models are considered available
     return true;

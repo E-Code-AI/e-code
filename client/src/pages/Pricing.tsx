@@ -49,13 +49,13 @@ interface PricingTier {
   ctaVariant?: 'default' | 'outline' | 'secondary';
 }
 
-const fadeInUp = {
+const _fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
   transition: { duration: 0.5 }
 };
 
-const staggerContainer = {
+const _staggerContainer = {
   animate: {
     transition: {
       staggerChildren: 0.1
@@ -264,7 +264,7 @@ export default function Pricing() {
     }
   };
 
-  const calculateSavings = (monthlyPrice: number, yearlyPrice: number) => {
+  const _calculateSavings = (monthlyPrice: number, yearlyPrice: number) => {
     if (monthlyPrice <= 0) return 0;
     return Math.round(((monthlyPrice - yearlyPrice) / monthlyPrice) * 100);
   };

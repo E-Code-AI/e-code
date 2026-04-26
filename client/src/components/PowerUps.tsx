@@ -53,8 +53,8 @@ interface PowerUpsProps {
 
 export function PowerUps({ projectId }: PowerUpsProps) {
   const queryClient = useQueryClient();
-  const [selectedPowerUp, setSelectedPowerUp] = useState<PowerUp | null>(null);
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [_selectedPowerUp, setSelectedPowerUp] = useState<PowerUp | null>(null);
+  const [_showUpgradeDialog, _setShowUpgradeDialog] = useState(false);
 
   // Fetch power-ups
   const { data: powerUps = [] } = useQuery<PowerUp[]>({

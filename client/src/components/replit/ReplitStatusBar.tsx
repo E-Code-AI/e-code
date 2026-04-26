@@ -56,7 +56,7 @@ export function ReplitStatusBar({
   useEffect(() => {
     const interval = setInterval(() => {
       // Get real system metrics - would connect to actual system monitoring
-      setCpuUsage(prev => {
+      setCpuUsage(_prev => {
         // Oscillate between 20-80% for realistic demo
         const time = Date.now() / 1000;
         const value = 50 + 30 * Math.sin(time / 10);

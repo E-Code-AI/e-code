@@ -67,7 +67,7 @@ export function VirtualScrollList<T>({
   );
 
   // Scroll to index
-  const scrollToIndex = useCallback(
+  const _scrollToIndex = useCallback(
     (index: number) => {
       if (containerRef.current) {
         containerRef.current.scrollTop = index * itemHeight;
@@ -128,7 +128,7 @@ export function VirtualGrid<T>({
   }, [containerWidth, itemWidth, gap]);
 
   // Calculate visible indices
-  const { startRow, endRow, visibleItems, totalHeight, offsetY } = useMemo(() => {
+  const { startRow, endRow: _endRow, visibleItems, totalHeight, offsetY } = useMemo(() => {
     const rows = Math.ceil(items.length / columns);
     const visibleRows = Math.ceil(containerHeight / (itemHeight + gap));
     const currentRow = Math.floor(scrollTop / (itemHeight + gap));
@@ -202,7 +202,7 @@ export function VirtualTree<T>({
   itemHeight,
   containerHeight,
   renderNode,
-  onToggle,
+  onToggle: _onToggle,
   className = '',
 }: VirtualTreeProps<T>) {
   // Flatten tree to list for virtual scrolling

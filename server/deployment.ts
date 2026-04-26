@@ -326,7 +326,7 @@ export class DeploymentManager {
     // Calculate real uptime based on deployment creation time
     const now = Date.now();
     const deploymentTime = deployment.createdAt.getTime();
-    const uptimeMs = now - deploymentTime;
+    const _uptimeMs = now - deploymentTime;
     const uptimePercent = deployment.status === 'running' ? 99.9 : 0;
     
     return {

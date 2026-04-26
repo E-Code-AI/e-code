@@ -78,7 +78,7 @@ export class MonitoringWebSocketService {
     logger.info('Monitoring WebSocket service initialized on', path);
   }
 
-  private handleConnection(ws: WebSocket, req: any) {
+  private handleConnection(ws: WebSocket, _req: any) {
     const clientId = this.generateClientId();
     const client: MonitoringClient = {
       id: clientId,

@@ -294,7 +294,7 @@ export class ResilientWebSocket {
         this.startHeartbeat();
       };
       
-      this.ws.onclose = (event) => {
+      this.ws.onclose = (_event) => {
         this.stopHeartbeat();
         
         if (this.isIntentionallyClosed) {

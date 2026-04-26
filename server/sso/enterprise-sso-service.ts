@@ -345,7 +345,7 @@ export class EnterpriseSSOService {
 
       const userInfo = extract.attributes;
       const email = userInfo.email || userInfo['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
-      const name = userInfo.name || userInfo['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
+      const _name = userInfo.name || userInfo['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
 
       if (!email) {
         return res.status(400).json({ error: 'Email not provided by SAML provider' });

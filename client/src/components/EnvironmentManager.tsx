@@ -79,7 +79,7 @@ const formSchema = z.object({
   isSecret: z.boolean().default(false),
 });
 
-export function EnvironmentManager({ project, isOpen, onClose }: EnvironmentManagerProps) {
+export function EnvironmentManager({ project: _project, isOpen, onClose }: EnvironmentManagerProps) {
   const [variables, setVariables] = useState<EnvVariable[]>([
     { id: 1, key: "PORT", value: "5000", isSecret: false },
     { id: 2, key: "NODE_ENV", value: "development", isSecret: false },

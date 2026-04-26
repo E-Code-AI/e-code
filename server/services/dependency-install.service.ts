@@ -377,7 +377,7 @@ export class DependencyInstallService extends EventEmitter {
     for (const [id, process] of this.activeProcesses) {
       try {
         process.kill('SIGTERM');
-      } catch (err) {
+      } catch (_err) {
         logger.debug('Error killing process during cleanup', { id });
       }
     }

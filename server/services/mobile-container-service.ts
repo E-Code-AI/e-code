@@ -126,7 +126,7 @@ export class MobileContainerService {
     
     try {
       // In production, this would start the actual project server
-      const container = await this.createContainer(projectId, 'javascript');
+      const _container = await this.createContainer(projectId, 'javascript');
       
       return {
         output: `Project ${projectId} is running on port ${this.containers.get(projectId)?.port}`,

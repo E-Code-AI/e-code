@@ -49,7 +49,7 @@ router.post('/projects/:id/upload',
     try {
       const projectId = parseInt(req.params.id);
       const file = req.file;
-      const { path: filepath = '', parentId } = req.body;
+      const { path: _filepath = '', parentId } = req.body;
       
       if (!file) {
         return res.status(400).json({ error: 'No file provided' });

@@ -244,7 +244,7 @@ class AgentStepCacheService {
     reason?: string
   ): Promise<number> {
     try {
-      const conditions = [eq(agentStepCache.projectId, projectId)];
+      const _conditions = [eq(agentStepCache.projectId, projectId)];
       
       if (stepTypes && stepTypes.length > 0) {
         // Invalidate only specified steps - preserve existing metadata

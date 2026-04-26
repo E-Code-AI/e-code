@@ -404,7 +404,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   }
 
   // Attempt to rollback completed steps (compensating actions)
-  private async attemptRollback(workflowId: string, state: WorkflowState): Promise<void> {
+  private async attemptRollback(workflowId: string, _state: WorkflowState): Promise<void> {
     try {
       // Mark workflow as rolling back
       await db.update(agentWorkflows)
@@ -880,7 +880,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
         });
         effectiveConfig.content = generatedFile.content;
         logger.info(`[WorkflowEngine] Generated content from description for ${effectiveConfig.path}`);
-      } catch (genError) {
+      } catch (_genError) {
         // Fallback to minimal content based on file type
         const ext = effectiveConfig.path?.split('.').pop()?.toLowerCase() || '';
         effectiveConfig.content = this.getMinimalFileContent(effectiveConfig.path, ext, description);
@@ -1058,7 +1058,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
     context: any,
     state: WorkflowState
   ): Promise<any> {
-    const { query, params, operation } = this.resolveVariables(config, state);
+    const { query, params: _params, operation } = this.resolveVariables(config, state);
     
     try {
       // Validate query to prevent SQL injection for non-parameterized queries
@@ -1183,7 +1183,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   private async executeInstallDependencies(
     config: any,
     context: any,
-    state: WorkflowState
+    _state: WorkflowState
   ): Promise<any> {
     const projectPath = config.projectPath || context.projectPath;
     
@@ -1209,7 +1209,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   private async executeVerifyBuild(
     config: any,
     context: any,
-    state: WorkflowState
+    _state: WorkflowState
   ): Promise<any> {
     const projectPath = config.projectPath || context.projectPath;
     
@@ -1233,8 +1233,8 @@ export class AgentWorkflowEngineService extends EventEmitter {
   // Execute responsive QA step
   private async executeResponsiveQA(
     config: any,
-    context: any,
-    state: WorkflowState
+    _context: any,
+    _state: WorkflowState
   ): Promise<any> {
     const url = config.url || config.previewUrl;
     
@@ -1268,7 +1268,7 @@ export class AgentWorkflowEngineService extends EventEmitter {
   private async executeRunTests(
     config: any,
     context: any,
-    state: WorkflowState
+    _state: WorkflowState
   ): Promise<TestResult> {
     const testCommand = config.testCommand || 'npm test';
     const projectPath = config.projectPath || context.projectPath;
@@ -1782,7 +1782,7 @@ Provide specific code changes to fix these issues.`;
       // Only allow simple property access and comparison operations
       try {
         return this.safeEvaluateExpression(condition.expression, state);
-      } catch (err) {
+      } catch (_err) {
         return false;
       }
     }
@@ -2058,7 +2058,7 @@ Provide specific code changes to fix these issues.`;
   // Generate workflow from natural language
   async generateWorkflowFromPrompt(
     prompt: string,
-    sessionId: string
+    _sessionId: string
   ): Promise<WorkflowStep[]> {
     const completion = await this.openai.chat.completions.create({
       model: 'gpt-4.1',

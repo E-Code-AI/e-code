@@ -1,5 +1,5 @@
 
-export default function DomainPurchasePanel({ projectId, onClose }: { projectId: string; onClose: () => void }) {
+export default function DomainPurchasePanel({ projectId: _projectId, onClose }: { projectId: string; onClose: () => void }) {
   return (
     <div className="flex flex-col h-full bg-[var(--ide-bg)] p-4 items-center justify-center text-center">
       <h3 className="text-lg font-bold text-[var(--ide-text)] mb-2">Domain Purchase</h3>

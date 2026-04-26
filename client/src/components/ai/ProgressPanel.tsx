@@ -207,7 +207,7 @@ export function ProgressPanel({
   isThinking: externalIsThinking,
   thinkingSteps: externalThinkingSteps,
   toolExecutions,
-  fileChanges
+  fileChanges: _fileChanges
 }: ProgressPanelProps) {
   const [filter, setFilter] = useState('');
   const [isPaused, setIsPaused] = useState(false);

@@ -44,7 +44,7 @@ interface CollaboratorPresenceProps {
   maxVisible?: number;
 }
 
-interface Collaborator {
+interface _Collaborator {
   user: {
     id: string;
     username: string;

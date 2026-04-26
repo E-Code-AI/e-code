@@ -67,7 +67,7 @@ const DEFAULT_SHORTCUTS: Omit<Shortcut, 'action'>[] = [
 export function KeyboardShortcuts({
   open,
   onOpenChange,
-  shortcuts,
+  shortcuts: _shortcuts,
   onSave,
   onSearch,
   onToggleTerminal,

@@ -74,7 +74,7 @@ interface StudentProgress {
   grade: string;
 }
 
-interface LearningTopic {
+interface _LearningTopic {
   title: string;
   description: string;
   difficulty: string;
@@ -87,7 +87,7 @@ export default function Education() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Fetch real classroom data
-  const { data: classrooms = [], isLoading: classroomsLoading } = useQuery<Classroom[]>({
+  const { data: classrooms = [], isLoading: _classroomsLoading } = useQuery<Classroom[]>({
     queryKey: ['/api/education/classrooms']
   });
 

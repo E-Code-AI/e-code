@@ -102,7 +102,7 @@ export default function Status() {
     }
   };
 
-  const getStatusColor = (status: ServiceStatus['status']) => {
+  const _getStatusColor = (status: ServiceStatus['status']) => {
     switch (status) {
       case 'operational':
         return 'text-green-500';

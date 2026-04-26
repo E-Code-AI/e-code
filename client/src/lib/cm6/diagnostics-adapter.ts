@@ -55,7 +55,7 @@ export const diagnosticsField = StateField.define<ExternalDiagnostic[]>({
         const oldLine = d.line;
         let newLine = oldLine;
         
-        tr.changes.iterChangedRanges((fromA, toA, fromB, toB) => {
+        tr.changes.iterChangedRanges((fromA, _toA, _fromB, _toB) => {
           const doc = tr.startState.doc;
           if (fromA < doc.length) {
             const lineAtChange = doc.lineAt(fromA).number;

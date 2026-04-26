@@ -51,7 +51,7 @@ type SharePermission = 'private' | 'unlisted' | 'public';
 export function ProjectSharing({ projectId, projectName, className }: ProjectSharingProps) {
   const [, navigate] = useLocation();
   const [sharePermission, setSharePermission] = useState<SharePermission>('private');
-  const [shareLink, setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
+  const [shareLink, _setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const { toast } = useToast();
@@ -112,7 +112,7 @@ export function ProjectSharing({ projectId, projectName, className }: ProjectSha
     inviteMutation.mutate({ email: inviteEmail, role: inviteRole });
   };
 
-  const removeCollaborator = (id: string) => {
+  const removeCollaborator = (_id: string) => {
     toast({
       title: 'Team Management',
       description: 'To remove collaborators, please manage team members through the Teams page.',

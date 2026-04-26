@@ -303,9 +303,9 @@ export class PriorityQueueService {
    * Clear completed/failed requests older than retention period
    */
   async cleanup(retentionDays: number = 7): Promise<number> {
-    const cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
+    const _cutoffDate = new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000);
 
-    const deleted = await db
+    const _deleted = await db
       .delete(aiRequestQueue)
       .where(
         and(

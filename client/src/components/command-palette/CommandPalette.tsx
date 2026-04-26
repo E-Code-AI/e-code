@@ -45,7 +45,7 @@ export function CommandPalette({
   commands = [],
   files = [],
   onFileSelect,
-  onToolSelect,
+  onToolSelect: _onToolSelect,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -176,7 +176,7 @@ interface GenerateCommandsOptions {
 }
 
 export function generateDefaultCommands(options: GenerateCommandsOptions): Command[] {
-  const { onToolSelect, onNavigate } = options;
+  const { onToolSelect, onNavigate: _onNavigate } = options;
   
   return [
     {

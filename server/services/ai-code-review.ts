@@ -10,7 +10,7 @@ import { CodeAnalyzer } from '../ai/code-analyzer';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('ai-code-review');
-const execAsync = promisify(exec);
+const _execAsync = promisify(exec);
 
 export interface CodeReviewIssue {
   id: string;
@@ -357,7 +357,7 @@ class AICodeReviewService {
     code: string,
     filePath: string,
     fileId?: number,
-    language: string
+    _language: string
   ): Promise<CodeReviewIssue[]> {
     const issues: CodeReviewIssue[] = [];
     const lines = code.split('\n');
@@ -815,7 +815,7 @@ Respond in JSON format with an array of issues:
   private async generateReviewSummary(
     issues: CodeReviewIssue[],
     metrics: CodeReviewResult['metrics'],
-    provider: string
+    _provider: string
   ): Promise<string> {
     if (issues.length === 0) {
       return '✅ Excellent! No issues found in this code review.';
@@ -912,7 +912,7 @@ Respond in JSON format with an array of issues:
     projectId: string,
     fileId: number,
     issueId: string,
-    fixCode: string
+    _fixCode: string
   ): Promise<boolean> {
     try {
       // This would integrate with the file system to apply the fix

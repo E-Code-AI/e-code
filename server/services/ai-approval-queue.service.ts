@@ -124,7 +124,7 @@ export class AIApprovalQueueService {
   /**
    * Get statistics for monitoring (database-backed)
    */
-  async getStats(userId?: string) {
+  async getStats(_userId?: string) {
     // This would require additional storage methods, but for now return basic info
     await this.cleanupExpired();
     

@@ -42,22 +42,22 @@ interface TopNavbarProps {
 
 const TopNavbar = ({
   project,
-  activeFile,
+  activeFile: _activeFile,
   isLoading,
   onNixConfigOpen,
   onCommandPaletteOpen,
   onKeyboardShortcutsOpen,
   onDatabaseOpen,
-  onCollaborationOpen,
-  onToggleFiles,
-  onTogglePreview,
-  onToggleConsole,
-  filesOpen = true,
-  previewOpen = true,
-  consoleOpen = true,
-  onSidebarMenuToggle
+  onCollaborationOpen: _onCollaborationOpen,
+  onToggleFiles: _onToggleFiles,
+  onTogglePreview: _onTogglePreview,
+  onToggleConsole: _onToggleConsole,
+  filesOpen: _filesOpen = true,
+  previewOpen: _previewOpen = true,
+  consoleOpen: _consoleOpen = true,
+  onSidebarMenuToggle: _onSidebarMenuToggle
 }: TopNavbarProps) => {
-  const { user, logoutMutation } = useAuth();
+  const { user: _user, logoutMutation: _logoutMutation } = useAuth();
   const [isRunning, setIsRunning] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 

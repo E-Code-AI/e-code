@@ -479,7 +479,7 @@ class MaxAutonomyService extends EventEmitter {
       }
       
     } catch (error: any) {
-      const actualDurationMs = Date.now() - startTime;
+      const _actualDurationMs = Date.now() - startTime;
       logger.error(`Task ${task.id} threw an error:`, error);
       
       const [session] = await db.select()

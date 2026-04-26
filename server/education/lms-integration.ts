@@ -39,7 +39,7 @@ interface LMSAssignment {
   submissionTypes: string[];
 }
 
-interface LMSStudent {
+interface _LMSStudent {
   id: string;
   email: string;
   name: string;
@@ -47,7 +47,7 @@ interface LMSStudent {
   lastActivity: Date;
 }
 
-interface LMSSubmission {
+interface _LMSSubmission {
   assignmentId: string;
   studentId: string;
   submittedAt: Date;
@@ -436,12 +436,12 @@ export class LMSIntegrationService {
   }
 
   private async blackboardSubmitGrade(
-    institutionId: number,
-    courseId: string,
-    assignmentId: string,
-    studentId: string,
-    grade: number,
-    feedback: string
+    _institutionId: number,
+    _courseId: string,
+    _assignmentId: string,
+    _studentId: string,
+    _grade: number,
+    _feedback: string
   ): Promise<void> {
     // Blackboard grade submission would happen here
   }
@@ -454,19 +454,19 @@ export class LMSIntegrationService {
   }
 
   private async googleClassroomSubmitGrade(
-    institutionId: number,
-    courseId: string,
-    assignmentId: string,
-    studentId: string,
-    grade: number,
-    feedback: string
+    _institutionId: number,
+    _courseId: string,
+    _assignmentId: string,
+    _studentId: string,
+    _grade: number,
+    _feedback: string
   ): Promise<void> {
     // Google Classroom grade submission would happen here
   }
 
   private async getStudentLmsId(
     studentId: number,
-    platform: string
+    _platform: string
   ): Promise<string> {
     // In real implementation, would look up from mapping table
     return `lms-student-${studentId}`;
@@ -538,15 +538,15 @@ export class LMSIntegrationService {
   }
 
   // Webhook endpoints for LMS events
-  async handleCanvasWebhook(payload: any): Promise<void> {
+  async handleCanvasWebhook(_payload: any): Promise<void> {
     // Handle Canvas webhook events (assignment created, grade updated, etc.)
   }
 
-  async handleBlackboardWebhook(payload: any): Promise<void> {
+  async handleBlackboardWebhook(_payload: any): Promise<void> {
     // Handle Blackboard webhook events
   }
 
-  async handleGoogleClassroomWebhook(payload: any): Promise<void> {
+  async handleGoogleClassroomWebhook(_payload: any): Promise<void> {
     // Handle Google Classroom push notifications
   }
 }

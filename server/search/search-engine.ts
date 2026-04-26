@@ -96,7 +96,7 @@ export class SearchEngine {
   private async searchProjects(
     pattern: RegExp,
     userId?: number,
-    limit?: number
+    _limit?: number
   ): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
 
@@ -154,7 +154,7 @@ export class SearchEngine {
     userId?: number,
     projectId?: number,
     fileExtensions: string[],
-    limit?: number
+    _limit?: number
   ): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     let files;
@@ -204,7 +204,7 @@ export class SearchEngine {
     userId?: number,
     projectId?: number,
     fileExtensions: string[],
-    limit?: number
+    _limit?: number
   ): Promise<SearchResult[]> {
     const results: SearchResult[] = [];
     let files;
@@ -233,7 +233,7 @@ export class SearchEngine {
 
       // Search in file content
       const lines = file.content.split('\n');
-      let fileScore = 0;
+      let _fileScore = 0;
 
       lines.forEach((line, lineIndex) => {
         const matches = line.match(pattern);
@@ -264,7 +264,7 @@ export class SearchEngine {
     return results;
   }
 
-  private async searchUsers(pattern: RegExp, limit?: number): Promise<SearchResult[]> {
+  private async searchUsers(_pattern: RegExp, _limit?: number): Promise<SearchResult[]> {
     // In real implementation, this would search users
     // For now, returning empty array
     return [];
@@ -297,12 +297,12 @@ export class SearchEngine {
     return results;
   }
 
-  async getRecentSearches(userId: number, limit = 10): Promise<string[]> {
+  async getRecentSearches(userId: number, _limit = 10): Promise<string[]> {
     // In real implementation, this would fetch from a search history table
     return [];
   }
 
-  async saveSearchQuery(userId: number, query: string): Promise<void> {
+  async saveSearchQuery(_userId: number, _query: string): Promise<void> {
     // In real implementation, this would save to a search history table
   }
 }

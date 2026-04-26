@@ -14,7 +14,7 @@ import { getJwtSecret } from '../utils/secrets-manager';
 
 const projectIdSchema = z.coerce.number().int().positive();
 const fileIdSchema = z.coerce.number().int().positive();
-const filePathSchema = z.string().min(1).max(500).refine(
+const _filePathSchema = z.string().min(1).max(500).refine(
   (path) => !path.includes('..') && !path.startsWith('/'),
   { message: 'Invalid file path - path traversal not allowed' }
 );
@@ -1037,7 +1037,7 @@ export class FilesRouter {
         const projectId = projectIdResult.data;
         const userId = req.user!.id;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+        const result = await withScopedTransaction(userId, userId, async (_scopedQueries) => {
           const { fileVersions, files } = await import('@shared/schema');
           const { db } = await import('../db');
           const { eq, desc } = await import('drizzle-orm');
@@ -1115,7 +1115,7 @@ export class FilesRouter {
         const fileId = fileIdResult.data;
         const userId = req.user!.id;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+        const result = await withScopedTransaction(userId, userId, async (_scopedQueries) => {
           const { fileVersions } = await import('@shared/schema');
           const { db } = await import('../db');
           const { eq, and, desc } = await import('drizzle-orm');
@@ -1171,7 +1171,7 @@ export class FilesRouter {
         const userId = req.user!.id;
         const { content, changeSummary, changeType = 'modified' } = req.body;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+        const result = await withScopedTransaction(userId, userId, async (_scopedQueries) => {
           const { fileVersions } = await import('@shared/schema');
           const { db } = await import('../db');
           const { eq, and, desc } = await import('drizzle-orm');
@@ -1242,7 +1242,7 @@ export class FilesRouter {
         const versionId = versionIdResult.data;
         const userId = req.user!.id;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
+        const result = await withScopedTransaction(userId, userId, async (_scopedQueries) => {
           const { fileVersions, files } = await import('@shared/schema');
           const { db } = await import('../db');
           const { eq, and, desc } = await import('drizzle-orm');
@@ -1341,8 +1341,8 @@ export class FilesRouter {
         const projectId = projectIdResult.data;
         const userId = req.user!.id;
 
-        const result = await withScopedTransaction(userId, userId, async (scopedQueries) => {
-          const { fileVersions, files } = await import('@shared/schema');
+        const result = await withScopedTransaction(userId, userId, async (_scopedQueries) => {
+          const { fileVersions: _fileVersions, files } = await import('@shared/schema');
           const { db } = await import('../db');
           const { eq, sql, desc } = await import('drizzle-orm');
           

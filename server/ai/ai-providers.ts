@@ -104,7 +104,7 @@ export class AnthropicProvider implements AIProvider {
   }
   
   async generateCodeWithUnderstanding(messages: any[], codeAnalysis: any, options?: any): Promise<string> {
-    const enhancedMessages = [...messages];
+    const _enhancedMessages = [...messages];
     if (codeAnalysis) {
       const systemMsg = messages.find(m => m.role === 'system');
       if (systemMsg) {

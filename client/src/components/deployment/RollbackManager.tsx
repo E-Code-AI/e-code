@@ -93,7 +93,7 @@ interface RollbackStatus {
   error?: string;
 }
 
-interface VersionDiff {
+interface _VersionDiff {
   files: {
     added: string[];
     modified: string[];

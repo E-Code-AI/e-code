@@ -98,7 +98,7 @@ export default function CodeSearchPage() {
   const [showFilters, setShowFilters] = useState(true);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
-  const [activeTab, setActiveTab] = useState('results');
+  const [_activeTab, _setActiveTab] = useState('results');
 
   const fuse = useMemo(() => new Fuse(CODE_INDEX, {
     keys: ['content', 'file', 'path'],

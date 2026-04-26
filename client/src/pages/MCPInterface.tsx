@@ -65,7 +65,7 @@ export default function MCPInterface() {
 
   // MCP Server endpoints - Using integrated MCP server on Express
   const MCP_SERVER_URL = '/mcp';  // Direct MCP HTTP transport
-  const EXPRESS_MCP_URL = '/api/mcp';
+  const _EXPRESS_MCP_URL = '/api/mcp';
 
   // Load tools - Using MCP HTTP transport
   const loadTools = async () => {
