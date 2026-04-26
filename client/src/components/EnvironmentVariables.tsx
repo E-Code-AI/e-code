@@ -31,26 +31,25 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
 
   // Fetch environment variables - REAL BACKEND (using secrets API)
   const { data: variables = [], isLoading } = useQuery({
-    queryKey: ['/api/secrets'],
+    queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/secrets');
-      return res.json();
+      const data = await apiRequest<{ variables?: EnvironmentVariableType[] }>('GET', `/api/env-vars/${projectId}`);
+      return data.variables ?? [];
     },
   });
 
   // Create environment variable - REAL BACKEND
   const createVariableMutation = useMutation({
     mutationFn: async (data: { key: string; value: string; isSecret: boolean }) => {
-      const res = await apiRequest('POST', '/api/secrets', {
-        name: data.key,
+      return apiRequest('POST', '/api/env-vars', {
+        projectId,
+        key: data.key,
         value: data.value,
-        category: 'other',
-        scope: 'project'
+        isSecret: data.isSecret,
       });
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'environment'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       setNewKey('');
       setNewValue('');
       setNewIsSecret(false);
@@ -71,14 +70,14 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
   // Update environment variable - REAL BACKEND
   const updateVariableMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; key?: string; value?: string; isSecret?: boolean }) => {
-      const res = await apiRequest('PUT', `/api/secrets/${id}`, {
-        name: data.key,
+      return apiRequest('PATCH', `/api/env-vars/${id}`, {
+        key: data.key,
         value: data.value,
+        isSecret: data.isSecret,
       });
-      return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'environment'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       toast({
         title: 'Environment variable updated',
         description: 'Your changes have been saved.',
@@ -96,11 +95,10 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
   // Delete environment variable - REAL BACKEND
   const deleteVariableMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest('DELETE', `/api/secrets/${id}`);
-      return res.json();
+      return apiRequest('DELETE', `/api/env-vars/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'environment'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/env-vars', projectId] });
       toast({
         title: 'Environment variable deleted',
         description: 'The variable has been removed.',
