@@ -185,10 +185,10 @@ export function ReplitCoreServices() {
         title: "Export Started",
         description: "Your project export is being processed",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Unable to start project export",
+        description: error?.message || "Unable to start project export",
         variant: "destructive",
       });
     } finally {

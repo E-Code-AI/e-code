@@ -266,10 +266,10 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         title: "Database Exported",
         description: "Your database has been exported successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Could not export the database",
+        description: error?.message || "Could not export the database",
         variant: "destructive"
       });
     }
