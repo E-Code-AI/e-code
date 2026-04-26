@@ -91,7 +91,7 @@ async function ensureProjectAccessFromRequest(req: Request, res: Response, next:
 
     const projectId = req.query.projectId ?? req.body?.projectId;
     if (!projectId) {
-      return res.status(400).json({ error: 'projectId is required' });
+      return next();
     }
 
     await ensureProjectAccessById(projectId as string | number, userId);
@@ -132,6 +132,7 @@ async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTas
 // Get all workflows for a project
 workflowsRouter.get('/', ensureAuthenticated, ensureProjectAccessFromRequest, async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).user?.id;
     const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
     
     let workflows: ProjectWorkflow[];
@@ -140,9 +141,23 @@ workflowsRouter.get('/', ensureAuthenticated, ensureProjectAccessFromRequest, as
         .where(eq(projectWorkflows.projectId, projectId))
         .orderBy(desc(projectWorkflows.isRunButton), asc(projectWorkflows.name));
     } else {
-      // Return all workflows (for global view)
-      workflows = await db.select().from(projectWorkflows)
+      const allWorkflows = await db.select().from(projectWorkflows)
         .orderBy(desc(projectWorkflows.isRunButton), asc(projectWorkflows.name));
+      const accessibleWorkflows = await Promise.all(
+        allWorkflows.map(async (workflow) => {
+          if (!workflow.projectId) {
+            return workflow;
+          }
+
+          try {
+            await ensureProjectAccessById(workflow.projectId, userId);
+            return workflow;
+          } catch {
+            return null;
+          }
+        })
+      );
+      workflows = accessibleWorkflows.filter((workflow): workflow is ProjectWorkflow => Boolean(workflow));
     }
     
     // Get tasks for each workflow
