@@ -190,7 +190,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     },
     onSuccess: () => {
       setPreviewUrl(null);
-      setPreviewStatus({ status: 'idle' });
+      setPreviewStatus({ status: 'stopped' });
       setSelectedPort(null);
       
       toast({
@@ -899,16 +899,37 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 md:p-8 lg:p-12">
             <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground mb-3 sm:mb-4" />
             <h3 className="text-base sm:text-[15px] md:text-xl font-semibold mb-1.5 sm:mb-2">
-              {previewStatus.status === 'error' ? 'Preview Error' : 'Preview Server Offline'}
+              {previewStatus.status === 'error'
+                ? 'Preview Error'
+                : previewStatus.status === 'stopped'
+                  ? 'Preview Stopped'
+                  : 'Preview Server Offline'}
             </h3>
             <p className="text-[11px] sm:text-[13px] md:text-base text-muted-foreground mb-3 sm:mb-4 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
               {projectId 
                 ? previewStatus.status === 'error'
                   ? "There was an error starting the preview server. Check your project files and try again."
-                  : "Click the play button to start the preview server. Your project will be served with auto-detected framework support."
+                  : previewStatus.status === 'stopped'
+                    ? "The preview was stopped. Start it again to reload your app."
+                    : "Click the play button to start the preview server. Your project will be served with auto-detected framework support."
                 : "Open a project to see the preview"
               }
             </p>
+            {projectId && (
+              <Button
+                onClick={startPreview}
+                disabled={startPreviewMutation.isPending}
+                className="gap-2"
+                data-testid="button-empty-start-preview"
+              >
+                {startPreviewMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+                {startPreviewMutation.isPending ? 'Starting...' : 'Run Preview'}
+              </Button>
+            )}
             
             {/* Service status indicators */}
             {previewStatus.services && previewStatus.services.length > 0 && (
