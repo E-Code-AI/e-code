@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { Server, Cpu, Brain } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ServiceStatus {
   status: 'active' | 'inactive' | 'loading';
@@ -40,8 +41,7 @@ export const PolyglotIndicator: React.FC<{ className?: string }> = ({ className 
   useEffect(() => {
     const checkServices = async () => {
       try {
-        const response = await fetch('/api/health', { credentials: 'include' });
-        const data = await response.json();
+        const data = await apiRequest<any>('GET', '/api/health');
         
         setServices(prev => ({
           typescript: {

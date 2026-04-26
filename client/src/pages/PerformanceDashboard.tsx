@@ -19,7 +19,7 @@ import {
   BarChart3, PieChartIcon, LineChartIcon, Grid3x3
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient } from '@/lib/queryClient';
+import { queryClient, apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
 import { PageHeader, PageShell } from '@/components/layout/PageShell';
 import { ResponseTimeChart } from '@/components/monitoring/ResponseTimeChart';
 import { ResourceUsageChart } from '@/components/monitoring/ResourceUsageChart';
@@ -62,9 +62,11 @@ export default function PerformanceDashboard() {
   const { data: metrics, isLoading: metricsLoading } = useQuery({
     queryKey: [`/api/monitoring/metrics?timeRange=${timeRange}`],
     queryFn: async () => {
-      const res = await fetch(`/api/monitoring/metrics?timeRange=${encodeURIComponent(timeRange)}`, { credentials: 'include' });
-      if (!res.ok) return null;
-      return res.json();
+      try {
+        return await apiRequest('GET', `/api/monitoring/metrics?timeRange=${encodeURIComponent(timeRange)}`);
+      } catch {
+        return null;
+      }
     },
     refetchInterval: autoRefresh ? 5000 : false
   });
@@ -87,16 +89,17 @@ export default function PerformanceDashboard() {
       const endDate = new Date();
       const startDate = new Date();
       startDate.setHours(startDate.getHours() - parseInt(timeRange));
-
-      const response = await fetch('/api/monitoring/export?' + new URLSearchParams({
+      const exportUrl = '/api/monitoring/export?' + new URLSearchParams({
         format,
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString()
-      }), {
+      });
+
+      const response = await fetch(exportUrl, {
         credentials: 'include',
-        headers: {
+        headers: withBootstrapHeaders(exportUrl, {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        })
       });
 
       const blob = await response.blob();

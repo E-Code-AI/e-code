@@ -39,8 +39,7 @@ export default function GitHubPanel({ projectId, projectName, onImported, onClon
   const [searchFilter, setSearchFilter] = useState("");
 
   useEffect(() => {
-    fetch("/api/github/user", { credentials: "include" })
-      .then(r => r.ok ? r.json() : Promise.reject(new Error("Failed")))
+    apiRequest<any>("GET", "/api/github/user")
       .then(d => {
         setConnected(d.connected);
         if (d.user) setGhUser(d.user);
@@ -50,8 +49,7 @@ export default function GitHubPanel({ projectId, projectName, onImported, onClon
 
   const loadRepos = () => {
     setLoading(true);
-    fetch("/api/github/repos", { credentials: "include" })
-      .then(r => r.ok ? r.json() : Promise.reject(new Error("Failed")))
+    apiRequest<any>("GET", "/api/github/repos")
       .then(d => { if (Array.isArray(d)) setRepos(d); })
       .catch(() => {})
       .finally(() => setLoading(false));

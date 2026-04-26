@@ -78,9 +78,11 @@ export function useCheckpoints(projectId: number | string) {
   return useQuery<CheckpointListResponse>({
     queryKey: ['/api/projects', projectId, 'checkpoints'],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/checkpoints`, { credentials: 'include' });
-      if (!res.ok) return { checkpoints: [], total: 0, page: 1, limit: 50 };
-      return res.json();
+      try {
+        return await apiRequest<CheckpointListResponse>('GET', `/api/projects/${projectId}/checkpoints`);
+      } catch {
+        return { success: true, checkpoints: [], count: 0 };
+      }
     },
     enabled: !!projectId,
     staleTime: 30000,
