@@ -4,7 +4,7 @@ import { AgentWorkflowSelector } from './AgentWorkflowSelector';
 import { DesignPrototypeViewer } from './DesignPrototypeViewer';
 import { MVPCompletionDialog } from './MVPCompletionDialog';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 import { Loader2, Sparkles } from 'lucide-react';
 
@@ -69,11 +69,13 @@ export function AgentWorkflowOrchestrator({
       // REAL AI-POWERED PLAN GENERATION via Server-Sent Events
       // Connect to streaming endpoint for real-time plan generation using multi-provider AI
       // ✅ CRITICAL FIX: Correct route is /api/agent/plan/stream (was incorrectly /api/agent/stream)
+      const csrfToken = await getCSRFToken();
       const response = await fetch('/api/agent/plan/stream', {
         method: 'POST',
-        headers: {
+        headers: withBootstrapHeaders('/api/agent/plan/stream', {
           'Content-Type': 'application/json',
-        },
+          'X-CSRF-Token': csrfToken,
+        }),
         credentials: 'include',
         body: JSON.stringify({
           projectId,

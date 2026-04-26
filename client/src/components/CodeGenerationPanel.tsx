@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Sparkles, Copy, Download, CheckCircle2, XCircle, Code2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { CM6Editor } from '@/components/editor/CM6Editor';
+import { getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface AIModel {
   id: string;
@@ -106,11 +107,12 @@ export function CodeGenerationPanel() {
     // Since EventSource only supports GET, we'll use fetch with proper SSE buffering
     const abortController = new AbortController();
     
-    fetch('/api/code-generation/generate', {
+    getCSRFToken().then((csrfToken) => fetch('/api/code-generation/generate', {
       method: 'POST',
-      headers: {
+      headers: withBootstrapHeaders('/api/code-generation/generate', {
         'Content-Type': 'application/json',
-      },
+        'X-CSRF-Token': csrfToken,
+      }),
       credentials: 'include',
       body: JSON.stringify({
         prompt,
@@ -118,7 +120,7 @@ export function CodeGenerationPanel() {
         modelId: selectedModel,
       }),
       signal: abortController.signal,
-    })
+    }))
       .then(async (response) => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
