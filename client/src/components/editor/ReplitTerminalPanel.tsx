@@ -22,6 +22,7 @@ import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsI
 import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
 import { createShellWebSocket, type ConnectionState, type ResilientWebSocket } from '@/lib/websocket-resilience';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitTerminalPanelProps {
   projectId?: string | number;
@@ -140,12 +141,7 @@ export function ReplitTerminalPanel({ projectId, className }: ReplitTerminalPane
 
     try {
       if (forceNewSession || !sessionIdRef.current) {
-        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        if (!sessionRes.ok) throw new Error('Failed to create shell session');
-        const { sessionId } = await sessionRes.json();
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
         sessionIdRef.current = sessionId;
       }
 

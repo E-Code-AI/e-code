@@ -501,6 +501,10 @@ export function createShellWebSocket(
     projectId: String(projectId),
     sessionId,
   });
+  const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+  if (bootstrapToken) {
+    params.set('bootstrap', bootstrapToken);
+  }
 
   return new ResilientWebSocket({
     url: `${protocol}//${window.location.host}/shell?${params.toString()}`,
@@ -512,6 +516,22 @@ export function createShellWebSocket(
     circuitBreakerThreshold: 5,
     circuitBreakerResetTime: 45000,
   });
+}
+
+export function buildShellWebSocketUrl(
+  projectId: string | number,
+  sessionId: string
+): string {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const params = new URLSearchParams({
+    projectId: String(projectId),
+    sessionId,
+  });
+  const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+  if (bootstrapToken) {
+    params.set('bootstrap', bootstrapToken);
+  }
+  return `${protocol}//${window.location.host}/shell?${params.toString()}`;
 }
 
 /**

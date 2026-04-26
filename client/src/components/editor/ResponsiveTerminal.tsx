@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { X, Maximize2, Minimize2, Copy, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import { apiRequest } from '@/lib/queryClient';
 import 'xterm/css/xterm.css';
 
 interface ResponsiveTerminalProps {
@@ -83,12 +85,9 @@ export function ResponsiveTerminal({
 
     const connect = async () => {
       try {
-        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
-        if (!sessionRes.ok || cancelled) return;
-        const { sessionId } = await sessionRes.json();
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
         if (cancelled) return;
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        const ws = new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
         wsRef.current = ws;
 
         ws.onopen = () => {

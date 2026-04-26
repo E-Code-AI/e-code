@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useTerminalHistoryPersistence } from '@/hooks/use-mobile-persistence';
 import { TerminalMetricsIndicator } from '@/components/terminal/TerminalMetricsIndicator';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import { apiRequest } from '@/lib/queryClient';
 import 'xterm/css/xterm.css';
 
 interface MobileTerminalProps {
@@ -106,11 +108,8 @@ export function MobileTerminal({
 
     (async () => {
       try {
-        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
-        if (!sessionRes.ok) throw new Error('session');
-        const { sessionId } = await sessionRes.json();
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
+        const ws = new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
         wsRef.current = ws;
 
         ws.onmessage = (event) => {

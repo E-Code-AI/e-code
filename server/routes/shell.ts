@@ -133,6 +133,25 @@ async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<
     return requestUser.id;
   }
 
+  try {
+    const requestUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    const bootstrapToken = requestUrl.searchParams.get('bootstrap') || requestUrl.searchParams.get('bootstrapToken');
+    if (bootstrapToken) {
+      const jwt = await import('jsonwebtoken');
+      const { getJwtSecret } = await import('../utils/secrets-manager');
+      const decoded = jwt.default.verify(bootstrapToken, getJwtSecret()) as {
+        type?: string;
+        userId?: number;
+      };
+
+      if (decoded?.type === 'agent_bootstrap' && Number.isInteger(decoded.userId)) {
+        return decoded.userId!;
+      }
+    }
+  } catch (error) {
+    logger.debug('Shell bootstrap token validation failed:', error);
+  }
+
   const cookieHeader = req.headers.cookie;
   if (!cookieHeader) {
     return null;

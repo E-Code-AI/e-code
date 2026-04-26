@@ -26,6 +26,7 @@ import { useRuntimeLogs, RuntimeLogEntry } from '@/hooks/useRuntimeLogs';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
 
 interface ConsoleLog {
   id: string;
@@ -116,9 +117,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
   }, [isRunning, executionId, connect, disconnect]);
 
   const createWebSocket = useCallback((sessionId: string): WebSocket => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
-    return new WebSocket(wsUrl);
+    return new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
   }, [projectId]);
 
   const createNewShell = useCallback(async () => {

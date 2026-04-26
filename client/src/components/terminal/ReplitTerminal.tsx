@@ -35,6 +35,8 @@ import {
   Clock,
 } from "lucide-react";
 import { TerminalMetricsIndicator } from "./TerminalMetricsIndicator";
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import { apiRequest } from '@/lib/queryClient';
 import "xterm/css/xterm.css";
 
 interface TerminalSession {
@@ -175,11 +177,8 @@ export function ReplitTerminal({
 
     const connectWebSocket = async () => {
       try {
-        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
-        if (!sessionRes.ok) throw new Error('session');
-        const { sessionId } = await sessionRes.json();
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const ws = new WebSocket(`${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
+        const ws = new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
         wsRef.current = ws;
 
         ws.onopen = () => {

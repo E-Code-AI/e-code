@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
+import { bootstrapAuth, getBootstrapContext } from '../middleware/bootstrap-auth';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,13 +24,29 @@ async function verifyProjectAccess(userId: number, projectId: string | number): 
   }
 }
 
-router.post('/:projectId/shell/create', ensureAuthenticated, async (req, res) => {
+function getEffectiveUserId(req: any): number | null {
+  const sessionUserId = req.user?.id;
+  if (Number.isInteger(sessionUserId)) return sessionUserId;
+  const bootstrapUserId = getBootstrapContext(req)?.userId;
+  return Number.isInteger(bootstrapUserId) ? bootstrapUserId : null;
+}
+
+function hasValidBootstrapProject(req: any, projectId: string | number): boolean {
+  const bootstrapProjectId = getBootstrapContext(req)?.projectId;
+  return bootstrapProjectId == null || String(bootstrapProjectId) === String(projectId);
+}
+
+router.post('/:projectId/shell/create', bootstrapAuth, async (req, res) => {
   try {
     const { projectId } = req.params;
-    const userId = req.user?.id;
+    const userId = getEffectiveUserId(req);
 
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'Authentication or bootstrap token required' });
+    }
+
+    if (!hasValidBootstrapProject(req, projectId)) {
+      return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
     }
 
     const hasAccess = await verifyProjectAccess(userId, projectId);
@@ -52,13 +69,17 @@ router.post('/:projectId/shell/create', ensureAuthenticated, async (req, res) =>
   }
 });
 
-router.get('/:projectId/shell/sessions', ensureAuthenticated, async (req, res) => {
+router.get('/:projectId/shell/sessions', bootstrapAuth, async (req, res) => {
   try {
     const { projectId } = req.params;
-    const userId = req.user?.id;
+    const userId = getEffectiveUserId(req);
 
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'Authentication or bootstrap token required' });
+    }
+
+    if (!hasValidBootstrapProject(req, projectId)) {
+      return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
     }
 
     const hasAccess = await verifyProjectAccess(userId, projectId);
@@ -84,13 +105,17 @@ router.get('/:projectId/shell/sessions', ensureAuthenticated, async (req, res) =
   }
 });
 
-router.delete('/:projectId/shell/:sessionId', ensureAuthenticated, async (req, res) => {
+router.delete('/:projectId/shell/:sessionId', bootstrapAuth, async (req, res) => {
   try {
     const { projectId, sessionId } = req.params;
-    const userId = req.user?.id;
+    const userId = getEffectiveUserId(req);
 
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'Authentication or bootstrap token required' });
+    }
+
+    if (!hasValidBootstrapProject(req, projectId)) {
+      return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
     }
 
     const hasAccess = await verifyProjectAccess(userId, projectId);
@@ -113,13 +138,17 @@ router.delete('/:projectId/shell/:sessionId', ensureAuthenticated, async (req, r
   }
 });
 
-router.get('/:projectId/shell/:sessionId/status', ensureAuthenticated, async (req, res) => {
+router.get('/:projectId/shell/:sessionId/status', bootstrapAuth, async (req, res) => {
   try {
     const { projectId, sessionId } = req.params;
-    const userId = req.user?.id;
+    const userId = getEffectiveUserId(req);
 
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: 'Authentication or bootstrap token required' });
+    }
+
+    if (!hasValidBootstrapProject(req, projectId)) {
+      return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
     }
 
     const hasAccess = await verifyProjectAccess(userId, projectId);

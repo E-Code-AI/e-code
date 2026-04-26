@@ -32,6 +32,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
 
 const ANSI_STRIP_REGEX = new RegExp(String.raw`\u001b\[[0-9;]*m`, "g");
 
@@ -73,9 +74,7 @@ export function ReplitMobileShell({ projectId, onClose, onBack }: ReplitMobileSh
   const activeTab = tabs.find(t => t.id === activeTabId);
 
   const createWebSocket = useCallback((sessionId: string): WebSocket => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`;
-    return new WebSocket(wsUrl);
+    return new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
   }, [projectId]);
 
   const createNewTab = useCallback(() => {

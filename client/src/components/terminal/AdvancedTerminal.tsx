@@ -42,6 +42,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToast } from '@/hooks/use-toast';
+import { buildShellWebSocketUrl } from '@/lib/websocket-resilience';
+import { apiRequest } from '@/lib/queryClient';
 
 interface TerminalSession {
   id: string;
@@ -218,11 +220,8 @@ export function AdvancedTerminal({
     // Connect async: fetch session ID first, then open WebSocket
     (async () => {
       try {
-        const sessionRes = await fetch(`/api/shell/${projectId}/shell/create`, { method: 'POST', credentials: 'include' });
-        if (!sessionRes.ok) throw new Error('session');
-        const { sessionId } = await sessionRes.json();
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const ws = new WebSocket(`${wsProtocol}//${window.location.host}/shell?sessionId=${sessionId}&projectId=${projectId}`);
+        const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
+        const ws = new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
         session.websocket = ws;
 
         ws.onopen = () => {
