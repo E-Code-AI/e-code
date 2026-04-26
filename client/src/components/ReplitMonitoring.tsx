@@ -152,10 +152,10 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
         title: "Alert Resolved",
         description: "Alert has been marked as resolved"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to resolve alert",
+        description: error?.message || "Failed to resolve alert",
         variant: "destructive"
       });
     }
