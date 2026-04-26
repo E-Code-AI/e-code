@@ -121,7 +121,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
   }, [projectId]);
 
   const createNewShell = useCallback(async () => {
-    const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
     const newSession: ShellSession = {
       id: sessionId,
       name: `Shell ${shellSessions.length + 1}`,
@@ -169,7 +169,7 @@ export function ConsolePanel({ projectId, userId, isRunning, executionId, classN
     setTimeout(() => connectWithRetry(), 100);
     
     return newSession;
-  }, [shellSessions.length, createWebSocket]);
+  }, [shellSessions.length, createWebSocket, projectId]);
 
   useEffect(() => {
     return () => {

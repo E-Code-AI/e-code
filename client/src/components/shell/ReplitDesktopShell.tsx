@@ -89,8 +89,8 @@ export function ReplitDesktopShell({
     return new WebSocket(buildShellWebSocketUrl(projectId, sessionId));
   }, [projectId]);
 
-  const createNewTab = useCallback(() => {
-    const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const createNewTab = useCallback(async () => {
+    const { sessionId } = await apiRequest<{ sessionId: string }>('POST', `/api/shell/${projectId}/shell/create`, {});
     const newTab: ShellTab = {
       id: sessionId,
       name: `Shell ${tabs.length + 1}`,
@@ -131,7 +131,7 @@ export function ReplitDesktopShell({
     setActiveTabId(sessionId);
     
     return newTab;
-  }, [tabs.length, createWebSocket]);
+  }, [tabs.length, createWebSocket, projectId]);
 
   useEffect(() => {
     if (tabs.length === 0) {
