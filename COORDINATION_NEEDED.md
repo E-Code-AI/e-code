@@ -22,3 +22,14 @@ The requirement "Toutes les apps consomment packages/ui exclusivement, zero dupl
 ## Storybook Cloud Run deployment
 
 `packages/ui/Dockerfile.storybook` is present, but production deployment to `storybook.ecode.app` requires shared Cloud Run, DNS, CDN and Cloud Build wiring. If this must be centralized, the deployer/infra owner should expose the standard Cloud Run service module interface before I add the Storybook service instance.
+
+## Create-flow router integration
+
+Branch: `parallel/03-create-flow`
+
+The project creation experience is implemented under the owned `apps/web/src/create`, `apps/web/src/templates`, and `apps/web/src/onboarding` paths. The active web shell in this repository is currently under `client/src/**`, which is outside my ownership. The frontend/workbench owner must wire:
+
+- `/new` to `NewProjectPage`.
+- `/new/ai` to the AI generator handoff from chantier 4.
+- Header `+ New`, command palette `project.new`, and Cmd+N to `createProjectCommands`.
+- Backend endpoints `/api/templates`, `/api/templates/:id`, `/api/projects/imports/git/detect`, `/api/projects/from-template`, `/api/projects/boot/:id/events`, and `/api/projects/:id/fork` to the API owner if they are not already mounted in the Fastify service.
