@@ -259,17 +259,17 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
     setIsLoading(true);
     const stripePriceId = getSelectedPlanId();
     try {
-      const response = await apiRequest('POST', '/api/billing/subscribe', {
+      const response = await apiRequest<{ checkoutUrl?: string }>('POST', '/api/billing/subscribe', {
         planId: stripePriceId,
         interval: billingInterval
       });
 
-      if (response.ok) {
-        const { checkoutUrl } = await response.json();
+      if (response.checkoutUrl) {
+        const { checkoutUrl } = response;
         window.location.href = checkoutUrl;
-      } else {
-        throw new Error('Failed to create subscription');
+        return;
       }
+      throw new Error('Failed to create subscription');
     } catch (error) {
       toast({
         title: "Subscription Failed",
@@ -286,15 +286,12 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
     setIsLoading(true);
     try {
-      const response = await apiRequest('POST', `/api/billing/cancel`, {});
-
-      if (response.ok) {
-        await loadSubscription();
-        toast({
-          title: "Subscription Canceled",
-          description: "Your subscription will end at the end of the current billing period.",
-        });
-      }
+      await apiRequest('POST', `/api/billing/cancel`, {});
+      await loadSubscription();
+      toast({
+        title: "Subscription Canceled",
+        description: "Your subscription will end at the end of the current billing period.",
+      });
     } catch (error) {
       toast({
         title: "Cancellation Failed",

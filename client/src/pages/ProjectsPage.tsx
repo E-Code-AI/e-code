@@ -174,11 +174,7 @@ const ProjectsPage = () => {
       if (filterVisibility.length === 1) {
         url += `&visibility=${encodeURIComponent(filterVisibility[0])}`;
       }
-      const res = await apiRequest('GET', url);
-      if (!res.ok) {
-        throw new Error('Failed to fetch projects');
-      }
-      return await res.json();
+      return apiRequest<{ projects: ProjectWithOwner[], pagination: { total: number, limit: number, offset: number, hasMore: boolean } }>('GET', url);
     },
     enabled: !!user,
   });

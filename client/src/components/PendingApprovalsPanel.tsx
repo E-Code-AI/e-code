@@ -104,12 +104,7 @@ export function PendingApprovalsPanel({
   const handleApprove = async (actionId: string) => {
     setActionInProgress(actionId);
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/approve/${actionId}`);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to approve action');
-      }
+      await apiRequest('POST', `/api/projects/${projectId}/ai/approve/${actionId}`);
 
       toast({
         title: "✅ Action Approved",
@@ -134,12 +129,7 @@ export function PendingApprovalsPanel({
   const handleReject = async (actionId: string, reason?: string) => {
     setActionInProgress(actionId);
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectId}/ai/reject/${actionId}`, { reason: reason || 'User rejected' });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to reject action');
-      }
+      await apiRequest('POST', `/api/projects/${projectId}/ai/reject/${actionId}`, { reason: reason || 'User rejected' });
 
       toast({
         title: "Action Rejected",
