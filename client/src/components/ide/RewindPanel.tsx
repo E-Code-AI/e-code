@@ -44,14 +44,12 @@ export function RewindPanel({ projectId, onRestore, className }: RewindPanelProp
   const { data: checkpoints, isLoading } = useQuery<Checkpoint[]>({
     queryKey: ['/api/checkpoints', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/checkpoints`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
+      try {
+        const data = await apiRequest<any>('GET', `/api/projects/${projectId}/checkpoints`);
+        return data?.checkpoints ?? data ?? [];
+      } catch {
         return [] as Checkpoint[];
       }
-      const data = await response.json();
-      return data?.checkpoints ?? data ?? [];
     },
     enabled: !!projectId
   });

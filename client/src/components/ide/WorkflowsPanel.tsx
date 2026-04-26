@@ -77,11 +77,11 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
   const { data: customWorkflows, isLoading } = useQuery<Workflow[]>({
     queryKey: ['/api/workflows', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/workflows?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) return [];
-      return response.json();
+      try {
+        return await apiRequest<Workflow[]>('GET', `/api/workflows?projectId=${projectId}`);
+      } catch {
+        return [];
+      }
     },
     enabled: !!projectId
   });

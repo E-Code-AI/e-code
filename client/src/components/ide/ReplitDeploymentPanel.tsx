@@ -207,9 +207,11 @@ export function ReplitDeploymentPanel({
   }>({
     queryKey: ['/api/projects', projectId, 'deployment', 'latest'],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/deployment/latest`, { credentials: 'include' });
-      if (!res.ok) return { success: false, deployment: null };
-      return res.json();
+      try {
+        return await apiRequest('GET', `/api/projects/${projectId}/deployment/latest`);
+      } catch {
+        return { success: false, deployment: null };
+      }
     },
     refetchInterval: isDeploying ? 3000 : false,
     enabled: !!projectId,
@@ -221,9 +223,11 @@ export function ReplitDeploymentPanel({
   }>({
     queryKey: ['/api/projects', projectId, 'deployments'],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/deployments`, { credentials: 'include' });
-      if (!res.ok) return { success: false, deployments: [] };
-      return res.json();
+      try {
+        return await apiRequest('GET', `/api/projects/${projectId}/deployments`);
+      } catch {
+        return { success: false, deployments: [] };
+      }
     },
     enabled: !!projectId,
   });
@@ -234,15 +238,7 @@ export function ReplitDeploymentPanel({
     period: string;
   }>({
     queryKey: ['/api/projects', projectId, 'deployments', 'analytics', { period: timePeriod }],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/deployments/analytics?period=${timePeriod}`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch analytics');
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/projects/${projectId}/deployments/analytics?period=${timePeriod}`),
     enabled: !!projectId && activeTab === 'analytics',
   });
 
@@ -262,17 +258,12 @@ export function ReplitDeploymentPanel({
 
   const fetchLogsViaHTTP = useCallback(async (deploymentId: string) => {
     try {
-      const response = await fetch(`/api/deployments/${deploymentId}/logs`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.logs && Array.isArray(data.logs)) {
-          setLogs(data.logs.map((log: any) => ({
-            ...log,
-            level: log.level || detectLogLevel(log.message),
-          })));
-        }
+      const data = await apiRequest<any>('GET', `/api/deployments/${deploymentId}/logs`);
+      if (data.logs && Array.isArray(data.logs)) {
+        setLogs(data.logs.map((log: any) => ({
+          ...log,
+          level: log.level || detectLogLevel(log.message),
+        })));
       }
     } catch (error) {
       console.error('Failed to fetch logs via HTTP:', error);
