@@ -112,11 +112,7 @@ export function ReplitConsolePanel({
   const { data: customWorkflows } = useQuery<Workflow[]>({
     queryKey: ['/api/workflows', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/workflows?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) return [];
-      const data = await response.json();
+      const data = await apiRequest<any>('GET', `/api/workflows?projectId=${projectId}`).catch(() => []);
       return Array.isArray(data) ? data : (data && typeof data === 'object' && 'workflows' in data && Array.isArray(data.workflows) ? data.workflows : []);
     },
     enabled: !!projectId

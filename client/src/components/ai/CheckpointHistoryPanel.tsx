@@ -51,11 +51,12 @@ interface CheckpointListResponse {
 export function useAutoCheckpoints(projectId: number | string, limit: number = 50) {
   return useQuery<CheckpointListResponse>({
     queryKey: ['/api/projects', projectId, 'checkpoints'],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/checkpoints?limit=${limit}`, { credentials: 'include' });
-      if (!res.ok) return { checkpoints: [], total: 0, page: 1, limit };
-      return res.json();
-    },
+    queryFn: async () =>
+      apiRequest<CheckpointListResponse>('GET', `/api/projects/${projectId}/checkpoints?limit=${limit}`).catch(() => ({
+        success: false,
+        checkpoints: [],
+        count: 0,
+      })),
     enabled: !!projectId,
     staleTime: 30000,
     refetchOnWindowFocus: false,

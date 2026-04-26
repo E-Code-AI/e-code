@@ -208,14 +208,7 @@ export default function AICodeReview({
   const { data: reviewData } = useQuery<ReviewResult>({
     queryKey: ['/api/code-review/current', projectId, filePath],
     queryFn: async () => {
-      const response = await fetch(`/api/code-review/current?projectId=${projectId}`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch current code review');
-      }
-
-      const data = await response.json();
+      const data = await apiRequest<any>('GET', `/api/code-review/current?projectId=${projectId}`);
       const latestReview = (data.issues || []).find((issue: any) => issue.filePath === filePath) || data.issues?.[0];
 
       if (!latestReview) {
