@@ -100,25 +100,15 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
     try {
       setInstalling(prev => [...prev, packageName]);
       
-      const response = await apiRequest('POST', `/api/packages/${projectId}`, { 
+      await apiRequest('POST', `/api/packages/${projectId}`, { 
         name: packageName,
         version: version || 'latest'
       });
-
-      if (response.ok) {
-        toast({
-          title: "Package Installed",
-          description: `${packageName} has been installed successfully`
-        });
-        fetchPackages();
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Installation Failed",
-          description: error.message || "Failed to install package",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Package Installed",
+        description: `${packageName} has been installed successfully`
+      });
+      fetchPackages();
     } catch (error) {
       toast({
         title: "Error",
@@ -132,15 +122,12 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const uninstallPackage = async (packageName: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/packages/${projectId}/${encodeURIComponent(packageName)}`);
-
-      if (response.ok) {
-        toast({
-          title: "Package Removed",
-          description: `${packageName} has been uninstalled`
-        });
-        fetchPackages();
-      }
+      await apiRequest('DELETE', `/api/packages/${projectId}/${encodeURIComponent(packageName)}`);
+      toast({
+        title: "Package Removed",
+        description: `${packageName} has been uninstalled`
+      });
+      fetchPackages();
     } catch (error) {
       toast({
         title: "Error",
@@ -152,15 +139,12 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
   const updateAllPackages = async () => {
     try {
-      const response = await apiRequest('POST', `/api/packages/${projectId}/update`);
-
-      if (response.ok) {
-        toast({
-          title: "Packages Updated",
-          description: "All packages have been updated to their latest versions"
-        });
-        fetchPackages();
-      }
+      await apiRequest('POST', `/api/packages/${projectId}/update`);
+      toast({
+        title: "Packages Updated",
+        description: "All packages have been updated to their latest versions"
+      });
+      fetchPackages();
     } catch (error) {
       toast({
         title: "Update Failed",

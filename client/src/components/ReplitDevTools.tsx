@@ -113,17 +113,13 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const startDebugSession = async () => {
     try {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/start`, {});
-
-      if (response.ok) {
-        const data = await response.json();
-        setDebugSession(data.session);
-        setIsDebugging(true);
-        toast({
-          title: "Debug Session Started",
-          description: "Debugger is now attached to your application"
-        });
-      }
+      const data = await apiRequest<any>('POST', `/api/debug/${projectId}/start`, {});
+      setDebugSession(data.session);
+      setIsDebugging(true);
+      toast({
+        title: "Debug Session Started",
+        description: "Debugger is now attached to your application"
+      });
     } catch (error) {
       toast({
         title: "Debug Error",
@@ -135,16 +131,13 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const stopDebugSession = async () => {
     try {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/stop`, {});
-
-      if (response.ok) {
-        setDebugSession(null);
-        setIsDebugging(false);
-        toast({
-          title: "Debug Session Stopped",
-          description: "Debugger has been detached"
-        });
-      }
+      await apiRequest('POST', `/api/debug/${projectId}/stop`, {});
+      setDebugSession(null);
+      setIsDebugging(false);
+      toast({
+        title: "Debug Session Stopped",
+        description: "Debugger has been detached"
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -156,15 +149,12 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const addBreakpoint = async (file: string, line: number) => {
     try {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/breakpoints`, { file, line });
-
-      if (response.ok) {
-        fetchBreakpoints();
-        toast({
-          title: "Breakpoint Added",
-          description: `Breakpoint set at ${file}:${line}`
-        });
-      }
+      await apiRequest('POST', `/api/debug/${projectId}/breakpoints`, { file, line });
+      fetchBreakpoints();
+      toast({
+        title: "Breakpoint Added",
+        description: `Breakpoint set at ${file}:${line}`
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -176,15 +166,12 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const removeBreakpoint = async (breakpointId: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/debug/${projectId}/breakpoints/${breakpointId}`, {});
-
-      if (response.ok) {
-        fetchBreakpoints();
-        toast({
-          title: "Breakpoint Removed",
-          description: "Breakpoint has been deleted"
-        });
-      }
+      await apiRequest('DELETE', `/api/debug/${projectId}/breakpoints/${breakpointId}`, {});
+      fetchBreakpoints();
+      toast({
+        title: "Breakpoint Removed",
+        description: "Breakpoint has been deleted"
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -196,12 +183,8 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const debugAction = async (action: 'continue' | 'step' | 'stepinto' | 'stepout') => {
     try {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/${action}`, {});
-
-      if (response.ok) {
-        const data = await response.json();
-        setDebugSession(data.session);
-      }
+      const data = await apiRequest<any>('POST', `/api/debug/${projectId}/${action}`, {});
+      setDebugSession(data.session);
     } catch (error) {
       toast({
         title: "Debug Error",

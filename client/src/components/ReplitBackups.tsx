@@ -125,34 +125,24 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
     try {
       setCreating(true);
-      const response = await apiRequest('POST', `/api/backups/${projectId}`, {
+      await apiRequest('POST', `/api/backups/${projectId}`, {
         name: newBackup.name,
         description: newBackup.description,
         includes: newBackup.includes,
         type: 'manual'
       });
-
-      if (response.ok) {
-        toast({
-          title: "Backup Created",
-          description: `Backup "${newBackup.name}" is being created`
-        });
-        
-        setNewBackup({
-          name: '',
-          description: '',
-          includes: { files: true, database: true, secrets: false, settings: true }
-        });
-        setShowCreateDialog(false);
-        fetchBackups();
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Backup Failed",
-          description: error.message || "Failed to create backup",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Backup Created",
+        description: `Backup "${newBackup.name}" is being created`
+      });
+      
+      setNewBackup({
+        name: '',
+        description: '',
+        includes: { files: true, database: true, secrets: false, settings: true }
+      });
+      setShowCreateDialog(false);
+      fetchBackups();
     } catch (error) {
       toast({
         title: "Error",
@@ -167,39 +157,36 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const restoreBackup = async (backupId: string) => {
     try {
       setRestoring(backupId);
-      const response = await apiRequest('POST', `/api/backups/${projectId}/${backupId}/restore`, {});
-
-      if (response.ok) {
-        toast({
-          title: "Restore Started",
-          description: "Project is being restored from backup"
+      await apiRequest('POST', `/api/backups/${projectId}/${backupId}/restore`, {});
+      toast({
+        title: "Restore Started",
+        description: "Project is being restored from backup"
+      });
+      
+      // Poll for restore status
+      const pollRestore = setInterval(async () => {
+        const statusRes = await fetch(`/api/backups/${projectId}/${backupId}/restore-status`, {
+          credentials: 'include'
         });
         
-        // Poll for restore status
-        const pollRestore = setInterval(async () => {
-          const statusRes = await fetch(`/api/backups/${projectId}/${backupId}/restore-status`, {
-            credentials: 'include'
-          });
-          
-          if (statusRes.ok) {
-            const status = await statusRes.json();
-            if (status.completed) {
-              clearInterval(pollRestore);
-              setRestoring(null);
-              toast({
-                title: "Restore Completed",
-                description: "Project has been successfully restored"
-              });
-            }
+        if (statusRes.ok) {
+          const status = await statusRes.json();
+          if (status.completed) {
+            clearInterval(pollRestore);
+            setRestoring(null);
+            toast({
+              title: "Restore Completed",
+              description: "Project has been successfully restored"
+            });
           }
-        }, 2000);
-        
-        // Stop polling after 10 minutes
-        setTimeout(() => {
-          clearInterval(pollRestore);
-          setRestoring(null);
-        }, 600000);
-      }
+        }
+      }, 2000);
+      
+      // Stop polling after 10 minutes
+      setTimeout(() => {
+        clearInterval(pollRestore);
+        setRestoring(null);
+      }, 600000);
     } catch (error) {
       setRestoring(null);
       toast({
@@ -243,15 +230,12 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const deleteBackup = async (backupId: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/backups/${projectId}/${backupId}`, {});
-
-      if (response.ok) {
-        toast({
-          title: "Backup Deleted",
-          description: "Backup has been removed"
-        });
-        fetchBackups();
-      }
+      await apiRequest('DELETE', `/api/backups/${projectId}/${backupId}`, {});
+      toast({
+        title: "Backup Deleted",
+        description: "Backup has been removed"
+      });
+      fetchBackups();
     } catch (error) {
       toast({
         title: "Error",
@@ -263,15 +247,12 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const updateSettings = async (newSettings: Partial<BackupSettings>) => {
     try {
-      const response = await apiRequest('PUT', `/api/backups/${projectId}/settings`, { ...settings, ...newSettings });
-
-      if (response.ok) {
-        setSettings(prev => ({ ...prev, ...newSettings }));
-        toast({
-          title: "Settings Updated",
-          description: "Backup settings have been saved"
-        });
-      }
+      await apiRequest('PUT', `/api/backups/${projectId}/settings`, { ...settings, ...newSettings });
+      setSettings(prev => ({ ...prev, ...newSettings }));
+      toast({
+        title: "Settings Updated",
+        description: "Backup settings have been saved"
+      });
     } catch (error) {
       toast({
         title: "Error",
