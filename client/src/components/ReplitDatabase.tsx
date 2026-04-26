@@ -48,11 +48,11 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
       setLoading(true);
       const data = await apiRequest<any[]>('GET', `/api/kv-store?projectId=${projectId}`);
       setEntries(Array.isArray(data) ? data : []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching database entries:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch database entries",
+        description: error?.message || "Failed to fetch database entries",
         variant: "destructive"
       });
     } finally {
@@ -119,10 +119,10 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
       setNewEntry({ key: '', value: '', type: 'string' });
       setShowAddDialog(false);
       fetchEntries();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to add database entry",
+        description: error?.message || "Failed to add database entry",
         variant: "destructive"
       });
     }
@@ -136,10 +136,10 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
         description: `Database entry "${key}" has been removed`
       });
       fetchEntries();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete database entry",
+        description: error?.message || "Failed to delete database entry",
         variant: "destructive"
       });
     }
