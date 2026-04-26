@@ -23,6 +23,12 @@ const workflowsRouter = Router();
 // Track running processes for stop functionality
 const runningProcesses = new Map<number, ChildProcess[]>();
 
+const runCommandSchema = z.object({
+  projectId: z.union([z.string(), z.number()]),
+  command: z.string().min(1),
+  name: z.string().optional(),
+});
+
 // Helper to get workflow with tasks
 async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTasks | null> {
   const workflow = await db.select().from(projectWorkflows).where(eq(projectWorkflows.id, workflowId)).limit(1);
@@ -83,6 +89,32 @@ workflowsRouter.get('/', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Failed to get workflows:', error);
     res.status(500).json({ error: 'Failed to get workflows' });
+  }
+});
+
+// Execute a one-off command in a project's workspace without persisting a workflow
+workflowsRouter.post('/run-command', async (req: Request, res: Response) => {
+  try {
+    const { projectId, command, name } = runCommandSchema.parse(req.body);
+    const logs: string[] = [`Starting command: ${name || command}`];
+    const processes: ChildProcess[] = [];
+    const workspaceCwd = await resolveProjectWorkspaceCwd(projectId, logs);
+
+    logs.push(`Running: ${command}`);
+    await executeShellCommand(command, logs, processes, workspaceCwd);
+    logs.push('✓ Command completed');
+
+    res.json({
+      success: true,
+      command,
+      logs,
+    });
+  } catch (error: any) {
+    logger.error('Failed to run command:', error);
+    res.status(500).json({
+      error: error?.message || 'Failed to run command',
+      success: false,
+    });
   }
 });
 
@@ -522,8 +554,12 @@ async function resolveWorkflowCwd(workflow: WorkflowWithTasks, logs: string[]): 
     return process.cwd();
   }
 
+  return resolveProjectWorkspaceCwd(workflow.projectId, logs);
+}
+
+async function resolveProjectWorkspaceCwd(projectId: string | number, logs: string[]): Promise<string> {
   try {
-    const projectDir = await ensureProjectDirectory(workflow.projectId);
+    const projectDir = await ensureProjectDirectory(projectId);
     logs.push(`Workspace: ${projectDir}`);
     return projectDir;
   } catch (error: any) {

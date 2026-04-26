@@ -73,6 +73,10 @@ function isPersistedWorkflow(workflow: Workflow): boolean {
   return typeof workflow.id === 'number' || /^\d+$/.test(String(workflow.id));
 }
 
+function shouldStartPreviewForSystemWorkflow(workflow: Workflow): boolean {
+  return ['dev'].includes(String(workflow.id));
+}
+
 export function WorkflowsPanel({ projectId, onRunWorkflow, className }: WorkflowsPanelProps) {
   const queryClient = useQueryClient();
   const [isCreating, setIsCreating] = useState(false);
@@ -137,6 +141,13 @@ export function WorkflowsPanel({ projectId, onRunWorkflow, className }: Workflow
     mutationFn: async (workflow: Workflow) => {
       if (isPersistedWorkflow(workflow)) {
         return apiRequest('POST', `/api/workflows/${workflow.id}/run`);
+      }
+      if (!shouldStartPreviewForSystemWorkflow(workflow)) {
+        return apiRequest('POST', '/api/workflows/run-command', {
+          projectId: String(projectId),
+          command: workflow.command,
+          name: workflow.name,
+        });
       }
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
     },

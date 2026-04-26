@@ -89,6 +89,10 @@ function isPersistedWorkflow(workflow: Workflow): boolean {
   return typeof workflow.id === 'number' || /^\d+$/.test(String(workflow.id));
 }
 
+function shouldStartPreviewForSystemWorkflow(workflow: Workflow): boolean {
+  return ['run-command', 'project', 'start-application', 'dev'].includes(String(workflow.id));
+}
+
 export function ReplitConsolePanel({ 
   projectId, 
   userId, 
@@ -130,13 +134,39 @@ export function ReplitConsolePanel({
       if (isPersistedWorkflow(workflow)) {
         return apiRequest('POST', `/api/workflows/${workflow.id}/run`);
       }
+      if (!shouldStartPreviewForSystemWorkflow(workflow)) {
+        return apiRequest<{ success?: boolean; logs?: string[] }>('POST', '/api/workflows/run-command', {
+          projectId: String(projectId),
+          command: workflow.command,
+          name: workflow.name,
+        });
+      }
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`);
     },
     onMutate: (workflow) => {
       setRunningWorkflowIds(prev => new Set(prev).add(String(workflow.id)));
       setLatestRunStartIndex(logs.length);
     },
-    onSuccess: (_, workflow) => {
+    onSuccess: (result, workflow) => {
+      if (workflow.isSystem && !shouldStartPreviewForSystemWorkflow(workflow)) {
+        const returnedLogs = Array.isArray((result as any)?.logs) ? (result as any).logs as string[] : [];
+        if (returnedLogs.length > 0) {
+          for (const line of returnedLogs) {
+            if (!line?.trim()) continue;
+            addPreviewLog({
+              type: line.includes('✗') || line.includes('[stderr]') ? 'stderr' : 'stdout',
+              content: line,
+              timestamp: Date.now(),
+            });
+          }
+        } else {
+          addPreviewLog({
+            type: 'system',
+            content: `Command completed: ${workflow.command}`,
+            timestamp: Date.now(),
+          });
+        }
+      }
       toast({ title: `Running: ${workflow.name}` });
       onRunWorkflow?.(workflow);
     },
