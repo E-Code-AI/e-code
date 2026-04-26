@@ -20,7 +20,7 @@
 // ║  Why migrate?                                                            ║
 // ║  ─────────────                                                           ║
 // ║  • Multi-provider fallback (6 AI providers: Gemini, Claude, GPT, etc.)  ║
-// ║  • System prompts automatically injected (agent-system-prompt.ts)       ║
+// ║  • E-code system prompt injected from agent-system-prompt.ts            ║
 // ║  • Context window optimization (smart conversation history truncation)  ║
 // ║  • Circuit breakers for 99.9% uptime                                    ║
 // ║  • Model-based API (more flexible than provider-based API)              ║
