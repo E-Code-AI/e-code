@@ -113,28 +113,22 @@ export default function IntegrationsPanel({ projectId, onClose }: { projectId: s
 
   const catalogQuery = useQuery<CatalogEntry[]>({
     queryKey: ["/api/integrations/catalog"],
-    queryFn: async () => {
-      return apiRequest<CatalogEntry[]>("GET", "/api/integrations/catalog");
-    },
+    queryFn: () => apiRequest<CatalogEntry[]>("GET", "/api/integrations/catalog"),
   });
 
   const integrationsQuery = useQuery<ProjectIntegration[]>({
     queryKey: ["/api/projects", projectId, "integrations"],
-    queryFn: async () => {
-      return apiRequest<ProjectIntegration[]>("GET", `/api/projects/${projectId}/integrations`);
-    },
+    queryFn: () => apiRequest<ProjectIntegration[]>("GET", `/api/projects/${projectId}/integrations`),
   });
 
   const userConnectionsQuery = useQuery<{ id: string; userId: string; integrationId: string; status: string; connectedAt: string; integration: CatalogEntry }[]>({
     queryKey: ["/api/user/connections"],
-    queryFn: async () => {
-      return apiRequest<{ id: string; userId: string; integrationId: string; status: string; connectedAt: string; integration: CatalogEntry }[]>("GET", "/api/user/connections");
-    },
+    queryFn: () => apiRequest<{ id: string; userId: string; integrationId: string; status: string; connectedAt: string; integration: CatalogEntry }[]>("GET", "/api/user/connections"),
   });
 
   const logsQuery = useQuery<IntegrationLog[]>({
     queryKey: ["/api/projects", projectId, "integrations", expandedLogId, "logs"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!expandedLogId) return [];
       return apiRequest<IntegrationLog[]>("GET", `/api/projects/${projectId}/integrations/${expandedLogId}/logs`);
     },
@@ -667,14 +661,12 @@ function McpServersSection({ projectId }: { projectId: string }) {
 
   const mcpServersQuery = useQuery<McpServer[]>({
     queryKey: ["/api/projects", projectId, "mcp", "servers"],
-    queryFn: async () => {
-      return apiRequest<McpServer[]>("GET", `/api/projects/${projectId}/mcp/servers`);
-    },
+    queryFn: () => apiRequest<McpServer[]>("GET", `/api/projects/${projectId}/mcp/servers`),
   });
 
   const mcpToolsQuery = useQuery<McpTool[]>({
     queryKey: ["/api/projects", projectId, "mcp", "servers", expandedToolsId, "tools"],
-    queryFn: async () => {
+    queryFn: () => {
       if (!expandedToolsId) return [];
       return apiRequest<McpTool[]>("GET", `/api/projects/${projectId}/mcp/servers/${expandedToolsId}/tools`);
     },

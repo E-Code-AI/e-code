@@ -7,7 +7,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { apiRequest } from "@/lib/queryClient";
+import { getCSRFToken, withBootstrapHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 interface AnimationPreviewProps {
@@ -43,18 +43,24 @@ export default function AnimationPreview({
   const handleExport = useCallback(async () => {
     setExporting(true);
     try {
-      const res = await apiRequest(
-        "POST",
-        `/api/projects/${projectId}/animations/export/mp4`,
-        {
+      const exportUrl = `/api/projects/${projectId}/animations/export/mp4`;
+      const csrfToken = await getCSRFToken();
+      const res = await fetch(exportUrl, {
+        method: "POST",
+        credentials: "include",
+        headers: withBootstrapHeaders(exportUrl, {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+        }),
+        body: JSON.stringify({
           artifactId,
           width: RESOLUTION_MAP[resolution].width,
           height: RESOLUTION_MAP[resolution].height,
           fps: framerate,
           duration,
           quality,
-        },
-      );
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.json();
@@ -62,14 +68,14 @@ export default function AnimationPreview({
       }
 
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url;
+      a.href = downloadUrl;
       a.download = `animation_${resolution}_${framerate}fps.mp4`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(downloadUrl);
 
       toast({ title: "Export complete", description: "Your MP4 has been downloaded." });
       onExportDialogClose?.();

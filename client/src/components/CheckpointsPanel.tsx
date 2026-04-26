@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { Clock, RotateCcw, Save, DollarSign, Code, FileText, Activity } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
 
 interface CheckpointsPanelProps {
   projectId: number;
@@ -18,51 +18,38 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
   const [checkpointName, setCheckpointName] = useState('');
   const [checkpointDescription, setCheckpointDescription] = useState('');
 
-  // Fetch checkpoints
-  const { data: checkpoints, isLoading } = useQuery({
+  const { data: checkpoints = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/checkpoints', projectId],
-    queryFn: async () => {
-      const res = await apiRequest('GET', `/api/checkpoints/${projectId}`);
-      if (!res.ok) throw new Error('Failed to fetch checkpoints');
-      return res.json();
-    }
+    queryFn: () => apiRequest<any[]>('GET', `/api/checkpoints/${projectId}`),
   });
 
-  // Create checkpoint mutation
   const createCheckpointMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/checkpoints/${projectId}`, {
+    mutationFn: () =>
+      apiRequest('POST', `/api/checkpoints/${projectId}`, {
         name: checkpointName || `Checkpoint ${new Date().toISOString()}`,
-        description: checkpointDescription
-      });
-      if (!res.ok) throw new Error('Failed to create checkpoint');
-      return res.json();
-    },
+        description: checkpointDescription,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/checkpoints', projectId] });
       toast({
         title: 'Checkpoint created',
-        description: 'Your project state has been saved'
+        description: 'Your project state has been saved',
       });
       setCheckpointName('');
       setCheckpointDescription('');
-    }
+    },
   });
 
-  // Restore checkpoint mutation
   const restoreCheckpointMutation = useMutation({
-    mutationFn: async (checkpointId: number) => {
-      const res = await apiRequest('POST', `/api/checkpoints/${checkpointId}/restore`);
-      if (!res.ok) throw new Error('Failed to restore checkpoint');
-      return res.json();
-    },
+    mutationFn: (checkpointId: number) =>
+      apiRequest('POST', `/api/checkpoints/${checkpointId}/restore`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'files'] });
       toast({
         title: 'Checkpoint restored',
-        description: 'Your project has been restored to the selected checkpoint'
+        description: 'Your project has been restored to the selected checkpoint',
       });
-    }
+    },
   });
 
   return (
@@ -83,7 +70,7 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
           className="w-full p-2 mb-2 border rounded h-20"
         />
         <Button
-          onClick={() => createCheckpointMutation.mutate(undefined)}
+          onClick={() => createCheckpointMutation.mutate()}
           disabled={createCheckpointMutation.isPending}
           className="w-full"
         >
@@ -98,19 +85,22 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
           <p>Loading checkpoints...</p>
         ) : (
           <div className="space-y-2">
-            {checkpoints?.map((checkpoint: any) => (
+            {checkpoints.map((checkpoint: any) => (
               <Card key={checkpoint.id} className="p-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium">{checkpoint.name || checkpoint.message}</h4>
                       {checkpoint.pricing && (
-                        <Badge 
+                        <Badge
                           variant={
-                            checkpoint.pricing.complexity === 'expert' ? 'destructive' :
-                            checkpoint.pricing.complexity === 'very_complex' ? 'secondary' :
-                            checkpoint.pricing.complexity === 'complex' ? 'default' :
-                            'outline'
+                            checkpoint.pricing.complexity === 'expert'
+                              ? 'destructive'
+                              : checkpoint.pricing.complexity === 'very_complex'
+                                ? 'secondary'
+                                : checkpoint.pricing.complexity === 'complex'
+                                  ? 'default'
+                                  : 'outline'
                           }
                           className="ml-2"
                         >
@@ -118,19 +108,22 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
                         </Badge>
                       )}
                     </div>
+
                     {checkpoint.description && (
                       <p className="text-[13px] text-muted-foreground">{checkpoint.description}</p>
                     )}
+
                     {checkpoint.agentTaskDescription && (
                       <p className="text-[13px] text-muted-foreground italic mt-1">
                         AI Task: {checkpoint.agentTaskDescription}
                       </p>
                     )}
+
                     {checkpoint.pricing && (
                       <div className="flex items-center gap-4 mt-2 text-[11px] text-muted-foreground">
                         <span className="flex items-center">
                           <DollarSign className="h-3 w-3 mr-1" />
-                          ${checkpoint.pricing.costInDollars.toFixed(2)}
+                          {'$' + checkpoint.pricing.costInDollars.toFixed(2)}
                         </span>
                         <span className="flex items-center">
                           <Code className="h-3 w-3 mr-1" />
@@ -146,11 +139,13 @@ export function CheckpointsPanel({ projectId }: CheckpointsPanelProps) {
                         </span>
                       </div>
                     )}
+
                     <p className="text-[11px] text-muted-foreground mt-1">
                       <Clock className="h-3 w-3 inline mr-1" />
                       {format(new Date(checkpoint.createdAt), 'PPpp')}
                     </p>
                   </div>
+
                   <Button
                     size="sm"
                     variant="outline"

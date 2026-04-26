@@ -61,29 +61,17 @@ export function PolyglotBackend() {
 
   const { data: healthData, isLoading: healthLoading } = useQuery({
     queryKey: ['polyglot-health'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/polyglot/health');
-      if (!res.ok) throw new Error('Failed to fetch health status');
-      return res.json();
-    },
+    queryFn: () => apiRequest('GET', '/api/polyglot/health'),
     refetchInterval: 30000
   });
 
   const { data: capabilitiesData } = useQuery({
     queryKey: ['polyglot-capabilities'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/polyglot/capabilities');
-      if (!res.ok) throw new Error('Failed to fetch capabilities');
-      return res.json() as ServiceCapabilities;
-    }
+    queryFn: () => apiRequest<ServiceCapabilities>('GET', '/api/polyglot/capabilities')
   });
 
   const benchmarkMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('GET', '/api/polyglot/benchmark');
-      if (!res.ok) throw new Error('Benchmark failed');
-      return res.json();
-    },
+    mutationFn: () => apiRequest<any>('GET', '/api/polyglot/benchmark'),
     onSuccess: (data) => {
       toast({
         title: "Benchmark Complete",
