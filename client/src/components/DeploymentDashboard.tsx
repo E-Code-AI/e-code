@@ -80,25 +80,14 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
 
   const handleCreateDeployment = async (config: any) => {
     try {
-      const response = await apiRequest('POST', `/api/deployment/${projectId}/enterprise`, config);
-
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "Deployment Started",
-          description: "Your application is being deployed..."
-        });
-        
-        setShowCreateDeployment(false);
-        fetchDeployments();
-      } else {
-        const error = await response.json();
-        toast({
-          title: "Deployment Failed",
-          description: error.message || "Failed to start deployment",
-          variant: "destructive"
-        });
-      }
+      await apiRequest('POST', `/api/deployment/${projectId}/enterprise`, config);
+      toast({
+        title: "Deployment Started",
+        description: "Your application is being deployed..."
+      });
+      
+      setShowCreateDeployment(false);
+      fetchDeployments();
     } catch (error) {
       console.error('Deployment error:', error);
       toast({
