@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,9 +81,7 @@ export default function Explore() {
       if (params.sort) searchParams.append('sort', params.sort);
       if (params.search) searchParams.append('search', params.search);
       
-      const response = await fetch(`/api/explore/projects?${searchParams}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      return response.json();
+      return apiRequest('GET', `/api/explore/projects?${searchParams.toString()}`);
     },
     retry: 2,
   });

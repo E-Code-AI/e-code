@@ -30,6 +30,7 @@ import {
 import { Link } from 'wouter';
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import type { LucideIcon } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -57,13 +58,7 @@ interface AIData {
 
 const fetchAIFeatures = async (): Promise<AIData> => {
   try {
-    const response = await fetch('/api/ai/features', { credentials: 'include' });
-
-    if (!response.ok) {
-      throw new Error('Failed to load AI feature data');
-    }
-
-    return response.json();
+    return await apiRequest('GET', '/api/ai/features');
   } catch (cause) {
     console.error('Unable to fetch AI features from the server', cause);
     throw new Error('Failed to load AI feature data', { cause });

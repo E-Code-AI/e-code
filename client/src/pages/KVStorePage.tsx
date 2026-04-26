@@ -65,24 +65,12 @@ export default function KVStorePage() {
 
   const { data: entries = [], isLoading, error: entriesError } = useQuery<KVEntry[]>({
     queryKey: ['/api/kv-store'],
-    queryFn: async () => {
-      const response = await fetch('/api/kv-store', { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch KV entries');
-      }
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', '/api/kv-store')
   });
 
   const { data: stats } = useQuery<KVStats>({
     queryKey: ['/api/kv-store/stats'],
-    queryFn: async () => {
-      const response = await fetch('/api/kv-store/stats', { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch KV stats');
-      }
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', '/api/kv-store/stats')
   });
 
   const addEntryMutation = useMutation({
