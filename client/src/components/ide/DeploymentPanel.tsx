@@ -106,6 +106,13 @@ export function DeploymentPanel({ projectId, className }: DeploymentPanelProps) 
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/deployments`] });
       toast({ title: 'Deployment stopped' });
     },
+    onError: (error: Error) => {
+      toast({
+        title: 'Failed to stop deployment',
+        description: error.message || 'Failed to stop deployment',
+        variant: 'destructive',
+      });
+    },
   });
 
   const getStatusIcon = (status: string) => {
