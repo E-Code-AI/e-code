@@ -702,6 +702,14 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
     
     const previewIndexFile = findPreferredPreviewIndex(files);
     if (previewIndexFile) {
+      const previewIndexPath = String(previewIndexFile.path || previewIndexFile.name || 'index.html')
+        .replace(/^\/+/, '');
+      if (previewIndexPath !== 'index.html') {
+        const nestedDir = previewIndexPath.replace(/\/index\.html$/i, '');
+        const nestedUrl = withBootstrapQuery(`/api/preview/projects/${projectId}/preview/${nestedDir}/`, req);
+        return res.redirect(307, nestedUrl);
+      }
+
       const content = previewIndexFile.content ?? '';
       if (!content) {
         res.type('html').send('');
