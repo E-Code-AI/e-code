@@ -60,7 +60,7 @@ import {
   type FileDiff
 } from '@/components/agent/messages';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, getCSRFToken } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 import { useWorkflowManager } from '@/hooks/use-workflow-manager';
 import { useAgentModelPreference } from '@/hooks/use-agent-model-preference';
 import { AgentWorkflowSelector } from './AgentWorkflowSelector';
@@ -1063,7 +1063,7 @@ export function ReplitAgentPanelV3({
       const response = await fetch('/api/agent/attachments', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'X-CSRF-Token': attachCsrf },
+        headers: withBootstrapHeaders('/api/agent/attachments', { 'X-CSRF-Token': attachCsrf }),
         body: formData
       });
       
@@ -1432,7 +1432,10 @@ export function ReplitAgentPanelV3({
             const streamCsrf = await getCSRFToken();
             const response = await fetch('/api/agent/chat/stream', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': streamCsrf },
+              headers: withBootstrapHeaders('/api/agent/chat/stream', {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': streamCsrf,
+              }),
               credentials: 'include',
               body: JSON.stringify({
                 message: userMessage.content,
@@ -1859,7 +1862,10 @@ export function ReplitAgentPanelV3({
       const csrfHeader = await getCSRFToken();
       const response = await fetch('/api/agent/chat/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfHeader },
+        headers: withBootstrapHeaders('/api/agent/chat/stream', {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfHeader,
+        }),
         credentials: 'include',
         body: JSON.stringify({
           message: messageWithAttachments,

@@ -100,7 +100,7 @@ function shouldAttachBootstrap(url: string): boolean {
   return url.startsWith('/api/');
 }
 
-function withBootstrapHeaders(url: string, headers?: HeadersInit): HeadersInit {
+export function withBootstrapHeaders(url: string, headers?: HeadersInit): HeadersInit {
   if (!shouldAttachBootstrap(url)) {
     return headers || {};
   }
