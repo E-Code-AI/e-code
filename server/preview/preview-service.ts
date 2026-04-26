@@ -928,19 +928,18 @@ export class PreviewService {
       return errInstance;
     }
 
-    let workspaceFiles: any[] = [];
-    if (!files || files.length === 0 || !hasRunnableFiles(files)) {
-      workspaceFiles = await this.readWorkspaceFiles(projectId).catch(() => []);
-      if (workspaceFiles.length > 0) {
-        const merged = new Map<string, any>();
-        for (const file of files || []) {
-          merged.set(String(file.path || file.name), file);
-        }
-        for (const file of workspaceFiles) {
-          merged.set(String(file.path || file.name), file);
-        }
-        files = [...merged.values()];
+    const workspaceFiles = await this.readWorkspaceFiles(projectId).catch(() => []);
+    if (workspaceFiles.length > 0) {
+      const merged = new Map<string, any>();
+      for (const file of files || []) {
+        merged.set(String(file.path || file.name), file);
       }
+      // Prefer the live workspace snapshot when the database is stale or only
+      // partially populated during bootstrap/autonomous generation.
+      for (const file of workspaceFiles) {
+        merged.set(String(file.path || file.name), file);
+      }
+      files = [...merged.values()];
     }
 
     if (!files || files.length === 0) {
