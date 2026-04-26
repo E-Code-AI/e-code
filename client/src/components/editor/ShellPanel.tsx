@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams } from 'wouter';
 import { useTheme } from '@/components/ThemeProvider';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -86,6 +87,7 @@ function getTerminalTheme() {
 }
 
 export function ShellPanel({ projectId, className }: ShellPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [tabs, setTabs] = useState<ShellTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>('');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -95,6 +97,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
   const wsInitiatedRef = useRef<Set<string>>(new Set());
   const { toast } = useToast();
   const { theme } = useTheme();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   useEffect(() => {
     const newTheme = getTerminalTheme();
@@ -108,7 +111,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
     // The API endpoint is optional and may fail if user doesn't own the project
     const sessionId = `shell-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     return sessionId;
-  }, [projectId]);
+  }, [resolvedProjectId]);
 
   const connectSocket = useCallback((tabId: string, sessionId: string) => {
     const instance = terminalsRef.current.get(tabId);
@@ -120,13 +123,19 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
       tab.id === tabId ? { ...tab, isConnecting: true, isConnected: false } : tab
     ));
 
-    const projectParam = projectId && projectId !== 'undefined' ? projectId : 'default';
+    if (!resolvedProjectId) {
+      setTabs(prev => prev.map(tab =>
+        tab.id === tabId ? { ...tab, isConnecting: false, isConnected: false } : tab
+      ));
+      instance.term.writeln('\r\n\x1b[1;31m✗ No project selected for shell session\x1b[0m');
+      return;
+    }
 
     try {
       // Use polling first for better proxy compatibility (Replit, etc.)
       const socket = io({
         path: '/socket.io/terminal',
-        query: { projectId: projectParam, sessionId },
+        query: { projectId: resolvedProjectId, sessionId },
         transports: ['polling', 'websocket'], // Polling first for proxy compatibility
         timeout: 30000, // Increased timeout for slower connections
         reconnection: true,
@@ -208,7 +217,7 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
         tab.id === tabId ? { ...tab, isConnecting: false } : tab
       ));
     }
-  }, [projectId]);
+  }, [resolvedProjectId]);
 
   const initializeTerminal = useCallback((tabId: string, container: HTMLDivElement) => {
     if (terminalsRef.current.has(tabId)) return;

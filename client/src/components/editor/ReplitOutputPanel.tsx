@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useParams } from 'wouter';
 import { LazyMotionDiv } from '@/lib/motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,7 @@ function EmptyState() {
 }
 
 export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [output, setOutput] = useState<OutputLine[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,10 +82,11 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   const [selectedSource, setSelectedSource] = useState('all');
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const { data: initialLogs, isLoading } = useQuery<BuildLog[]>({
-    queryKey: [`/api/workspace/projects/${projectId}/build-logs`],
-    enabled: !!projectId,
+    queryKey: [`/api/workspace/projects/${resolvedProjectId}/build-logs`],
+    enabled: !!resolvedProjectId,
   });
 
   useEffect(() => {
@@ -100,10 +103,10 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   }, [initialLogs]);
 
   useEffect(() => {
-    if (!projectId) return;
+    if (!resolvedProjectId) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/api/build-logs/ws?projectId=${projectId}`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/api/build-logs/ws?projectId=${resolvedProjectId}`);
 
     ws.onopen = () => {};
 
@@ -144,7 +147,7 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     return () => {
       ws.close();
     };
-  }, [projectId]);
+  }, [resolvedProjectId]);
 
   useEffect(() => {
     if (autoScroll && bottomRef.current) {
@@ -210,10 +213,10 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
   });
 
   const clearOutput = async () => {
-    if (!projectId) return;
+    if (!resolvedProjectId) return;
     
     try {
-      await apiRequest('DELETE', `/api/workspace/projects/${projectId}/build-logs`, {});
+      await apiRequest('DELETE', `/api/workspace/projects/${resolvedProjectId}/build-logs`, {});
       setOutput([]);
     } catch (error) {
       console.error('[Output] Error clearing logs:', error);
@@ -222,6 +225,22 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
 
   const showEmpty = !isLoading && output.length === 0;
   const showNoMatches = !isLoading && output.length > 0 && filteredOutput.length === 0;
+
+  if (!resolvedProjectId) {
+    return (
+      <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
+        <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
+          <Terminal className="w-3.5 h-3.5 text-[var(--ecode-text-muted)]" />
+          <span className="text-xs font-medium text-[var(--ecode-text)] ml-1.5">Output</span>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center">
+          <Terminal className="w-8 h-8 text-[var(--ecode-text-muted)] opacity-40 mb-3" />
+          <p className="text-[15px] leading-[20px] text-foreground mb-1">No project selected</p>
+          <p className="text-[13px] text-[var(--ecode-text-muted)]">Open the output panel from a real workspace to stream build logs.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
