@@ -81,11 +81,11 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
       setLoading(true);
       const data = await apiRequest<any>('GET', `/api/tests/${projectId}/suites`);
       setTestSuites(data.suites || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching test suites:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch test suites",
+        description: error?.message || "Failed to fetch test suites",
         variant: "destructive"
       });
     } finally {
@@ -181,11 +181,11 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
       pollingTimeoutRef.current = setTimeout(() => {
         stopPolling();
       }, 300000);
-    } catch (error) {
+    } catch (error: any) {
       stopPolling();
       toast({
         title: "Error",
-        description: "Failed to run tests",
+        description: error?.message || "Failed to run tests",
         variant: "destructive"
       });
     }
@@ -200,10 +200,10 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
       });
       fetchTestSuites();
       fetchTestRuns();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to run test suite",
+        description: error?.message || "Failed to run test suite",
         variant: "destructive"
       });
     }
