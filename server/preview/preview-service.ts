@@ -372,10 +372,10 @@ async function scriptReferencesMissingDirectories(script: string, cwd: string): 
   return missing;
 }
 
-function detectNodeEntryFile(files: any[], packageJson: any): string | null {
+function detectNodeEntryFile(files: any[], packageJson: any, appRoot = '.'): string | null {
   const filePaths = files
     .filter((file) => !file?.isDirectory && !file?.isFolder)
-    .map((file) => String(file.path || file.name || ''));
+    .map((file) => String(file.path || file.name || '').replace(/\\/g, '/'));
 
   const candidates = [
     packageJson?.main,
@@ -392,8 +392,15 @@ function detectNodeEntryFile(files: any[], packageJson: any): string | null {
   ].filter(Boolean) as string[];
 
   for (const candidate of candidates) {
-    if (filePaths.includes(candidate)) {
-      return candidate;
+    const normalizedCandidate = String(candidate).replace(/\\/g, '/');
+    const rootedCandidate = appRoot !== '.'
+      ? path.posix.join(appRoot.replace(/\\/g, '/'), normalizedCandidate)
+      : normalizedCandidate;
+    if (filePaths.includes(rootedCandidate)) {
+      return appRoot !== '.' ? normalizedCandidate : rootedCandidate;
+    }
+    if (filePaths.includes(normalizedCandidate)) {
+      return normalizedCandidate;
     }
   }
 
@@ -441,6 +448,28 @@ function detectModernFrontend(files: any[]) {
       (hasViteConfig && (hasMainEntry || hasRootIndex || hasClientIndex)) ||
       (hasMainEntry && hasReactAppShell),
   };
+}
+
+function selectPackageJsonFile(files: any[]) {
+  const packageFiles = files.filter((file) => {
+    if (file?.isDirectory || file?.isFolder) return false;
+    const filePath = String(file.path || file.name || '');
+    return filePath.endsWith('package.json');
+  });
+
+  if (packageFiles.length === 0) {
+    return null;
+  }
+
+  const priority = ['package.json', 'client/package.json', 'frontend/package.json', 'app/package.json'];
+  for (const candidate of priority) {
+    const match = packageFiles.find((file) => String(file.path || file.name || '') === candidate);
+    if (match) {
+      return match;
+    }
+  }
+
+  return packageFiles[0];
 }
 
 interface PreviewInstance {
@@ -1113,7 +1142,7 @@ export class PreviewService {
   }
 
   private async detectFramework(files: any[], previewPath: string) {
-    const packageJsonFile = files.find(f => f.name === 'package.json');
+    const packageJsonFile = selectPackageJsonFile(files);
     const hasIndexHtml = files.some(f => f.name === 'index.html');
     const hasPythonFiles = files.some(f => f.name.endsWith('.py'));
     const hasRequirementsTxt = files.some(f => f.name === 'requirements.txt');
@@ -1122,27 +1151,33 @@ export class PreviewService {
     if (packageJsonFile) {
       const packageJson = JSON.parse(packageJsonFile.content || '{}');
       const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
+      const packageJsonPath = String(packageJsonFile.path || packageJsonFile.name || 'package.json');
+      const appRoot = path.dirname(packageJsonPath) === '.' ? '.' : path.dirname(packageJsonPath);
       
       if (deps.react || deps['@vitejs/plugin-react'] || frontendSignals.looksLikeModernFrontend) {
         return {
           type: 'react' as const,
           packageJson,
+          packageJsonPath,
+          appRoot,
           hasVite: !!deps.vite || frontendSignals.hasViteConfig,
         };
       } else if (deps.vue || deps['@vitejs/plugin-vue']) {
-        return { type: 'vue' as const, packageJson, hasVite: !!deps.vite };
+        return { type: 'vue' as const, packageJson, packageJsonPath, appRoot, hasVite: !!deps.vite };
       } else if (deps['@angular/core']) {
-        return { type: 'angular' as const, packageJson };
+        return { type: 'angular' as const, packageJson, packageJsonPath, appRoot };
       } else if (deps.express || deps.fastify || deps.koa) {
-        return { type: 'node' as const, packageJson };
+        return { type: 'node' as const, packageJson, packageJsonPath, appRoot };
       } else if (frontendSignals.hasViteConfig && (frontendSignals.hasClientIndex || frontendSignals.hasRootIndex)) {
         return {
           type: 'react' as const,
           packageJson,
+          packageJsonPath,
+          appRoot,
           hasVite: true,
         };
       } else {
-        return { type: 'node' as const, packageJson };
+        return { type: 'node' as const, packageJson, packageJsonPath, appRoot };
       }
     } else if (hasPythonFiles) {
       return { type: 'python' as const, hasRequirements: hasRequirementsTxt };
@@ -1159,6 +1194,7 @@ export class PreviewService {
     previewPath: string,
     files: any[],
   ) {
+    const runtimeRoot = path.join(previewPath, frameworkInfo?.appRoot || '.');
     const packageJson = frameworkInfo?.packageJson || {};
     const deps = { ...(packageJson.dependencies || {}), ...(packageJson.devDependencies || {}) };
     const hasTypeScriptSource = files.some((file) => {
@@ -1175,7 +1211,7 @@ export class PreviewService {
     const missingDeps = requiredPreviewDeps.filter((pkg) => {
       if (deps[pkg]) return false;
       try {
-        const pkgJsonPath = path.join(previewPath, 'node_modules', pkg, 'package.json');
+        const pkgJsonPath = path.join(runtimeRoot, 'node_modules', pkg, 'package.json');
         require('fs').accessSync(pkgJsonPath);
         return false;
       } catch {
@@ -1198,7 +1234,7 @@ export class PreviewService {
     await this.runCommand(
       'npm',
       ['install', '--no-save', '--include=dev', ...missingDeps],
-      previewPath,
+      runtimeRoot,
       {
         NODE_ENV: 'development',
         npm_config_production: 'false',
@@ -1209,6 +1245,7 @@ export class PreviewService {
 
   private async startModernFramework(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
+    const appRootPath = path.join(previewPath, frameworkInfo.appRoot || '.');
     const apiScript = frameworkInfo.packageJson.scripts?.api
       ? 'api'
       : frameworkInfo.packageJson.scripts?.server
@@ -1233,7 +1270,7 @@ export class PreviewService {
     try {
       preview.logs.push('Installing dependencies...');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
-      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath, {
+      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], appRootPath, {
         NODE_ENV: 'development',
         npm_config_production: 'false',
         NPM_CONFIG_PRODUCTION: 'false',
@@ -1253,8 +1290,8 @@ export class PreviewService {
       // <base href="/preview/:projectId/:port/"> when serving proxied preview routes.
       // --clearScreen false prevents Vite from clearing stdout (keeps logs visible).
       // --strictPort prevents port auto-increment which would break the proxy.
-      const localViteBin = path.join(previewPath, 'node_modules', '.bin', process.platform === 'win32' ? 'vite.cmd' : 'vite');
-      const packagedViteBin = path.join(previewPath, 'node_modules', 'vite', 'bin', 'vite.js');
+      const localViteBin = path.join(appRootPath, 'node_modules', '.bin', process.platform === 'win32' ? 'vite.cmd' : 'vite');
+      const packagedViteBin = path.join(appRootPath, 'node_modules', 'vite', 'bin', 'vite.js');
       const viteArgs = [
         '--port', port.toString(),
         '--host', '0.0.0.0',
@@ -1287,7 +1324,7 @@ export class PreviewService {
     }
 
     const childProcess = spawn(startCommand[0], startCommand.slice(1), {
-      cwd: previewPath,
+      cwd: appRootPath,
       env: createSafeEnv(frontendEnv)
     });
 
@@ -1304,7 +1341,7 @@ export class PreviewService {
 
     if (apiScript && apiPort) {
       const apiProcess = spawn('npm', ['run', apiScript], {
-        cwd: previewPath,
+        cwd: appRootPath,
         env: createSafeEnv({ ...projectEnvVars, PORT: apiPort.toString() })
       });
 
@@ -1323,12 +1360,13 @@ export class PreviewService {
 
   private async startNodeApplication(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
+    const appRootPath = path.join(previewPath, frameworkInfo.appRoot || '.');
     preview.logs.push('Starting Node.js application...');
     
     try {
       preview.logs.push('Installing dependencies...');
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
-      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], previewPath, {
+      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], appRootPath, {
         NODE_ENV: 'development',
         npm_config_production: 'false',
         NPM_CONFIG_PRODUCTION: 'false',
@@ -1346,7 +1384,7 @@ export class PreviewService {
     let startCommand: string[] = [];
 
     if (startScript) {
-      const missingDirs = await scriptReferencesMissingDirectories(startScript, previewPath);
+      const missingDirs = await scriptReferencesMissingDirectories(startScript, appRootPath);
       if (missingDirs.length === 0) {
         startCommand = ['npm', 'start'];
       } else {
@@ -1355,7 +1393,7 @@ export class PreviewService {
     }
 
     if (startCommand.length === 0 && devScript) {
-      const missingDirs = await scriptReferencesMissingDirectories(devScript, previewPath);
+      const missingDirs = await scriptReferencesMissingDirectories(devScript, appRootPath);
       if (missingDirs.length === 0) {
         startCommand = ['npm', 'run', 'dev'];
       } else {
@@ -1364,13 +1402,13 @@ export class PreviewService {
     }
 
     if (startCommand.length === 0) {
-      const entryFile = detectNodeEntryFile(files, packageJson);
+      const entryFile = detectNodeEntryFile(files, packageJson, frameworkInfo.appRoot || '.');
       if (!entryFile) {
         throw new Error('No runnable Node entry file found after filtering invalid scripts');
       }
 
       if (entryFile.endsWith('.ts') || entryFile.endsWith('.tsx')) {
-        const localTsxBin = path.join(previewPath, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
+        const localTsxBin = path.join(appRootPath, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
         if (await pathExists(localTsxBin)) {
           startCommand = [localTsxBin, entryFile];
         } else {
@@ -1382,7 +1420,7 @@ export class PreviewService {
     }
 
     const nodeProcess = spawn(startCommand[0], startCommand.slice(1), {
-      cwd: previewPath,
+      cwd: appRootPath,
       env: createSafeEnv({ ...projectEnvVars, PORT: port.toString() })
     });
 
