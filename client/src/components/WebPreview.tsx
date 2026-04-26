@@ -53,7 +53,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   const reconnectAttemptsRef = useRef(0);
   const maxReconnectAttempts = 10;
   
-  const { data: previewData } = useQuery<{ previewUrl: string; status?: string }>({
+  const { data: previewData, refetch: refetchPreviewData } = useQuery<{ previewUrl: string; status?: string }>({
     queryKey: ['/api/preview/url', projectId],
     queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId && projectId > 0
@@ -64,7 +64,12 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/preview`;
+    const params = new URLSearchParams({ projectId: String(projectId) });
+    const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+    if (bootstrapToken) {
+      params.set('bootstrap', bootstrapToken);
+    }
+    const wsUrl = `${protocol}//${window.location.host}/ws/preview?${params.toString()}`;
 
     try {
       const ws = new WebSocket(wsUrl);
@@ -95,11 +100,14 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
             case 'preview:ready':
               setPreviewStatus('running');
               setErrorMessage(null);
-              if (data.url) {
-                setUrl(data.url);
-                setIframeKey(prev => prev + 1);
-              }
               queryClient.invalidateQueries({ queryKey: ['/api/preview/url', projectId] });
+              void refetchPreviewData().then((result) => {
+                const resolvedUrl = result.data?.previewUrl;
+                if (resolvedUrl) {
+                  setUrl(resolvedUrl);
+                  setIframeKey(prev => prev + 1);
+                }
+              });
               break;
 
             case 'preview:stop':
@@ -124,7 +132,12 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
             case 'preview:status':
               if (data.status === 'running') {
                 setPreviewStatus('running');
-                if (data.url) setUrl(data.url);
+                void refetchPreviewData().then((result) => {
+                  const resolvedUrl = result.data?.previewUrl;
+                  if (resolvedUrl) {
+                    setUrl(resolvedUrl);
+                  }
+                });
               } else if (data.status === 'starting') {
                 setPreviewStatus('starting');
               } else if (data.status === 'error') {
@@ -154,7 +167,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
     } catch {
       // connection failed, will retry via onclose
     }
-  }, [projectId]);
+  }, [projectId, refetchPreviewData]);
 
   useEffect(() => {
     connectWebSocket();
@@ -171,7 +184,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
   }, [connectWebSocket]);
 
   useEffect(() => {
-    if (previewData?.previewUrl && !url) {
+    if (previewData?.previewUrl && previewData.previewUrl !== url) {
       setUrl(previewData.previewUrl);
     }
     if (previewData?.previewUrl && (previewData?.status === 'static' || previewData?.status === 'running')) {

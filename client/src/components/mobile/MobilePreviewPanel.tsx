@@ -219,8 +219,8 @@ export function MobilePreviewPanel({
     hasAttemptedAutoStart.current = false;
     startPreviewMutation.mutate(undefined);
   };
-  const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || `/api/preview/projects/${projectId}/preview`;
-  const computedPreviewUrl = baseUrl + (currentPath === '/' ? '' : currentPath);
+  const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || '';
+  const computedPreviewUrl = baseUrl ? `${baseUrl}${currentPath === '/' ? '' : currentPath}` : '';
 
   const handleRefresh = () => {
     setIsLoading(true);
@@ -262,7 +262,7 @@ export function MobilePreviewPanel({
     }
   };
 
-  const displayPreviewUrl = computedPreviewUrl || `/api/preview/projects/${projectId}/preview`;
+  const displayPreviewUrl = computedPreviewUrl || '';
 
   /* ── OVERLAY / SPLIT-VIEW MODE ── compact header only */
   if (isOverlay) {

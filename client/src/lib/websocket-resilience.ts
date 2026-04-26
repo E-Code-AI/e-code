@@ -521,9 +521,14 @@ export function createPreviewWebSocket(
   projectId: string | number
 ): ResilientWebSocket {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const params = new URLSearchParams({ projectId: String(projectId) });
+  const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+  if (bootstrapToken) {
+    params.set('bootstrap', bootstrapToken);
+  }
 
   return new ResilientWebSocket({
-    url: `${protocol}//${window.location.host}/ws/preview?projectId=${projectId}`,
+    url: `${protocol}//${window.location.host}/ws/preview?${params.toString()}`,
     maxReconnectAttempts: 20,
     baseDelay: 750,
     maxDelay: 30000,

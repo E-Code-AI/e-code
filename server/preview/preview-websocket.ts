@@ -4,9 +4,12 @@ import { Server } from 'http';
 import { IncomingMessage } from 'http';
 import { EventEmitter } from 'events';
 import { parse as parseCookie } from 'cookie';
+import { URL } from 'url';
+import jwt from 'jsonwebtoken';
 import { storage } from '../storage';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 // Event emitter for preview updates
 // NOTE: File changes are emitted by files.router.ts when files are mutated via REST API
@@ -17,9 +20,16 @@ interface PreviewClient {
   ws: WebSocket;
   projectId?: number;
   userId: number;
+  bootstrapProjectId?: number;
   isAlive: boolean;
   lastPing: number;
   eventListeners: Map<string, (...args: any[]) => void>;
+}
+
+interface BootstrapTokenPayload {
+  projectId: string;
+  userId: number;
+  timestamp: number;
 }
 
 class PreviewWebSocketService {
@@ -40,23 +50,34 @@ class PreviewWebSocketService {
 
       const cookies = parseCookie(request.headers.cookie || '');
       const sessionId = cookies['ecode.sid'];
-      
-      if (!sessionId) {
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        socket.destroy();
-        return;
+
+      const requestUrl = new URL(request.url || '/ws/preview', 'http://localhost');
+      const bootstrapToken = requestUrl.searchParams.get('bootstrap');
+
+      let userId: number | null = null;
+      let bootstrapProjectId: number | undefined;
+
+      if (sessionId) {
+        try {
+          userId = await this.getUserIdFromSession(sessionId);
+        } catch (error) {
+          console.error('Session validation error:', error);
+          socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+          socket.destroy();
+          return;
+        }
       }
 
-      let userId: number | null;
-      try {
-        userId = await this.getUserIdFromSession(sessionId);
-      } catch (error) {
-        console.error('Session validation error:', error);
-        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
-        socket.destroy();
-        return;
+      if (!userId && bootstrapToken) {
+        try {
+          const decoded = jwt.verify(bootstrapToken, getJwtSecret()) as BootstrapTokenPayload;
+          userId = decoded.userId;
+          bootstrapProjectId = Number(decoded.projectId);
+        } catch (error) {
+          console.error('Bootstrap token validation error:', error);
+        }
       }
-      
+
       if (!userId) {
         socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
         socket.destroy();
@@ -69,6 +90,7 @@ class PreviewWebSocketService {
           const client: PreviewClient = { 
             ws, 
             userId, 
+            bootstrapProjectId,
             isAlive: true, 
             lastPing: Date.now(),
             eventListeners: new Map()
@@ -258,6 +280,14 @@ class PreviewWebSocketService {
       case 'subscribe':
         // Subscribe to a specific project's preview updates
         const projectId = data.projectId;
+
+        if (client.bootstrapProjectId != null && Number(projectId) !== client.bootstrapProjectId) {
+          client.ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Access denied to this project'
+          }));
+          return;
+        }
         
         // Security: Verify user has access to this project
         const hasAccess = await this.verifyProjectAccess(client.userId, projectId);

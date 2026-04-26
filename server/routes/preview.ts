@@ -23,7 +23,8 @@ function getHotReloadScript(projectId: string): string {
         
         function connect() {
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = protocol + '//' + window.location.host + '/ws/preview';
+          var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
+          const wsUrl = protocol + '//' + window.location.host + '/ws/preview' + (bootstrap ? ('?bootstrap=' + encodeURIComponent(bootstrap) + '&projectId=' + encodeURIComponent(projectId)) : ('?projectId=' + encodeURIComponent(projectId)));
           
           try {
             ws = new WebSocket(wsUrl);
