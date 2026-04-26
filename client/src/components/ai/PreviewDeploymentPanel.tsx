@@ -131,6 +131,21 @@ export function PreviewDeploymentPanel({
     if (!bootstrapToken) return path;
     return `${path}${path.includes('?') ? '&' : '?'}bootstrap=${encodeURIComponent(bootstrapToken)}`;
   };
+  const resolveServicePreviewUrl = (port: number) => {
+    const servicePath = buildPreviewPath(`/api/preview/projects/${projectId}/preview/${port}/`);
+
+    if (!previewUrl) {
+      return servicePath;
+    }
+
+    try {
+      const base = new URL(previewUrl, window.location.origin);
+      const target = new URL(servicePath, base.origin);
+      return target.toString();
+    } catch {
+      return servicePath;
+    }
+  };
 
   useEffect(() => {
     if (isRunning && previewUrl && onPreviewReady && lastReportedUrlRef.current !== previewUrl) {
@@ -436,7 +451,7 @@ export function PreviewDeploymentPanel({
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                const serviceUrl = `${window.location.origin}${buildPreviewPath(`/api/preview/projects/${projectId}/preview/${service.port}/`)}`;
+                                const serviceUrl = resolveServicePreviewUrl(service.port);
                                 window.open(serviceUrl, '_blank');
                               }}
                               data-testid={`button-open-service-${service.port}`}

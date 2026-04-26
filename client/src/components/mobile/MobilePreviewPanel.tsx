@@ -220,7 +220,22 @@ export function MobilePreviewPanel({
     startPreviewMutation.mutate(undefined);
   };
   const baseUrl = externalPreviewUrl || previewStatus?.previewUrl || '';
-  const computedPreviewUrl = baseUrl ? `${baseUrl}${currentPath === '/' ? '' : currentPath}` : '';
+  const computedPreviewUrl = (() => {
+    if (!baseUrl) return '';
+    if (currentPath === '/' || !currentPath) return baseUrl;
+    try {
+      const url = new URL(baseUrl, window.location.origin);
+      const nextPath = currentPath.startsWith('/') ? currentPath.slice(1) : currentPath;
+      if (url.pathname.endsWith('/')) {
+        url.pathname = `${url.pathname}${nextPath}`;
+      } else {
+        url.pathname = `${url.pathname}/${nextPath}`;
+      }
+      return url.toString();
+    } catch {
+      return baseUrl;
+    }
+  })();
 
   const handleRefresh = () => {
     setIsLoading(true);
