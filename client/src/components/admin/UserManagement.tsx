@@ -70,10 +70,10 @@ export default function UserManagement() {
         description: "Admin status updated successfully"
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to update admin status",
+        description: error.message || "Failed to update admin status",
         variant: "destructive"
       });
     }
@@ -109,6 +109,13 @@ export default function UserManagement() {
         title: "Success",
         description: "User account unlocked successfully"
       });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to unlock user account",
+        variant: "destructive"
+      });
     }
   });
 
@@ -123,10 +130,10 @@ export default function UserManagement() {
         description: "User deleted successfully"
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to delete user",
+        description: error.message || "Failed to delete user",
         variant: "destructive"
       });
     }
@@ -142,6 +149,13 @@ export default function UserManagement() {
       toast({
         title: "Success",
         description: "User updated successfully"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive"
       });
     }
   });
