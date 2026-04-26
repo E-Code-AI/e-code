@@ -282,16 +282,25 @@ interface ServiceInfo {
   ready: boolean;
   lastCheck: Date;
   error?: string;
+  // Optional services are reported in /health/components for observability
+  // but do NOT contribute to /health/readiness — they cannot fail the gate.
+  optional?: boolean;
 }
 
 const serviceRegistry = new Map<string, ServiceInfo>();
 
 /**
  * Register a service in the health check registry
- * Call this when a service begins initialization
+ * Call this when a service begins initialization.
+ * Pass { optional: true } for subsystems whose absence must NOT fail readiness
+ * (e.g. unwired stubs, feature-flagged components).
  */
-export function registerService(name: string): void {
-  serviceRegistry.set(name, { ready: false, lastCheck: new Date() });
+export function registerService(name: string, opts?: { optional?: boolean }): void {
+  serviceRegistry.set(name, {
+    ready: false,
+    lastCheck: new Date(),
+    optional: opts?.optional ?? false,
+  });
 }
 
 /**
@@ -478,22 +487,42 @@ app.get('/api/health/liveness', (_req, res) => {
   res.status(200).json({ status: 'alive' });
 });
 
+function computeReadinessSnapshot() {
+  const requiredEntries: Array<[string, ServiceInfo]> = [];
+  const optionalEntries: Array<[string, ServiceInfo]> = [];
+  serviceRegistry.forEach((info, name) => {
+    if (info.optional) {
+      optionalEntries.push([name, info]);
+    } else {
+      requiredEntries.push([name, info]);
+    }
+  });
+  const allReady = requiredEntries.every(([, info]) => info.ready);
+  const readyCount = requiredEntries.filter(([, info]) => info.ready).length;
+  const requiredDetails = Object.fromEntries(
+    requiredEntries.map(([name, info]) => [name, info.ready]),
+  );
+  const optionalDetails = Object.fromEntries(
+    optionalEntries.map(([name, info]) => [
+      name,
+      { ready: info.ready, error: info.error ?? null },
+    ]),
+  );
+  return { allReady, readyCount, total: requiredEntries.length, requiredDetails, optionalDetails };
+}
+
 app.get('/health/readiness', (_req, res) => {
   if (serverState.phase === 'draining') {
     return res.status(503).json({ ready: false, phase: 'draining' });
   }
-  const services = getServiceStatus();
-  const allReady = Object.values(services).every(ready => ready);
-  const readyCount = Object.values(services).filter(ready => ready).length;
-  const totalCount = serviceRegistry.size;
-  const statusCode = allReady ? 200 : 503;
-  
-  res.status(statusCode).json({
-    ready: allReady,
+  const snap = computeReadinessSnapshot();
+  return res.status(snap.allReady ? 200 : 503).json({
+    ready: snap.allReady,
     phase: serverState.phase,
-    services: readyCount,
-    total: totalCount,
-    details: services
+    services: snap.readyCount,
+    total: snap.total,
+    details: snap.requiredDetails,
+    optional: snap.optionalDetails,
   });
 });
 
@@ -501,13 +530,26 @@ app.get('/api/health/readiness', (_req, res) => {
   if (serverState.phase === 'draining') {
     return res.status(503).json({ ready: false, phase: 'draining' });
   }
-  const services = getServiceStatus();
-  const allReady = Object.values(services).every(ready => ready);
-  return res.status(allReady ? 200 : 503).json({
-    ready: allReady,
+  const snap = computeReadinessSnapshot();
+  return res.status(snap.allReady ? 200 : 503).json({
+    ready: snap.allReady,
     phase: serverState.phase,
-    services,
+    services: snap.requiredDetails,
+    optional: snap.optionalDetails,
   });
+});
+
+app.get('/health/components', (_req, res) => {
+  const components: Record<string, { ready: boolean; optional: boolean; error?: string | null; lastCheck: string }> = {};
+  serviceRegistry.forEach((info, name) => {
+    components[name] = {
+      ready: info.ready,
+      optional: !!info.optional,
+      error: info.error ?? null,
+      lastCheck: info.lastCheck.toISOString(),
+    };
+  });
+  res.json({ phase: serverState.phase, components });
 });
 
 // Helper to track service loading (registers and marks ready)
@@ -907,8 +949,10 @@ httpServer.listen(port, "0.0.0.0", () => {
       markServiceFailed('preview-ws', String(error));
     }
 
-    // Debugger WebSocket service is not wired in this build; keep status explicit.
-    registerService('debug-ws');
+    // Debugger WebSocket is an optional subsystem (no DAP integration in this build).
+    // It is registered as optional so that /health/readiness reports 200 without it,
+    // while /health/components keeps the explicit "not wired" signal for observability.
+    registerService('debug-ws', { optional: true });
     markServiceFailed('debug-ws', 'Debugger WebSocket service is not available in this build');
 
     // Make session store available globally for WebSocket authentication
