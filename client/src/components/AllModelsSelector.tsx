@@ -51,6 +51,16 @@ export function AllModelsSelector() {
 
     // ── OpenAI (April 2026) ─────────────────────────────────────────────────────
     {
+      id: 'gpt-5-codex',
+      name: 'GPT-5 Codex',
+      description: 'Code-first flagship — strongest OpenAI model for agentic engineering and deep implementation work',
+      provider: 'OpenAI',
+      contextWindow: 400000,
+      capabilities: ['Chat', 'Code', 'Reasoning', 'Tools', 'Agentic Workflows'],
+      pricing: { input: 15, output: 60, currency: 'USD', unit: '1M tokens' },
+      available: true
+    },
+    {
       id: 'gpt-4.1',
       name: 'GPT-4.1',
       description: 'OpenAI legacy flagship — best coding, instruction following, 1M context',

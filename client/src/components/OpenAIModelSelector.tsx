@@ -55,6 +55,7 @@ export function OpenAIModelSelector({
   };
   
   const getModelIcon = (modelId: string) => {
+    if (modelId.includes('codex')) return <Code className="h-4 w-4" />;
     if (modelId.includes('o1')) return <Brain className="h-4 w-4" />;
     if (modelId.includes('vision')) return <Eye className="h-4 w-4" />;
     if (modelId.includes('mini')) return <Zap className="h-4 w-4" />;
@@ -210,7 +211,16 @@ export function OpenAIModelSelector({
       )}
       
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleModelChange('gpt-5-codex')}
+          className={localSelectedModel === 'gpt-5-codex' ? 'border-blue-500' : ''}
+        >
+          <Code className="h-3 w-3 mr-1" />
+          GPT-5 Codex
+        </Button>
         <Button
           variant="outline"
           size="sm"

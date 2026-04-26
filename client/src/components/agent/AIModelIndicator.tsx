@@ -87,6 +87,7 @@ function getModelDisplayName(model: string): string {
   // OpenAI — real models (ModelFarm-compatible first)
   if (model === 'gpt-4o-mini') return 'GPT-4o Mini';
   if (model === 'gpt-4o') return 'GPT-4o';
+  if (model.includes('gpt-5-codex')) return 'GPT-5 Codex';
   if (model.includes('o4-mini')) return 'o4-mini';
   if (model.includes('o3-mini')) return 'o3-mini';
   if (model.includes('o3')) return 'o3';

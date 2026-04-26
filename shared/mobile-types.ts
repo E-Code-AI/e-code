@@ -17,6 +17,7 @@ export { normalizeUserId, isValidUserId } from './schema';
 // Source: Official provider documentation verified January 2026
 export const AI_MODELS = [
   // OpenAI Models
+  'gpt-5-codex',
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',

@@ -73,6 +73,7 @@ export const subscriptionTierEnum = pgEnum('subscription_tier', ['free', 'core',
 // AI Models - Production enum (March 2026) - verified real model IDs only
 export const aiModelEnum = pgEnum('ai_model', [
   // OpenAI — verified March 2026
+  'gpt-5-codex',
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',
@@ -2020,6 +2021,7 @@ export type InsertAgentMessage = z.infer<typeof insertAgentMessageSchema>;
 // - xAI: 403 billing = model exists
 export const AI_MODELS = [
   // ── OpenAI (all confirmed real, March 2026) ──────────────────────────────
+  'gpt-5-codex',
   'gpt-4.1',
   'gpt-4.1-mini',
   'gpt-4.1-nano',

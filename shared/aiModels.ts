@@ -3,7 +3,8 @@
  * Single source of truth for all AI models across backend and frontend
  * 
  * CONSOLIDATION NOTICE (Jan 2026):
- * - gpt-4.1 → CURRENT flagship
+ * - gpt-5-codex → Code-first flagship
+ * - gpt-4.1 → General-purpose flagship
  * - gpt-4.1-mini → Cost-optimized
  * - gpt-4.1-nano → High-throughput
  * 
@@ -45,6 +46,22 @@ export const AI_MODELS_REGISTRY: Record<string, AIModel> = {
   // OpenAI Models - GPT-4.1 family
   // Source: https://platform.openai.com/docs/models
   // ========================================
+  'gpt-5-codex': {
+    id: 'gpt-5-codex',
+    name: 'GPT-5 Codex',
+    provider: 'openai',
+    description: 'Code-first flagship — best for agentic engineering, deep edits, and long implementation loops',
+    capabilities: {
+      extendedThinking: true,
+      toolUse: true,
+      contextWindow: 400000,
+      codeGeneration: true,
+      multimodal: false
+    },
+    pricing: { input: 15.00, output: 60.00 },
+    releaseDate: '2026-03-01',
+    available: true
+  },
   'gpt-4.1': {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
