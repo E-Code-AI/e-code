@@ -54,6 +54,15 @@ export function AgentWorkflowOrchestrator({
     }
   }, [phase, initialPrompt]);
 
+  const resolveDesignPreviewUrl = async () => {
+    try {
+      const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+      return data?.previewUrl || '';
+    } catch {
+      return '';
+    }
+  };
+
   const generateFeatureList = async () => {
     setIsProcessing(true);
     try {
@@ -258,8 +267,9 @@ export function AgentWorkflowOrchestrator({
         setPhase('building_design');
         
         // Simulate design build (3-10 mins)
-        setTimeout(() => {
-          setDesignPreviewUrl(`/project/${projectId}/preview`);
+        setTimeout(async () => {
+          const resolvedPreviewUrl = await resolveDesignPreviewUrl();
+          setDesignPreviewUrl(resolvedPreviewUrl);
           setPhase('design_preview');
           setIsProcessing(false);
         }, 2000);

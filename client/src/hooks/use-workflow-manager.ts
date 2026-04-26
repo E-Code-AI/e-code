@@ -50,6 +50,16 @@ export function useWorkflowManager(): WorkflowManager {
   const [state, setState] = useState<WorkflowState>(initialState);
   const { toast } = useToast();
 
+  const resolveDesignPreviewUrl = useCallback(async (projectId: string | null) => {
+    if (!projectId) return '';
+    try {
+      const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+      return data?.previewUrl || '';
+    } catch {
+      return '';
+    }
+  }, []);
+
   const generateFeatures = useCallback(async (projectId: string, prompt: string): Promise<string[]> => {
     setState(prev => ({ ...prev, phase: 'generating_features', projectId, prompt, isProcessing: true }));
 
@@ -105,10 +115,11 @@ export function useWorkflowManager(): WorkflowManager {
         setState(prev => ({ ...prev, phase: 'building_design' }));
         
         // Simulate design build
-        setTimeout(() => {
+        setTimeout(async () => {
+          const resolvedPreviewUrl = await resolveDesignPreviewUrl(state.projectId);
           setState(prev => ({
             ...prev,
-            designPreviewUrl: `/project/${prev.projectId}/preview`,
+            designPreviewUrl: resolvedPreviewUrl,
             phase: 'design_preview',
             isProcessing: false
           }));
@@ -225,7 +236,7 @@ export function useWorkflowManager(): WorkflowManager {
 
   const dismissMVP = useCallback(() => {
     setState(prev => ({ ...prev, phase: 'complete' }));
-  }, []);
+  }, [resolveDesignPreviewUrl, state.projectId]);
 
   const reset = useCallback(() => {
     setState(initialState);
