@@ -59,31 +59,19 @@ export default function MonitoringPanel({ projectId, onClose }: { projectId: str
 
   const metricsQuery = useQuery<MonitoringMetric[]>({
     queryKey: ["/api/projects", projectId, "monitoring", "metrics"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/monitoring/metrics`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load metrics");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/monitoring/metrics`),
     refetchInterval: 30000,
   });
 
   const summaryQuery = useQuery<MetricsSummary | null>({
     queryKey: ["/api/projects", projectId, "monitoring", "summary"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/monitoring/summary`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load summary");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/monitoring/summary`),
     refetchInterval: 15000,
   });
 
   const alertsQuery = useQuery<MonitoringAlert[]>({
     queryKey: ["/api/projects", projectId, "monitoring", "alerts"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/monitoring/alerts`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load alerts");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/monitoring/alerts`),
   });
 
   const recordMetricMutation = useMutation({

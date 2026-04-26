@@ -61,30 +61,18 @@ export default function NetworkingPanel({ projectId, onClose }: { projectId: str
 
   const portsQuery = useQuery<PortConfig[]>({
     queryKey: ["/api/projects", projectId, "networking", "ports"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/networking/ports`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load ports");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/networking/ports`),
     refetchInterval: 10000,
   });
 
   const domainsQuery = useQuery<CustomDomain[]>({
     queryKey: ["/api/projects", projectId, "networking", "domains"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/networking/domains`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load domains");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}/networking/domains`),
   });
 
   const projectQuery = useQuery<ProjectData>({
     queryKey: ["/api/projects", projectId, "dev-url-settings"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load project");
-      return res.json();
-    },
+    queryFn: () => apiRequest("GET", `/api/projects/${projectId}`),
   });
 
   const toggleDevUrlMutation = useMutation({

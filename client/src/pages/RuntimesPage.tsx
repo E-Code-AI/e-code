@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { LanguageEnvironments, Language, languageConfigs } from '@/components/LanguageEnvironments';
 import { RuntimePanel } from '@/components/RuntimePanel';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -25,9 +26,7 @@ export default function RuntimesPage() {
   const { data: projects, isLoading: isLoadingProjects } = useQuery({
     queryKey: ['/api/projects'],
     queryFn: async () => {
-      const response = await fetch('/api/projects', { credentials: 'include' });
-      if (!response.ok) return [];
-      const res = await response.json();
+      const res = await apiRequest('GET', '/api/projects');
       // Handle paginated response format
       return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
     },

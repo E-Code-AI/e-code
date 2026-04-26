@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { PageHeader, PageShell, PageShellLoading } from "@/components/layout/PageShell";
+import { apiRequest } from "@/lib/queryClient";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ReplitPackagesPanel } from "@/components/editor/ReplitPackagesPanel";
@@ -16,13 +17,7 @@ export default function PackagesPage() {
 
   const { data: projects = [], isLoading } = useQuery<ProjectOption[]>({
     queryKey: ["/api/projects"],
-    queryFn: async () => {
-      const response = await fetch("/api/projects", { credentials: "include" });
-      if (!response.ok) {
-        throw new Error("Failed to fetch projects");
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest("GET", "/api/projects"),
   });
 
   useEffect(() => {
