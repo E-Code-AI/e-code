@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +59,8 @@ interface ThemePreset {
 
 export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
   const [selectedTheme, setSelectedTheme] = useState('light');
   const [customColors, setCustomColors] = useState({
     primary: '#3b82f6',
@@ -74,12 +77,12 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
 
   // Fetch theme settings from API
   const { data: themeSettings, isLoading, isSuccess } = useQuery<ThemeSettings | null>({
-    queryKey: ['/api/projects', projectId, 'themes'],
+    queryKey: ['/api/projects', resolvedProjectId, 'themes'],
     queryFn: async () => {
-      if (!projectId) return null;
-      return apiRequest<ThemeSettings>('GET', `/api/projects/${projectId}/themes`);
+      if (!resolvedProjectId) return null;
+      return apiRequest<ThemeSettings>('GET', `/api/projects/${resolvedProjectId}/themes`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
   });
 
   // Sync local state with fetched settings
@@ -97,11 +100,11 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   // Save theme mutation
   const saveThemeMutation = useMutation({
     mutationFn: async (settings: Partial<ThemeSettings>) => {
-      if (!projectId) throw new Error('No project ID');
-      return apiRequest<ThemeSettings>('PUT', `/api/projects/${projectId}/themes`, settings);
+      if (!resolvedProjectId) throw new Error('No project ID');
+      return apiRequest<ThemeSettings>('PUT', `/api/projects/${resolvedProjectId}/themes`, settings);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'themes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'themes'] });
       toast({ title: 'Theme saved', description: 'Your theme settings have been saved.' });
     },
     onError: (error: Error) => {
@@ -112,7 +115,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   // Auto-save when theme changes - only save after initial data is loaded
   const handleThemeSelect = (themeId: string) => {
     setSelectedTheme(themeId);
-    if (projectId && isSuccess) {
+    if (resolvedProjectId && isSuccess) {
       saveThemeMutation.mutate({ themeId, customColors, fontSize: fontSize[0], borderRadius: borderRadius[0] });
     }
   };
@@ -200,7 +203,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveCustomTheme = () => {
-    if (projectId && !isLoading) {
+    if (resolvedProjectId && !isLoading) {
       saveThemeMutation.mutate({ 
         themeId: 'custom', 
         customColors, 
@@ -211,7 +214,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   };
 
   const handleSaveEditorSettings = () => {
-    if (projectId && !isLoading) {
+    if (resolvedProjectId && !isLoading) {
       saveThemeMutation.mutate({ 
         themeId: selectedTheme, 
         customColors, 

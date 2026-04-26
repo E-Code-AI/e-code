@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useLocation } from 'wouter';
+import { useLocation, useParams } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -92,8 +92,10 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   const [activeSection, setActiveSection] = useState<SettingSection['id']>('editor');
   const [isDirty, setIsDirty] = useState(false);
   const [, navigate] = useLocation();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const [projectSettings, setProjectSettings] = useState<ProjectSettings>(defaultProjectSettings);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(defaultNotificationSettings);
@@ -108,8 +110,8 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
   ], []);
 
   const { data: fetchedProjectSettings, isLoading: projectSettingsLoading, refetch: refetchProjectSettings } = useQuery<ProjectSettings>({
-    queryKey: [`/api/projects/${projectId}/settings`],
-    enabled: !!projectId,
+    queryKey: [`/api/projects/${resolvedProjectId}/settings`],
+    enabled: !!resolvedProjectId,
   });
 
   const { data: fetchedNotificationSettings, isLoading: notificationSettingsLoading, refetch: refetchNotificationSettings } = useQuery<NotificationSettings>({
@@ -149,14 +151,14 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!projectId) {
+      if (!resolvedProjectId) {
         throw new Error('Project ID required');
       }
 
       const themeId = theme === 'dark' || theme === 'light' || theme === 'system' ? theme : 'system';
 
       const [savedProjectSettings, savedNotificationSettings] = await Promise.all([
-        apiRequest<ProjectSettings>('PUT', `/api/projects/${projectId}/settings`, {
+        apiRequest<ProjectSettings>('PUT', `/api/projects/${resolvedProjectId}/settings`, {
           ...projectSettings,
           themeId,
         }),
@@ -166,9 +168,9 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
       return { savedProjectSettings, savedNotificationSettings };
     },
     onSuccess: ({ savedProjectSettings, savedNotificationSettings }) => {
-      queryClient.setQueryData([`/api/projects/${projectId}/settings`], savedProjectSettings);
+      queryClient.setQueryData([`/api/projects/${resolvedProjectId}/settings`], savedProjectSettings);
       queryClient.setQueryData(['/api/notifications/settings'], savedNotificationSettings);
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/settings`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/projects/${resolvedProjectId}/settings`] });
       queryClient.invalidateQueries({ queryKey: ['/api/notifications/settings'] });
       setIsDirty(false);
       toast({

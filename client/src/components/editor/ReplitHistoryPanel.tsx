@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -296,6 +297,7 @@ function DiffViewer({ oldContent, newContent, fileName }: { oldContent: string; 
 }
 
 export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [selectedCheckpoint, setSelectedCheckpoint] = useState<string | null>(null);
   const [expandedCheckpoints, setExpandedCheckpoints] = useState<Set<string>>(new Set());
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
@@ -310,7 +312,8 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const [showVersionRestoreDialog, setShowVersionRestoreDialog] = useState(false);
   const { toast } = useToast();
 
-  const numericProjectId = projectId ? parseInt(projectId, 10) : null;
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
+  const numericProjectId = resolvedProjectId ? parseInt(resolvedProjectId, 10) : null;
 
   const { data: checkpointsData, isLoading: checkpointsLoading } = useQuery<CheckpointsAPIResponse>({
     queryKey: ['/api/projects', numericProjectId, 'checkpoints'],
