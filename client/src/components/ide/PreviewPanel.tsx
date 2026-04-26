@@ -320,6 +320,15 @@ export function PreviewPanel({
               </Button>
             </div>
           </div>
+        ) : previewStatus?.previewUrl && isPreviewRunning ? (
+          <iframe
+            id="preview-iframe"
+            src={previewStatus.previewUrl}
+            className="w-full h-full border-0"
+            title="Project Preview"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
+            data-testid="iframe-preview"
+          />
         ) : (autonomousBuildPhase && !splashDismissed) ? (
           <SplashScreenSequence
             isComplete={autonomousBuildPhase === 'complete'}
@@ -361,15 +370,6 @@ export function PreviewPanel({
               </Button>
             </div>
           </div>
-        ) : previewStatus?.previewUrl ? (
-          <iframe
-            id="preview-iframe"
-            src={previewStatus.previewUrl}
-            className="w-full h-full border-0"
-            title="Project Preview"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"
-            data-testid="iframe-preview"
-          />
         ) : (
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
