@@ -1,0 +1,21 @@
+{
+  "name": "@ecode/storage",
+  "version": "0.1.0",
+  "description": "Shared Google Cloud Storage wrapper for E-code services",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@google-cloud/storage": "^7.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "typescript": "^5.9.3"
+  }
+}
