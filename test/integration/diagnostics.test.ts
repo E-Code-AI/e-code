@@ -28,7 +28,7 @@ afterAll(async () => {
 });
 
 describe('getDiagnostics', () => {
-  const executor = new ToolExecutor('test-project');
+  const executor = new ToolExecutor('default');
 
   it('returns diagnostics for a file with type errors', async () => {
     const result = await executor.execute('get_diagnostics', {

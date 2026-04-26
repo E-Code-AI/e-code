@@ -46,6 +46,25 @@ Finaliser E-code pour une cible de production `replit-deploy` avec :
 
 ## État production E-code
 
+`RELEASE BLOCKED — NOT RELEASE-READY` — 2026-04-27.
+
+Rapport final de consolidation: `RELEASE_READY.md`.
+
+Dernière passe release:
+
+- `npm run typecheck` — PASS
+- `npm run lint` — PASS
+- `npm run build` — PASS
+- `npm run test:unit -- --runInBand` — PASS
+- `npm run test:integration -- --runInBand` — PASS après correction du diagnostic TypeScript ciblé
+- `npm run test:smoke:backend` — PASS script, mais `/health/readiness` observé à 503 en local sous dépendances infra manquantes
+- `npm run test:smoke:agent` — PASS
+- `npm run desktop:smoke` — PASS
+- `npm run mobile:smoke` — PASS
+- `npm audit --audit-level=high` — PASS, 0 vulnérabilité
+
+Blocage principal: pas de certification 100% possible sans Detox/pure React Native, staging/prod+rollback observés, readiness production verte, signatures desktop/mobile, k6 100 sessions, dashboard observabilité et pentest complet.
+
 `CERTIFICATION EN COURS — BLOCKED` — 2026-04-26.
 
 Nouvelle certification stricte lancée sur la branche `codex/production-certification-20260426`.

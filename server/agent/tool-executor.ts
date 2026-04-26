@@ -998,9 +998,7 @@ export class ToolExecutor {
       let targetResolvedFile: string | undefined;
       if (params.file_path) {
         targetResolvedFile = path.resolve(this.projectRoot, params.file_path);
-        if (!rootFileNames.includes(targetResolvedFile)) {
-          rootFileNames.push(targetResolvedFile);
-        }
+        rootFileNames = [targetResolvedFile];
       }
 
       if (rootFileNames.length === 0) {

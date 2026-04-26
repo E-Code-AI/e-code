@@ -213,3 +213,30 @@ Known limitations for this gate:
 - This pass does not create a pure React Native app; converting away from Capacitor/WebView is a separate architecture migration.
 - Physical device validation on iPhone, iPad, Android phone, and Android tablet was not executed locally.
 - App Store / Play Store signing, provisioning profiles, TestFlight/Internal App Sharing, and push provider credentials remain environment-dependent.
+
+## Final Release Consolidation — 2026-04-27
+
+Status: BLOCKED - NOT RELEASE-READY. Full release evidence is captured in `RELEASE_READY.md`.
+
+Verified in the final pass:
+
+- `npm run typecheck` — PASS.
+- `npm run lint` — PASS.
+- `npm run build` — PASS.
+- `npm run test:unit -- --runInBand` — PASS.
+- `npm run test:integration -- --runInBand` — PASS after correcting the diagnostics integration root and targeted TypeScript diagnostics behavior.
+- `npm run test:smoke:backend` — PASS script exit, but local `/health/readiness` returned 503 while Redis/email/runner dependencies were not production-configured.
+- `npm run test:smoke:agent` — PASS.
+- `npm run desktop:smoke` — PASS.
+- `npm run mobile:smoke` — PASS.
+- `npm audit --audit-level=high` — PASS, 0 vulnerabilities.
+
+Release blockers:
+
+- Exact 20-scenario Playwright release suite was not fully re-run in this pass.
+- Detox mobile suite is missing.
+- Existing mobile architecture is Capacitor, not pure React Native.
+- k6 100-session run was not executed locally against a production-equivalent target.
+- Grafana/dashboard and external uptime monitoring were not validated.
+- Full SSRF/RCE/SQLi/XSS/path-traversal/secret-leak pen test was not completed.
+- Signed desktop/mobile artifacts, staging deployment, production deployment, and rollback were not observed.
