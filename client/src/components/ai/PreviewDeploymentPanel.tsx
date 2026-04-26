@@ -89,6 +89,9 @@ export function PreviewDeploymentPanel({
   const [selectedViewport, setSelectedViewport] = useState<ViewportSize>('desktop');
   const lastReportedUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
+  const bootstrapToken = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('bootstrap')
+    : null;
 
   const { data: previewData, isLoading, refetch } = useQuery<{ 
     status: string; 
@@ -124,6 +127,10 @@ export function PreviewDeploymentPanel({
   
   const isRunning = preview?.status === 'running';
   const previewUrl = isRunning ? (previewUrlData?.previewUrl || null) : null;
+  const buildPreviewPath = (path: string) => {
+    if (!bootstrapToken) return path;
+    return `${path}${path.includes('?') ? '&' : '?'}bootstrap=${encodeURIComponent(bootstrapToken)}`;
+  };
 
   useEffect(() => {
     if (isRunning && previewUrl && onPreviewReady && lastReportedUrlRef.current !== previewUrl) {
@@ -429,7 +436,7 @@ export function PreviewDeploymentPanel({
                               size="icon"
                               className="h-6 w-6"
                               onClick={() => {
-                                const serviceUrl = `${window.location.origin}/api/preview/projects/${projectId}/preview/${service.port}/`;
+                                const serviceUrl = `${window.location.origin}${buildPreviewPath(`/api/preview/projects/${projectId}/preview/${service.port}/`)}`;
                                 window.open(serviceUrl, '_blank');
                               }}
                               data-testid={`button-open-service-${service.port}`}

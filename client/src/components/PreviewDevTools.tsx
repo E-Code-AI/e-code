@@ -114,7 +114,13 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
     if (!previewUrl) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/preview-devtools/${projectId}`);
+    const params = new URLSearchParams();
+    const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+    if (bootstrapToken) {
+      params.set('bootstrap', bootstrapToken);
+    }
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws/preview-devtools/${projectId}${suffix}`);
     wsRef.current = ws;
 
     ws.onopen = () => {
