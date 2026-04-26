@@ -168,7 +168,17 @@ export default function Themes() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to export theme');
+        let message = 'Failed to export theme';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
       }
 
       const blob = await response.blob();
@@ -185,10 +195,10 @@ export default function Themes() {
         title: "Theme exported",
         description: "Your theme settings have been downloaded"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to export theme",
+        description: error?.message || "Failed to export theme",
         variant: "destructive"
       });
     }

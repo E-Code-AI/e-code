@@ -102,6 +102,20 @@ export default function PerformanceDashboard() {
         })
       });
 
+      if (!response.ok) {
+        let message = 'Failed to export metrics';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

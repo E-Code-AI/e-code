@@ -166,7 +166,17 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to export database');
+        let message = 'Failed to export database';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
       }
 
       const entries = await response.json();
@@ -184,10 +194,10 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
         title: "Export Complete",
         description: "Database exported successfully"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Failed to export database",
+        description: error?.message || "Failed to export database",
         variant: "destructive"
       });
     }

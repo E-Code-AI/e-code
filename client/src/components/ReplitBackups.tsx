@@ -191,7 +191,17 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to download backup');
+        let message = 'Failed to download backup';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
       }
 
       const blob = await response.blob();
@@ -208,10 +218,10 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
         title: "Download Started",
         description: "Backup download has begun"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Download Failed",
-        description: "Failed to download backup",
+        description: error?.message || "Failed to download backup",
         variant: "destructive"
       });
     }
