@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface PackageManagerProps {
   projectId: number;
@@ -62,9 +62,7 @@ export function PackageManager({ projectId, language: propLanguage, className }:
   }>({
     queryKey: ['/api/projects', projectId, 'packages'],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/packages`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch packages');
-      return res.json();
+      return apiRequest('GET', `/api/projects/${projectId}/packages`);
     },
     enabled: !!projectId,
   });
@@ -93,14 +91,10 @@ export function PackageManager({ projectId, language: propLanguage, className }:
 
     setIsSearching(true);
     try {
-      const response = await fetch(
-        `/api/packages/search?q=${encodeURIComponent(searchQuery)}&language=${detectedLanguage}`,
-        { credentials: 'include' }
+      const results = await apiRequest<any>(
+        'GET',
+        `/api/packages/search?q=${encodeURIComponent(searchQuery)}&language=${detectedLanguage}`
       );
-      
-      if (!response.ok) throw new Error('Search failed');
-      
-      const results = await response.json();
       const resultArray = Array.isArray(results) ? results : results.packages || [];
       setSearchResults(resultArray.map((pkg: any) => ({
         name: pkg.name,
@@ -124,9 +118,14 @@ export function PackageManager({ projectId, language: propLanguage, className }:
     setShowLog(true);
 
     try {
-      const response = await fetch(`/api/projects/${projectId}/packages/install-stream`, {
+      const streamUrl = `/api/projects/${projectId}/packages/install-stream`;
+      const csrfToken = await getCSRFToken();
+      const response = await fetch(streamUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withBootstrapHeaders(streamUrl, {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        }),
         credentials: 'include',
         body: JSON.stringify({ name: packageName, version, language: detectedLanguage }),
       });

@@ -88,9 +88,11 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
   const { data: searchResults = [], isLoading: searchLoading } = useQuery<PackageInfo[]>({
     queryKey: [`/api/packages/search`, searchQuery],
     queryFn: async () => {
-      const res = await fetch(`/api/packages/search?q=${encodeURIComponent(searchQuery)}`, { credentials: 'include' });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<PackageInfo[]>('GET', `/api/packages/search?q=${encodeURIComponent(searchQuery)}`);
+      } catch {
+        return [];
+      }
     },
     enabled: searchQuery.length > 2
   });

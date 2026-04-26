@@ -116,18 +116,14 @@ export default function MCPPanel({ projectId, onClose }: { projectId: string; on
   const serversQuery = useQuery<McpServer[]>({
     queryKey: ["/api/projects", projectId, "mcp", "servers"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/mcp/servers`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load MCP servers");
-      return res.json();
+      return apiRequest<McpServer[]>("GET", `/api/projects/${projectId}/mcp/servers`);
     },
   });
 
   const toolsQuery = useQuery<McpTool[]>({
     queryKey: ["/api/projects", projectId, "mcp", "tools"],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/mcp/tools`, { credentials: "include" });
-      if (!res.ok) throw new Error("Failed to load MCP tools");
-      return res.json();
+      return apiRequest<McpTool[]>("GET", `/api/projects/${projectId}/mcp/tools`);
     },
   });
 

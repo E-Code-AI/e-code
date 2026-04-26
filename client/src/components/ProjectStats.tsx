@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ProjectStatsProps {
   projectId: number;
@@ -49,13 +50,7 @@ export function ProjectStats({ projectId, className }: ProjectStatsProps) {
   const { data: metrics, isLoading, isError, refetch } = useQuery<ProjectMetrics>({
     queryKey: ['/api/projects', projectId, 'stats'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${projectId}/stats`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch project stats');
-      }
-      return response.json();
+      return apiRequest<ProjectMetrics>('GET', `/api/projects/${projectId}/stats`);
     },
     enabled: !!projectId,
     staleTime: 30000, // Cache for 30 seconds
