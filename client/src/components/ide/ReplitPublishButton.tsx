@@ -68,13 +68,9 @@ export function ReplitPublishButton({
 
   const { data: publishState, isLoading: isLoadingStatus } = useQuery<PublishState>({
     queryKey: ['/api/projects', projectId, 'publish', 'status'],
-    queryFn: async () => {
-      try {
-        return await apiRequest<PublishState>('GET', `/api/projects/${projectId}/publish/status`);
-      } catch {
-        return { status: 'idle' };
-      }
-    },
+    queryFn: () =>
+      apiRequest<PublishState>('GET', `/api/projects/${projectId}/publish/status`)
+        .catch(() => ({ status: 'idle' as const })),
     refetchInterval: (query) => {
       const data = query.state.data;
       return data?.status === 'publishing' ? 2000 : false;

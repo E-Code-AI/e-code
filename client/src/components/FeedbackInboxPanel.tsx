@@ -35,19 +35,16 @@ export default function FeedbackInboxPanel({ projectId, onClose, onSendToAI }: F
 
   const { data: feedback = [], isLoading } = useQuery<FeedbackEntry[]>({
     queryKey: ["/api/projects", projectId, "feedback", filter],
-    queryFn: async () => {
+    queryFn: () => {
       const params = filter !== "all" ? `?status=${filter}` : "";
-      const res = await apiRequest("GET", `/api/projects/${projectId}/feedback${params}`);
-      return res.json();
+      return apiRequest<FeedbackEntry[]>("GET", `/api/projects/${projectId}/feedback${params}`);
     },
     refetchInterval: 30000,
   });
 
   const resolveMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await apiRequest("PATCH", `/api/projects/${projectId}/feedback/${id}`, { status });
-      return res.json();
-    },
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      apiRequest("PATCH", `/api/projects/${projectId}/feedback/${id}`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "feedback"] });
       toast({ title: "Feedback updated" });
@@ -55,9 +52,8 @@ export default function FeedbackInboxPanel({ projectId, onClose, onSendToAI }: F
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/projects/${projectId}/feedback/${id}`);
-    },
+    mutationFn: (id: string) =>
+      apiRequest("DELETE", `/api/projects/${projectId}/feedback/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "feedback"] });
       toast({ title: "Feedback deleted" });

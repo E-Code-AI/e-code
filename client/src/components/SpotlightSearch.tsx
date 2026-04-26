@@ -78,11 +78,10 @@ export function SpotlightSearch({ open: controlledOpen, onOpenChange }: Spotligh
   // Fetch recent projects
   const { data: recentProjects } = useQuery<Project[]>({
     queryKey: ['/api/projects'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/projects?limit=5');
+    queryFn: () => apiRequest<any>('GET', '/api/projects?limit=5').then((res) => {
       // Handle paginated response format
       return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
-    },
+    }),
     enabled: !!user && open,
   });
 
