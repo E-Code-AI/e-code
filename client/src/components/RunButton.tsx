@@ -58,11 +58,11 @@ export function RunButton({
   const { data: runtimeStatus } = useQuery<RuntimeStatus>({
     queryKey: ['/api/runtime', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/runtime/${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) return { status: 'stopped' } as RuntimeStatus;
-      return response.json();
+      try {
+        return await apiRequest<RuntimeStatus>('GET', `/api/runtime/${projectId}`);
+      } catch {
+        return { status: 'stopped' } as RuntimeStatus;
+      }
     },
     enabled: !!projectId && useRuntime,
     refetchInterval: (query) => {
