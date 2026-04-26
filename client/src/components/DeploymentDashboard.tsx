@@ -60,11 +60,11 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
       setLoading(true);
       const data = await apiRequest('GET', `/api/deployment/${projectId}/enterprise`);
       setDeployments(data.deployments || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching deployments:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch deployments",
+        description: error?.message || "Failed to fetch deployments",
         variant: "destructive"
       });
     } finally {
@@ -82,11 +82,11 @@ export function DeploymentDashboard({ projectId }: DeploymentDashboardProps) {
       
       setShowCreateDeployment(false);
       fetchDeployments();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deployment error:', error);
       toast({
         title: "Error",
-        description: "Failed to create deployment",
+        description: error?.message || "Failed to create deployment",
         variant: "destructive"
       });
     }
