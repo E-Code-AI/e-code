@@ -491,12 +491,79 @@ export function ResponsiveWebPreview({
           </div>
         )}
 
+        {/* Running State - Show Iframe */}
+        {currentState === 'running' && iframeSrc && (
+          <div 
+            className={cn(
+              "relative bg-white rounded-lg shadow-lg transition-all duration-300",
+              isResponsive ? "w-full h-full" : "overflow-hidden"
+            )}
+            style={{
+              width: isResponsive ? '100%' : deviceSize.width,
+              height: isResponsive ? '100%' : deviceSize.height,
+              maxWidth: '100%',
+              maxHeight: '100%'
+            }}
+            data-testid="preview-frame"
+          >
+            {/* Device Frame (optional) */}
+            {!isResponsive && !isMobile && (
+              <div className="absolute -top-6 left-0 right-0 text-center">
+                <span className="text-[11px] text-[var(--ecode-text-muted)]">
+                  {deviceSize.name} ({deviceSize.width} × {deviceSize.height})
+                </span>
+              </div>
+            )}
+
+            {/* Loading Overlay for iframe */}
+            {iframeLoading && (
+              <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
+                <div className="relative h-full w-full overflow-hidden rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
+                  <SplashScreenSequence
+                    loopUntilComplete
+                    isComplete={!iframeLoading && !iframeError}
+                    appName={`Project ${projectId}`}
+                    currentTask={splashTask}
+                    progress={splashProgress}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Iframe Error Overlay */}
+            {iframeError && !iframeLoading && (
+              <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
+                <div className="text-center">
+                  <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
+                  <p className="text-[13px] text-[var(--ecode-text-muted)] mb-2">Failed to load page</p>
+                  <Button variant="outline" size="sm" onClick={handleRefresh}>
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Iframe */}
+            <iframe
+              ref={iframeRef}
+              src={iframeSrc}
+              className="w-full h-full border-0 rounded-lg"
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+              title={`Preview for project ${projectId}`}
+              data-testid="preview-iframe"
+            />
+          </div>
+        )}
+
         {/* Professional splash sequence during build/startup */}
-        {showSplashSequence && (
+        {currentState !== 'running' && showSplashSequence && (
           <div className="relative w-full h-full max-w-6xl overflow-hidden rounded-2xl border border-[var(--ecode-border)] bg-[var(--ecode-surface)]" data-testid="preview-splash-sequence">
             <SplashScreenSequence
               loopUntilComplete
-              isComplete={currentState === 'running' && !iframeLoading && !iframeError}
+              isComplete={false}
               appName={`Project ${projectId}`}
               currentTask={splashTask}
               progress={splashProgress}
@@ -613,72 +680,6 @@ export function ResponsiveWebPreview({
           </div>
         )}
 
-        {/* Running State - Show Iframe */}
-        {currentState === 'running' && iframeSrc && (
-          <div 
-            className={cn(
-              "relative bg-white rounded-lg shadow-lg transition-all duration-300",
-              isResponsive ? "w-full h-full" : "overflow-hidden"
-            )}
-            style={{
-              width: isResponsive ? '100%' : deviceSize.width,
-              height: isResponsive ? '100%' : deviceSize.height,
-              maxWidth: '100%',
-              maxHeight: '100%'
-            }}
-            data-testid="preview-frame"
-          >
-            {/* Device Frame (optional) */}
-            {!isResponsive && !isMobile && (
-              <div className="absolute -top-6 left-0 right-0 text-center">
-                <span className="text-[11px] text-[var(--ecode-text-muted)]">
-                  {deviceSize.name} ({deviceSize.width} × {deviceSize.height})
-                </span>
-              </div>
-            )}
-
-            {/* Loading Overlay for iframe */}
-            {iframeLoading && (
-              <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
-                <div className="relative h-full w-full overflow-hidden rounded-lg border border-[var(--ecode-border)] bg-[var(--ecode-surface)]">
-                  <SplashScreenSequence
-                    loopUntilComplete
-                    isComplete={!iframeLoading && !iframeError}
-                    appName={`Project ${projectId}`}
-                    currentTask={splashTask}
-                    progress={splashProgress}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Iframe Error Overlay */}
-            {iframeError && !iframeLoading && (
-              <div className="absolute inset-0 bg-[var(--ecode-background)] flex items-center justify-center z-10">
-                <div className="text-center">
-                  <AlertCircle className="h-6 w-6 mx-auto mb-2 text-red-500" />
-                  <p className="text-[13px] text-[var(--ecode-text-muted)] mb-2">Failed to load page</p>
-                  <Button variant="outline" size="sm" onClick={handleRefresh}>
-                    <RefreshCw className="h-3 w-3 mr-1" />
-                    Retry
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Iframe */}
-            <iframe
-              ref={iframeRef}
-              src={iframeSrc}
-              className="w-full h-full border-0 rounded-lg"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-              title={`Preview for project ${projectId}`}
-              data-testid="preview-iframe"
-            />
-          </div>
-        )}
       </div>
     </div>
   );
