@@ -165,7 +165,17 @@ export function AgentSessionsGrid({
         headers: withBootstrapHeaders(exportUrl),
       });
       if (!response.ok) {
-        throw new Error('Export failed');
+        let message = 'Export failed';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -176,10 +186,15 @@ export function AgentSessionsGrid({
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Export failed:', err);
+      toast({
+        title: 'Export failed',
+        description: err?.message || 'Failed to export agent sessions',
+        variant: 'destructive',
+      });
     }
-  }, []);
+  }, [toast]);
 
   const handleQuickFilter = useCallback((text: string) => {
     setSearchQuery(text);

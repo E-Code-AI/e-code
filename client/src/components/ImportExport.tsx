@@ -71,7 +71,17 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        let message = 'Export failed';
+        try {
+          const errorData = await response.json();
+          message = errorData?.message || errorData?.error || message;
+        } catch {
+          const errorText = await response.text();
+          if (errorText) {
+            message = errorText;
+          }
+        }
+        throw new Error(message);
       }
 
       // Simulate progress

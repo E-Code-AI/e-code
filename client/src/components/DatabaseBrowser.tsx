@@ -116,10 +116,10 @@ export function DatabaseBrowser({ projectId }: { projectId: string }) {
         title: "Table exported",
         description: `${selectedTable} data exported successfully`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export failed",
-        description: "Failed to export table data",
+        description: error?.message || "Failed to export table data",
         variant: "destructive"
       });
     }
