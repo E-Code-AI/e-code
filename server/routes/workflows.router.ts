@@ -31,6 +31,11 @@ const runCommandSchema = z.object({
   name: z.string().optional(),
 });
 
+const projectIdSchema = z.union([
+  z.number().int().positive(),
+  z.string().regex(/^\d+$/).transform((value) => parseInt(value, 10)),
+]);
+
 async function ensureProjectAccessById(projectId: string | number, userId: number): Promise<void> {
   const project = await storage.getProject(projectId);
   if (!project) {
@@ -133,7 +138,10 @@ async function getWorkflowWithTasks(workflowId: number): Promise<WorkflowWithTas
 workflowsRouter.get('/', ensureAuthenticated, ensureProjectAccessFromRequest, async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const projectId = req.query.projectId ? parseInt(req.query.projectId as string) : null;
+    const projectId =
+      req.query.projectId !== undefined
+        ? projectIdSchema.parse(req.query.projectId)
+        : null;
     
     let workflows: ProjectWorkflow[];
     if (projectId) {
@@ -231,7 +239,7 @@ workflowsRouter.get('/:id', ensureAuthenticated, ensureWorkflowAccess, async (re
 
 // Create workflow request schema
 const createWorkflowSchema = z.object({
-  projectId: z.number().optional().nullable(),
+  projectId: projectIdSchema.optional().nullable(),
   name: z.string().min(1).max(255),
   executionMode: z.enum(['sequential', 'parallel']).default('sequential'),
   isRunButton: z.boolean().default(false),
