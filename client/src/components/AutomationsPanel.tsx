@@ -143,8 +143,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
       if (newType === "telegram") {
         body.telegramBotToken = newTelegramBotToken;
       }
-      const res = await apiRequest("POST", `/api/projects/${projectId}/automations`, body);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/automations`, body);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "automations"] });
@@ -161,16 +160,14 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
-      const res = await apiRequest("PATCH", `/api/automations/${id}`, { enabled });
-      return res.json();
+      return apiRequest("PATCH", `/api/automations/${id}`, { enabled });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "automations"] }),
   });
 
   const updateScriptMutation = useMutation({
     mutationFn: async ({ id, script }: { id: string; script: string }) => {
-      const res = await apiRequest("PATCH", `/api/automations/${id}`, { script });
-      return res.json();
+      return apiRequest("PATCH", `/api/automations/${id}`, { script });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "automations"] });
@@ -181,8 +178,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
 
   const triggerMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("POST", `/api/automations/${id}/trigger`);
-      return res.json();
+      return apiRequest("POST", `/api/automations/${id}/trigger`);
     },
     onSuccess: (data) => {
       toast({ title: data.success ? "Automation completed" : "Automation failed", variant: data.success ? "default" : "destructive" });
@@ -203,8 +199,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
 
   const testBotMutation = useMutation({
     mutationFn: async ({ id, message }: { id: string; message: string }) => {
-      const res = await apiRequest("POST", `/api/automations/${id}/trigger`, { testMessage: message });
-      return res.json();
+      return apiRequest("POST", `/api/automations/${id}/trigger`, { testMessage: message });
     },
     onSuccess: (data) => {
       toast({ title: data.success ? "Test completed" : "Test failed", variant: data.success ? "default" : "destructive" });
@@ -216,8 +211,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
 
   const testSlackMutation = useMutation({
     mutationFn: async (data: { botToken: string; signingSecret: string }) => {
-      const res = await apiRequest("POST", "/api/automations/test-slack", data);
-      return res.json();
+      return apiRequest("POST", "/api/automations/test-slack", data);
     },
     onSuccess: (data) => {
       if (data.success) {
@@ -231,8 +225,7 @@ export default function AutomationsPanel({ projectId, onClose }: AutomationsPane
 
   const testTelegramMutation = useMutation({
     mutationFn: async (data: { botToken: string }) => {
-      const res = await apiRequest("POST", "/api/automations/test-telegram", data);
-      return res.json();
+      return apiRequest("POST", "/api/automations/test-telegram", data);
     },
     onSuccess: (data) => {
       if (data.success) {

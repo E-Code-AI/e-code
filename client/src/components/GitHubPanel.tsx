@@ -65,8 +65,7 @@ export default function GitHubPanel({ projectId, projectName, onImported, onClon
     if (!exportName.trim()) return;
     setExporting(true);
     try {
-      const res = await apiRequest("POST", "/api/github/export", { projectId, repoName: exportName.trim(), isPrivate: exportPrivate });
-      const data = await res.json();
+      const data = await apiRequest<any>("POST", "/api/github/export", { projectId, repoName: exportName.trim(), isPrivate: exportPrivate });
       toast({ title: "Exported to GitHub!", description: data.url });
     } catch (err: any) {
       toast({ title: "Export failed", description: err.message, variant: "destructive" });
@@ -78,8 +77,7 @@ export default function GitHubPanel({ projectId, projectName, onImported, onClon
   const handleImport = async (repo: GHRepo) => {
     setImporting(repo.full_name);
     try {
-      const res = await apiRequest("POST", "/api/github/import", { owner: repo.owner.login, repo: repo.name, visibility: "public" });
-      const data = await res.json();
+      const data = await apiRequest<any>("POST", "/api/github/import", { owner: repo.owner.login, repo: repo.name, visibility: "public" });
       toast({ title: `Imported ${repo.name}`, description: "Opening project..." });
       onImported?.(data.project?.id);
     } catch (err: any) {
@@ -92,8 +90,7 @@ export default function GitHubPanel({ projectId, projectName, onImported, onClon
   const handleClone = async (repo: GHRepo) => {
     setCloning(repo.full_name);
     try {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/git/clone`, { owner: repo.owner.login, repo: repo.name });
-      const data = await res.json();
+      const data = await apiRequest<any>("POST", `/api/projects/${projectId}/git/clone`, { owner: repo.owner.login, repo: repo.name });
       toast({ title: `Cloned ${repo.name}`, description: `${data.filesCloned} files cloned` });
       onCloned?.();
     } catch (err: any) {

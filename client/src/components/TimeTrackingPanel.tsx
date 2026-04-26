@@ -22,9 +22,7 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   const { data: activeTracking } = useQuery({
     queryKey: ['/api/time-tracking', projectId, 'active'],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/time-tracking/${projectId}/active`);
-      if (!res.ok) return null;
-      return res.json();
+      return apiRequest('GET', `/api/time-tracking/${projectId}/active`);
     }
   });
 
@@ -32,18 +30,14 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   const { data: trackingHistory } = useQuery({
     queryKey: ['/api/time-tracking', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/time-tracking/${projectId}`);
-      if (!res.ok) throw new Error('Failed to fetch time tracking');
-      return res.json();
+      return apiRequest('GET', `/api/time-tracking/${projectId}`);
     }
   });
 
   // Start tracking mutation
   const startTrackingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/time-tracking/${projectId}/start`);
-      if (!res.ok) throw new Error('Failed to start tracking');
-      return res.json();
+      return apiRequest('POST', `/api/time-tracking/${projectId}/start`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/time-tracking', projectId] });
@@ -57,9 +51,7 @@ export function TimeTrackingPanel({ projectId, userId }: TimeTrackingPanelProps)
   // Stop tracking mutation
   const stopTrackingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/time-tracking/${projectId}/stop`);
-      if (!res.ok) throw new Error('Failed to stop tracking');
-      return res.json();
+      return apiRequest('POST', `/api/time-tracking/${projectId}/stop`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/time-tracking', projectId] });

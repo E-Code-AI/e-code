@@ -55,8 +55,7 @@ export default function SkillsPanel({ projectId, onClose }: SkillsPanelProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; description: string; content: string }) => {
-      const res = await apiRequest("POST", `/api/skills/${projectId}`, data);
-      return res.json();
+      return apiRequest("POST", `/api/skills/${projectId}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills", projectId] });
@@ -71,8 +70,7 @@ export default function SkillsPanel({ projectId, onClose }: SkillsPanelProps) {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Skill> }) => {
-      const res = await apiRequest("PUT", `/api/skills/${id}`, data);
-      return res.json();
+      return apiRequest("PUT", `/api/skills/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills", projectId] });
@@ -84,8 +82,7 @@ export default function SkillsPanel({ projectId, onClose }: SkillsPanelProps) {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      const res = await apiRequest("PUT", `/api/skills/${id}`, { isActive });
-      return res.json();
+      return apiRequest("PUT", `/api/skills/${id}`, { isActive });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills", projectId] });
@@ -104,8 +101,7 @@ export default function SkillsPanel({ projectId, onClose }: SkillsPanelProps) {
 
   const uploadMutation = useMutation({
     mutationFn: async ({ filename, content }: { filename: string; content: string }) => {
-      const res = await apiRequest("POST", `/api/skills/${projectId}/upload`, { filename, content });
-      return res.json();
+      return apiRequest("POST", `/api/skills/${projectId}/upload`, { filename, content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills", projectId] });

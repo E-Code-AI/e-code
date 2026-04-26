@@ -157,8 +157,7 @@ export function CommunityFeatures() {
   // Create post mutation
   const createPostMutation = useMutation({
     mutationFn: async (postData: any) => {
-      const response = await apiRequest('POST', '/api/community/posts', postData);
-      return response.json();
+      return apiRequest('POST', '/api/community/posts', postData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/community/posts'] });
@@ -173,8 +172,7 @@ export function CommunityFeatures() {
   // Like post mutation
   const likePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      const response = await apiRequest('POST', `/api/community/posts/${postId}/like`);
-      return response.json();
+      return apiRequest('POST', `/api/community/posts/${postId}/like`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/community/posts'] });
