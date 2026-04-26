@@ -55,15 +55,7 @@ export function PreviewPanel({
   // Query preview status
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<PreviewStatus>({
     queryKey: ['/api/preview/url', projectId],
-    queryFn: async () => {
-      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to get preview status');
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest<PreviewStatus>('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId,
     refetchInterval: (query) => {
       const data = query.state.data;
