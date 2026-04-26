@@ -79,10 +79,10 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
       });
       setInviteEmail('');
       fetchCollaborators();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to send invitation",
+        description: error?.message || "Failed to send invitation",
         variant: "destructive"
       });
     }
@@ -96,10 +96,10 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
         title: "Role Updated",
         description: `Collaborator role changed to ${role}`
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update role",
+        description: error?.message || "Failed to update role",
         variant: "destructive"
       });
     }
@@ -113,10 +113,10 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
         title: "Collaborator Removed",
         description: "Collaborator has been removed from the project"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to remove collaborator",
+        description: error?.message || "Failed to remove collaborator",
         variant: "destructive"
       });
     }
