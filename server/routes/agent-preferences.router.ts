@@ -15,7 +15,10 @@ const logger = createLogger('agent-preferences');
 export default function createAgentPreferencesRouter(storage: IStorage): Router {
   const router = Router();
 
-  router.use(ensureAuthenticated);
+  router.use(
+    ['/models', '/preferences', '/recommend-model', '/effective-model', '/conversation'],
+    ensureAuthenticated,
+  );
 
   router.get('/models', async (req, res) => {
     try {

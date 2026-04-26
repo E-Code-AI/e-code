@@ -10,7 +10,8 @@ function RedirectToLogin() {
   useEffect(() => {
     if (hasRedirectedRef.current) return;
     hasRedirectedRef.current = true;
-    const nextPath = encodeURIComponent(location);
+    const next = `${location}${window.location.search || ''}`;
+    const nextPath = encodeURIComponent(next);
     navigate(`/login?next=${nextPath}`, { replace: true });
   }, [location, navigate]);
 
@@ -30,6 +31,9 @@ export function ProtectedRoute({
   component: React.ComponentType<any>;
 }) {
   const { user, isLoading } = useAuth();
+  const hasBootstrapToken = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).has('bootstrap')
+    : false;
 
   return (
     <Route path={path}>
@@ -39,7 +43,7 @@ export function ProtectedRoute({
             <Loader2 className="h-8 w-8 animate-spin text-border" />
             <div className="ml-2 text-[13px] text-muted-foreground">Loading authentication...</div>
           </div>
-        ) : user ? (
+        ) : user || hasBootstrapToken ? (
           <Component params={params} {...params} />
         ) : (
           <RedirectToLogin />

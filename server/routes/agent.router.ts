@@ -2,6 +2,7 @@
 import { agentSessions,agentWorkflows,AI_MODELS,commandExecutions,fileOperations,toolExecutions } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { db } from '../db';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
@@ -17,13 +18,50 @@ import { schemaWarming } from '../services/schema-warming.service';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { getJwtSecret } from '../utils/secrets-manager';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const logger = createLogger('agent-router');
 const router = Router();
 
-// Public agent routes (require authentication only)
-router.use(ensureAuthenticated);
+async function agentAuthOrBootstrap(req: any, res: any, next: any) {
+  const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+
+  if (!bootstrapToken) {
+    return ensureAuthenticated(req, res, next);
+  }
+
+  try {
+    const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as {
+      type?: string;
+      projectId?: string | number;
+      userId?: number;
+      timestamp?: number;
+    };
+
+    if (decoded.type !== 'agent_bootstrap' || !decoded.projectId || !decoded.userId) {
+      return res.status(401).json({ error: 'Invalid bootstrap token' });
+    }
+
+    const requestedProjectId = req.body?.projectId ?? req.query?.projectId ?? req.params?.projectId;
+    if (requestedProjectId && String(requestedProjectId) !== String(decoded.projectId)) {
+      return res.status(403).json({ error: 'Bootstrap token invalid for this project' });
+    }
+
+    req.user = { id: decoded.userId };
+    req.bootstrapContext = {
+      projectId: String(decoded.projectId),
+      userId: decoded.userId,
+      isBootstrapSession: true,
+    };
+    return next();
+  } catch (error: any) {
+    return res.status(401).json({ error: error?.message || 'Invalid or expired bootstrap token' });
+  }
+}
+
+// Public agent routes require either an authenticated session or a valid bootstrap token.
+router.use(agentAuthOrBootstrap);
 
 // Model Selection & Preferences Routes (for all authenticated users)
 // GET /api/agent/models - Get available AI models

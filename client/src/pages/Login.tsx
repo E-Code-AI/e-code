@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { getPostLoginRedirect } from '@/lib/auth-redirect';
 import { LazyMotionDiv } from '@/lib/motion';
 import { apiRequest,queryClient,resetCSRFToken } from '@/lib/queryClient';
 import { getProjectUrl } from '@/lib/utils';
@@ -98,6 +99,12 @@ export default function Login() {
       if (shouldRedirectToAgent && pendingAppDescription) {
         sessionStorage.removeItem('pendingAppDescription');
         createProjectAndNavigate(pendingAppDescription);
+        return;
+      }
+
+      const postLoginRedirect = getPostLoginRedirect();
+      if (postLoginRedirect) {
+        navigate(postLoginRedirect);
         return;
       }
       

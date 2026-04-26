@@ -638,7 +638,9 @@ export function ReplitAgentPanelV3({
 
         const response = await apiRequest('POST', '/api/agent/conversation', {
           projectId: projectId.toString()
-        }) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
+        }, bootstrapToken ? {
+          headers: { 'X-Bootstrap-Token': bootstrapToken },
+        } : undefined) as { conversationId: number; agentMode: 'plan' | 'build'; existing: boolean };
 
         if (!isMounted) return;
 

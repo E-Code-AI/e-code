@@ -297,6 +297,12 @@ export class MainRouter {
     // Unified multi-model proxy: normalized chat, SSE, tools, BYOK, fallback, metering
     app.use('/api/ai/proxy', tierRateLimiters.streaming, lazyModelProxyRouter);
 
+    // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
+    // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
+    // Keep this before preference/tool routers so bootstrap-authenticated conversation
+    // requests are not intercepted by routers that require a full session.
+    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentRouter);
+
     // Agent preferences routes (authenticated users) - user-facing preferences
     app.use('/api/agent', tierRateLimiters.api, lazyAgentPreferencesRouter);
 
@@ -313,10 +319,6 @@ export class MainRouter {
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
     app.use('/api/agent/build', tierRateLimiters.streaming, lazyAgentBuildRouter);
-
-    // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
-    // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
-    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentRouter);
 
     // Autonomous agent routes (authenticated users) - mounted after base agent routes
     // so project-scoped panel APIs such as /api/agent/actions/:projectId are not

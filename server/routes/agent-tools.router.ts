@@ -28,7 +28,10 @@ export default function createAgentToolsRouter(): Router {
   const router = Router();
   const webSearchService = new WebSearchService();
   
-  router.use(ensureAuthenticated);
+  router.use(
+    ['/tools', '/web-search', '/testing', '/thinking', '/workflows'],
+    ensureAuthenticated,
+  );
 
   // ============================================
   // WEB SEARCH ENDPOINTS

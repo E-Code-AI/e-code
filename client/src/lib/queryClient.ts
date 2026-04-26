@@ -106,15 +106,16 @@ export function withBootstrapHeaders(url: string, headers?: HeadersInit): Header
   }
 
   const bootstrapToken = getBootstrapToken();
-  if (!bootstrapToken) {
-    return headers || {};
-  }
-
   const normalized = new Headers(headers || {});
-  if (!normalized.has('X-Bootstrap-Token')) {
+  if (bootstrapToken && !normalized.has('X-Bootstrap-Token')) {
     normalized.set('X-Bootstrap-Token', bootstrapToken);
   }
-  return normalized;
+
+  const output: Record<string, string> = {};
+  normalized.forEach((value, key) => {
+    output[key] = value;
+  });
+  return output;
 }
 
 // Reset CSRF token (call after login to ensure fresh token for new session)
@@ -195,20 +196,23 @@ export async function apiRequest<T = any>(
   // Detect if body is FormData or other non-JSON type
   const isFormData = body instanceof FormData;
   
+  const { headers: optionHeaders, _csrfRetried, ...fetchOptions } = options || {};
+  void _csrfRetried;
+
   const headers: HeadersInit = {
     // Only set Content-Type for JSON bodies, let browser set it for FormData
     ...(body && !isFormData && { "Content-Type": "application/json" }),
     ...(needsCsrf && csrfToken && { "X-CSRF-Token": csrfToken }),
-    ...withBootstrapHeaders(url, options?.headers),
+    ...withBootstrapHeaders(url, optionHeaders),
   };
 
   const res = await fetch(url, {
+    ...fetchOptions,
     method,
     credentials: "include",
     headers,
     // Only JSON.stringify non-FormData bodies
     body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-    ...options,
   });
 
   // Update CSRF token from response header if present
