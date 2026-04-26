@@ -169,6 +169,21 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
     }
   }, [projectId, refetchPreviewData]);
 
+  const handleRunPreview = useCallback(async () => {
+    if (!projectId || projectId <= 0) return;
+
+    setPreviewStatus('starting');
+    setErrorMessage(null);
+
+    try {
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      await refetchPreviewData();
+    } catch (error: any) {
+      setPreviewStatus('error');
+      setErrorMessage(error?.message || 'Failed to start preview');
+    }
+  }, [projectId, refetchPreviewData]);
+
   useEffect(() => {
     connectWebSocket();
 
@@ -252,6 +267,10 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
             <p className="text-[13px] text-muted-foreground">
               Click Run to start the preview again.
             </p>
+            <Button onClick={handleRunPreview} size="sm">
+              <PlayCircle className="h-4 w-4 mr-2" />
+              Run Preview
+            </Button>
           </div>
         </div>
       );
@@ -269,6 +288,10 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
           <p className="text-[13px] text-muted-foreground">
             Add an HTML file to your project or click Run to see the preview.
           </p>
+          <Button onClick={handleRunPreview}>
+            <PlayCircle className="h-4 w-4 mr-2" />
+            Run Preview
+          </Button>
         </div>
       </Card>
     );
