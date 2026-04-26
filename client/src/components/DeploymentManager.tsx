@@ -295,7 +295,9 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       const isTimeout = error.name === 'AbortError' || error.name === 'TimeoutError';
       toast({
         title: "Deployment Failed",
-        description: isTimeout ? "Deployment request timed out. Please try again." : "Failed to start deployment. Please try again.",
+        description: isTimeout
+          ? "Deployment request timed out. Please try again."
+          : error?.message || "Failed to start deployment. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -312,10 +314,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         title: "Redeployment Started",
         description: `Redeploying version ${deployment.version}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Redeployment Failed",
-        description: "Failed to redeploy",
+        description: error?.message || "Failed to redeploy",
         variant: "destructive"
       });
     }
@@ -334,10 +336,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
         title: "Deployment Stopped",
         description: `Deployment ${deployment.version} and container have been stopped`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Stop Failed",
-        description: "Failed to stop deployment",
+        description: error?.message || "Failed to stop deployment",
         variant: "destructive"
       });
     }
