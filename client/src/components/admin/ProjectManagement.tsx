@@ -56,7 +56,7 @@ export function ProjectManagement() {
       if (visibilityFilter !== 'all') params.append('visibility', visibilityFilter);
       if (languageFilter !== 'all') params.append('language', languageFilter);
       
-      return fetch(`/api/admin/projects?${params}`, { credentials: 'include' }).then(res => res.json());
+      return apiRequest('GET', `/api/admin/projects?${params.toString()}`);
     },
   });
 

@@ -190,11 +190,8 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
   const loadAllPlans = async () => {
     setPlansLoading(true);
     try {
-      const response = await fetch('/api/payments/plans', { credentials: 'include' });
-      if (response.ok) {
-        const stripePlans: StripePlan[] = await response.json();
-        setAllStripePlans(stripePlans);
-      }
+      const stripePlans = await apiRequest<StripePlan[]>('GET', '/api/payments/plans');
+      setAllStripePlans(stripePlans);
     } catch (error) {
       console.error('Failed to load plans from API:', error);
       setAllStripePlans([]);
@@ -208,13 +205,8 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
   const loadSubscription = async () => {
     try {
-      const response = await fetch(`/api/users/${userId}/subscription`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSubscription(data);
-      }
+      const data = await apiRequest<Subscription>('GET', `/api/users/${userId}/subscription`);
+      setSubscription(data);
     } catch (error) {
       console.error('Failed to load subscription:', error);
       // Set default free subscription
@@ -230,13 +222,8 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
 
   const loadUsage = async () => {
     try {
-      const response = await fetch(`/api/users/${userId}/usage`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setUsage(data);
-      }
+      const data = await apiRequest<Usage>('GET', `/api/users/${userId}/usage`);
+      setUsage(data);
     } catch (error) {
       console.error('Failed to load usage:', error);
       // Set default usage

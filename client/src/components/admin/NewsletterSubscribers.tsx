@@ -26,6 +26,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -89,18 +90,9 @@ export default function NewsletterSubscribers() {
 
   const fetchSubscribers = async () => {
     try {
-      const response = await fetch('/api/newsletter/subscribers', { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setSubscribers(data.subscribers || []);
-        setStats(data.stats || null);
-      } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch subscribers',
-          variant: 'destructive',
-        });
-      }
+      const data = await apiRequest<any>('GET', '/api/newsletter/subscribers');
+      setSubscribers(data.subscribers || []);
+      setStats(data.stats || null);
     } catch (error) {
       toast({
         title: 'Error',

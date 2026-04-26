@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   AreaChart, Area, PieChart, Pie, Cell,
@@ -27,20 +28,12 @@ const DashboardCharts = memo(function DashboardCharts({ projects }: { projects: 
   // Real API calls - no mock data
   const { data: weeklyActivityData = [], isLoading: activityLoading, error: activityError } = useQuery<ActivityData[]>({
     queryKey: ['/api/analytics/weekly-activity'],
-    queryFn: async () => {
-      const response = await fetch('/api/analytics/weekly-activity', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch activity data');
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', '/api/analytics/weekly-activity')
   });
 
   const { data: storageData = [], isLoading: storageLoading, error: storageError } = useQuery<StorageData[]>({
     queryKey: ['/api/analytics/storage'],
-    queryFn: async () => {
-      const response = await fetch('/api/analytics/storage', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch storage data');
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', '/api/analytics/storage')
   });
   
   const chartAnimation = useMemo(() => ({
