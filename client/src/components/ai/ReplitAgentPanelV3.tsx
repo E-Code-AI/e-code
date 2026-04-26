@@ -458,7 +458,8 @@ export function ReplitAgentPanelV3({
     isConnected: wsIsConnected,
     connectionError,
     reconnectAttempt,
-    maxReconnectAttempts
+    maxReconnectAttempts,
+    routingStatus
   } = useAutonomousChatIntegration({
     conversationId,
     projectId: typeof projectId === 'string' ? parseInt(projectId, 10) : projectId,
@@ -2803,6 +2804,25 @@ export function ReplitAgentPanelV3({
                   )}
                   {/* Provider Health Badge - shows AI provider availability */}
                   <ProviderHealthBadge />
+                  {routingStatus.summary && (
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "max-w-full text-[11px]",
+                        routingStatus.mode === 'degraded' && "border-yellow-500/40 text-yellow-700 dark:text-yellow-300",
+                        routingStatus.mode === 'unavailable' && "border-red-500/40 text-red-700 dark:text-red-300"
+                      )}
+                    >
+                      {routingStatus.mode === 'degraded' ? 'Routing fallback' :
+                        routingStatus.mode === 'unavailable' ? 'Routing unavailable' :
+                        'Routing live'}: {routingStatus.summary}
+                    </Badge>
+                  )}
+                  {routingStatus.availableProviders > 1 && (
+                    <Badge variant="secondary" className="text-[11px]">
+                      {routingStatus.availableProviders} providers live for parallel work
+                    </Badge>
+                  )}
                 </div>
                 <MiniProgressIndicator
                   completed={orchestratorProgress?.progress?.tasksCompleted || 0}

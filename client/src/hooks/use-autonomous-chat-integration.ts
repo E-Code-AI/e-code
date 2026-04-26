@@ -159,6 +159,13 @@ interface UseAutonomousChatIntegrationOptions {
   initialPrompt?: string | null;
 }
 
+interface RoutingStatus {
+  summary: string | null;
+  mode: 'normal' | 'degraded' | 'unavailable';
+  availableProviders: number;
+  updatedAt: number | null;
+}
+
 function mapPhaseToSplashPhase(phase: string | undefined): AutonomousBuildPhase {
   switch (phase) {
     case 'planning':
@@ -235,6 +242,12 @@ export function useAutonomousChatIntegration({
     error: null,
     reconnectAttempt: 0,
     maxReconnectAttempts: 10
+  });
+  const [routingStatus, setRoutingStatus] = useState<RoutingStatus>({
+    summary: null,
+    mode: 'normal',
+    availableProviders: 0,
+    updatedAt: null,
   });
   
   // Reconnection logic with exponential backoff
@@ -1324,6 +1337,12 @@ export function useAutonomousChatIntegration({
         const providerLabel = event.provider || 'primary provider';
         const fallbackLabel = event.fallbackProvider ? ` -> ${event.fallbackProvider}` : '';
         const degradedMessage = eventMessage || `Routing adjusted: ${providerLabel}${fallbackLabel}`;
+        setRoutingStatus({
+          summary: degradedMessage,
+          mode: 'degraded',
+          availableProviders: event.providers?.filter((provider) => provider.canAcceptRequests).length || 0,
+          updatedAt: Date.now(),
+        });
         const msg = createAutonomousMessage(
           'autonomous_working',
           `Routing update: ${degradedMessage}`,
@@ -1345,6 +1364,12 @@ export function useAutonomousChatIntegration({
         const healthMessage = healthyProviders.length > 1
           ? `${healthSummary} • ${healthyProviders.length} providers available for parallel routing`
           : healthSummary;
+        setRoutingStatus({
+          summary: healthSummary,
+          mode: healthyProviders.length > 0 ? 'normal' : 'unavailable',
+          availableProviders: healthyProviders.length,
+          updatedAt: Date.now(),
+        });
         const msg = createAutonomousMessage(
           'autonomous_working',
           healthMessage,
@@ -1837,6 +1862,7 @@ export function useAutonomousChatIntegration({
     connectionError: connectionState.error,
     reconnectAttempt: connectionState.reconnectAttempt,
     maxReconnectAttempts: connectionState.maxReconnectAttempts,
+    routingStatus,
     // Expose effective conversationId for parent components to use when displaying messages
     effectiveConversationId: conversationId,
     // Flag to indicate if we're using a temporary ID (for bootstrap flow)
