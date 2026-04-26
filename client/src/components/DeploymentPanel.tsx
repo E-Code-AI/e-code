@@ -109,12 +109,23 @@ export const DeploymentPanel: React.FC<DeploymentPanelProps> = ({ projectId }) =
 
   const handleSecurityScan = async () => {
     try {
-      const response = await apiRequest('POST', `/api/security/${projectId}/scan`, {});
-      if (response.ok) {
-        await queryClient.invalidateQueries({ queryKey: [`/api/deployment/${projectId}`] });
-      }
+      await apiRequest('POST', `/api/workspace/projects/${projectId}/security-scans`, {
+        scanType: 'full',
+        status: 'queued',
+        scanner: 'semgrep',
+      });
+      toast({
+        title: 'Security scan started',
+        description: 'The project scan has been queued.',
+      });
+      await queryClient.invalidateQueries({ queryKey: [`/api/workspace/projects/${projectId}/security-scans`] });
     } catch (error) {
       console.error('Failed to run security scan:', error);
+      toast({
+        title: 'Security scan failed',
+        description: error instanceof Error ? error.message : 'Please try again.',
+        variant: 'destructive',
+      });
     }
   };
 

@@ -41,7 +41,7 @@ export function MobileDeployPanel({ projectId, className }: MobileDeployPanelPro
     queryKey: ['/api/projects', projectId, 'publish', 'status'],
     queryFn: async () => {
       const res = await fetch(`/api/projects/${projectId}/publish/status`, { credentials: 'include' });
-      if (!res.ok) return { status: 'unpublished' };
+      if (!res.ok) return { status: 'idle' };
       return res.json();
     },
     refetchInterval: (query) => {
