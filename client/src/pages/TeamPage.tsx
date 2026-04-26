@@ -133,10 +133,10 @@ export default function TeamPage() {
       setInviteEmail('');
       setInviteRole('member');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Failed to send invitation",
-        description: error.message,
+        description: error?.message || "Failed to send invitation",
         variant: "destructive"
       });
     }
@@ -153,6 +153,13 @@ export default function TeamPage() {
         title: "Member removed",
         description: "Team member has been removed successfully.",
       });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to remove member",
+        description: error?.message || "Failed to remove member",
+        variant: "destructive",
+      });
     }
   });
 
@@ -166,6 +173,13 @@ export default function TeamPage() {
       toast({
         title: "Role updated",
         description: "Team member role has been updated.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to update role",
+        description: error?.message || "Failed to update role",
+        variant: "destructive",
       });
     }
   });
@@ -187,6 +201,13 @@ export default function TeamPage() {
       setShowCreateWorkspaceDialog(false);
       setWorkspaceName('');
       setWorkspaceDescription('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create workspace",
+        description: error?.message || "Failed to create workspace",
+        variant: "destructive",
+      });
     }
   });
 
