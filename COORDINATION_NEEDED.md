@@ -22,3 +22,13 @@ The requirement "Toutes les apps consomment packages/ui exclusivement, zero dupl
 ## Storybook Cloud Run deployment
 
 `packages/ui/Dockerfile.storybook` is present, but production deployment to `storybook.ecode.app` requires shared Cloud Run, DNS, CDN and Cloud Build wiring. If this must be centralized, the deployer/infra owner should expose the standard Cloud Run service module interface before I add the Storybook service instance.
+
+## Marketing, docs and community gallery integration
+
+Branch: `parallel/07-marketing-docs`
+
+Static marketing and docs sites plus CDN/Terraform modules are implemented in owned paths. The public community gallery requested at `/community` or `/explore` requires active web routes and backend project visibility queries outside my ownership:
+
+- Frontend owner: wire `/community`, `/explore`, public profiles and project public pages in the active router under `client/src/**` or approved `apps/web` shell path.
+- Backend owner: expose public project listing, report moderation, follower stats and fork API backed by Cloud SQL.
+- Infra owner: instantiate `infra/terraform/modules/marketing` and `infra/terraform/modules/cdn`, then upload `apps/marketing/dist/**` to `ecode-marketing` and `apps/docs/dist/**` to the docs bucket through Cloud Build.
