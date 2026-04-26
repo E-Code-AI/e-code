@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { LazyMotionDiv } from '@/lib/motion';
@@ -105,41 +106,43 @@ function LoadingSkeleton() {
 
 export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [showPassword, setShowPassword] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'free' | 'starter' | 'pro' | 'enterprise'>('free');
   const [activeTab, setActiveTab] = useState<'status' | 'credentials' | 'query'>('status');
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   // Fetch database status
   const { data: databaseInfo, isLoading: databaseLoading, refetch: refetchDatabase } = useQuery<DatabaseInfo>({
-    queryKey: ['/api/database/project', projectId],
+    queryKey: ['/api/database/project', resolvedProjectId],
     queryFn: async () => {
-      if (!projectId) return { provisioned: false };
-      return apiRequest<DatabaseInfo>('GET', `/api/database/project/${projectId}`);
+      if (!resolvedProjectId) return { provisioned: false };
+      return apiRequest<DatabaseInfo>('GET', `/api/database/project/${resolvedProjectId}`);
     },
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
     staleTime: 30000,
   });
 
   // Fetch credentials when provisioned
   const { data: credentials, isLoading: credentialsLoading, refetch: refetchCredentials } = useQuery<{ credentials: DatabaseCredentials }>({
-    queryKey: ['/api/database/project', projectId, 'credentials'],
+    queryKey: ['/api/database/project', resolvedProjectId, 'credentials'],
     queryFn: async () => {
-      return apiRequest<{ credentials: DatabaseCredentials }>('GET', `/api/database/project/${projectId}/credentials`);
+      return apiRequest<{ credentials: DatabaseCredentials }>('GET', `/api/database/project/${resolvedProjectId}/credentials`);
     },
-    enabled: !!projectId && databaseInfo?.provisioned === true,
+    enabled: !!resolvedProjectId && databaseInfo?.provisioned === true,
     staleTime: 60000,
   });
 
   // Provision mutation
   const provisionMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/database/project/${projectId}/provision`, {
+      return apiRequest('POST', `/api/database/project/${resolvedProjectId}/provision`, {
         plan: selectedPlan,
         type: 'postgresql',
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/database/project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/database/project', resolvedProjectId] });
       toast({
         title: 'Database Provisioned',
         description: 'Your PostgreSQL database is ready to use.',
@@ -168,7 +171,7 @@ export function ReplitDatabasePanel({ projectId }: { projectId?: string }) {
   };
 
   // No project ID - show message
-  if (!projectId) {
+  if (!resolvedProjectId) {
     return (
       <div className="h-full flex flex-col bg-[var(--ecode-surface)]" data-testid="database-panel">
         <div className="h-9 px-2.5 flex items-center border-b border-[var(--ecode-border)] shrink-0">
