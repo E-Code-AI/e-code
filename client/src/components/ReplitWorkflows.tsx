@@ -138,21 +138,10 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     }
 
     try {
-      const [workflowsResponse, runsResponse] = await Promise.all([
-        fetch(`/api/projects/${projectIdParam}/workflows`, {
-          credentials: 'include'
-        }),
-        fetch(`/api/projects/${projectIdParam}/workflow-runs`, {
-          credentials: 'include'
-        })
+      const [workflowPayload, runsPayload] = await Promise.all([
+        apiRequest<any>('GET', `/api/projects/${projectIdParam}/workflows`),
+        apiRequest<any>('GET', `/api/projects/${projectIdParam}/workflow-runs`).catch(() => ({ runs: [] }))
       ]);
-
-      if (!workflowsResponse.ok) {
-        throw new Error('Failed to load workflows');
-      }
-
-      const workflowPayload = await workflowsResponse.json();
-      const runsPayload = runsResponse.ok ? await runsResponse.json() : { runs: [] };
       const incomingRuns: WorkflowRun[] = Array.isArray(runsPayload?.runs) ? runsPayload.runs : [];
 
       const sortedRuns = [...incomingRuns].sort(

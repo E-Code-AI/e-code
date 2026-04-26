@@ -28,6 +28,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { apiRequest } from '@/lib/queryClient';
 
 interface GitCommitNode {
   hash: string;
@@ -78,13 +79,7 @@ export function GitGraph({
   const { data: logData, isLoading, error, refetch } = useQuery<CommitLogResponse>({
     queryKey: ['/api/git', projectId, 'commits', maxCommits],
     queryFn: async () => {
-      const response = await fetch(`/api/git/${projectId}/commits?limit=${maxCommits}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch commit log');
-      }
-      const data = await response.json();
+      const data = await apiRequest<any>('GET', `/api/git/${projectId}/commits?limit=${maxCommits}`);
       return { commits: Array.isArray(data) ? data : (data.commits || []) };
     }
   });

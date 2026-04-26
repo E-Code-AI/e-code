@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface CommunityPost {
@@ -117,13 +118,7 @@ export function CommunityFeatures() {
       if (selectedTag) params.set('tag', selectedTag);
       if (searchQuery) params.set('search', searchQuery);
       params.set('pageSize', '6');
-      const res = await fetch(`/api/community/posts?${params.toString()}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to fetch community posts');
-      }
-      return res.json();
+      return apiRequest('GET', `/api/community/posts?${params.toString()}`);
     }
   });
 
