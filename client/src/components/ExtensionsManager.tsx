@@ -115,7 +115,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
   const installMutation = useMutation({
     mutationFn: async (extension: MarketplaceExtension) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/extensions/${projectId}/install`, {
+      return apiRequest('POST', `/api/extensions/${projectId}/install`, {
         extensionId: extension.extensionId,
         name: extension.name,
         description: extension.description,
@@ -124,7 +124,6 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
         category: extension.category,
         icon: extension.icon,
       });
-      return response.json();
     },
     onSuccess: (_, extension) => {
       toast({
@@ -145,8 +144,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
   const uninstallMutation = useMutation({
     mutationFn: async (extensionId: string) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('DELETE', `/api/extensions/${projectId}/${extensionId}`, {});
-      return response.json();
+      return apiRequest('DELETE', `/api/extensions/${projectId}/${extensionId}`, {});
     },
     onSuccess: () => {
       toast({
@@ -167,10 +165,9 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
   const toggleMutation = useMutation({
     mutationFn: async ({ extensionId, enabled }: { extensionId: string; enabled: boolean }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('PATCH', `/api/extensions/${projectId}/${extensionId}`, {
+      return apiRequest('PATCH', `/api/extensions/${projectId}/${extensionId}`, {
         enabled,
       });
-      return response.json();
     },
     onSuccess: (data) => {
       toast({
