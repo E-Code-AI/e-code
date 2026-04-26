@@ -117,6 +117,7 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
   const routingSummary = availableProviders.length > 0
     ? `Routing ready: ${availableProviders.join(', ')}`
     : 'No AI provider is currently available';
+  const parallelReady = availableCount > 1;
 
   if (compact) {
     return (
@@ -205,6 +206,12 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
       <div className="text-[11px] text-muted-foreground">
         {routingSummary}
       </div>
+
+      {parallelReady && (
+        <div className="text-[11px] text-violet-700 dark:text-violet-300">
+          {availableCount} providers ready for parallel routing
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
         {Object.entries(data.providers).map(([provider, health]) => (

@@ -244,6 +244,10 @@ export function AgentActivityFeed({
 }: AgentActivityFeedProps) {
   const [filter, setFilter] = useState<ActivityFilter>('all');
   const [showStats, setShowStats] = useState(true);
+  const activeEventsCount = useMemo(
+    () => (events || []).filter(e => e.status === 'running').length,
+    [events]
+  );
 
   const counts = useMemo(() => {
     const c = { files: 0, commands: 0, errors: 0 };
@@ -287,6 +291,11 @@ export function AgentActivityFeed({
               <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-950 text-emerald-600 border-emerald-500 animate-pulse">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1" />
                 Live
+              </Badge>
+            )}
+            {activeEventsCount > 1 && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-violet-950 text-violet-300 border-violet-500">
+                {activeEventsCount} active in parallel
               </Badge>
             )}
           </div>
@@ -333,6 +342,16 @@ export function AgentActivityFeed({
                 )}
               </p>
             </div>
+            {(stats.provider || stats.model) && (
+              <div className="space-y-0.5 col-span-2 sm:col-span-4 pt-1">
+                <p className="text-muted-foreground">Active engine</p>
+                <p className="font-medium break-all">
+                  {stats.provider && stats.model
+                    ? `${stats.provider}/${stats.model}`
+                    : stats.model || stats.provider}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
