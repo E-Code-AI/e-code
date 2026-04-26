@@ -2421,6 +2421,8 @@ function UnifiedIDELayout({
           <AutonomousWorkspaceViewer
             bootstrapToken={bootstrapToken}
             projectId={projectId}
+            projectName={projectName}
+            requestSummary={projectDescription}
             onComplete={onWorkspaceComplete}
             onError={onWorkspaceError}
           />

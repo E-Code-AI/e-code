@@ -34,6 +34,8 @@ import { cn } from '@/lib/utils';
 interface AutonomousWorkspaceViewerProps {
   bootstrapToken: string | null;
   projectId: string;
+  projectName?: string | null;
+  requestSummary?: string | null;
   onComplete?: () => void;
   onError?: (error: string) => void;
 }
@@ -105,6 +107,8 @@ function toLogEntry(raw: string): Omit<ActivityLogEntry, 'id' | 'count'> {
 export function AutonomousWorkspaceViewer({
   bootstrapToken,
   projectId,
+  projectName,
+  requestSummary,
   onComplete,
   onError
 }: AutonomousWorkspaceViewerProps) {
@@ -602,6 +606,22 @@ export function AutonomousWorkspaceViewer({
         {routingSummary && (
           <div className="text-[11px] text-violet-700 dark:text-violet-300 border rounded-md px-2 py-1 bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800">
             {routingSummary}
+          </div>
+        )}
+
+        {(projectName || requestSummary) && (
+          <div className="rounded-md border bg-muted/30 px-3 py-2 space-y-1">
+            {projectName && (
+              <div className="text-[11px] sm:text-[13px]">
+                <span className="text-muted-foreground">Requested app:</span>{' '}
+                <span className="font-medium text-foreground">{projectName}</span>
+              </div>
+            )}
+            {requestSummary && (
+              <p className="text-[11px] text-muted-foreground line-clamp-3">
+                {requestSummary}
+              </p>
+            )}
           </div>
         )}
 
