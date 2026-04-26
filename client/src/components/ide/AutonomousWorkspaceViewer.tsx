@@ -39,7 +39,7 @@ interface AutonomousWorkspaceViewerProps {
 }
 
 interface AgentMessage {
-  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete' | 'status' | 'plan_chunk' | 'plan_generated' | 'connected';
+  type: 'task_start' | 'task_progress' | 'task_complete' | 'file_created' | 'build_log' | 'error' | 'complete' | 'status' | 'plan_chunk' | 'plan_generated' | 'connected' | 'degraded_mode' | 'provider_health';
   data?: any;
   message?: string;
   taskId?: string;
@@ -52,6 +52,13 @@ interface AgentMessage {
   status?: string;
   plan?: any;
   phaseName?: string; // ✅ FIX (Dec 11, 2025): Phase name for UI display
+  provider?: string;
+  fallbackProvider?: string;
+  providers?: Array<{
+    provider: string;
+    status: 'healthy' | 'degraded' | 'circuit_open' | 'unavailable';
+    canAcceptRequests: boolean;
+  }>;
 }
 
 interface Task {
@@ -112,6 +119,7 @@ export function AutonomousWorkspaceViewer({
   const [planText, setPlanText] = useState<string>('');
   const [phase, setPhase] = useState<'planning' | 'executing' | 'complete'>('planning');
   const [generatedPlan, setGeneratedPlan] = useState<any>(null);
+  const [routingSummary, setRoutingSummary] = useState<string | null>(null);
   
   const wsRef = useRef<WebSocket | null>(null);
   const logsEndRef = useRef<HTMLDivElement>(null);
@@ -403,6 +411,29 @@ export function AutonomousWorkspaceViewer({
         }
         break;
 
+      case 'degraded_mode': {
+        const providerLabel = message.provider || 'primary provider';
+        const fallbackLabel = message.fallbackProvider ? ` -> ${message.fallbackProvider}` : '';
+        const degradedMessage = message.message || `Routing adjusted: ${providerLabel}${fallbackLabel}`;
+        setRoutingSummary(degradedMessage);
+        addLog(`🔀 ${degradedMessage}`);
+        break;
+      }
+
+      case 'provider_health': {
+        const healthyProviders = message.providers?.filter((provider) => provider.canAcceptRequests).map((provider) => provider.provider) || [];
+        const healthSummary = healthyProviders.length > 0
+          ? `Providers ready: ${healthyProviders.join(', ')}`
+          : 'No providers currently ready';
+        setRoutingSummary(
+          healthyProviders.length > 1
+            ? `${healthSummary} • ${healthyProviders.length} providers available for parallel routing`
+            : healthSummary
+        );
+        addLog(`🛰️ ${healthSummary}`);
+        break;
+      }
+
       case 'file_created':
         if (message.filePath) {
           addLog(`📄 Created: ${message.filePath}`);
@@ -567,6 +598,12 @@ export function AutonomousWorkspaceViewer({
             </span>
           )}
         </div>
+
+        {routingSummary && (
+          <div className="text-[11px] text-violet-700 dark:text-violet-300 border rounded-md px-2 py-1 bg-violet-50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800">
+            {routingSummary}
+          </div>
+        )}
 
         {/* Overall Progress */}
         <div className="space-y-2">
