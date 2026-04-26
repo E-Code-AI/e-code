@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { PreviewDevTools } from '@/components/PreviewDevTools';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { 
   Globe, 
   Smartphone, 
@@ -50,11 +51,34 @@ export default function PreviewWithDevTools() {
   });
 
   useEffect(() => {
-    if (projectId) {
-      // Set preview URL - in production this would be the actual preview server URL
-      setPreviewUrl(`/preview/${projectId}`);
-      setIsLoading(false);
-    }
+    let cancelled = false;
+
+    const loadPreviewUrl = async () => {
+      if (!projectId) return;
+      setIsLoading(true);
+
+      try {
+        const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+        if (!cancelled) {
+          setPreviewUrl(data?.previewUrl || '');
+        }
+      } catch (error) {
+        console.error('Failed to resolve preview URL:', error);
+        if (!cancelled) {
+          setPreviewUrl('');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadPreviewUrl();
+
+    return () => {
+      cancelled = true;
+    };
   }, [projectId]);
 
   const handleDeviceChange = (device: string) => {

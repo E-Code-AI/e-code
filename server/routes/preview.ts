@@ -579,9 +579,14 @@ router.get('/projects/:id/preview/status', ensureProjectAccess, async (req, res)
       });
     }
     
+    const previewUrl = preview.primaryPort
+      ? withBootstrapQuery(previewService.getPreviewUrl(projectId, preview.primaryPort), req)
+      : null;
+
     res.json({
       status: preview.status,
       runId: preview.runId,
+      previewUrl,
       ports: preview.ports,
       primaryPort: preview.primaryPort,
       services: preview.exposedServices,
@@ -667,7 +672,7 @@ router.post('/projects/:id/preview/switch-port', ensureProjectAccess, async (req
       res.json({ 
         success: true, 
         port,
-        url: previewService.getPreviewUrl(projectId, port)
+        url: withBootstrapQuery(previewService.getPreviewUrl(projectId, port), req)
       });
     } else {
       res.status(400).json({ error: 'Failed to switch to port. Port may not be available or unhealthy.' });

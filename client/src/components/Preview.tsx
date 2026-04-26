@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { File } from '@shared/schema';
 import { useMutation } from '@tanstack/react-query';
 import { 
@@ -97,6 +97,20 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const { toast } = useToast();
+
+  const resolvePreviewUrl = useCallback(async () => {
+    if (!projectId) return null;
+    try {
+      const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+      if (data?.previewUrl) {
+        setPreviewUrl(data.previewUrl);
+        return data.previewUrl;
+      }
+    } catch {
+      // Ignore transient resolution failures here; the caller already handles status/error UI.
+    }
+    return null;
+  }, [projectId]);
 
   // Load saved preferences
   useEffect(() => {
@@ -377,13 +391,11 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             ? selectedPort
             : data.primaryPort;
           setSelectedPort(targetPort);
-
-          // Use port-specific URL so Vite's --base path resolves correctly through the proxy
-          const readyUrl = targetPort
-            ? `/preview/${projectId}/${targetPort}/`
-            : `/preview/${projectId}/`;
-          setPreviewUrl(readyUrl);
-          if (iframeRef.current) iframeRef.current.src = readyUrl;
+          void resolvePreviewUrl().then((readyUrl) => {
+            if (readyUrl && iframeRef.current) {
+              iframeRef.current.src = readyUrl;
+            }
+          });
           break;
         }
           
@@ -438,11 +450,8 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
             const statusPort = selectedPort && data.ports.includes(selectedPort)
               ? selectedPort
               : data.primaryPort;
-            const statusUrl = statusPort
-              ? `/preview/${projectId}/${statusPort}/`
-              : `/preview/${projectId}/`;
-            setPreviewUrl(statusUrl);
             setSelectedPort(statusPort);
+            void resolvePreviewUrl();
           }
           break;
       }
@@ -525,13 +534,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
   }, [projectId, openFiles, previewStatus.status, startPreviewMutation]);
 
   // Check preview status on component mount
-  useEffect(() => {
-    if (projectId) {
-      checkPreviewStatus();
-    }
-  }, [projectId]);
-
-  const checkPreviewStatus = async () => {
+  const checkPreviewStatus = useCallback(async () => {
     if (!projectId) return;
     
     try {
@@ -553,17 +556,20 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           const targetPort = selectedPort && data.ports.includes(selectedPort)
             ? selectedPort
             : data.primaryPort;
-          const statusUrl = targetPort
-            ? `/preview/${projectId}/${targetPort}/`
-            : `/preview/${projectId}/`;
-          setPreviewUrl(statusUrl);
           setSelectedPort(targetPort);
+          await resolvePreviewUrl();
         }
       }
     } catch (error) {
       console.error('Failed to check preview status:', error);
     }
-  };
+  }, [projectId, selectedPort, resolvePreviewUrl]);
+
+  useEffect(() => {
+    if (projectId) {
+      checkPreviewStatus();
+    }
+  }, [projectId, checkPreviewStatus]);
 
   // Track preview status in ref to avoid stale closure in cleanup
   const previewStatusRef = useRef(previewStatus.status);
