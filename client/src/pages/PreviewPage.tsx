@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { PageShell, PageHeader } from '@/components/layout/PageShell';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface DevicePreset {
   name: string;
@@ -66,8 +67,11 @@ const BREAKPOINTS: Breakpoint[] = [
 export default function PreviewPage() {
   const { toast } = useToast();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const projectId = typeof window !== 'undefined'
+    ? new URLSearchParams(window.location.search).get('projectId')
+    : null;
   
-  const [url, setUrl] = useState(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
+  const [url, setUrl] = useState(projectId ? '' : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000'));
   const [inputUrl, setInputUrl] = useState(url);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -87,6 +91,41 @@ export default function PreviewPage() {
   const [customHeight, setCustomHeight] = useState(844);
   const [history, setHistory] = useState<string[]>([url]);
   const [historyIndex, setHistoryIndex] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveProjectPreview = async () => {
+      if (!projectId) return;
+
+      try {
+        setIsLoading(true);
+        const data = await apiRequest<{ previewUrl?: string | null }>('GET', `/api/preview/url?projectId=${projectId}`);
+        const resolvedUrl = data?.previewUrl || '';
+        if (cancelled || !resolvedUrl) return;
+
+        setUrl(resolvedUrl);
+        setInputUrl(resolvedUrl);
+        setHistory([resolvedUrl]);
+        setHistoryIndex(0);
+      } catch {
+        if (!cancelled) {
+          setUrl('');
+          setInputUrl('');
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    resolveProjectPreview();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   const getCurrentBreakpoint = useCallback((width: number): Breakpoint => {
     return BREAKPOINTS.find(bp => 
@@ -145,7 +184,9 @@ export default function PreviewPage() {
   };
 
   const handleHome = () => {
-    const homeUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000';
+    const homeUrl = projectId
+      ? url
+      : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
     handleNavigate(homeUrl);
   };
 
