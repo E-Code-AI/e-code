@@ -76,6 +76,7 @@ backups/*.sql
 
 # Local agent workspace artifacts
 .claude/
+.openclaw/
 logs/
 screenshots/
 AGENTS.md
