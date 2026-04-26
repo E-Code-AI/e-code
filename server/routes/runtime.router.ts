@@ -26,6 +26,30 @@ const codeExecutor = new CodeExecutor();
 
 const router = Router();
 
+router.get('/runtime/public/dependencies', async (_req, res) => {
+  try {
+    const dependencies = await runtimeHealth.checkSystemDependencies();
+
+    return res.json({
+      docker: Boolean(dependencies.docker?.available),
+      nix: Boolean(dependencies.nix?.available),
+      languages: Object.fromEntries(
+        Object.entries(dependencies.languages ?? {}).map(([language, info]) => [
+          language,
+          Boolean(info?.available),
+        ]),
+      ),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error: any) {
+    logger.error('Failed to load public runtime dependencies:', error);
+    return res.status(500).json({
+      error: 'Failed to load public runtime dependencies',
+      details: error?.message,
+    });
+  }
+});
+
 router.get('/runtime/dashboard', ensureAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;

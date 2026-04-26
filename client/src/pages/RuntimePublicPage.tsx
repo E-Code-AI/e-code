@@ -34,27 +34,17 @@ import {
   Monitor 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { normalizeRuntimeDependencies } from '@/lib/runtimeDependencies';
 
 export default function RuntimePublicPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('nodejs');
   
   const { data: dependencies, isLoading: isLoadingDependencies, error } = useQuery({
-    queryKey: ['/api/runtime/dependencies'],
+    queryKey: ['/api/runtime/public/dependencies'],
     refetchInterval: false,
     refetchOnWindowFocus: false,
   });
-
-  // Add interfaces to fix type issues
-  interface RuntimeDependencies {
-    docker: boolean;
-    nix: boolean;
-    languages?: Record<string, boolean>;
-  }
-
-  // Cast dependencies to the correct type with defaults
-  const deps = (dependencies || {}) as RuntimeDependencies;
-  const dockerAvailable = deps.docker || false;
-  const nixAvailable = deps.nix || false;
+  const { dockerAvailable, nixAvailable, languages } = normalizeRuntimeDependencies(dependencies);
 
   // If neither Docker nor Nix is available, show a warning
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;
@@ -116,6 +106,7 @@ export default function RuntimePublicPage() {
           <LanguageEnvironments 
             onSelectLanguage={setSelectedLanguage}
             selectedLanguage={selectedLanguage}
+            dependenciesQueryKey="/api/runtime/public/dependencies"
           />
         </div>
         
@@ -243,7 +234,7 @@ export default function RuntimePublicPage() {
                           <span>{languageConfigs[selectedLanguage]?.displayName} Runtime</span>
                         </div>
                         <div>
-                          {deps.languages && deps.languages[selectedLanguage] ? (
+                          {languages[selectedLanguage] ? (
                             <div className="flex items-center gap-2">
                               <span className="h-3 w-3 rounded-full bg-green-500"></span>
                               <span className="text-[13px] text-green-600">Ready</span>

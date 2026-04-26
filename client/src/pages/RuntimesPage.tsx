@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LanguageEnvironments, Language, languageConfigs } from '@/components/LanguageEnvironments';
 import { RuntimePanel } from '@/components/RuntimePanel';
 import { apiRequest } from '@/lib/queryClient';
+import { normalizeRuntimeDependencies } from '@/lib/runtimeDependencies';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -32,18 +33,7 @@ export default function RuntimesPage() {
     },
     refetchInterval: false,
   });
-
-  // Add interfaces to fix type issues
-  interface RuntimeDependencies {
-    docker: boolean;
-    nix: boolean;
-    languages?: Record<string, boolean>;
-  }
-
-  // Cast dependencies to the correct type with defaults
-  const deps = (dependencies || {}) as RuntimeDependencies;
-  const dockerAvailable = deps.docker || false;
-  const nixAvailable = deps.nix || false;
+  const { dockerAvailable, nixAvailable } = normalizeRuntimeDependencies(dependencies);
 
   // If neither Docker nor Nix is available, show a warning
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { normalizeRuntimeDependencies } from '@/lib/runtimeDependencies';
 // Define types locally to avoid circular dependencies
 // Full 29-language support for Fortune 500 production parity with Replit
 export type Language = 
@@ -332,26 +333,20 @@ const languageIcons: Record<string, React.ReactNode> = {
 interface LanguageEnvironmentsProps {
   onSelectLanguage?: (language: Language) => void;
   selectedLanguage?: Language;
+  dependenciesQueryKey?: string;
 }
 
-export function LanguageEnvironments({ onSelectLanguage, selectedLanguage }: LanguageEnvironmentsProps) {
+export function LanguageEnvironments({
+  onSelectLanguage,
+  selectedLanguage,
+  dependenciesQueryKey = '/api/runtime/dependencies',
+}: LanguageEnvironmentsProps) {
   const { data: dependencies, isLoading } = useQuery({
-    queryKey: ['/api/runtime/dependencies'],
+    queryKey: [dependenciesQueryKey],
     refetchInterval: false,
     refetchOnWindowFocus: false,
   });
-
-  // Add interfaces to fix type issues
-  interface RuntimeDependencies {
-    docker: boolean;
-    nix: boolean;
-    languages?: Record<string, boolean>;
-  }
-
-  // Cast dependencies to the correct type with defaults
-  const deps = (dependencies || {}) as RuntimeDependencies;
-  const dockerAvailable = deps.docker || false;
-  const nixAvailable = deps.nix || false;
+  const { dockerAvailable, nixAvailable } = normalizeRuntimeDependencies(dependencies);
 
   // Filter and sort languages
   const sortedLanguages = Object.entries(languageConfigs)
