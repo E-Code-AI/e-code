@@ -38,6 +38,7 @@
     "mobile:android": "npx cap open android",
     "mobile:ios": "npx cap open ios",
     "mobile:setup": "bash scripts/mobile-setup.sh",
+    "mobile:smoke": "node scripts/smoke-mobile-native.mjs",
     "desktop:start": "electron .",
     "desktop:pack": "npm run build && electron-builder --dir",
     "desktop:build": "npm run build && electron-builder -mwl",

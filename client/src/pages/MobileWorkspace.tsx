@@ -13,6 +13,7 @@ import { MobileDebugPanel } from '@/components/mobile/MobileDebugPanel';
 import { MobileDeployPanel } from '@/components/mobile/MobileDeployPanel';
 import { MobileFileExplorer } from '@/components/mobile/MobileFileExplorer';
 import { MobilePreviewPanel } from '@/components/mobile/MobilePreviewPanel';
+import { MobileProjectsPanel } from '@/components/mobile/MobileProjectsPanel';
 import { ReplitBottomTabs } from '@/components/mobile/ReplitBottomTabs';
 import { ReplitToolsSheet } from '@/components/mobile/ReplitToolsSheet';
 import { Button } from '@/components/ui/button';
@@ -23,23 +24,28 @@ SheetHeader,
 SheetTitle,
 } from '@/components/ui/sheet';
 import { apiRequest } from '@/lib/queryClient';
+import { initializeNativeMobileRuntime } from '@/lib/mobile-native';
+import { offlineStorage } from '@/lib/offline-storage';
+import { offlineSyncService } from '@/lib/offline-sync';
 import { cn } from '@/lib/utils';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
 import {
 ArrowLeft,
+FolderOpen,
 Loader2,
 MessageSquarePlus,
 MoreVertical,
 RefreshCw
 } from 'lucide-react';
-import { Suspense,useState } from 'react';
-import { useParams } from 'wouter';
+import { Suspense,useCallback,useEffect,useMemo,useRef,useState, type TouchEvent } from 'react';
+import { useLocation,useParams } from 'wouter';
 
 const MobileTerminal = instrumentedLazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })),
   'MobileTerminal'
 );
+const ReplitSettingsPanel = instrumentedLazy(() => import('@/components/editor/ReplitSettingsPanel').then(mod => ({ default: mod.ReplitSettingsPanel })), 'ReplitSettingsPanel');
 
 const TerminalFallback = () => (
   <div className="h-full flex items-center justify-center bg-background">
@@ -50,11 +56,20 @@ const TerminalFallback = () => (
   </div>
 );
 
-type MobileTab = 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'deploy' | 'more';
+type MobileTab = 'projects' | 'agent' | 'files' | 'code' | 'terminal' | 'preview' | 'deploy' | 'settings' | 'more';
+type MobileFormFactor = 'phone-portrait' | 'phone-landscape' | 'tablet';
+
+function getMobileFormFactor(): MobileFormFactor {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  if (width >= 768) return 'tablet';
+  return width > height ? 'phone-landscape' : 'phone-portrait';
+}
 
 export default function MobileWorkspace() {
   const params = useParams();
   const projectId = (params.projectId || params.id) as string;
+  const [, navigate] = useLocation();
 
   if (!projectId) {
     return (
@@ -64,18 +79,84 @@ export default function MobileWorkspace() {
     );
   }
 
+  const [formFactor, setFormFactor] = useState<MobileFormFactor>(() => getMobileFormFactor());
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [activeTab, setActiveTab] = useState<MobileTab>('agent');
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | undefined>();
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const [lastWorkspaceTab, setLastWorkspaceTab] = useState<'agent' | 'code' | 'terminal' | 'deploy'>('agent');
+  const touchStartRef = useRef<{ x: number; y: number; at: number } | null>(null);
 
   // Split-view: agent chat visible with floating preview overlay
   const [previewOverlay, setPreviewOverlay] = useState(false);
   const isSchemaReady = useSchemaWarmingStore((s) => s.isReady);
 
-  const handleTabChange = (tabId: MobileTab) => {
+  useEffect(() => {
+    initializeNativeMobileRuntime().catch(() => {});
+
+    const refreshSyncStatus = async () => {
+      const status = await offlineSyncService.getSyncStatus();
+      setPendingSyncCount(status.pendingOperations);
+      setIsOnline(status.online);
+    };
+
+    const handleResize = () => setFormFactor(getMobileFormFactor());
+    const handleOnline = () => {
+      setIsOnline(true);
+      offlineSyncService.forceSyncNow().finally(refreshSyncStatus);
+    };
+    const handleOffline = () => setIsOnline(false);
+    const handleSyncCompleted = () => refreshSyncStatus();
+    const handleDeepLink = (event: Event) => {
+      const url = (event as CustomEvent<{ url: string }>).detail?.url;
+      const match = url?.match(/ecode:\/\/open\/([^/?#]+)/);
+      if (match?.[1]) navigate(`/mobile-workspace/${encodeURIComponent(match[1])}`);
+    };
+
+    refreshSyncStatus();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('offline-sync-completed', handleSyncCompleted);
+    window.addEventListener('ecode:mobile-deep-link', handleDeepLink);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('offline-sync-completed', handleSyncCompleted);
+      window.removeEventListener('ecode:mobile-deep-link', handleDeepLink);
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    offlineStorage.saveProject({
+      id: Number(projectId) || Date.now(),
+      name: `Project ${projectId}`,
+      description: 'Recent mobile project',
+      lastModified: Date.now(),
+      syncStatus: 'synced',
+    }).catch(() => {});
+  }, [projectId]);
+
+  const handleTabChange = useCallback((tabId: MobileTab) => {
+    if (tabId === 'projects') {
+      setPreviewOverlay(false);
+      setActiveTab('projects');
+      setActiveTool(null);
+      return;
+    }
+    if (tabId === 'settings') {
+      setPreviewOverlay(false);
+      setActiveTab('settings');
+      setActiveTool(null);
+      return;
+    }
     if (tabId === 'files') {
       setPreviewOverlay(false);
       setActiveTab('files');
@@ -95,7 +176,7 @@ export default function MobileWorkspace() {
       setActiveTab(tabId);
       setActiveTool(null);
     }
-  };
+  }, []);
 
   const handleToolSelect = (toolId: string) => {
     if (toolId === 'files') {
@@ -121,12 +202,37 @@ export default function MobileWorkspace() {
     setToolsSheetOpen(false);
   };
 
-  const handleFileSelect = (file: any) => {
+  const handleFileSelect = useCallback((file: any) => {
     setSelectedFileId(file.id);
     setIsFilesOpen(false);
     setLastWorkspaceTab('code');
     setActiveTab('code');
-  };
+  }, []);
+
+  const handleOpenProject = useCallback((nextProjectId: string | number) => {
+    navigate(`/mobile-workspace/${encodeURIComponent(String(nextProjectId))}`);
+  }, [navigate]);
+
+  const handleTouchStart = useCallback((event: TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, at: Date.now() };
+  }, []);
+
+  const workspaceTabs = useMemo<MobileTab[]>(() => ['projects', 'code', 'agent', 'terminal', 'settings'], []);
+
+  const handleTouchEnd = useCallback((event: TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 72 || Math.abs(dx) < Math.abs(dy) || Date.now() - start.at > 650) return;
+    const currentIndex = workspaceTabs.indexOf(activeTab);
+    if (currentIndex === -1) return;
+    const nextIndex = dx < 0 ? Math.min(workspaceTabs.length - 1, currentIndex + 1) : Math.max(0, currentIndex - 1);
+    handleTabChange(workspaceTabs[nextIndex]);
+  }, [activeTab, handleTabChange, workspaceTabs]);
 
   // Layers icon in preview panel → switch to agent with floating preview overlay
   const handleEnterOverlayMode = () => {
@@ -158,17 +264,28 @@ export default function MobileWorkspace() {
 
   // Tab title shown in header center
   const tabTitle: Record<MobileTab, string> = {
+    projects: 'Projects',
     agent: 'Agent',
     files: 'Files',
     code: 'Code',
     terminal: 'Shell',
     preview: 'Preview',
     deploy: 'Deploy',
+    settings: 'Settings',
     more: 'Tools',
   };
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'projects':
+        return (
+          <MobileProjectsPanel
+            activeProjectId={projectId}
+            onOpenProject={handleOpenProject}
+            className="h-full"
+          />
+        );
+
       case 'agent':
       case 'more':
         return (
@@ -193,6 +310,16 @@ export default function MobileWorkspace() {
             projectId={projectId}
             onSave={async (content: string) => {
               if (!selectedFileId) return;
+              if (!navigator.onLine) {
+                await offlineStorage.addPendingOperation({
+                  type: 'update',
+                  resourceType: 'file',
+                  resourceId: selectedFileId,
+                  data: { content },
+                });
+                setPendingSyncCount((count) => count + 1);
+                return;
+              }
               await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
             }}
             className="h-full"
@@ -220,6 +347,13 @@ export default function MobileWorkspace() {
           />
         );
 
+      case 'settings':
+        return (
+          <ReplitSettingsPanel
+            projectId={projectId}
+          />
+        );
+
       case 'preview':
         if (renderBootstrapPlaceholder('preview')) return renderBootstrapPlaceholder('preview');
         return (
@@ -240,8 +374,114 @@ export default function MobileWorkspace() {
     }
   };
 
+  const renderSecondaryPanel = () => {
+    if (activeTab === 'terminal') return renderTabContent();
+    if (activeTab === 'settings') return renderTabContent();
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <div className="flex h-11 items-center justify-between border-b px-3">
+          <span className="text-[13px] font-medium">AI / Preview</span>
+          <Button size="sm" variant="ghost" onClick={() => setActiveTab('preview')}>Preview</Button>
+        </div>
+        <div className="min-h-0 flex-1">
+          {activeTab === 'preview' ? renderTabContent() : (
+            <AgentPanelErrorBoundary>
+              <ReplitAgentPanelV3 projectId={projectId} className="h-full" mode={formFactor === 'tablet' ? 'tablet' : 'mobile'} />
+            </AgentPanelErrorBoundary>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderAdaptiveWorkspace = () => {
+    if (formFactor === 'phone-portrait') return renderTabContent();
+
+    if (formFactor === 'phone-landscape') {
+      return (
+        <div className="grid h-full min-h-0 grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
+          <div className="min-w-0 border-r">{activeTab === 'projects' ? renderTabContent() : (
+            <LazyMobileCodeEditor
+              fileId={selectedFileId}
+              projectId={projectId}
+              onSave={async (content: string) => {
+                if (!selectedFileId) return;
+                if (!navigator.onLine) {
+                  await offlineStorage.addPendingOperation({
+                    type: 'update',
+                    resourceType: 'file',
+                    resourceId: selectedFileId,
+                    data: { content },
+                  });
+                  return;
+                }
+                await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
+              }}
+              className="h-full"
+            />
+          )}</div>
+          <div className="min-w-0">{renderSecondaryPanel()}</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid h-full min-h-0 grid-cols-[72px_minmax(220px,280px)_minmax(0,1fr)_minmax(320px,0.42fr)] bg-background">
+        <nav className="flex flex-col items-center gap-2 border-r py-3" data-testid="tablet-activity-bar">
+          {workspaceTabs.map((tab) => (
+            <Button
+              key={tab}
+              variant={activeTab === tab ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-11 w-11"
+              onClick={() => handleTabChange(tab)}
+              data-testid={`tablet-tab-${tab}`}
+            >
+              <span className="sr-only">{tabTitle[tab]}</span>
+              {tab === 'projects' && <FolderOpen className="h-5 w-5" />}
+              {tab === 'code' && <span className="font-mono text-[13px]">{"</>"}</span>}
+              {tab === 'agent' && <MessageSquarePlus className="h-5 w-5" />}
+              {tab === 'terminal' && <span className="font-mono text-[13px]">$</span>}
+              {tab === 'settings' && <MoreVertical className="h-5 w-5" />}
+            </Button>
+          ))}
+        </nav>
+        <aside className="min-w-0 border-r">
+          <MobileProjectsPanel activeProjectId={projectId} onOpenProject={handleOpenProject} className="h-full" />
+        </aside>
+        <main className="min-w-0">
+          {activeTab === 'projects' ? (
+            <MobileFileExplorer
+              isOpen={true}
+              onClose={() => {}}
+              projectId={projectId}
+              onFileSelect={handleFileSelect}
+              currentFileId={selectedFileId}
+            />
+          ) : (
+            <LazyMobileCodeEditor
+              fileId={selectedFileId}
+              projectId={projectId}
+              onSave={async (content: string) => {
+                if (!selectedFileId) return;
+                await apiRequest('PUT', `/api/projects/${projectId}/files/${selectedFileId}`, { content });
+              }}
+              className="h-full"
+            />
+          )}
+        </main>
+        <aside className="min-w-0 border-l">{renderSecondaryPanel()}</aside>
+      </div>
+    );
+  };
+
   return (
-    <div className="h-screen flex flex-col bg-background md:hidden">
+    <div
+      className="h-screen flex flex-col bg-background"
+      data-mobile-form-factor={formFactor}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
 
       {/* ── Top Navigation Bar ── hidden when in full preview tab (preview has its own header) */}
       {!isPreviewTab && (
@@ -270,6 +510,11 @@ export default function MobileWorkspace() {
             <span className="text-[15px] font-semibold text-foreground">
               {tabTitle[activeTab]}
             </span>
+            {pendingSyncCount > 0 && (
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] text-primary">
+                {pendingSyncCount} queued
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-1">
@@ -295,7 +540,7 @@ export default function MobileWorkspace() {
 
       {/* ── Tab Content ── */}
       <div className={cn('mobile-panel-density flex-1 flex flex-col overflow-hidden relative', isPreviewTab && 'pb-16')}>
-        {renderTabContent()}
+        {renderAdaptiveWorkspace()}
 
         {/* ── Floating Preview Overlay (split-view mode) ── */}
         {previewOverlay && (
@@ -316,6 +561,7 @@ export default function MobileWorkspace() {
       <ReplitBottomTabs
         activeTab={activeTab}
         onTabChange={(tab) => handleTabChange(tab as MobileTab)}
+        isConnected={isOnline}
       />
 
       {/* File Explorer Modal */}

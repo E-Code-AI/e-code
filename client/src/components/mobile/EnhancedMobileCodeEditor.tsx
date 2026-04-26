@@ -24,7 +24,7 @@ Redo2,Save,Search,
 Undo2,
 X
 } from 'lucide-react';
-import { useCallback,useEffect,useRef,useState } from 'react';
+import { useCallback,useEffect,useRef,useState, type TouchEvent } from 'react';
 
 interface EnhancedMobileCodeEditorProps {
   fileId?: number;
@@ -62,7 +62,10 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
   const [connectionStatus, _setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connected');
   const [content, setContent] = useState(props.initialContent || '');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [fontSize, setFontSize] = useState(14);
   const editorViewRef = useRef<EditorView | null>(null);
+  const pinchDistanceRef = useRef<number | null>(null);
+  const longPressTimerRef = useRef<number | null>(null);
 
   const saveFileMutation = useMutation({
     mutationFn: async (content: string) =>
@@ -121,12 +124,29 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
     window.addEventListener('ide:replace', handleReplace as EventListener);
     window.addEventListener('ide:save-file', handleSaveEvent as EventListener);
     window.addEventListener('ide:format', handleFormat as EventListener);
+    const handleExternalKeyboard = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault();
+        handleSave();
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        setShowSearch(true);
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) handleRedo();
+        else handleUndo();
+      }
+    };
+    window.addEventListener('keydown', handleExternalKeyboard);
 
     return () => {
       window.removeEventListener('ide:find', handleFind as EventListener);
       window.removeEventListener('ide:replace', handleReplace as EventListener);
       window.removeEventListener('ide:save-file', handleSaveEvent as EventListener);
       window.removeEventListener('ide:format', handleFormat as EventListener);
+      window.removeEventListener('keydown', handleExternalKeyboard);
     };
   }, [props.onSave, toast]);
 
@@ -243,6 +263,18 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
     view.focus();
   };
 
+  const wrapSelection = (before: string, after: string) => {
+    const view = editorViewRef.current;
+    if (!view) return;
+    const { from, to } = view.state.selection.main;
+    const selected = view.state.sliceDoc(from, to);
+    view.dispatch({
+      changes: { from, to, insert: `${before}${selected}${after}` },
+      selection: { anchor: from + before.length, head: from + before.length + selected.length },
+    });
+    view.focus();
+  };
+
   const handleSave = () => {
     const currentContent = editorViewRef.current?.state.doc.toString() || content;
     if (props.fileId) {
@@ -264,6 +296,46 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
     if (view) {
       redo(view);
       view.focus();
+    }
+  };
+
+  const distanceBetweenTouches = (event: TouchEvent<HTMLDivElement>) => {
+    if (event.touches.length < 2) return null;
+    const [first, second] = [event.touches[0], event.touches[1]];
+    return Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+  };
+
+  const handleEditorTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    const distance = distanceBetweenTouches(event);
+    if (distance) {
+      pinchDistanceRef.current = distance;
+      return;
+    }
+    longPressTimerRef.current = window.setTimeout(() => {
+      setShowSearch(true);
+      toast({ title: 'Editor menu', description: 'Search and replace opened for touch editing.' });
+    }, 550);
+  };
+
+  const handleEditorTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    const distance = distanceBetweenTouches(event);
+    if (!distance || !pinchDistanceRef.current) return;
+    const delta = distance - pinchDistanceRef.current;
+    if (Math.abs(delta) > 18) {
+      setFontSize((current) => Math.min(22, Math.max(12, current + (delta > 0 ? 1 : -1))));
+      pinchDistanceRef.current = distance;
+    }
+  };
+
+  const handleEditorTouchEnd = () => {
+    pinchDistanceRef.current = null;
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
 
@@ -308,6 +380,14 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           >
             {'}'}
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-[13px] bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => wrapSelection('{', '}')}
+          >
+            {'{}'}
+          </Button>
           
           <Button
             size="sm"
@@ -326,6 +406,33 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
           >
             )
           </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-[13px] bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => wrapSelection('[', ']')}
+          >
+            []
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-10 px-3 text-[13px] bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+            onClick={() => wrapSelection('<', '>')}
+          >
+            &lt;&gt;
+          </Button>
+          {['=>', ':', ',', '.', '/', '"', "'"].map((token) => (
+            <Button
+              key={token}
+              size="sm"
+              variant="ghost"
+              className="h-10 px-3 text-[13px] bg-muted dark:bg-[var(--ecode-surface-secondary)] hover:bg-surface-tertiary-solid dark:hover:bg-[var(--ecode-surface-hover)] active:scale-95 touch-manipulation min-w-[44px]"
+              onClick={() => insertText(token)}
+            >
+              {token}
+            </Button>
+          ))}
           
           <Button
             size="sm"
@@ -415,7 +522,13 @@ export function EnhancedMobileCodeEditor(props: EnhancedMobileCodeEditorProps) {
         </LazyMotionDiv>
       )}
 
-      <div className="flex-1 relative min-h-0">
+      <div
+        className="flex-1 relative min-h-0 touch-pan-y"
+        onTouchStart={handleEditorTouchStart}
+        onTouchMove={handleEditorTouchMove}
+        onTouchEnd={handleEditorTouchEnd}
+        style={{ fontSize }}
+      >
         <CM6Editor
           value={content}
           language={getLanguage()}

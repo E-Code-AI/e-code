@@ -184,3 +184,32 @@ Known limitations for this gate:
 - Production macOS signing/notarization requires `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` in GitHub secrets.
 - Production Windows signing requires `WINDOWS_CERTIFICATE` and `WINDOWS_CERTIFICATE_PASSWORD` in GitHub secrets.
 - Real installer E2E for `.dmg`, `.exe`, AppImage, and `.deb`, auto-update bump validation, cold start <2s measurement, and 1-hour leak test were not executed locally in this pass.
+
+## Mobile iOS/Android Gate — 2026-04-27
+
+Status: PARTIAL PRODUCTION GATE PASS for the existing Capacitor mobile client. The repository does not contain a React Native or Expo native client; the implemented mobile app is a Capacitor iOS/Android shell around the shared React app with native plugins. This does not satisfy a strict "no WebView" React Native requirement, so the global platform verdict remains blocked for that specific architecture request.
+
+Implemented:
+
+- Phone portrait navigation now exposes the requested primary tabs: Projects, Editor, AI, Terminal, and Settings.
+- Phone landscape uses a split editor + secondary panel layout.
+- Tablet uses a desktop-like multi-pane layout with activity bar, project browser, editor, and side panel.
+- Device/orientation detection switches layouts at runtime on resize/orientation changes.
+- Mobile Projects panel added with API-backed project listing, search, local favorites, and project creation.
+- CodeMirror 6 mobile editor enhanced with a larger coding keybar, selection wrappers, `=>`, punctuation tokens, external keyboard shortcuts, long-press menu behavior, and pinch zoom.
+- Mobile save path queues file updates offline through the existing IndexedDB offline sync queue.
+- Native mobile runtime bridge initializes Capacitor Network, App deep links, and Push Notifications.
+- iOS Info.plist and Android manifest expanded for camera, microphone, media/files, push notifications, deep links, orientation, and tablet resizing.
+
+Verified commands:
+
+- `npm run mobile:smoke` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run lint` — PASS.
+- `npm run mobile:build` — PASS; Vite build completed and `npx cap sync` updated iOS/Android with 10 Capacitor plugins.
+
+Known limitations for this gate:
+
+- This pass does not create a pure React Native app; converting away from Capacitor/WebView is a separate architecture migration.
+- Physical device validation on iPhone, iPad, Android phone, and Android tablet was not executed locally.
+- App Store / Play Store signing, provisioning profiles, TestFlight/Internal App Sharing, and push provider credentials remain environment-dependent.

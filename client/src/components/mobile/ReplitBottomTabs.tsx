@@ -10,11 +10,11 @@
  */
 
 import { memo, useCallback, type ElementType } from 'react';
-import { Rocket, Monitor, MoreHorizontal, Sparkles, FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff, Code2, Settings, Sparkles, Terminal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type MobileTab = 'agent' | 'files' | 'deploy' | 'preview' | 'more';
+type MobileTab = 'projects' | 'code' | 'agent' | 'terminal' | 'settings';
 
 interface Tab {
   id: MobileTab;
@@ -35,11 +35,11 @@ interface ReplitBottomTabsProps {
 }
 
 const tabs: Tab[] = [
-  { id: 'files', icon: FolderOpen, label: 'Files' },
-  { id: 'preview', icon: Monitor, label: 'Preview' },
-  { id: 'agent', icon: Sparkles, label: 'Agent' },
-  { id: 'deploy', icon: Rocket, label: 'Deploy' },
-  { id: 'more', icon: MoreHorizontal, label: 'Tools' },
+  { id: 'projects', icon: FolderOpen, label: 'Projects' },
+  { id: 'code', icon: Code2, label: 'Editor' },
+  { id: 'agent', icon: Sparkles, label: 'AI' },
+  { id: 'terminal', icon: Terminal, label: 'Terminal' },
+  { id: 'settings', icon: Settings, label: 'Settings' },
 ];
 
 export const ReplitBottomTabs = memo(function ReplitBottomTabs({ 
@@ -62,7 +62,7 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
   }, [onTabChange]);
 
   const getBadgeForTab = (tabId: MobileTab): number | undefined => {
-    if (tabId === 'more') {
+    if (tabId === 'settings') {
       const gitCount = badgeCounts.git || 0;
       const errorsCount = badgeCounts.errors || 0;
       return gitCount + errorsCount > 0 ? gitCount + errorsCount : undefined;

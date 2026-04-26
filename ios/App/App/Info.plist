@@ -51,8 +51,12 @@
         <string>E-Code needs camera access to scan QR codes and capture images for your projects.</string>
         <key>NSPhotoLibraryUsageDescription</key>
         <string>E-Code needs photo library access to upload images to your projects.</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>E-Code saves generated screenshots and project assets to your photo library when requested.</string>
         <key>NSMicrophoneUsageDescription</key>
         <string>E-Code needs microphone access for voice input and audio recording features.</string>
+        <key>NSDocumentsFolderUsageDescription</key>
+        <string>E-Code needs document picker access to attach files to agent chats and project uploads.</string>
         <key>CFBundleURLTypes</key>
         <array>
             <dict>
@@ -67,6 +71,7 @@
         <key>UIBackgroundModes</key>
         <array>
             <string>remote-notification</string>
+            <string>fetch</string>
         </array>
 </dict>
 </plist>
