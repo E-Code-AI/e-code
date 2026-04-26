@@ -610,7 +610,7 @@ export function useAutonomousChatIntegration({
     switch (type) {
       case 'connected': {
         store.setPhase('planning');
-        store.setCurrentTask('Connected to AI agent');
+        store.setCurrentTask('Agent connected');
         store.setProgress(5);
         
         // Emit connected event for favicon/audio/notifications
@@ -623,7 +623,7 @@ export function useAutonomousChatIntegration({
         // Add welcome message to chat
         const connectedMsg = createAutonomousMessage(
           'autonomous_working',
-          '🔗 Connected to AI agent. Starting workspace creation...',
+          'Agent connected. Preparing workspace orchestration...',
           {
             phase: 'planning',
             progress: 5
@@ -653,9 +653,13 @@ export function useAutonomousChatIntegration({
         
         // Add status update message to chat (update existing if same phase, or add new)
         const statusContent = phaseName || eventMessage || `${splashPhase}...`;
+        const normalizedStatusContent =
+          statusContent === 'Workspace creation in progress...'
+            ? 'Workspace build is running...'
+            : statusContent;
         const statusMsg = createAutonomousMessage(
           'autonomous_working',
-          statusContent,
+          normalizedStatusContent,
           {
             phase: payloadPhase,
             progress: eventProgress || store.progress
@@ -672,7 +676,7 @@ export function useAutonomousChatIntegration({
         // Update existing message or add new one based on phase changes
         if (lastMessageIdRef.current && splashPhase === store.phase) {
           updateMessage(conversationId, lastMessageIdRef.current, {
-            content: statusContent,
+            content: normalizedStatusContent,
             autonomousPayload: { phase: payloadPhase, progress: eventProgress || store.progress }
           });
         } else {

@@ -277,7 +277,7 @@ export function AutonomousWorkspaceViewer({
     switch (message.type) {
       // ✅ FIX (Dec 1, 2025): Handle 'connected' message from server
       case 'connected':
-        addLog('🔌 Connected to AI agent');
+        addLog('🔌 Agent connected');
         setOverallProgress(5); // Show initial progress
         break;
 
@@ -286,28 +286,28 @@ export function AutonomousWorkspaceViewer({
         // This ensures the UI displays exactly what the backend sends
         if (message.status === 'waiting_for_plan') {
           setPhase('planning');
-          setCurrentTask(message.phaseName || 'Waiting for AI');
+          setCurrentTask(message.phaseName || 'Waiting for planning');
           setOverallProgress(message.progress ?? 8);
-          addLog('⏳ Waiting for AI to begin planning...');
+          addLog('⏳ Waiting for planning to start...');
         } else if (message.status === 'planning') {
           setPhase('planning');
-          setCurrentTask(message.phaseName || 'Planning started');
+          setCurrentTask(message.phaseName || 'Planning workspace');
           setOverallProgress(message.progress ?? 15);
-          addLog('🧠 AI is analyzing your request...');
+          addLog('🧠 Analyzing requirements and execution plan...');
         } else if (message.status === 'executing') {
           setPhase('executing');
-          setCurrentTask(message.phaseName || 'Tasks starting');
+          setCurrentTask(message.phaseName || 'Executing workspace tasks');
           setOverallProgress(message.progress ?? 35);
         } else if (message.status === 'in_progress') {
           // Handle in_progress status with server-sent progress
           setPhase('executing');
-          setCurrentTask(message.phaseName || 'Building...');
+          setCurrentTask(message.phaseName || 'Building workspace');
           if (message.progress !== undefined) {
             setOverallProgress(message.progress);
           }
         }
         if (message.message && message.status !== 'waiting_for_plan') {
-          addLog(`📌 ${message.message}`);
+          addLog(`📌 ${message.message === 'Workspace creation in progress...' ? 'Workspace build is running...' : message.message}`);
         }
         break;
 
@@ -345,15 +345,19 @@ export function AutonomousWorkspaceViewer({
               name: message.taskName!,
               status: 'in_progress' as const
             }];
+            const activeTasks = newTasks.filter(task => task.status === 'in_progress').length;
             // ✅ FIX (Dec 11, 2025): Update progress when tasks start (35-95%)
             const totalTasks = generatedPlan?.tasks?.length || newTasks.length;
             const startedTasks = newTasks.length;
             const progressFromTasks = 35 + (startedTasks / totalTasks) * 30; // 35-65%
             setOverallProgress(Math.min(65, progressFromTasks));
+            if (activeTasks > 1) {
+              addLog(`🧩 ${activeTasks} tasks are running in parallel`);
+            }
             return newTasks;
           });
           setCurrentTask(message.taskName);
-          addLog(`🚀 Starting: ${message.taskName}`);
+          addLog(`🚀 Started: ${message.taskName}`);
         } else if (message.message) {
           addLog(`🚀 ${message.message}`);
         }
@@ -421,9 +425,9 @@ export function AutonomousWorkspaceViewer({
         setIsComplete(true);
         setPhase('complete');
         setOverallProgress(100);
-        setCurrentTask('Workspace ready! 🎉');
-        addLog('🎉 Workspace creation complete!');
-        addLog('✨ Your application is ready to use');
+        setCurrentTask('Workspace ready');
+        addLog('🎉 Workspace creation complete');
+        addLog('✨ Application ready');
         
         // Auto-close after 2 seconds
         setTimeout(() => {
