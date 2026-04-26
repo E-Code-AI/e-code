@@ -9,8 +9,8 @@ describe('E-code agent system prompt', () => {
     expect(AGENT_SYSTEM_PROMPT).toBe(E_CODE_AGENT_SYSTEM_PROMPT);
     expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('# Identity');
     expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('You are E-code Agent');
-    expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('## Working updates (Replit-style)');
-    expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('## Task list (for any request with 3+ steps)');
+    expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('## Status updates while working');
+    expect(E_CODE_AGENT_SYSTEM_PROMPT).toContain('## Task tracking');
   });
 
   it('adds context-specific focus instructions without losing the shared base prompt', () => {
