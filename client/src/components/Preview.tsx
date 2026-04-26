@@ -229,10 +229,16 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       }
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/switch-port`, { port });
     },
-    onSuccess: (data, port) => {
+    onSuccess: async (data, port) => {
       if (data.success) {
         setSelectedPort(port);
-        setPreviewUrl(data.url || `/preview/${projectId}/`);
+        const nextUrl =
+          data.url ||
+          data.previewUrl ||
+          (await resolvePreviewUrl());
+        if (nextUrl) {
+          setPreviewUrl(nextUrl);
+        }
         savePreference('port', port.toString());
         
         setPreviewStatus(prev => ({
