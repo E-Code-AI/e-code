@@ -244,7 +244,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
       );
     }
 
-    if (previewStatus === 'error') {
+    if (previewStatus === 'error' && !url) {
       return (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center space-y-3">
@@ -258,7 +258,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
       );
     }
 
-    if (previewStatus === 'stopped') {
+    if (previewStatus === 'stopped' && !url) {
       return (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
           <div className="text-center space-y-3">
