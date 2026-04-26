@@ -79,14 +79,8 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
   const fetchTestSuites = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/tests/${projectId}/suites`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setTestSuites(data.suites || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/tests/${projectId}/suites`);
+      setTestSuites(data.suites || []);
     } catch (error) {
       console.error('Error fetching test suites:', error);
       toast({
@@ -101,14 +95,8 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
 
   const fetchTestRuns = async () => {
     try {
-      const response = await fetch(`/api/tests/${projectId}/runs`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setTestRuns(data.runs || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/tests/${projectId}/runs`);
+      setTestRuns(data.runs || []);
     } catch (error) {
       console.error('Error fetching test runs:', error);
     }
@@ -176,19 +164,13 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
         
         // Check if tests are complete
         try {
-          const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
-            credentials: 'include'
-          });
-          
-          if (updatedResponse.ok) {
-            const status = await updatedResponse.json();
-            if (status.running === false) {
-              stopPolling();
-              toast({
-                title: "Tests Completed",
-                description: `${status.results.passed}/${status.results.total} tests passed`
-              });
-            }
+          const status = await apiRequest<any>('GET', `/api/tests/${projectId}/status`);
+          if (status.running === false) {
+            stopPolling();
+            toast({
+              title: "Tests Completed",
+              description: `${status.results.passed}/${status.results.total} tests passed`
+            });
           }
         } catch (e) {
           // Network error during polling - continue polling

@@ -48,14 +48,8 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
   const fetchPackages = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/packages/${projectId}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPackages(data.packages || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/packages/${projectId}`);
+      setPackages(data.packages || []);
     } catch (error) {
       console.error('Error fetching packages:', error);
       toast({
@@ -76,14 +70,8 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
 
     try {
       setSearching(true);
-      const response = await fetch(`/api/packages/search?q=${encodeURIComponent(query)}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.packages || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/packages/search?q=${encodeURIComponent(query)}`);
+      setSearchResults(data.packages || []);
     } catch (error) {
       console.error('Error searching packages:', error);
       toast({

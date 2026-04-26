@@ -10,6 +10,7 @@ import {
   Smartphone, Monitor, MapPin, Activity
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface AnalyticsData {
   overview: {
@@ -77,14 +78,8 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/analytics/${projectId}?period=${timeRange}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data.analytics);
-      }
+      const data = await apiRequest<any>('GET', `/api/analytics/${projectId}?period=${timeRange}`);
+      setAnalytics(data.analytics);
     } catch (error) {
       console.error('Error fetching analytics:', error);
       toast({

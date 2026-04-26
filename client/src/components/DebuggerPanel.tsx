@@ -82,9 +82,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   // Start debugging
   const startDebugMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/start`);
-      if (!response.ok) throw new Error('Failed to start debugging');
-      return response.json();
+      return apiRequest('POST', `/api/debug/${projectId}/start`);
     },
     onSuccess: () => {
       toast({
@@ -105,9 +103,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   // Debug control mutations
   const debugControlMutation = useMutation({
     mutationFn: async (action: 'continue' | 'pause' | 'stop' | 'step_over' | 'step_into' | 'step_out') => {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/${action}`);
-      if (!response.ok) throw new Error(`Failed to ${action}`);
-      return response.json();
+      return apiRequest('POST', `/api/debug/${projectId}/${action}`);
     },
     onSuccess: () => {
       refetchSession();
@@ -117,9 +113,7 @@ export function DebuggerPanel({ projectId }: { projectId: string }) {
   // Toggle breakpoint
   const toggleBreakpointMutation = useMutation({
     mutationFn: async ({ file, line }: { file: string; line: number }) => {
-      const response = await apiRequest('POST', `/api/debug/${projectId}/breakpoints/toggle`, { file, line });
-      if (!response.ok) throw new Error('Failed to toggle breakpoint');
-      return response.json();
+      return apiRequest('POST', `/api/debug/${projectId}/breakpoints/toggle`, { file, line });
     },
     onSuccess: () => {
       refetchSession();
