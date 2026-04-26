@@ -27,8 +27,9 @@ router.use((req, res, next) => {
 
 const searchSchema = z.object({
   query: z.string().min(1).max(500),
-  projectId: z.string(),
+  projectId: z.coerce.string(),
   type: z.enum(['all', 'files', 'content', 'symbols']).optional().default('content'),
+  searchType: z.enum(['all', 'files', 'content', 'symbols']).optional(),
   caseSensitive: z.boolean().optional().default(false),
   wholeWord: z.boolean().optional().default(false),
   useRegex: z.boolean().optional().default(false),
@@ -434,12 +435,14 @@ router.post('/global', async (req, res) => {
       query,
       projectId,
       type,
+      searchType,
       caseSensitive,
       wholeWord,
       useRegex,
       filePattern,
       excludePattern
     } = searchSchema.parse(req.body);
+    const effectiveType = searchType ?? type;
 
     const project = await storage.getProject(projectId);
     if (!project) {
@@ -473,7 +476,7 @@ router.post('/global', async (req, res) => {
       const content = file.content || '';
       let matches: SearchResult['matches'] = [];
 
-      if (type === 'files') {
+      if (effectiveType === 'files') {
         if (fileNameMatches(filePath, query, caseSensitive, useRegex)) {
           matches = [{
             line: 1,
@@ -483,7 +486,7 @@ router.post('/global', async (req, res) => {
             context: filePath,
           }];
         }
-      } else if (type === 'symbols') {
+      } else if (effectiveType === 'symbols') {
         matches = searchSymbolsInContent(content, query, { caseSensitive, wholeWord, useRegex });
       } else {
         matches = searchInContent(content, query, { caseSensitive, wholeWord, useRegex });
@@ -521,6 +524,9 @@ router.post('/global', async (req, res) => {
       query
     });
   } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid search request', details: error.errors });
+    }
     logger.error('Global search error:', error);
     res.status(500).json({ error: error.message });
   }

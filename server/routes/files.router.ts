@@ -201,7 +201,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.get("/:projectId/files/*", this.ensureReadAccess, async (req: Request, res: Response) => {
+    this.router.get("/:projectId/files/*", this.ensureReadAccess, async (req: Request, res: Response, next: NextFunction) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -215,6 +215,10 @@ export class FilesRouter {
         const hasSession = this.hasValidSession(req);
         const userId = hasSession ? req.user!.id : null;
         let fileIdentifier = req.params[0];
+
+        if (/^\d+\/history$/.test(fileIdentifier || '')) {
+          return next();
+        }
         
         if (!fileIdentifier) {
           return res.status(400).json({

@@ -1,8 +1,9 @@
 # E-code Production Certification
 
 Date: 2026-04-26
-Branch: `codex/production-certification-20260426`
+Branch: `main`
 Certification source: `docs/SURFACE-MAP.md`
+Panel router inventory: `docs/PANEL-ROUTER-INVENTORY.md`
 
 ## Current Verdict
 
@@ -72,9 +73,13 @@ Fixes made during Phase C:
 - Fixed `GET /api/templates/categories`, `/collections`, and `/suggestions`: root cause was `GET /api/templates/:id` declared before static template routes.
 - Fixed `GET /api/projects/u/:username/:slug`: root cause was `GET /api/projects/:projectId` declared before the public username/slug route.
 - Fixed `GET /api/agent/tools/status`: root cause was routers reading `req.app.locals.storage` without `MainRouter` publishing the shared storage instance.
+- Fixed mounted IDE panel router contracts: file history wildcard capture, search payload mismatch, and terminal shell mount mismatch.
 - Added a local Playwright config and a workspace-core panel smoke spec.
 - Added `test/e2e/api/router-contracts.spec.ts` to lock the router contracts above.
+- Added `test/e2e/api/panel-router-contracts.spec.ts` and `docs/PANEL-ROUTER-INVENTORY.md`.
 
 Router validation:
 
 - `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/api/router-contracts.spec.ts test/e2e/panels/workspace-core.spec.ts --reporter=line` — PASS (4/4).
+- `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/api/panel-router-contracts.spec.ts --reporter=line` — PASS (1/1).
+- Controlled dev boot on `127.0.0.1:5063` plus `router-contracts.spec.ts`, `panel-router-contracts.spec.ts`, and `workspace-core.spec.ts` — PASS (5/5).

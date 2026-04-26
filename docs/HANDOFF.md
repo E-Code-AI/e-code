@@ -84,6 +84,7 @@ Services annexes si activés:
 - `/health` et `/health/readiness` : PASS en boot dev contrôlé
 - `test/e2e/panels/workspace-core.spec.ts` : PASS, couvre ouverture IDE, file tree create/rename/delete, preview URL
 - `test/e2e/api/router-contracts.spec.ts` : PASS, couvre templates statiques, projet public `/u/:username/:slug`, et `/api/agent/tools/status`
+- `test/e2e/api/panel-router-contracts.spec.ts` : PASS, couvre l’inventaire panels IDE → routers dans `docs/PANEL-ROUTER-INVENTORY.md`
 
 Routers cassés corrigés:
 
@@ -91,6 +92,9 @@ Routers cassés corrigés:
 - Projects: `/:projectId` capturait `/u/:username/:slug`
 - Agent tools: `/tools/status` dépendait de `req.app.locals.storage` non initialisé
 - Files: `/:projectId/files/*` capturait `/files/by-id/:fileId` sur DELETE
+- Files history: `/:projectId/files/*` capturait `/files/:fileId/history`
+- Search: `/api/search/global` rejetait `projectId` numérique et ignorait `searchType`
+- Terminal: le panel appelait `/api/shell/:projectId/shell/create` sans mount backend compatible
 
 Blockers externes confirmés pour le boot artefact production local:
 

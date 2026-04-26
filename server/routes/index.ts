@@ -358,6 +358,9 @@ export class MainRouter {
 
     // Shell routes
     app.use('/api/shell', tierRateLimiters.api, shellRouter);
+    // Compatibility: mounted terminal clients use /api/shell/:projectId/shell/*
+    // while project-scoped shell APIs are also available under /api/projects/:projectId/shell/*.
+    app.use('/api/shell', tierRateLimiters.api, projectShellRouter);
 
     // Containers routes
     app.use('/api/containers', tierRateLimiters.api, containersRouter);
