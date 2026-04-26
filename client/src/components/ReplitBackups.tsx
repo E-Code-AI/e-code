@@ -80,11 +80,11 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
       setLoading(true);
       const data = await apiRequest<any>('GET', `/api/backups/${projectId}`);
       setBackups(data.backups || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching backups:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch backups",
+        description: error?.message || "Failed to fetch backups",
         variant: "destructive"
       });
     } finally {
@@ -131,10 +131,10 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
       });
       setShowCreateDialog(false);
       fetchBackups();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to create backup",
+        description: error?.message || "Failed to create backup",
         variant: "destructive"
       });
     } finally {
@@ -172,11 +172,11 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
         clearInterval(pollRestore);
         setRestoring(null);
       }, 600000);
-    } catch (error) {
+    } catch (error: any) {
       setRestoring(null);
       toast({
         title: "Restore Failed",
-        description: "Failed to restore from backup",
+        description: error?.message || "Failed to restore from backup",
         variant: "destructive"
       });
     }
@@ -235,10 +235,10 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
         description: "Backup has been removed"
       });
       fetchBackups();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to delete backup",
+        description: error?.message || "Failed to delete backup",
         variant: "destructive"
       });
     }
@@ -252,10 +252,10 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
         title: "Settings Updated",
         description: "Backup settings have been saved"
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to update settings",
+        description: error?.message || "Failed to update settings",
         variant: "destructive"
       });
     }
