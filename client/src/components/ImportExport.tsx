@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken } from '@/lib/queryClient';
 
 interface ImportExportProps {
   projectId: number;
@@ -55,9 +55,18 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
     setExportProgress(0);
     
     try {
-      const response = await apiRequest('POST', `/api/import-export/${projectId}/export`, {
+      const csrfToken = await getCSRFToken();
+      const response = await fetch(`/api/import-export/${projectId}/export`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({
         format: exportFormat,
         options: exportOptions
+        }),
       });
 
       if (!response.ok) {
@@ -75,12 +84,10 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         });
       }, 200);
 
-      // Get the blob
       const blob = await response.blob();
       clearInterval(progressInterval);
       setExportProgress(100);
 
-      // Download the file
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -134,14 +141,31 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
       let response;
       
       if (importSource === 'file' && selectedFile) {
+        const csrfToken = await getCSRFToken();
         const formData = new FormData();
         formData.append('file', selectedFile);
         
-        response = await apiRequest('POST', `/api/import-export/${projectId}/import`, formData);
+        response = await fetch(`/api/import-export/${projectId}/import`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'X-CSRF-Token': csrfToken,
+          },
+          body: formData,
+        });
       } else if (importSource === 'github') {
-        response = await apiRequest('POST', `/api/import-export/${projectId}/import`, {
+        const csrfToken = await getCSRFToken();
+        response = await fetch(`/api/import-export/${projectId}/import`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({
           source: 'github',
           url: githubUrl
+          }),
         });
       }
 
@@ -160,7 +184,7 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         });
       }, 300);
 
-      await response.json();
+      await response.text();
       clearInterval(progressInterval);
       setImportProgress(100);
 

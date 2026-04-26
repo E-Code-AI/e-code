@@ -141,15 +141,8 @@ export function Ghostwriter({ activeFile, onApplyCompletion }: GhostwriterProps)
   const aiMutation = useMutation({
     mutationFn: async (request: { endpoint: string, data: AIRequest }) => {
       const { endpoint, data } = request;
-      
-      const response = await apiRequest('POST', `/api/ai/${endpoint}`, data);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'AI request failed');
-      }
-      
-      return response.json() as Promise<AIResponse>;
+
+      return apiRequest('POST', `/api/ai/${endpoint}`, data) as Promise<AIResponse>;
     },
     onMutate: () => {
       setIsGenerating(true);
