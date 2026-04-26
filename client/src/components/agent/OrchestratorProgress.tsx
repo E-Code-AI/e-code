@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { AIModelBadge } from './AIModelIndicator';
 
 export interface CurrentTaskDelegation {
   tier: 'fast' | 'balanced' | 'quality';
@@ -120,6 +121,7 @@ export function OrchestratorProgress({
   const taskProgress = progress.tasksTotal > 0 
     ? (progress.tasksCompleted / progress.tasksTotal) * 100 
     : 0;
+  const activeParallelCapacity = Math.max(0, progress.tasksPending - (progress.currentTaskId ? 1 : 0));
   
   const testPassRate = progress.testsRun > 0 
     ? (progress.testsPassed / progress.testsRun) * 100 
@@ -140,6 +142,9 @@ export function OrchestratorProgress({
             </div>
             <div className="flex items-center gap-2">
               {getStatusBadge(progress.status)}
+              {progress.currentTaskDelegation && (
+                <AIModelBadge delegation={progress.currentTaskDelegation} />
+              )}
               {progress.currentTaskTitle && progress.status === 'running' && (
                 <span className="text-[11px] text-muted-foreground truncate">
                   Working on: {progress.currentTaskTitle}
@@ -282,6 +287,38 @@ export function OrchestratorProgress({
             </p>
           </div>
         </div>
+
+        {(progress.currentTaskDelegation || activeParallelCapacity > 0) && (
+          <div className="rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/60 dark:bg-violet-950/20 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px]">
+              {progress.currentTaskDelegation && (
+                <>
+                  <span className="font-medium text-violet-900 dark:text-violet-100">
+                    Active engine: {progress.currentTaskDelegation.provider}/{progress.currentTaskDelegation.model}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Tier: {progress.currentTaskDelegation.tier}
+                  </span>
+                  {progress.currentTaskDelegation.taskComplexity !== undefined && (
+                    <span className="text-muted-foreground">
+                      Complexity: {progress.currentTaskDelegation.taskComplexity}/10
+                    </span>
+                  )}
+                </>
+              )}
+              {activeParallelCapacity > 0 && (
+                <span className="text-violet-700 dark:text-violet-300 font-medium">
+                  {activeParallelCapacity} additional task{activeParallelCapacity > 1 ? 's' : ''} ready for parallel execution
+                </span>
+              )}
+            </div>
+            {progress.currentTaskDelegation?.reason && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {progress.currentTaskDelegation.reason}
+              </p>
+            )}
+          </div>
+        )}
         
         {(progress.checkpointsCreated > 0 || progress.rollbacksPerformed > 0) && (
           <div className="flex items-center gap-4 pt-2 border-t border-violet-200 dark:border-violet-800 text-[11px] text-muted-foreground">
