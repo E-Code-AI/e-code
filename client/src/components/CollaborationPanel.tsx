@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { useRealTimeCollaboration, Collaborator, ChatMessage } from '@/hooks/useRealTimeCollaboration';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -249,14 +250,11 @@ const InviteDialog = memo(({
     
     setIsLoading(true);
     try {
-      const response = await fetch('/api/collaboration/invite', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, email: email.trim(), role })
+      await apiRequest('POST', '/api/collaboration/invite', {
+        projectId,
+        email: email.trim(),
+        role,
       });
-      
-      if (!response.ok) throw new Error('Failed to send invitation');
       
       toast({ description: `Invitation sent to ${email}` });
       setEmail('');

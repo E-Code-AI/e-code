@@ -16,6 +16,7 @@ import {
   Trash2, Edit, Save, X, Search, Copy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface NixPackage {
   name: string;
@@ -39,21 +40,13 @@ export function NixConfig({ projectId }: { projectId: number }) {
   // Fetch Nix packages
   const { data: packages = [] } = useQuery<NixPackage[]>({
     queryKey: ['/api/nix', projectId, 'packages'],
-    queryFn: async () => {
-      const response = await fetch(`/api/nix/${projectId}/packages`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', `/api/nix/${projectId}/packages`)
   });
 
   // Fetch Nix channels
   const { data: channels = [] } = useQuery<NixChannel[]>({
     queryKey: ['/api/nix', projectId, 'channels'],
-    queryFn: async () => {
-      const response = await fetch(`/api/nix/${projectId}/channels`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch channels');
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', `/api/nix/${projectId}/channels`)
   });
 
   const defaultConfig = `{ pkgs }: {

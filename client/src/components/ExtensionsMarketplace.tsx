@@ -89,29 +89,15 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
 
   const { data: marketplaceData, isLoading: isLoadingMarketplace, error: marketplaceError, refetch: refetchMarketplace } = useQuery<MarketplaceResponse>({
     queryKey: ['/api/extensions/marketplace'],
-    queryFn: async () => {
-      const response = await fetch('/api/extensions/marketplace', {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch marketplace extensions');
-      }
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', '/api/extensions/marketplace'),
     staleTime: 60000,
   });
 
   const { data: installedExtensions = [], isLoading: isLoadingInstalled, refetch: refetchInstalled } = useQuery<InstalledExtension[]>({
     queryKey: ['/api/extensions', projectId, 'installed'],
-    queryFn: async () => {
+    queryFn: () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/extensions/${projectId}/installed`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch installed extensions');
-      }
-      return response.json();
+      return apiRequest('GET', `/api/extensions/${projectId}/installed`);
     },
     enabled: !!projectId,
     staleTime: 30000,

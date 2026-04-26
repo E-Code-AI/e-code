@@ -97,9 +97,7 @@ export function AdvancedCollaboration() {
   const { data: projects = [] } = useQuery<ProjectOption[]>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
-      const response = await fetch('/api/projects', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to load projects');
-      const data = await response.json();
+      const data = await apiRequest<any>('GET', '/api/projects');
       return Array.isArray(data) ? data : data.projects || [];
     },
     staleTime: 30000,
@@ -120,13 +118,7 @@ export function AdvancedCollaboration() {
 
   const { data: sessionsData } = useQuery<{ sessions: VoiceVideoSession[] }>({
     queryKey: ['/api/voice-video', selectedProject, 'sessions'],
-    queryFn: async () => {
-      const response = await fetch(`/api/voice-video/projects/${selectedProject}/sessions`, {
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to load voice/video sessions');
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/voice-video/projects/${selectedProject}/sessions`),
     enabled: !!selectedProject,
     staleTime: 10000,
   });
