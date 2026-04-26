@@ -168,6 +168,8 @@ export function PreviewPanel({
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
   const isPreviewError = previewStatus?.status === 'error';
+  const serviceCount = previewStatus?.services?.length || 0;
+  const activePort = previewStatus?.primaryPort || previewStatus?.ports?.[0];
 
   const handleRetryPreview = useCallback(() => {
     hasAttemptedAutoStart.current = false;
@@ -211,6 +213,16 @@ export function PreviewPanel({
           {previewStatus?.frameworkType && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
               {previewStatus.frameworkType}
+            </Badge>
+          )}
+          {isPreviewRunning && activePort && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+              Port {activePort}
+            </Badge>
+          )}
+          {isPreviewRunning && serviceCount > 1 && (
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+              {serviceCount} services
             </Badge>
           )}
         </div>
@@ -329,9 +341,9 @@ export function PreviewPanel({
           <div className="h-full flex items-center justify-center text-center p-8">
             <div>
               <Globe className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
-              <h3 className="text-[15px] font-semibold mb-2">No preview available</h3>
-              <p className="text-[13px] text-muted-foreground">
-                Add an HTML file or package.json to preview your project.
+              <h3 className="text-[15px] font-semibold mb-2">Preview not ready</h3>
+              <p className="text-[13px] text-muted-foreground max-w-md">
+                No runnable app was detected yet. Add an entrypoint such as `index.html`, or a `package.json` with a valid start or dev script.
               </p>
             </div>
           </div>

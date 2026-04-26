@@ -111,6 +111,12 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
   const totalCount = Object.keys(data.providers).length;
   const allHealthy = availableCount === totalCount;
   const someUnavailable = availableCount < totalCount;
+  const availableProviders = Object.entries(data.providers)
+    .filter(([, health]) => health.available)
+    .map(([provider]) => PROVIDER_DISPLAY[provider]?.name || provider);
+  const routingSummary = availableProviders.length > 0
+    ? `Routing ready: ${availableProviders.join(', ')}`
+    : 'No AI provider is currently available';
 
   if (compact) {
     return (
@@ -165,6 +171,9 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
                     <span>Success rate:</span>
                     <span>{(data.globalStats.successRate * 100).toFixed(1)}%</span>
                   </div>
+                  <div className="mt-2 text-foreground">
+                    {routingSummary}
+                  </div>
                 </div>
               )}
             </div>
@@ -191,6 +200,10 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
         >
           {availableCount}/{totalCount} available
         </Badge>
+      </div>
+
+      <div className="text-[11px] text-muted-foreground">
+        {routingSummary}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -256,6 +269,12 @@ export function ProviderHealthIndicator({ className, compact = false }: Provider
             <span>Buffer size:</span>
             <span className="font-medium text-foreground">
               {data.globalStats.bufferSize.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex justify-between col-span-2">
+            <span>Parallel capacity:</span>
+            <span className="font-medium text-foreground">
+              {availableCount} provider{availableCount === 1 ? '' : 's'} ready
             </span>
           </div>
         </div>
