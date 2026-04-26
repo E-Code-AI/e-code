@@ -17,7 +17,7 @@ import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 
 interface AutonomousProgressEvent {
-  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation' | 'post_validation_start' | 'install_dependencies_start' | 'install_dependencies_complete' | 'verify_build_start' | 'verify_build_complete' | 'responsive_qa_start' | 'responsive_qa_complete';
+  type: 'planning' | 'plan_ready' | 'awaiting_approval' | 'executing' | 'step_update' | 'complete' | 'error' | 'connected' | 'status' | 'plan_chunk' | 'plan_generated' | 'task_start' | 'task_progress' | 'task_complete' | 'step' | 'summary' | 'file_created' | 'command_output' | 'agent_message' | 'step_start' | 'step_complete' | 'checkpoint_created' | 'autonomous_timeline_event' | 'autonomous_checkpoint' | 'autonomous_task_list' | 'autonomous_preview' | 'autonomous_file_operation' | 'post_validation_start' | 'install_dependencies_start' | 'install_dependencies_complete' | 'verify_build_start' | 'verify_build_complete' | 'responsive_qa_start' | 'responsive_qa_complete' | 'degraded_mode' | 'provider_health';
   projectId?: number;
   sessionId?: string;
   status?: string;
@@ -109,6 +109,14 @@ interface AutonomousProgressEvent {
     isLoading?: boolean;
     isLive?: boolean;
   };
+  provider?: string;
+  fallbackProvider?: string;
+  providers?: Array<{
+    provider: string;
+    status: 'healthy' | 'degraded' | 'circuit_open' | 'unavailable';
+    canAcceptRequests: boolean;
+    errorRate?: number;
+  }>;
   fileOperation?: {
     type: 'create' | 'update' | 'delete' | 'rename';
     filePath: string;
@@ -1301,6 +1309,41 @@ export function useAutonomousChatIntegration({
           );
           addMessage(conversationId, msg);
         }
+        break;
+      }
+
+      case 'degraded_mode': {
+        const providerLabel = event.provider || 'primary provider';
+        const fallbackLabel = event.fallbackProvider ? ` -> ${event.fallbackProvider}` : '';
+        const degradedMessage = eventMessage || `Routing adjusted: ${providerLabel}${fallbackLabel}`;
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          `Routing update: ${degradedMessage}`,
+          {
+            phase: 'executing',
+            currentTask: degradedMessage,
+            progress: store.progress
+          }
+        );
+        addMessage(conversationId, msg);
+        break;
+      }
+
+      case 'provider_health': {
+        const healthyProviders = event.providers?.filter((provider) => provider.canAcceptRequests).map((provider) => provider.provider) || [];
+        const healthSummary = healthyProviders.length > 0
+          ? `Providers ready: ${healthyProviders.join(', ')}`
+          : 'No providers currently ready';
+        const msg = createAutonomousMessage(
+          'autonomous_working',
+          healthSummary,
+          {
+            phase: 'executing',
+            currentTask: healthSummary,
+            progress: store.progress
+          }
+        );
+        addMessage(conversationId, msg);
         break;
       }
 
