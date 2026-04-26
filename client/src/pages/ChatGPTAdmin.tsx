@@ -289,9 +289,7 @@ export default function ChatGPTAdmin() {
     enabled: !!selectedProject,
     queryFn: async () => {
       if (!selectedProject) return [];
-      const res = await fetch(`/api/admin/chatgpt/projects/${selectedProject.id}/files`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch files');
-      return res.json();
+      return apiRequest<ProjectFile[]>('GET', `/api/admin/chatgpt/projects/${selectedProject.id}/files`);
     },
   });
 
@@ -470,11 +468,7 @@ export default function ChatGPTAdmin() {
     setPlatformSelectedPath(filePath);
     setIsLoadingPlatformFile(true);
     try {
-      const res = await fetch(`/api/admin/chatgpt/platform/file?path=${encodeURIComponent(filePath)}`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to load file');
-      const data: PlatformFileContent = await res.json();
+      const data = await apiRequest<PlatformFileContent>('GET', `/api/admin/chatgpt/platform/file?path=${encodeURIComponent(filePath)}`);
       setPlatformEditedContent(data.content);
       setPlatformFileExt(data.extension || 'ts');
     } catch {
@@ -488,13 +482,10 @@ export default function ChatGPTAdmin() {
     if (!platformSelectedPath) return;
     setIsSavingPlatformFile(true);
     try {
-      const res = await fetch('/api/admin/chatgpt/platform/file', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ path: platformSelectedPath, content: platformEditedContent }),
+      await apiRequest('PUT', '/api/admin/chatgpt/platform/file', {
+        path: platformSelectedPath,
+        content: platformEditedContent,
       });
-      if (!res.ok) throw new Error('Failed to save');
       toast({ title: 'Platform file saved successfully' });
     } catch {
       toast({ title: 'Failed to save platform file', variant: 'destructive' });

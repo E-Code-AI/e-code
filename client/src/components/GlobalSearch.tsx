@@ -165,16 +165,9 @@ export function GlobalSearch({ isOpen, onClose, projectId, onFileSelect, inline 
 
   const handleResultClick = async (result: SearchResult) => {
     try {
-      // Fetch full file details
-      const response = await fetch(`/api/projects/${projectId}/files/${result.id}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const file = await response.json();
-        onFileSelect(file);
-        onClose();
-      }
+      const file = await apiRequest<any>('GET', `/api/projects/${projectId}/files/${result.id}`);
+      onFileSelect(file);
+      onClose();
     } catch (error) {
       toast({
         title: 'Failed to open file',

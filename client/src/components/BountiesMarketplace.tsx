@@ -560,18 +560,14 @@ export default function BountiesMarketplace() {
   const { data, isLoading, error } = useQuery<BountyListResponse>({
     queryKey: ['/api/bounties', filters],
     queryFn: async () => {
-      const response = await fetch(`/api/bounties?${buildQueryString()}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch bounties');
-      return response.json();
+      return apiRequest<BountyListResponse>('GET', `/api/bounties?${buildQueryString()}`);
     },
   });
 
   const { data: featuredData } = useQuery<{ bounties: Bounty[] }>({
     queryKey: ['/api/bounties', 'featured'],
     queryFn: async () => {
-      const response = await fetch('/api/bounties/featured?limit=3', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch featured bounties');
-      return response.json();
+      return apiRequest<{ bounties: Bounty[] }>('GET', '/api/bounties/featured?limit=3');
     },
   });
 
