@@ -62,6 +62,34 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
     return 'Preview not running';
   }, [resolvedPreviewUrl, previewStatus?.status, previewStatus?.message]);
 
+  const previewHeadline = useMemo(() => {
+    switch (previewStatus?.status) {
+      case 'starting':
+        return 'Preview is starting...';
+      case 'error':
+        return 'Preview failed to start';
+      case 'no_runnable_files':
+        return 'Preview is ready to start';
+      case 'stopped':
+        return 'Preview not running';
+      default:
+        return 'Run your project to see the preview';
+    }
+  }, [previewStatus?.status]);
+
+  const previewDescription = useMemo(() => {
+    if (previewStatus?.status === 'error') {
+      return previewStatus.message || 'The preview did not start successfully.';
+    }
+    if (previewStatus?.status === 'no_runnable_files') {
+      return 'The workspace is ready, but no live preview is running yet.';
+    }
+    if (previewStatus?.status === 'starting') {
+      return 'The runtime is booting and the preview URL will appear automatically.';
+    }
+    return undefined;
+  }, [previewStatus?.status, previewStatus?.message]);
+
   const startPreviewMutation = useMutation({
     mutationFn: async () => apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}),
     onSuccess: async () => {
@@ -236,13 +264,12 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <div className="flex items-center justify-center h-96 text-muted-foreground">
                   <div className="text-center">
                     <Globe className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-[13px] mb-4">
-                      {previewStatus?.status === 'starting'
-                        ? 'Preview is starting...'
-                        : previewStatus?.status === 'error'
-                          ? (previewStatus.message || 'Preview failed to start')
-                          : 'Run your project to see the preview'}
-                    </p>
+                    <p className="text-[13px] font-medium mb-2">{previewHeadline}</p>
+                    {previewDescription && (
+                      <p className="text-xs text-muted-foreground mb-4 max-w-sm">
+                        {previewDescription}
+                      </p>
+                    )}
                     {previewStatus?.status !== 'starting' && (
                       <Button
                         onClick={() => startPreviewMutation.mutate()}

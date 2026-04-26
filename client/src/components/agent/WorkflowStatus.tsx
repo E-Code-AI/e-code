@@ -130,6 +130,10 @@ function WorkflowCard({ workflow }: { workflow: WorkflowData }) {
   
   const steps = workflow.steps || [];
   const completedSteps = steps.filter(s => s.status === 'completed').length;
+  const metadata = workflow.metadata || {};
+  const activeProvider = typeof metadata.provider === 'string' ? metadata.provider : undefined;
+  const activeModel = typeof metadata.model === 'string' ? metadata.model : undefined;
+  const orchestrationMode = typeof metadata.orchestrationMode === 'string' ? metadata.orchestrationMode : undefined;
   const duration = workflow.completedAt && workflow.startedAt
     ? new Date(workflow.completedAt).getTime() - new Date(workflow.startedAt).getTime()
     : workflow.startedAt
@@ -164,6 +168,24 @@ function WorkflowCard({ workflow }: { workflow: WorkflowData }) {
                     {duration > 0 && <span>Duration: {formatDuration(duration)}</span>}
                     <span>Steps: {completedSteps}/{steps.length}</span>
                   </div>
+                  {(activeProvider || activeModel || orchestrationMode) && (
+                    <div className="flex items-center gap-2 flex-wrap mt-2">
+                      {activeProvider && activeModel ? (
+                        <Badge variant="outline" className="text-[10px]">
+                          Active engine: {activeProvider}/{activeModel}
+                        </Badge>
+                      ) : activeProvider ? (
+                        <Badge variant="outline" className="text-[10px]">
+                          Provider: {activeProvider}
+                        </Badge>
+                      ) : null}
+                      {orchestrationMode && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          {orchestrationMode}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
