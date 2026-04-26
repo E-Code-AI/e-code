@@ -79,7 +79,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
   // Start recording mutation
   const startMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/admin/agent/recording/start`, {
+      return apiRequest('POST', `/api/admin/agent/recording/start`, {
         sessionId,
         projectId,
         options: {
@@ -87,7 +87,6 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
           resolution: { width: 1920, height: 1080 }
         }
       });
-      return await res.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -109,8 +108,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
   // Stop recording mutation
   const stopMutation = useMutation({
     mutationFn: async (recordingId: string) => {
-      const res = await apiRequest('POST', `/api/admin/agent/recording/stop/${recordingId}`, {});
-      return await res.json();
+      return apiRequest('POST', `/api/admin/agent/recording/stop/${recordingId}`, {});
     },
     onSuccess: () => {
       toast({
@@ -132,12 +130,11 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
   // Add marker mutation
   const addMarkerMutation = useMutation({
     mutationFn: async ({ recordingId, label, type }: { recordingId: string; label: string; type: string }) => {
-      const res = await apiRequest('POST', `/api/admin/agent/recording/marker/${recordingId}`, {
+      return apiRequest('POST', `/api/admin/agent/recording/marker/${recordingId}`, {
         timestamp: currentTime,
         label,
         type
       });
-      return await res.json();
     },
     onSuccess: () => {
       toast({

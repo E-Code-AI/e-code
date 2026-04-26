@@ -143,13 +143,12 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
   const generateMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/admin/agent/selector/generate`, {
+      return apiRequest('POST', `/api/admin/agent/selector/generate`, {
         sessionId,
         projectId,
         pageUrl,
         elementDescription
       });
-      return await res.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -169,13 +168,12 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
 
   const syncCodeMutation = useMutation({
     mutationFn: async (params: { elementPath: string; styles: Record<string, string>; text?: string }) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/visual-edit`, {
+      return apiRequest('POST', `/api/projects/${projectId}/visual-edit`, {
         sessionId,
         elementPath: params.elementPath,
         styles: params.styles,
         text: params.text,
       });
-      return await res.json();
     },
     onSuccess: () => {
       toast({
