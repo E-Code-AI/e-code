@@ -33,11 +33,7 @@ export default function TestRunnerPanel({ projectId, onClose }: TestRunnerPanelP
 
   const testFilesQuery = useQuery<{ files: string[]; framework: string }>({
     queryKey: ["/api/projects", projectId, "tests/detect"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/tests/detect`, { credentials: "include" });
-      if (!res.ok) return { files: [], framework: "none" };
-      return res.json();
-    },
+    queryFn: async () => apiRequest("GET", `/api/projects/${projectId}/tests/detect`).catch(() => ({ files: [], framework: "none" })),
   });
 
   const [testResults, setTestResults] = useState<TestSuite[] | null>(null);
@@ -45,8 +41,7 @@ export default function TestRunnerPanel({ projectId, onClose }: TestRunnerPanelP
 
   const runTestsMutation = useMutation({
     mutationFn: async (file?: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/tests/run`, { file });
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/tests/run`, { file });
     },
     onSuccess: (data) => {
       if (data.suites) {

@@ -53,28 +53,19 @@ export default function BackupRecoverySection({ projectId }: { projectId: string
 
   const statusQuery = useQuery<BackupStatus>({
     queryKey: ["/api/git", projectId, "backup-status"],
-    queryFn: async () => {
-      const res = await fetch(`/api/git/${projectId}/backup-status`, { credentials: "include" });
-      if (!res.ok) return { lastBackupAt: null, backupCount: 0, totalSizeBytes: 0, health: "red" as const };
-      return res.json();
-    },
+    queryFn: async () => apiRequest("GET", `/api/git/${projectId}/backup-status`).catch(() => ({ lastBackupAt: null, backupCount: 0, totalSizeBytes: 0, health: "red" as const })),
     refetchInterval: 30000,
   });
 
   const backupsQuery = useQuery<BackupEntry[]>({
     queryKey: ["/api/git", projectId, "backups"],
-    queryFn: async () => {
-      const res = await fetch(`/api/git/${projectId}/backups`, { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
-    },
+    queryFn: async () => apiRequest("GET", `/api/git/${projectId}/backups`).catch(() => []),
     enabled: showBackupList,
   });
 
   const createBackupMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/git/${projectId}/backup`);
-      return res.json();
+      return apiRequest("POST", `/api/git/${projectId}/backup`);
     },
     onSuccess: () => {
       toast({ title: "Backup created", description: "Manual backup saved successfully" });
@@ -88,8 +79,7 @@ export default function BackupRecoverySection({ projectId }: { projectId: string
 
   const restoreMutation = useMutation({
     mutationFn: async (version?: number) => {
-      const res = await apiRequest("POST", `/api/git/${projectId}/backup/restore`, { version });
-      return res.json();
+      return apiRequest("POST", `/api/git/${projectId}/backup/restore`, { version });
     },
     onSuccess: () => {
       toast({ title: "Restored from backup", description: "Your repository has been restored successfully" });

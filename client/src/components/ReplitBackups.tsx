@@ -12,7 +12,7 @@ import {
   Settings, Trash2, Plus, FileArchive
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface Backup {
   id: string;
@@ -78,14 +78,8 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const fetchBackups = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/backups/${projectId}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setBackups(data.backups || []);
-      }
+      const data = await apiRequest<any>('GET', `/api/backups/${projectId}`);
+      setBackups(data.backups || []);
     } catch (error) {
       console.error('Error fetching backups:', error);
       toast({
@@ -100,14 +94,8 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
 
   const fetchSettings = async () => {
     try {
-      const response = await fetch(`/api/backups/${projectId}/settings`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data.settings);
-      }
+      const data = await apiRequest<any>('GET', `/api/backups/${projectId}/settings`);
+      setSettings(data.settings);
     } catch (error) {
       console.error('Error fetching backup settings:', error);
     }
@@ -165,12 +153,8 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
       
       // Poll for restore status
       const pollRestore = setInterval(async () => {
-        const statusRes = await fetch(`/api/backups/${projectId}/${backupId}/restore-status`, {
-          credentials: 'include'
-        });
-        
-        if (statusRes.ok) {
-          const status = await statusRes.json();
+        try {
+          const status = await apiRequest<any>('GET', `/api/backups/${projectId}/${backupId}/restore-status`);
           if (status.completed) {
             clearInterval(pollRestore);
             setRestoring(null);
@@ -179,6 +163,7 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
               description: "Project has been successfully restored"
             });
           }
+        } catch {
         }
       }, 2000);
       
@@ -200,7 +185,8 @@ export function ReplitBackups({ projectId }: ReplitBackupsProps) {
   const downloadBackup = async (backupId: string, name: string) => {
     try {
       const response = await fetch(`/api/backups/${projectId}/${backupId}/download`, {
-        credentials: 'include'
+        credentials: 'include',
+        headers: withBootstrapHeaders(`/api/backups/${projectId}/${backupId}/download`),
       });
       
       if (response.ok) {

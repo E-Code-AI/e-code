@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getCSRFToken } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import {
   X, Check, AlertTriangle, GitMerge, ChevronRight,
   Loader2, FileCode, ArrowLeftRight
@@ -56,32 +56,10 @@ export default function MergeConflictPanel({
     }
   }, [resolutions, onResolutionChange]);
 
-  const getHeaders = useCallback(async () => {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const csrf = await getCSRFToken();
-    if (csrf) headers["X-CSRF-Token"] = csrf;
-    return headers;
-  }, []);
-
   const resolveFile = useCallback(async (filename: string, content: string) => {
     setResolutions(prev => ({ ...prev, [filename]: content }));
     try {
-      const headers = await getHeaders();
-      const res = await fetch(`/api/git/${projectId}/resolve-conflict`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-        body: JSON.stringify({ path: filename, resolvedContent: content }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setResolutions(prev => {
-          const next = { ...prev };
-          delete next[filename];
-          return next;
-        });
-        toast({ title: "Failed to save resolution", description: data.message, variant: "destructive" });
-      }
+      await apiRequest("POST", `/api/git/${projectId}/resolve-conflict`, { path: filename, resolvedContent: content });
     } catch {
       setResolutions(prev => {
         const next = { ...prev };
@@ -90,22 +68,12 @@ export default function MergeConflictPanel({
       });
       toast({ title: "Failed to save resolution", variant: "destructive" });
     }
-  }, [projectId, getHeaders, toast]);
+  }, [projectId, toast]);
 
   const handleCompleteMerge = useCallback(async () => {
     setCompleting(true);
     try {
-      const headers = await getHeaders();
-      const res = await fetch(`/api/git/${projectId}/complete-merge`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast({ title: "Merge failed", description: data.message, variant: "destructive" });
-        return;
-      }
+      await apiRequest("POST", `/api/git/${projectId}/complete-merge`);
       toast({ title: "Merge complete", description: "All conflicts resolved and merge commit created" });
       onMergeComplete();
     } catch (err: any) {
@@ -113,22 +81,12 @@ export default function MergeConflictPanel({
     } finally {
       setCompleting(false);
     }
-  }, [projectId, getHeaders, toast, onMergeComplete]);
+  }, [projectId, toast, onMergeComplete]);
 
   const handleAbortMerge = useCallback(async () => {
     setAborting(true);
     try {
-      const headers = await getHeaders();
-      const res = await fetch(`/api/git/${projectId}/abort-merge`, {
-        method: "POST",
-        headers,
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        toast({ title: "Abort failed", description: data.message, variant: "destructive" });
-        return;
-      }
+      await apiRequest("POST", `/api/git/${projectId}/abort-merge`);
       toast({ title: "Merge aborted", description: "Restored to pre-merge state" });
       onAbort();
     } catch (err: any) {
@@ -136,7 +94,7 @@ export default function MergeConflictPanel({
     } finally {
       setAborting(false);
     }
-  }, [projectId, getHeaders, toast, onAbort]);
+  }, [projectId, toast, onAbort]);
 
   const selectedConflict = conflicts.find(c => c.filename === selectedFile);
   const isBinaryConflict = selectedConflict?.mergedContent?.startsWith("[Binary file conflict");
