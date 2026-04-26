@@ -345,18 +345,7 @@ export function MobilePreviewPanel({
 
         {/* Iframe content */}
         <div className="flex-1 relative bg-background overflow-hidden">
-        {showPreviewStartupSplash ? (
-          <SplashScreenSequence
-            phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
-            progress={buildProgress || (isPreviewStarting ? 92 : (buildPhase === 'complete' ? 95 : 10))}
-            currentTask={currentTask || (isPreviewStarting || buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
-            loopUntilComplete
-          />
-        ) : isStatusLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
-          </div>
-        ) : isPreviewRunning || isPreviewStarting ? (
+        {isPreviewRunning && computedPreviewUrl ? (
             <iframe
               ref={iframeRef}
               key={iframeKey}
@@ -368,6 +357,21 @@ export function MobilePreviewPanel({
               sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
               data-testid="mobile-preview-overlay-iframe"
             />
+        ) : showPreviewStartupSplash ? (
+          <SplashScreenSequence
+            phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
+            progress={buildProgress || (isPreviewStarting ? 92 : (buildPhase === 'complete' ? 95 : 10))}
+            currentTask={currentTask || (isPreviewStarting || buildPhase === 'complete' ? 'Starting preview...' : 'Creating your app...')}
+            loopUntilComplete
+          />
+        ) : isStatusLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+          </div>
+        ) : isPreviewStarting ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full gap-2 p-4">
               <Monitor className="w-6 h-6 text-muted-foreground" />
@@ -541,7 +545,26 @@ export function MobilePreviewPanel({
 
       {/* ── CONTENT AREA ── */}
       <div className="flex-1 relative bg-background overflow-hidden">
-        {showPreviewStartupSplash ? (
+        {isPreviewRunning && computedPreviewUrl ? (
+          <>
+            {isLoading && (
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-muted z-10">
+                <div className="h-full bg-primary animate-pulse" style={{ width: '60%' }} />
+              </div>
+            )}
+            <iframe
+              ref={iframeRef}
+              key={iframeKey}
+              src={computedPreviewUrl}
+              className="w-full h-full border-0 bg-background"
+              onLoad={handleIframeLoad}
+              onError={() => setIsLoading(false)}
+              title="App Preview"
+              sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
+              data-testid="mobile-preview-iframe"
+            />
+          </>
+        ) : showPreviewStartupSplash ? (
           <SplashScreenSequence
             phase={buildPhase === 'complete' ? 'finalizing' : (buildPhase || 'planning')}
             progress={buildProgress || (isPreviewStarting ? 92 : (buildPhase === 'complete' ? 95 : 10))}
@@ -564,26 +587,7 @@ export function MobilePreviewPanel({
               Installing dependencies and starting the dev server. This can take 1–2 minutes on first run.
             </p>
           </div>
-        ) : (
-          <>
-            {isLoading && (
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-muted z-10">
-                <div className="h-full bg-primary animate-pulse" style={{ width: '60%' }} />
-              </div>
-            )}
-            <iframe
-              ref={iframeRef}
-              key={iframeKey}
-              src={computedPreviewUrl}
-              className="w-full h-full border-0 bg-background"
-              onLoad={handleIframeLoad}
-              onError={() => setIsLoading(false)}
-              title="App Preview"
-              sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
-              data-testid="mobile-preview-iframe"
-            />
-          </>
-        )}
+        ) : null}
       </div>
     </div>
   );
