@@ -844,21 +844,19 @@ export function ReplitAgentPanelV3({
       const newLimit = currentCount + batchSize;
       
       // Load incrementally by increasing the limit
-      const response = await fetch(`/api/agent/conversation/${conversationId}/messages?limit=${newLimit}`, {
-        credentials: 'include',
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.messages && Array.isArray(data.messages)) {
-          // Prepend older messages to the existing list (backend returns chronologically ordered)
-          setStoreMessages(conversationId, data.messages as Message[]);
-          
-          // Update hasMore based on whether there are still more messages
-          const remainingCount = (data.totalCount || 0) - data.messages.length;
-          setHasMoreMessages(remainingCount > 0);
-          setTotalMessageCount(data.totalCount || data.messages.length);
-        }
+      const data = await apiRequest<{ messages?: Message[]; totalCount?: number }>(
+        'GET',
+        `/api/agent/conversation/${conversationId}/messages?limit=${newLimit}`
+      );
+
+      if (data.messages && Array.isArray(data.messages)) {
+        // Prepend older messages to the existing list (backend returns chronologically ordered)
+        setStoreMessages(conversationId, data.messages as Message[]);
+        
+        // Update hasMore based on whether there are still more messages
+        const remainingCount = (data.totalCount || 0) - data.messages.length;
+        setHasMoreMessages(remainingCount > 0);
+        setTotalMessageCount(data.totalCount || data.messages.length);
       }
     } catch (error) {
       console.error('[LoadPrevious] Failed to load previous messages:', error);
