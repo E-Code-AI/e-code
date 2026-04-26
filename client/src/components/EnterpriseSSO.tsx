@@ -128,10 +128,8 @@ export function EnterpriseSSO() {
 
   // Create SSO provider mutation
   const createProviderMutation = useMutation({
-    mutationFn: async (providerData: any) => {
-      const response = await apiRequest('POST', '/api/sso/providers', providerData);
-      return response.json();
-    },
+    mutationFn: (providerData: any) =>
+      apiRequest('POST', '/api/sso/providers', providerData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sso/providers'] });
       setShowCreateProvider(false);
@@ -144,10 +142,8 @@ export function EnterpriseSSO() {
 
   // Update SSO provider mutation
   const updateProviderMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await apiRequest('PUT', `/api/sso/providers/${id}`, data);
-      return response.json();
-    },
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      apiRequest('PUT', `/api/sso/providers/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sso/providers'] });
       setEditingProvider(null);

@@ -29,10 +29,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
 
   // Acknowledge alert mutation
   const acknowledgeAlert = useMutation({
-    mutationFn: async (alertId: string) => {
-      const response = await apiRequest('POST', `/api/monitoring/alerts/${alertId}/ack`);
-      return response.json();
-    },
+    mutationFn: (alertId: string) =>
+      apiRequest('POST', `/api/monitoring/alerts/${alertId}/ack`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/monitoring/alerts'] });
     }
@@ -40,10 +38,8 @@ export function AlertManager({ alerts }: AlertManagerProps) {
 
   // Mute alert mutation
   const muteAlert = useMutation({
-    mutationFn: async ({ alertId, duration }: { alertId: string; duration?: number }) => {
-      const response = await apiRequest('POST', `/api/monitoring/alerts/${alertId}/mute`, { duration });
-      return response.json();
-    },
+    mutationFn: ({ alertId, duration }: { alertId: string; duration?: number }) =>
+      apiRequest('POST', `/api/monitoring/alerts/${alertId}/mute`, { duration }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/monitoring/alerts'] });
     }

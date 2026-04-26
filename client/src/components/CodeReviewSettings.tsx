@@ -115,10 +115,7 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['/api/code-review/settings'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/code-review/settings');
-      return response.json();
-    }
+    queryFn: () => apiRequest<ReviewSettings>('GET', '/api/code-review/settings')
   });
 
   const [localSettings, setLocalSettings] = useState<ReviewSettings>(() => settings || {
@@ -167,10 +164,8 @@ export default function CodeReviewSettings({ className }: CodeReviewSettingsProp
   }, [settings]);
 
   const saveMutation = useMutation<any, Error, void>({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/code-review/settings', localSettings);
-      return response.json();
-    },
+    mutationFn: () =>
+      apiRequest('POST', '/api/code-review/settings', localSettings),
     onSuccess: () => {
       toast({
         title: 'Settings Saved',

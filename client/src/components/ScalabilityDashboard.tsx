@@ -115,10 +115,8 @@ export const ScalabilityDashboard: React.FC = () => {
 
   // Create container mutation
   const createContainer = useMutation({
-    mutationFn: async (projectId: string) => {
-      const response = await apiRequest('POST', '/api/scalability/cluster/containers', { userId: '1', projectId });
-      return response.json();
-    },
+    mutationFn: (projectId: string) =>
+      apiRequest('POST', '/api/scalability/cluster/containers', { userId: '1', projectId }),
     onSuccess: () => {
       toast({ title: 'Container created successfully' });
       queryClient.invalidateQueries({ queryKey: ['/api/scalability/cluster/status'] });
@@ -130,10 +128,8 @@ export const ScalabilityDashboard: React.FC = () => {
 
   // Scale cluster mutation
   const scaleCluster = useMutation({
-    mutationFn: async (direction: 'up' | 'down') => {
-      const response = await apiRequest('POST', `/api/scalability/cluster/scale/${direction}`);
-      return response.json();
-    },
+    mutationFn: (direction: 'up' | 'down') =>
+      apiRequest('POST', `/api/scalability/cluster/scale/${direction}`),
     onSuccess: (_, direction) => {
       toast({ title: `Cluster scaled ${direction} successfully` });
       refetchCluster();
@@ -142,10 +138,8 @@ export const ScalabilityDashboard: React.FC = () => {
 
   // Purge CDN cache
   const purgeCDN = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/scalability/cdn/purge', { pattern: '*' });
-      return response.json();
-    },
+    mutationFn: () =>
+      apiRequest('POST', '/api/scalability/cdn/purge', { pattern: '*' }),
     onSuccess: () => {
       toast({ title: 'CDN cache purged successfully' });
       queryClient.invalidateQueries({ queryKey: ['/api/scalability/cdn/status'] });
