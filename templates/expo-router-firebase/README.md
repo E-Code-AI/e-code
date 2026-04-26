@@ -1,0 +1,26 @@
+# Expo + Expo Router + Firebase
+
+Official E-code template for mobile projects.
+
+## Stack
+
+- Language: typescript
+- Runtime port: 8081
+- Deployment target: Google Cloud Run
+- Storage: Google Cloud Storage through the shared E-code storage wrapper
+
+## Run
+
+```bash
+npm install
+npm run dev
+npm test
+```
+
+## Deploy
+
+Build with Cloud Build, push to Artifact Registry, and deploy to Cloud Run. Runtime secrets are injected from Secret Manager. Project files are copied from GCS before build.
+
+## Template ID
+
+`expo-router-firebase`

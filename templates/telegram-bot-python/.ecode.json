@@ -1,0 +1,43 @@
+{
+  "id": "telegram-bot-python",
+  "name": "Telegram Bot Python",
+  "author": "Official",
+  "category": "bots",
+  "language": "python",
+  "runtime": "python",
+  "ports": [
+    8080
+  ],
+  "install": "npm install",
+  "dev": "npm run dev -- --port 8080",
+  "build": "npm run build",
+  "start": "npm run start -- --port 8080",
+  "hidden": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".git"
+  ],
+  "recommendedExtensions": [
+    "ecode.cloud-run",
+    "ecode.gcs",
+    "ecode.secret-manager"
+  ],
+  "suggestedCloudRun": {
+    "region": "us-central1",
+    "cpu": "1",
+    "memory": "512Mi",
+    "minInstances": 0,
+    "maxInstances": 5,
+    "timeoutSeconds": 300
+  },
+  "tags": [
+    "bots",
+    "telegram",
+    "cloud-run",
+    "official"
+  ],
+  "difficulty": "intermediate",
+  "previewBucket": "ecode-templates-previews",
+  "previewObject": "telegram-bot-python/preview.png"
+}

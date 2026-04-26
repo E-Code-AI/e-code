@@ -22,3 +22,7 @@ The requirement "Toutes les apps consomment packages/ui exclusivement, zero dupl
 ## Storybook Cloud Run deployment
 
 `packages/ui/Dockerfile.storybook` is present, but production deployment to `storybook.ecode.app` requires shared Cloud Run, DNS, CDN and Cloud Build wiring. If this must be centralized, the deployer/infra owner should expose the standard Cloud Run service module interface before I add the Storybook service instance.
+
+## Template endpoints in main API
+
+The templates catalog branch provides `templates/catalog-server` with real `GET /templates` filtering. The required `POST /projects/from-template` must write Cloud SQL project rows, copy files into `ecode-projects-files`, create Secret Manager entries, and spawn a Cloud Run preview. Those integrations live in backend/API and runner zones owned by the other agent, so the endpoint is marked `COORDINATION_REQUIRED` in the standalone catalog server until the API owner exposes the project creation contract.

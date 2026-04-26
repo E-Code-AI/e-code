@@ -1,0 +1,43 @@
+{
+  "id": "langchain-pgvector-agent",
+  "name": "LangChain Agent + pgvector",
+  "author": "Official",
+  "category": "ai-ml",
+  "language": "python",
+  "runtime": "python",
+  "ports": [
+    8000
+  ],
+  "install": "npm install",
+  "dev": "npm run dev -- --port 8000",
+  "build": "npm run build",
+  "start": "npm run start -- --port 8000",
+  "hidden": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".git"
+  ],
+  "recommendedExtensions": [
+    "ecode.cloud-run",
+    "ecode.gcs",
+    "ecode.secret-manager"
+  ],
+  "suggestedCloudRun": {
+    "region": "us-central1",
+    "cpu": "1",
+    "memory": "512Mi",
+    "minInstances": 0,
+    "maxInstances": 5,
+    "timeoutSeconds": 300
+  },
+  "tags": [
+    "ai-ml",
+    "langchain",
+    "cloud-run",
+    "official"
+  ],
+  "difficulty": "intermediate",
+  "previewBucket": "ecode-templates-previews",
+  "previewObject": "langchain-pgvector-agent/preview.png"
+}

@@ -1,0 +1,43 @@
+{
+  "id": "three-r3f-scene",
+  "name": "Three.js + React Three Fiber",
+  "author": "Official",
+  "category": "creative",
+  "language": "typescript",
+  "runtime": "node",
+  "ports": [
+    5173
+  ],
+  "install": "npm install",
+  "dev": "npm run dev -- --port 5173",
+  "build": "npm run build",
+  "start": "npm run start -- --port 5173",
+  "hidden": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".git"
+  ],
+  "recommendedExtensions": [
+    "ecode.cloud-run",
+    "ecode.gcs",
+    "ecode.secret-manager"
+  ],
+  "suggestedCloudRun": {
+    "region": "us-central1",
+    "cpu": "1",
+    "memory": "512Mi",
+    "minInstances": 0,
+    "maxInstances": 5,
+    "timeoutSeconds": 300
+  },
+  "tags": [
+    "creative",
+    "three.js",
+    "cloud-run",
+    "official"
+  ],
+  "difficulty": "advanced",
+  "previewBucket": "ecode-templates-previews",
+  "previewObject": "three-r3f-scene/preview.png"
+}
