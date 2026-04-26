@@ -413,6 +413,10 @@ export const CreateProjectModal = ({
     }
   }, []);
 
+  const ensurePreviewStarted = useCallback(async (projectId: number): Promise<void> => {
+    await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}).catch(() => null);
+  }, []);
+
   const createProjectMutation = useMutation({
     mutationFn: async (values: FormValues) => {
       setLastFormValues(values);
@@ -465,6 +469,7 @@ export const CreateProjectModal = ({
           message: 'Starting preview...'
         });
 
+        await ensurePreviewStarted(project.id);
         await apiRequest('GET', `/api/preview/url?projectId=${project.id}`).catch(() => null);
 
         setCreationProgress({ step: 'ready', progress: 100, message: 'Opening workspace...' });
@@ -572,6 +577,7 @@ export const CreateProjectModal = ({
         const pollStartedAt = Date.now();
         const maxWaitMs = 20000;
         let previewResolved = false;
+        let previewStartRequested = false;
         let lastBootstrapStatus = 'provisioning';
 
         while (Date.now() - pollStartedAt < maxWaitMs) {
@@ -618,6 +624,24 @@ export const CreateProjectModal = ({
           if (previewStatus?.previewUrl || previewStatus?.status === 'running' || previewStatus?.status === 'static') {
             previewResolved = true;
             break;
+          }
+
+          const canStartPreview =
+            !previewStartRequested &&
+            (lastBootstrapStatus === 'executing' || lastBootstrapStatus === 'ready') &&
+            previewStatus?.status !== 'starting' &&
+            previewStatus?.status !== 'running' &&
+            previewStatus?.status !== 'static' &&
+            previewStatus?.status !== 'error';
+
+          if (canStartPreview) {
+            previewStartRequested = true;
+            updateProgress({
+              step: 'configuring',
+              progress: 82,
+              message: 'Starting the live preview...',
+            });
+            await ensurePreviewStarted(response.projectId).catch(() => null);
           }
 
           await new Promise((resolve) => setTimeout(resolve, 1200));
