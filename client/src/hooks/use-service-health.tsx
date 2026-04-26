@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useConnectionStatus } from './use-connection-status';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ServiceHealthState {
   api: HealthStatus;
@@ -60,24 +61,13 @@ export function useServiceHealth(options: UseServiceHealthOptions = {}) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include',
+      await apiRequest('GET', url, undefined, {
         signal: controller.signal,
-        headers: { 'Accept': 'application/json' },
+        headers: { Accept: 'application/json' },
       });
-      
+
       clearTimeout(timeoutId);
       const latencyMs = Math.round(performance.now() - start);
-      
-      if (!response.ok) {
-        return {
-          status: response.status >= 500 ? 'unhealthy' : 'degraded',
-          lastCheck: new Date(),
-          latencyMs,
-          error: `HTTP ${response.status}`,
-        };
-      }
 
       return {
         status: latencyMs > 2000 ? 'degraded' : 'healthy',
@@ -85,8 +75,9 @@ export function useServiceHealth(options: UseServiceHealthOptions = {}) {
         latencyMs,
       };
     } catch (error) {
+      const status = typeof error === 'object' && error && 'status' in error ? Number((error as any).status) : null;
       return {
-        status: 'unhealthy',
+        status: status && status < 500 ? 'degraded' : 'unhealthy',
         lastCheck: new Date(),
         latencyMs: null,
         error: error instanceof Error ? error.message : 'Unknown error',

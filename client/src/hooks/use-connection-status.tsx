@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import type { ReactNode } from 'react';
 import { onlineManager } from '@tanstack/react-query';
 import { useToast } from './use-toast';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConnectionState {
   isOnline: boolean;
@@ -45,14 +46,12 @@ export function ConnectionStatusProvider({ children }: { children: ReactNode }) 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
-      const response = await fetch('/api/health/liveness', {
-        method: 'GET',
-        credentials: 'include',
+      await apiRequest('GET', '/api/health/liveness', undefined, {
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
-      return response.ok;
+      return true;
     } catch { /* Health check - expected to fail when offline or during reconnection */
       return false;
     }

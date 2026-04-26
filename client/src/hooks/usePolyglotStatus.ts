@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ServiceStatus {
   healthy: boolean;
@@ -36,8 +37,7 @@ export const usePolyglotStatus = () => {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('/api/health', { credentials: 'include' });
-        const data = await response.json();
+        const data = await apiRequest<any>('GET', '/api/health');
         
         if (data.services) {
           setStatus({

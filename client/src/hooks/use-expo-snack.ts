@@ -29,13 +29,12 @@ export function useExpoSnack(projectId: string | number) {
     queryKey: ['/api/expo-snack/session', projectIdStr],
     queryFn: async () => {
       try {
-        const response = await fetch(`/api/expo-snack/session/${projectIdStr}`, { credentials: 'include' });
-        if (response.status === 404) {
+        const data = await apiRequest<any>('GET', `/api/expo-snack/session/${projectIdStr}`);
+        return data.session || null;
+      } catch (error: any) {
+        if (error?.status === 404) {
           return null;
         }
-        const data = await response.json();
-        return data.session || null;
-      } catch {
         return null;
       }
     },
