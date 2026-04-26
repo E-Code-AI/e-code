@@ -88,7 +88,7 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
   const message = getAppNotReadyMessage(tabName, progress.status);
   const showProgress = isWarming && progress.progress > 0;
 
-  if (isPreviewTab) {
+  if (isPreviewTab && !showRunButton) {
     return (
       <div className={cn("flex-1 min-h-0 overflow-hidden", className)} data-testid="preview-bootstrap-splash">
         <SplashScreenSequence
