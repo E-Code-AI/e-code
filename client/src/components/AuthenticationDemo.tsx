@@ -6,13 +6,24 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useQuery } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 
-export function AuthenticationDemo() {
+interface AuthenticationDemoProps {
+  projectId?: string | number | null;
+}
+
+export function AuthenticationDemo({ projectId: providedProjectId }: AuthenticationDemoProps = {}) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin');
   const [isLogging, setIsLogging] = useState(false);
   const [testResults, setTestResults] = useState<any>({});
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
+  const resolvedProjectId =
+    providedProjectId ??
+    params.projectId ??
+    params.id ??
+    (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('projectId') : null);
 
   // Check current user status
   const { data: currentUser, refetch: refetchUser } = useQuery({
@@ -46,10 +57,19 @@ export function AuthenticationDemo() {
 
   const testBackendFeatures = async () => {
     const results: any = {};
+
+    if (!resolvedProjectId) {
+      toast({
+        title: "Project Required",
+        description: "Open this demo from a real project workspace to run backend checks.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     try {
       // Test 1: File Operations
-      await apiRequest('POST', '/api/projects/1/files', {
+      await apiRequest('POST', `/api/projects/${resolvedProjectId}/files`, {
         path: 'test.js',
         content: 'console.log("Backend test successful!");'
       });
@@ -63,12 +83,12 @@ export function AuthenticationDemo() {
       results.aiGeneration = '✅ Working';
 
       // Test 3: Live Preview
-      await apiRequest('POST', '/api/preview/projects/1/preview/start', {});
+      await apiRequest('POST', `/api/preview/projects/${resolvedProjectId}/preview/start`, {});
       results.livePreview = '✅ Working';
 
       // Test 4: Container Orchestration
       await apiRequest('POST', '/api/containers', {
-        projectId: 1,
+        projectId: resolvedProjectId,
         image: 'node:18',
         command: 'node --version'
       });
