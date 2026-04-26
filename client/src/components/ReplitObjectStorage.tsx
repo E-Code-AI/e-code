@@ -137,10 +137,10 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
         description: 'Storage bucket created successfully',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
-        description: 'Failed to create bucket',
+        description: error?.message || 'Failed to create bucket',
         variant: 'destructive',
       });
     },
@@ -158,10 +158,10 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
         description: 'File deleted successfully',
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
-        description: 'Failed to delete object',
+        description: error?.message || 'Failed to delete object',
         variant: 'destructive',
       });
     },
@@ -220,7 +220,7 @@ export function ReplitObjectStorage({ projectId, className }: ReplitObjectStorag
         clearInterval(interval);
         toast({
           title: 'Upload Failed',
-          description: `Failed to upload ${file.name}`,
+          description: error instanceof Error ? error.message : `Failed to upload ${file.name}`,
           variant: 'destructive',
         });
       }
