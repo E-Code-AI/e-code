@@ -48,13 +48,19 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
       (function() {
         var primaryBase = ${JSON.stringify(primaryBase)};
         var apiBase = ${JSON.stringify(apiBase)};
+        var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
+
+        function appendBootstrap(url) {
+          if (!bootstrap || typeof url !== 'string' || url.indexOf('bootstrap=') !== -1) return url;
+          return url + (url.indexOf('?') === -1 ? '?' : '&') + 'bootstrap=' + encodeURIComponent(bootstrap);
+        }
 
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith('/preview/')) return url;
           if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-          if (url.startsWith('/api')) return apiBase + url;
-          if (url.startsWith('/')) return primaryBase + url;
+          if (url.startsWith('/api')) return appendBootstrap(apiBase + url);
+          if (url.startsWith('/')) return appendBootstrap(primaryBase + url);
           return url;
         }
 

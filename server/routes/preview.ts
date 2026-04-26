@@ -182,12 +182,18 @@ function getFetchInterceptorScript(projectId: string): string {
     <script data-fetch-interceptor="true">
       (function() {
         var basePrefix = '/api/preview/projects/${projectId}/preview';
+        var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
+
+        function appendBootstrap(url) {
+          if (!bootstrap || typeof url !== 'string' || url.indexOf('bootstrap=') !== -1) return url;
+          return url + (url.indexOf('?') === -1 ? '?' : '&') + 'bootstrap=' + encodeURIComponent(bootstrap);
+        }
 
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith(basePrefix)) return url;
           if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-          if (url.startsWith('/')) return basePrefix + url;
+          if (url.startsWith('/')) return appendBootstrap(basePrefix + url);
           return url;
         }
 
