@@ -48,9 +48,7 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
     queryKey: ['/api/checkpoints/project', projectId],
     queryFn: async () => {
       try {
-        const res = await apiRequest('GET', `/api/checkpoints/project/${projectId}?limit=20`);
-        if (!res.ok) throw new Error('Failed to fetch checkpoints');
-        return await res.json();
+        return await apiRequest('GET', `/api/checkpoints/project/${projectId}?limit=20`);
       } catch (error) {
         console.error('Error fetching checkpoints:', error);
         throw error;
@@ -62,9 +60,7 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
   const createCheckpoint = useMutation({
     mutationFn: async (data: any) => {
       try {
-        const res = await apiRequest('POST', '/api/checkpoints/create', data);
-        if (!res.ok) throw new Error('Failed to create checkpoint');
-        return await res.json();
+        return await apiRequest('POST', '/api/checkpoints/create', data);
       } catch (error) {
         console.error('Error creating checkpoint:', error);
         throw error;
@@ -97,9 +93,7 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
   const restoreCheckpoint = useMutation({
     mutationFn: async (data: any) => {
       try {
-        const res = await apiRequest('POST', '/api/checkpoints/restore', data);
-        if (!res.ok) throw new Error('Failed to restore checkpoint');
-        return await res.json();
+        return await apiRequest('POST', '/api/checkpoints/restore', data);
       } catch (error) {
         console.error('Error restoring checkpoint:', error);
         throw error;
@@ -124,9 +118,7 @@ export function CheckpointManager({ projectId }: CheckpointManagerProps) {
   const deleteCheckpoint = useMutation({
     mutationFn: async (checkpointId: number) => {
       try {
-        const res = await apiRequest('DELETE', `/api/checkpoints/${checkpointId}`);
-        if (!res.ok) throw new Error('Failed to delete checkpoint');
-        return await res.json();
+        return await apiRequest('DELETE', `/api/checkpoints/${checkpointId}`);
       } catch (error) {
         console.error('Error deleting checkpoint:', error);
         throw error;

@@ -40,9 +40,9 @@ export default function LovableImport() {
         lovableExportData: exportData
       });
 
-      if (response.json.success) {
+      if (response.success) {
         setImportStatus('completed');
-        setImportDetails(response.json.import);
+        setImportDetails(response.import);
         toast({
           title: 'Import Successful',
           description: 'Your Lovable project has been imported successfully!'

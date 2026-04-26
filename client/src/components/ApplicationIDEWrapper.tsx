@@ -62,8 +62,7 @@ export function ApplicationIDEWrapper({
   // Update file content mutation - REAL BACKEND
   const updateFileMutation = useMutation({
     mutationFn: async ({ fileId, content }: { fileId: number, content: string }) => {
-      const res = await apiRequest('PATCH', `/api/files/${fileId}`, { content });
-      return res.json();
+      return apiRequest('PATCH', `/api/files/${fileId}`, { content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
@@ -84,13 +83,12 @@ export function ApplicationIDEWrapper({
   // Create file mutation - REAL BACKEND
   const createFileMutation = useMutation({
     mutationFn: async ({ name, isFolder, parentId }: { name: string, isFolder: boolean, parentId?: number | null }) => {
-      const res = await apiRequest('POST', `/api/files/${projectId}`, {
+      return apiRequest('POST', `/api/files/${projectId}`, {
         name,
         isFolder,
         parentId: parentId || null,
         content: isFolder ? null : '',
       });
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });

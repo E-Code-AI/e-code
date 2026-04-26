@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { instrumentedLazy } from '@/utils/instrumented-lazy';
+import { apiRequest } from '@/lib/queryClient';
 
 const UnifiedIDELayout = instrumentedLazy(
   () => import('@/components/ide/UnifiedIDELayout'),
@@ -105,14 +106,12 @@ export default function IDEPage() {
   const { data: project, isLoading: isLoadingProject, fetchStatus } = useQuery<Project>({
     queryKey: ['/api/projects', projectId],
     queryFn: async () => {
-      // Use the current bootstrapToken value for the fetch, but it's not in the query key
-      // This ensures the cache persists even after the token is cleared
-      const url = `/api/projects/${projectId}${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`Failed to fetch project: ${res.status} ${res.statusText}`);
-      }
-      return res.json();
+      return apiRequest<Project>(
+        'GET',
+        `/api/projects/${projectId}`,
+        undefined,
+        bootstrapToken ? { headers: { 'X-Bootstrap-Token': bootstrapToken } } : undefined,
+      );
     },
     enabled: canFetchProject,
     // Keep stale data when the query is disabled to prevent "Project not found" flash
