@@ -59,6 +59,8 @@ import { ReplitSecretsPanel } from '@/components/editor/ReplitSecretsPanel';
 import { ReplitDebuggerPanel } from '@/components/editor/ReplitDebuggerPanel';
 import { useConnectionStatus } from '@/hooks/use-connection-status';
 import { useProblemsCount } from '@/hooks/use-problems-count';
+import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
+import { AppNotReadyPlaceholder } from '@/components/mobile/AppNotReadyPlaceholder';
 
 const MobileTerminal = instrumentedLazy(() => 
   import('@/components/mobile/MobileTerminal').then(module => ({ default: module.MobileTerminal })), 'MobileTerminal'
@@ -92,6 +94,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
   const { isIPad, isIPadPro, orientation, screenSize } = useTablet();
   const layout = useTabletLayout();
   const { toast } = useToast();
+  const { isReady: isSchemaReady } = useSchemaWarmingStore();
   
   // Agent Tools state for tablet
   const numericProjectId = parseInt(projectId, 10) || 1;
@@ -140,6 +143,15 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('keyboard-shortcut-hint') !== 'false';
   });
+
+  const shouldGatePreview = !!bootstrapToken && !isSchemaReady;
+  const renderPreviewContent = () => {
+    if (shouldGatePreview) {
+      return <AppNotReadyPlaceholder tabName="Preview" projectId={projectId} />;
+    }
+
+    return <MobilePreviewPanel projectId={projectId} />;
+  };
   const [enableShortcutTester, setEnableShortcutTester] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('keyboard-shortcut-tester') === 'true';
@@ -589,7 +601,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
                   <RightPanelSwitcher />
                   <div className="flex-1 overflow-hidden">
                     {rightPanel === 'preview' ? (
-                      <MobilePreviewPanel projectId={projectId} />
+                      renderPreviewContent()
                     ) : rightPanel === 'terminal' ? (
                       <Suspense fallback={<TerminalFallback />}>
                         <MobileTerminal projectId={projectId} />
@@ -632,7 +644,7 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
                     className="h-full"
                   />
                 ) : rightPanel === 'preview' ? (
-                  <MobilePreviewPanel projectId={projectId} />
+                  renderPreviewContent()
                 ) : rightPanel === 'terminal' ? (
                   <Suspense fallback={<TerminalFallback />}>
                     <MobileTerminal projectId={projectId} />
