@@ -66,13 +66,7 @@ export function MobileSecretsPanel({ projectId, className }: MobileSecretsPanelP
 
   const { data, isLoading, error } = useQuery<{ variables: EnvVariable[] }>({
     queryKey: ['/api/env-vars', projectId],
-    queryFn: async () => {
-      const response = await fetch(`/api/env-vars/${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch secrets');
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/env-vars/${projectId}`),
     enabled: !!projectId
   });
 

@@ -150,13 +150,7 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
     queryKey: ['/api/env-vars', projectId],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/env-vars/${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch environment variables');
-      }
-      return response.json();
+      return apiRequest<EnvVarsResponse>('GET', `/api/env-vars/${projectId}`);
     },
     enabled: !!projectId,
     staleTime: 30000,

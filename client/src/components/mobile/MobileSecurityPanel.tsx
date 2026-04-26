@@ -70,20 +70,12 @@ export function MobileSecurityPanel({ projectId, className }: MobileSecurityPane
 
   const { data: activeVulnerabilities, isLoading: activeLoading } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'active'],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
-      return res.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=false`),
   });
 
   const { data: hiddenVulnerabilities, isLoading: hiddenLoading } = useQuery<Vulnerability[]>({
     queryKey: ['/api/workspace/projects', projectId, 'vulnerabilities', 'by-hidden', 'hidden'],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch vulnerabilities');
-      return res.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/workspace/projects/${projectId}/vulnerabilities/by-hidden?hidden=true`),
   });
 
   const latestScan = scans?.[0];

@@ -110,21 +110,17 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
 
   const { data: detectedTests, isLoading: detectionLoading, refetch: refetchDetection } = useQuery<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>({
     queryKey: ['/api/workspace/projects', projectId, 'tests/detect'],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/tests/detect`, { credentials: 'include' });
-      if (!res.ok) return { files: [], framework: 'none' };
-      return res.json();
-    },
+    queryFn: async () =>
+      apiRequest<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>('GET', `/api/workspace/projects/${projectId}/tests/detect`).catch(() => ({
+        files: [],
+        framework: 'none',
+      })),
     enabled: !!projectId,
   });
 
   const { data: testRuns = [], isLoading: runsLoading, refetch } = useQuery<TestRun[]>({
     queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspace/projects/${projectId}/test-runs`, { credentials: 'include' });
-      if (!res.ok) return [];
-      return res.json();
-    },
+    queryFn: async () => apiRequest<TestRun[]>('GET', `/api/workspace/projects/${projectId}/test-runs`).catch(() => []),
     enabled: !!projectId,
     refetchInterval: (query) => query.state.data?.[0]?.status === 'running' ? 1500 : false,
   });
@@ -132,11 +128,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const latestRunId = testRuns[0]?.id;
   const { data: latestRunDetails, isLoading: latestRunLoading } = useQuery<{ cases: TestCase[] } & TestRun>({
     queryKey: ['/api/workspace/test-runs', latestRunId],
-    queryFn: async () => {
-      const res = await fetch(`/api/workspace/test-runs/${latestRunId}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch test run details');
-      return res.json();
-    },
+    queryFn: () => apiRequest<{ cases: TestCase[] } & TestRun>('GET', `/api/workspace/test-runs/${latestRunId}`),
     enabled: !!latestRunId,
     refetchInterval: latestRunId && testRuns[0]?.status === 'running' ? 1500 : false,
   });
