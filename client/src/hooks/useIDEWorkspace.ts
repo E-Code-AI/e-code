@@ -73,6 +73,7 @@ const normalizeToolId = (id?: string | null) => {
   if (!id) return id;
   if (id === 'database-browser') return 'database';
   if (id === 'package-viewer') return 'packages';
+  if (id === 'webpreview') return 'preview';
   return id;
 };
 
@@ -159,7 +160,6 @@ export const availableTools: AvailableTool[] = [
   { id: 'extensions', label: 'Extensions', icon: '🧩' },
   { id: 'test-runner', label: 'Test Runner', icon: '🧪' },
   { id: 'shell', label: 'Shell', icon: '⌨️' },
-  { id: 'webpreview', label: 'Web Preview', icon: '🌐' },
   { id: 'env-vars', label: 'Env Vars Manager', icon: '🔐' },
   { id: 'global-search', label: 'Global Search', icon: '🔎' },
   { id: 'logs', label: 'Logs Viewer', icon: '📋' },
@@ -209,7 +209,12 @@ export function useIDEWorkspace(projectId: string) {
       ? persistedState.tabs.map((tab: Tab) => ({
           ...tab,
           id: normalizeToolId(tab.id) || tab.id,
-          label: tab.id === 'database-browser' ? 'Database' : tab.label,
+          label:
+            tab.id === 'database-browser'
+              ? 'Database'
+              : tab.id === 'webpreview'
+                ? 'Preview'
+                : tab.label,
         }))
       : undefined,
     selectedFileId: persistedState.selectedFileId && persistedState.tabs?.some((t: Tab) => t.id === `file:${persistedState.selectedFileId}`)

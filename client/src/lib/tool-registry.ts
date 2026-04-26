@@ -142,12 +142,12 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   },
   'webpreview': {
     id: 'webpreview',
-    label: 'Web Preview',
+    label: 'Preview',
     icon: Globe,
     emoji: '🌐',
     category: 'Development',
-    description: 'Live preview of web applications',
-    keywords: ['browser', 'preview', 'view'],
+    description: 'Legacy alias for the Preview tool',
+    keywords: ['browser', 'preview', 'view', 'legacy'],
   },
 
   // Data & Database
