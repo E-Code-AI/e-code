@@ -7,7 +7,7 @@ import {
   Play, Box, Eye, EyeOff, ChevronDown, ChevronRight, Package
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getCSRFToken } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ConfigPanelProps {
   projectId: string;
@@ -86,11 +86,14 @@ export default function ConfigPanel({ projectId, onClose }: ConfigPanelProps) {
 
   const configQuery = useQuery<{ replit: ReplitConfig; nix: any; raw: { replit: string; nix: string }; hasReplitFile: boolean; hasNixFile: boolean }>({
     queryKey: ["/api/projects", projectId, "config"],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/config`, { credentials: "include" });
-      if (!res.ok) return { replit: {}, nix: {}, raw: { replit: "", nix: "" }, hasReplitFile: false, hasNixFile: false };
-      return res.json();
-    },
+    queryFn: async () =>
+      apiRequest("GET", `/api/projects/${projectId}/config`).catch(() => ({
+        replit: {},
+        nix: {},
+        raw: { replit: "", nix: "" },
+        hasReplitFile: false,
+        hasNixFile: false,
+      })),
   });
 
   useEffect(() => {
@@ -105,15 +108,10 @@ export default function ConfigPanel({ projectId, onClose }: ConfigPanelProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (config: ReplitConfig) => {
-      const csrf = await getCSRFToken();
-      const res = await fetch(`/api/projects/${projectId}/config`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...(csrf ? { "x-csrf-token": csrf } : {}) } as HeadersInit,
-        credentials: "include",
-        body: JSON.stringify({ replit: config, nix: { deps: nixDeps } }),
+      return apiRequest("PUT", `/api/projects/${projectId}/config`, {
+        replit: config,
+        nix: { deps: nixDeps },
       });
-      if (!res.ok) throw new Error("Failed to save config");
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "config"] });

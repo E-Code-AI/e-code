@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import { useDebounce } from 'use-debounce';
 import { LazyMotionDiv, LazyAnimatePresence } from '@/lib/motion';
 
@@ -54,13 +55,8 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
 
   const fetchSuggestions = async (query: string) => {
     try {
-      const response = await fetch(`/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
-      } else {
-        setSuggestions([]);
-      }
+      const data = await apiRequest<any>('GET', `/api/templates/suggestions?q=${encodeURIComponent(query)}&limit=5`);
+      setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
     } catch (error) {
       console.error('Failed to fetch suggestions:', error);
       setSuggestions([]);

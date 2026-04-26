@@ -77,19 +77,13 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   const { data: searchResults, isLoading: isSearching } = useQuery({
     queryKey: [`/api/packages/search`, projectId, searchTerm],
     enabled: searchTerm.length > 2 && activeTab === 'search',
-    queryFn: async () => {
-      const response = await fetch(`/api/packages/search?projectId=${projectId}&q=${searchTerm}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to search packages');
-      return response.json();
-    }
+    queryFn: () => apiRequest('GET', `/api/packages/search?projectId=${projectId}&q=${encodeURIComponent(searchTerm)}`)
   });
 
   // Install package mutation
   const installPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await apiRequest('POST', `/api/packages/${projectId}/install`, { package: packageName });
-      if (!response.ok) throw new Error('Failed to install package');
-      return response.json();
+      return apiRequest('POST', `/api/packages/${projectId}/install`, { package: packageName });
     },
     onSuccess: () => {
       toast({
@@ -110,9 +104,7 @@ export function PackageViewer({ projectId }: { projectId: string }) {
   // Uninstall package mutation
   const uninstallPackageMutation = useMutation({
     mutationFn: async (packageName: string) => {
-      const response = await apiRequest('POST', `/api/packages/${projectId}/uninstall`, { package: packageName });
-      if (!response.ok) throw new Error('Failed to uninstall package');
-      return response.json();
+      return apiRequest('POST', `/api/packages/${projectId}/uninstall`, { package: packageName });
     },
     onSuccess: () => {
       toast({

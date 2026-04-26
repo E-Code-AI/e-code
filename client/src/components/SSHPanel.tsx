@@ -44,11 +44,7 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
 
   const keysQuery = useQuery<SshKey[]>({
     queryKey: ["/api/ssh-keys"],
-    queryFn: async () => {
-      const res = await fetch("/api/ssh-keys", { credentials: "include" });
-      if (!res.ok) return [];
-      return res.json();
-    },
+    queryFn: async () => apiRequest<SshKey[]>("GET", "/api/ssh-keys").catch(() => []),
   });
 
   const addKeyMutation = useMutation({
