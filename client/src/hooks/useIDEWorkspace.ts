@@ -270,6 +270,12 @@ export function useIDEWorkspace(projectId: string) {
   const [cursorPosition, setCursorPosition] = useState<CursorPosition>({ line: 1, column: 1 });
   const [lastSaved, setLastSaved] = useState<Date>(new Date());
   const [problemsCount, setProblemsCount] = useState<ProblemsCount>({ errors: 0, warnings: 0 });
+  const [workspaceMode, setWorkspaceMode] = useState<'single' | 'split'>(validatedState?.workspaceMode || 'single');
+  const [splitEditorFileId, setSplitEditorFileId] = useState<string | null>(validatedState?.splitEditorFileId || null);
+  const [blameEnabled, setBlameEnabled] = useState(false);
+  const [blameData, setBlameData] = useState<Record<string, unknown> | null>(null);
+  const [mergeConflicts, setMergeConflicts] = useState<Array<Record<string, unknown>>>([]);
+  const [mergeResolutions, setMergeResolutions] = useState<Record<string, string>>({});
 
   // ========== RUNTIME STATE ==========
   const [runtimeAutoStarted, setRuntimeAutoStarted] = useState(false);
@@ -390,8 +396,10 @@ export function useIDEWorkspace(projectId: string) {
       tabs,
       selectedFileId,
       showFileExplorer,
+      workspaceMode,
+      splitEditorFileId,
     });
-  }, [projectId, activeTab, tabs, selectedFileId, showFileExplorer]);
+  }, [projectId, activeTab, tabs, selectedFileId, showFileExplorer, workspaceMode, splitEditorFileId]);
 
   // Switch to deployment tab when triggered
   useEffect(() => {
@@ -586,12 +594,23 @@ export function useIDEWorkspace(projectId: string) {
     });
   }, [toast]);
 
-  const handleSplitRight = useCallback((_tabId: string) => {
+  const handleSplitRight = useCallback((tabId: string) => {
+    const fileId = tabId.startsWith('file:') ? tabId.slice('file:'.length) : selectedFileId ? String(selectedFileId) : null;
+    if (!fileId) {
+      toast({
+        title: "Split view unavailable",
+        description: "Open a file before creating a split editor.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setWorkspaceMode('split');
+    setSplitEditorFileId(fileId);
     toast({
-      title: "Split view",
-      description: "Split view feature coming soon.",
+      title: "Split view opened",
+      description: "The file is now open in a second editor group.",
     });
-  }, [toast]);
+  }, [selectedFileId, toast]);
 
   const handleToolsSheetSelect = useCallback((toolId: string) => {
     handleAddTool(toolId);
@@ -693,6 +712,18 @@ export function useIDEWorkspace(projectId: string) {
     setLastSaved,
     problemsCount,
     setProblemsCount,
+    workspaceMode,
+    setWorkspaceMode,
+    splitEditorFileId,
+    setSplitEditorFileId,
+    blameEnabled,
+    setBlameEnabled,
+    blameData,
+    setBlameData,
+    mergeConflicts,
+    setMergeConflicts,
+    mergeResolutions,
+    setMergeResolutions,
 
     // Deployment
     deploymentStatus,

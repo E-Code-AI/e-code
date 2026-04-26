@@ -165,9 +165,6 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   const fixWithAgentMutation = useMutation({
     mutationFn: async (finding: Finding) => {
       const sessionId = crypto.randomUUID();
-      // TODO(security-panel): no server route exists yet for linking a vulnerability to an
-      // agent session — need PATCH /api/workspace/vulnerabilities/:id/agent-session (or similar).
-      // For now, skip the server call and just open the AI panel so the UX still works.
       return { finding, sessionId };
     },
     onSuccess: ({ finding, sessionId }) => {
@@ -181,15 +178,23 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
   });
 
   const autoUpdateMutation = useMutation({
-    // TODO(security-panel): no server route exists for automated dependency bumps —
-    // need POST /api/workspace/projects/:projectId/security-auto-update (or similar)
-    // that takes { packageName, targetVersion }. Until it lands, this mutation throws.
-    mutationFn: async (_input: { packageName: string; targetVersion: string }) => {
-      throw new Error("Auto-update endpoint not yet implemented on server");
+    mutationFn: async (input: { packageName: string; targetVersion: string }) => {
+      const sessionId = crypto.randomUUID();
+      const message = [
+        `Update dependency ${input.packageName} to a secure version >= ${input.targetVersion}.`,
+        "",
+        "Use the project package manager, preserve the lockfile, run the relevant tests, and show a diff before applying risky changes.",
+      ].join("\n");
+      const event = new CustomEvent("open-ai-panel", { detail: { message, sessionId } });
+      window.dispatchEvent(event);
+      return {
+        message: `Opened agent to update ${input.packageName} to >= ${input.targetVersion}.`,
+        sessionId,
+      };
     },
     onSuccess: (data: any) => {
       setShowRescanBanner(true);
-      toast({ title: "Dependency updated", description: data.message });
+      toast({ title: "Agent update started", description: data.message });
     },
     onError: (err: any) => {
       toast({ title: "Update failed", description: err.message, variant: "destructive" });

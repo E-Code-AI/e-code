@@ -54,11 +54,24 @@ export function TabContextMenu({
   };
 
   const handleRevealInFileTree = () => {
-    // Feature requires parent component to handle file tree navigation
-    // Parent components can implement this by scrolling to file in tree
+    if (!file) {
+      toast({
+        title: 'Error',
+        description: 'File data not available',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    window.dispatchEvent(new CustomEvent('ecode:reveal-file-in-tree', {
+      detail: {
+        fileId,
+        path: file.path,
+      },
+    }));
     toast({
-      title: 'Coming soon',
-      description: 'Reveal in file tree will be available soon',
+      title: 'Revealed in tree',
+      description: file.path || file.name,
     });
   };
 

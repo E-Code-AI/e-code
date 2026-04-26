@@ -15,6 +15,7 @@ PopoverTrigger,
 import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { apiRequest } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 import { Clock,Mic,Search,Sparkles,TrendingUp,X } from 'lucide-react';
 import { useEffect,useRef,useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -27,6 +28,7 @@ interface TemplateSearchProps {
 }
 
 export function TemplateSearch({ value, onChange, onSearch, className }: TemplateSearchProps) {
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -79,7 +81,11 @@ export function TemplateSearch({ value, onChange, onSearch, className }: Templat
 
   const handleVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window)) {
-      alert('Voice search is not supported in your browser');
+      toast({
+        title: 'Voice search unavailable',
+        description: 'Voice search is not supported in this browser.',
+        variant: 'destructive',
+      });
       return;
     }
 

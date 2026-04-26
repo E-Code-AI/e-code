@@ -50,7 +50,7 @@ Trash2,
 Upload,
 X
 } from "lucide-react";
-import { useRef,useState } from "react";
+import { useEffect,useRef,useState } from "react";
 
 interface FileNode {
   id: number;
@@ -95,6 +95,7 @@ export function ReplitFileExplorer({
   const [newItemDialog, setNewItemDialog] = useState<{ parentId: number | null; type: "file" | "folder"; name: string } | null>(null);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<FileNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileItemRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const { toast } = useToast();
   const fileQueryKeys = [
     [`/api/projects/${projectId}/files`],
@@ -411,6 +412,9 @@ export function ReplitFileExplorer({
           <ContextMenu>
             <ContextMenuTrigger>
               <div
+                ref={(element) => {
+                  fileItemRefs.current[node.id] = element;
+                }}
                 className={`
                   flex items-center py-1 px-2 rounded-md cursor-pointer select-none
                   ${isSelected ? "bg-[var(--ecode-accent)] text-white" : "hover:bg-[var(--ecode-sidebar-hover)]"}
@@ -507,6 +511,32 @@ export function ReplitFileExplorer({
 
   const fileTree = buildFileTree(files);
   const filteredTree = filterFiles(fileTree, searchQuery);
+
+  useEffect(() => {
+    const handleReveal = (event: Event) => {
+      const detail = (event as CustomEvent<{ fileId?: number; path?: string }>).detail;
+      if (!detail?.fileId && !detail?.path) return;
+
+      const target = files.find((file) => file.id === detail.fileId || file.path === detail.path);
+      if (!target) return;
+
+      setSearchQuery("");
+      const nextExpanded = new Set(expandedFolders);
+      const pathParts = target.path.split("/").filter(Boolean);
+      for (let i = 1; i < pathParts.length; i++) {
+        nextExpanded.add(pathParts.slice(0, i).join("/"));
+      }
+      setExpandedFolders(nextExpanded);
+      onFileSelect?.(target);
+
+      window.setTimeout(() => {
+        fileItemRefs.current[target.id]?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 0);
+    };
+
+    window.addEventListener("ecode:reveal-file-in-tree", handleReveal);
+    return () => window.removeEventListener("ecode:reveal-file-in-tree", handleReveal);
+  }, [expandedFolders, files, onFileSelect]);
 
   return (
     <TooltipProvider>

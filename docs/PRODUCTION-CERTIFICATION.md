@@ -126,3 +126,27 @@ Known limitations for this gate:
 - Live provider calls still require real provider keys and quotas; the proxy is wired for BYOK/platform keys but was not certified against every third-party provider in this pass.
 - `screenshot_preview` is exposed as an agent tool contract but delegates to the existing browser-testing API instead of taking screenshots directly inside `ToolExecutor`.
 - The local deterministic runner currently certifies the `/health` route task path; arbitrary long-horizon LLM planning remains covered by existing agent planners and requires provider-key E2E.
+
+## Front Web React Gate — 2026-04-27
+
+Status: PARTIAL PRODUCTION GATE PASS for targeted workbench and IDE panel interaction hardening. This does not change the global platform verdict, which remains blocked until the remaining generation, hardening, robustness, Lighthouse, and deployment gates above are complete.
+
+Implemented:
+
+- `Split Right` now opens a real second editor group for the current or selected file and persists the split state per project/user layout.
+- `Reveal in File Tree` now dispatches a real file-tree reveal event, expands parent folders, selects the file, and scrolls it into view.
+- Security dependency auto-update no longer throws a placeholder error; it starts a real AI-agent workflow with package/version context and required validation instructions.
+- Blocking `alert()` calls in front surfaces were replaced with non-blocking toast notifications.
+- IDE/workbench source scan has no remaining `Coming soon`, `Not implemented`, or `alert()` hits in panel/workspace components; the only remaining `coming soon` text is in the marketing compare page demo-video copy.
+
+Verified commands:
+
+- `pnpm run typecheck` — PASS.
+- `pnpm run lint` — PASS.
+- `pnpm run test:e2e:panels --project=desktop-xl-1600 --reporter=line` — PASS (23/23).
+- `pnpm run build` — PASS.
+
+Known limitations for this gate:
+
+- Full 4-viewport systematic panel matrix was not rerun in this pass; the previous certification run remains documented above as PASS 92/92.
+- Lighthouse >90 for the main shell was not certified in this pass.

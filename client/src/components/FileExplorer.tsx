@@ -21,6 +21,7 @@ TooltipContent,
 TooltipProvider,
 TooltipTrigger
 } from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { File } from '@shared/schema';
 import {
@@ -250,6 +251,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   onDeleteFile,
   isLoading
 }) => {
+  const { toast } = useToast();
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreatingNew, setIsCreatingNew] = useState<false | 'file' | 'folder'>(false);
@@ -288,7 +290,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       setIsCreatingNew(false);
     } catch (error) {
       console.error('Error creating new item:', error);
-      alert('Failed to create new item');
+      toast({
+        title: 'Create failed',
+        description: 'Failed to create new item',
+        variant: 'destructive',
+      });
     }
   };
   

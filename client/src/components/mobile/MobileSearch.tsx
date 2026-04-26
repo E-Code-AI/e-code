@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useToast } from "@/hooks/use-toast";
 
 interface SearchCategory {
   name: string;
@@ -37,6 +38,7 @@ interface MobileSearchProps {
 }
 
 export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [isListening, setIsListening] = useState(false);
@@ -93,7 +95,11 @@ export function MobileSearch({ isOpen, onClose, onSearch }: MobileSearchProps) {
 
   const handleVoiceSearch = async () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Voice search is not supported in your browser');
+      toast({
+        title: "Voice search unavailable",
+        description: "Voice search is not supported in this browser.",
+        variant: "destructive",
+      });
       return;
     }
 

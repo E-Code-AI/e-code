@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from '@/components/ui/select';
 import { Table,TableBody,TableCell,TableHead,TableHeader,TableRow } from '@/components/ui/table';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
@@ -65,6 +66,7 @@ interface UsageResponse {
 
 export default function AdminAIUsage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [period, setPeriod] = useState('month');
   const [page, setPage] = useState(1);
   const [searchUserId, setSearchUserId] = useState('');
@@ -104,7 +106,10 @@ export default function AdminAIUsage() {
 
   const exportData = () => {
     if (!usageData?.usage || usageData.usage.length === 0) {
-      alert('No data to export');
+      toast({
+        title: 'No data to export',
+        description: 'Adjust the filters or date range and try again.',
+      });
       return;
     }
     

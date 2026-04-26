@@ -63,6 +63,7 @@ Dernier état vérifié:
 - validations ciblées suite panels: PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment
 - lint zéro warning: PASS
 - couche multi-modèles + orchestration agentique locale: PARTIAL GATE PASS — proxy unifié `/api/ai/proxy/*`, runner plan/act/observe/reflect, outils agent normalisés, smoke `pnpm run test:smoke:agent` validé 3 fois
+- front web React ciblé: PARTIAL GATE PASS — split editor réel, reveal file tree réel, security auto-update via agent, alertes bloquantes remplacées par toasts; typecheck/lint/build PASS, panels desktop 23/23 PASS
 - génération multi-format + hardening + déploiement production: en cours
 
 État précédent:
