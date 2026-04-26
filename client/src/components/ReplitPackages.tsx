@@ -50,11 +50,11 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
       setLoading(true);
       const data = await apiRequest<any>('GET', `/api/packages/${projectId}`);
       setPackages(data.packages || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching packages:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch packages",
+        description: error?.message || "Failed to fetch packages",
         variant: "destructive"
       });
     } finally {
@@ -72,11 +72,11 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
       setSearching(true);
       const data = await apiRequest<any>('GET', `/api/packages/search?q=${encodeURIComponent(query)}`);
       setSearchResults(data.packages || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching packages:', error);
       toast({
         title: "Search Error",
-        description: "Failed to search packages",
+        description: error?.message || "Failed to search packages",
         variant: "destructive"
       });
     } finally {
@@ -97,10 +97,10 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
         description: `${packageName} has been installed successfully`
       });
       fetchPackages();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to install package",
+        description: error?.message || "Failed to install package",
         variant: "destructive"
       });
     } finally {
@@ -116,10 +116,10 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
         description: `${packageName} has been uninstalled`
       });
       fetchPackages();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to uninstall package",
+        description: error?.message || "Failed to uninstall package",
         variant: "destructive"
       });
     }
@@ -133,10 +133,10 @@ export function ReplitPackages({ projectId }: ReplitPackagesProps) {
         description: "All packages have been updated to their latest versions"
       });
       fetchPackages();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Update Failed",
-        description: "Failed to update packages",
+        description: error?.message || "Failed to update packages",
         variant: "destructive"
       });
     }
