@@ -289,27 +289,37 @@ export function ReplitHeader() {
                         credentials: 'include',
                         headers: withBootstrapHeaders(downloadUrl),
                       });
-                      if (response.ok) {
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.style.display = 'none';
-                        a.href = url;
-                        a.download = `${projectInfo?.name || 'project'}.zip`;
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        toast({
-                          title: "Download Started",
-                          description: "Your project is being downloaded",
-                        });
-                      } else {
-                        throw new Error('Download failed');
+                      if (!response.ok) {
+                        let message = 'Download failed';
+                        try {
+                          const errorData = await response.json();
+                          message = errorData?.message || errorData?.error || message;
+                        } catch {
+                          const errorText = await response.text();
+                          if (errorText) {
+                            message = errorText;
+                          }
+                        }
+                        throw new Error(message);
                       }
-                    } catch (error) {
+
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.style.display = 'none';
+                      a.href = url;
+                      a.download = `${projectInfo?.name || 'project'}.zip`;
+                      document.body.appendChild(a);
+                      a.click();
+                      window.URL.revokeObjectURL(url);
+                      toast({
+                        title: "Download Started",
+                        description: "Your project is being downloaded",
+                      });
+                    } catch (error: any) {
                       toast({
                         title: "Download Failed",
-                        description: "Failed to download project. Please try again.",
+                        description: error?.message || "Failed to download project. Please try again.",
                         variant: "destructive"
                       });
                     }

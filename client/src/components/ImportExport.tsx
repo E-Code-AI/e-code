@@ -114,10 +114,10 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
       });
       
       setShowExportDialog(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Export Failed",
-        description: "Failed to export project",
+        description: error?.message || "Failed to export project",
         variant: "destructive"
       });
     } finally {
