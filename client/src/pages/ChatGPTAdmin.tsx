@@ -362,7 +362,18 @@ export default function ChatGPTAdmin() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        let errorMessage = `HTTP ${response.status}`;
+        try {
+          const errorText = await response.text();
+          if (errorText.startsWith('{')) {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          }
+        } catch {
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body!.getReader();

@@ -88,8 +88,18 @@ export function AgentWorkflowOrchestrator({
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to connect to plan generation service'}`);
+        let errorMessage = `HTTP ${response.status}: Failed to connect to plan generation service`;
+        try {
+          const errorText = await response.text();
+          if (errorText.startsWith('{')) {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          }
+        } catch {
+        }
+        throw new Error(errorMessage);
       }
 
       if (!response.body) {

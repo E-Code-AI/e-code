@@ -82,7 +82,20 @@ function useTTS(text: string) {
         body: JSON.stringify({ text: clean, voice: 'alloy' }),
       });
 
-      if (!res.ok) throw new Error('TTS API unavailable');
+      if (!res.ok) {
+        let errorMessage = 'TTS API unavailable';
+        try {
+          const errorText = await res.text();
+          if (errorText.startsWith('{')) {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          }
+        } catch {
+        }
+        throw new Error(errorMessage);
+      }
 
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
