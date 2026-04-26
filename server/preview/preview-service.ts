@@ -94,12 +94,66 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
     </script>`;
 }
 
+function appendBootstrapQuery(url: string, bootstrapToken?: string | null): string {
+  if (!bootstrapToken) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}bootstrap=${encodeURIComponent(bootstrapToken)}`;
+}
+
+function rewritePreviewAssetPaths(
+  html: string,
+  projectId: string,
+  primaryPort: number,
+  apiPort?: number | null,
+  bootstrapToken?: string | null
+): string {
+  const primaryBase = `/preview/${projectId}/${primaryPort}`;
+  const apiBase = apiPort ? `/preview/${projectId}/${apiPort}` : primaryBase;
+
+  const rewritePath = (rawPath: string): string => {
+    if (!rawPath || rawPath.startsWith('//') || rawPath.startsWith('http://') || rawPath.startsWith('https://') || rawPath.startsWith('data:') || rawPath.startsWith('blob:')) {
+      return rawPath;
+    }
+    if (rawPath.startsWith('/preview/')) {
+      return appendBootstrapQuery(rawPath, bootstrapToken);
+    }
+    if (rawPath.startsWith('/api')) {
+      return appendBootstrapQuery(`${apiBase}${rawPath}`, bootstrapToken);
+    }
+    if (rawPath.startsWith('/')) {
+      return appendBootstrapQuery(`${primaryBase}${rawPath}`, bootstrapToken);
+    }
+    return rawPath;
+  };
+
+  const attrPattern = /((?:href|src|action|poster|data)\s*=\s*["'])([^"']+)(["'])/gi;
+  const cssUrlPattern = /(url\s*\(\s*["']?)([^"')]+)(["']?\s*\))/gi;
+  const srcsetPattern = /(srcset\s*=\s*["'])([^"']+)(["'])/gi;
+
+  let result = html.replace(attrPattern, (_match, prefix, assetPath, suffix) => {
+    return `${prefix}${rewritePath(assetPath)}${suffix}`;
+  });
+
+  result = result.replace(cssUrlPattern, (_match, prefix, assetPath, suffix) => {
+    return `${prefix}${rewritePath(assetPath)}${suffix}`;
+  });
+
+  result = result.replace(srcsetPattern, (_match, prefix, srcsetValue, suffix) => {
+    const rewrittenValue = srcsetValue.replace(/(^|\s)(\/[^\s,]+)/g, (_entry: string, space: string, assetPath: string) => {
+      return `${space}${rewritePath(assetPath)}`;
+    });
+    return `${prefix}${rewrittenValue}${suffix}`;
+  });
+
+  return result;
+}
+
 function getPreviewBaseTag(projectId: string, primaryPort: number): string {
   return `<base data-preview-base="true" href="/preview/${projectId}/${primaryPort}/">`;
 }
 
-function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null): string {
-  const html = buffer.toString('utf8');
+function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null, bootstrapToken?: string | null): string {
+  const html = rewritePreviewAssetPaths(buffer.toString('utf8'), projectId, primaryPort, apiPort, bootstrapToken);
   if (html.includes('data-preview-fetch-interceptor="true"') || html.includes('data-preview-base="true"')) {
     return html;
   }
@@ -615,7 +669,8 @@ export class PreviewService {
               return responseBuffer;
             }
 
-            return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null);
+            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
+            return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null, bootstrapToken);
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
@@ -656,7 +711,8 @@ export class PreviewService {
               return responseBuffer;
             }
 
-            return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null);
+            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
+            return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null, bootstrapToken);
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId}:`, err);

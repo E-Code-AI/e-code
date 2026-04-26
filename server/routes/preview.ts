@@ -131,7 +131,13 @@ function getHotReloadScript(projectId: string): string {
 // - External URLs like "https://cdn.example.com/"
 // - Data URIs like "data:image/png;base64,..."
 // - Protocol-relative URLs like "//cdn.example.com/"
-function rewriteAssetPaths(html: string, projectId: string): string {
+function appendBootstrapQuery(url: string, bootstrapToken?: string | null): string {
+  if (!bootstrapToken) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}bootstrap=${encodeURIComponent(bootstrapToken)}`;
+}
+
+function rewriteAssetPaths(html: string, projectId: string, bootstrapToken?: string | null): string {
   const basePrefix = `/api/preview/projects/${projectId}/preview`;
   
   // Pattern to match href="/path" or src="/path" attributes (root-absolute paths)
@@ -151,19 +157,19 @@ function rewriteAssetPaths(html: string, projectId: string): string {
   // Rewrite href, src, action, poster, data attributes with root-absolute paths
   // Example: href="/style.css" → href="/api/preview/projects/123/preview/style.css"
   result = result.replace(attrPattern, (match, prefix, path) => {
-    return `${prefix}${basePrefix}/${path}`;
+    return `${prefix}${appendBootstrapQuery(`${basePrefix}/${path}`, bootstrapToken)}`;
   });
   
   // Rewrite CSS url() with root-absolute paths
   // Example: url(/fonts/font.woff) → url(/api/preview/projects/123/preview/fonts/font.woff)
   result = result.replace(cssUrlPattern, (match, urlStart, path) => {
-    return `${urlStart}${basePrefix}/${path}`;
+    return `${urlStart}${appendBootstrapQuery(`${basePrefix}/${path}`, bootstrapToken)}`;
   });
   
   // Rewrite srcset attribute (contains multiple paths with sizes)
   result = result.replace(srcsetPattern, (match, prefix, srcsetValue, suffix) => {
     const rewrittenValue = srcsetValue.replace(/(\s|^)\/(?!\/|api\/preview)([^\s,]+)/g, (m: string, space: string, path: string) => {
-      return `${space}${basePrefix}/${path}`;
+      return `${space}${appendBootstrapQuery(`${basePrefix}/${path}`, bootstrapToken)}`;
     });
     return `${prefix}${rewrittenValue}${suffix}`;
   });
@@ -220,12 +226,12 @@ function getFetchInterceptorScript(projectId: string): string {
     </script>`;
 }
 
-function injectPreviewScripts(content: string, projectId: string): string {
+function injectPreviewScripts(content: string, projectId: string, bootstrapToken?: string | null): string {
   const hotReload = getHotReloadScript(projectId);
   const fetchInterceptor = getFetchInterceptorScript(projectId);
   const scripts = fetchInterceptor + '\n' + hotReload;
   
-  let modifiedContent = rewriteAssetPaths(content, projectId);
+  let modifiedContent = rewriteAssetPaths(content, projectId, bootstrapToken);
   
   if (/<head>/i.test(modifiedContent)) {
     return modifiedContent.replace(/<head>/i, `<head>\n    ${scripts}`);
@@ -512,6 +518,7 @@ function setCacheHeaders(res: any): void {
 router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
+    const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
     
     // Add cache-control headers to prevent stale content
     setCacheHeaders(res);
@@ -526,7 +533,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
       if (requestedFile) {
         const content = requestedFile.content ?? '';
         if (fileParam.endsWith('.html')) {
-          const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+          const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
           res.type('html').send(modifiedContent);
         } else {
           const ext = path.extname(fileParam).toLowerCase();
@@ -551,7 +558,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
         res.type('html').send('');
         return;
       }
-      const modifiedContent = injectPreviewScripts(content, projectId);
+      const modifiedContent = injectPreviewScripts(content, projectId, bootstrapToken);
       res.type('html').send(modifiedContent);
       return;
     }
@@ -697,6 +704,7 @@ router.post('/projects/:id/preview/switch-port', ensureProjectAccess, async (req
 router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req, res) => {
   try {
     const projectId = req.params.id;
+    const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
     let filepath = req.params.filepath || 'index.html';
     
     // Add cache-control headers to prevent stale content for ALL responses
@@ -714,7 +722,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
       const indexFile = findIndexInDirectory(files, dirPath);
       if (indexFile) {
         const content = indexFile.content ?? '';
-        const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+        const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
         res.type('html').send(modifiedContent);
         return;
       }
@@ -729,7 +737,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
       const indexFile = findIndexInDirectory(files, normalizedPath);
       if (indexFile) {
         const content = indexFile.content ?? '';
-        const modifiedContent = content ? injectPreviewScripts(content, projectId) : '';
+        const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
         res.type('html').send(modifiedContent);
         return;
       }
@@ -783,7 +791,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
     
     // For HTML files, inject hot-reload script for live updates
     if (ext === '.html' && file.content) {
-      const modifiedContent = injectPreviewScripts(file.content, projectId);
+      const modifiedContent = injectPreviewScripts(file.content, projectId, bootstrapToken);
       res.send(modifiedContent);
     } else {
       res.send(file.content || '');
