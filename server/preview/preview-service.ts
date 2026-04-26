@@ -272,6 +272,49 @@ function detectNodeEntryFile(files: any[], packageJson: any): string | null {
   return null;
 }
 
+function detectModernFrontend(files: any[]) {
+  const filePaths = files
+    .filter((file) => !file?.isDirectory && !file?.isFolder)
+    .map((file) => String(file.path || file.name || ''));
+
+  const hasViteConfig = filePaths.some((filePath) =>
+    ['vite.config.ts', 'vite.config.js', 'vite.config.mjs', 'vite.config.cjs'].includes(filePath)
+  );
+  const hasRootIndex = filePaths.includes('index.html');
+  const hasClientIndex = filePaths.includes('client/index.html');
+  const hasMainEntry = filePaths.some((filePath) =>
+    [
+      'src/main.tsx',
+      'src/main.jsx',
+      'src/main.ts',
+      'src/main.js',
+      'client/src/main.tsx',
+      'client/src/main.jsx',
+      'client/src/main.ts',
+      'client/src/main.js',
+    ].includes(filePath)
+  );
+  const hasReactAppShell = filePaths.some((filePath) =>
+    [
+      'src/App.tsx',
+      'src/App.jsx',
+      'client/src/App.tsx',
+      'client/src/App.jsx',
+    ].includes(filePath)
+  );
+
+  return {
+    hasViteConfig,
+    hasRootIndex,
+    hasClientIndex,
+    hasMainEntry,
+    hasReactAppShell,
+    looksLikeModernFrontend:
+      (hasViteConfig && (hasMainEntry || hasRootIndex || hasClientIndex)) ||
+      (hasMainEntry && hasReactAppShell),
+  };
+}
+
 interface PreviewInstance {
   projectId: string;
   runId: string;
@@ -945,19 +988,30 @@ export class PreviewService {
     const hasIndexHtml = files.some(f => f.name === 'index.html');
     const hasPythonFiles = files.some(f => f.name.endsWith('.py'));
     const hasRequirementsTxt = files.some(f => f.name === 'requirements.txt');
+    const frontendSignals = detectModernFrontend(files);
 
     if (packageJsonFile) {
       const packageJson = JSON.parse(packageJsonFile.content || '{}');
       const deps = { ...packageJson.dependencies, ...packageJson.devDependencies };
       
-      if (deps.react || deps['@vitejs/plugin-react']) {
-        return { type: 'react' as const, packageJson, hasVite: !!deps.vite };
+      if (deps.react || deps['@vitejs/plugin-react'] || frontendSignals.looksLikeModernFrontend) {
+        return {
+          type: 'react' as const,
+          packageJson,
+          hasVite: !!deps.vite || frontendSignals.hasViteConfig,
+        };
       } else if (deps.vue || deps['@vitejs/plugin-vue']) {
         return { type: 'vue' as const, packageJson, hasVite: !!deps.vite };
       } else if (deps['@angular/core']) {
         return { type: 'angular' as const, packageJson };
       } else if (deps.express || deps.fastify || deps.koa) {
         return { type: 'node' as const, packageJson };
+      } else if (frontendSignals.hasViteConfig && (frontendSignals.hasClientIndex || frontendSignals.hasRootIndex)) {
+        return {
+          type: 'react' as const,
+          packageJson,
+          hasVite: true,
+        };
       } else {
         return { type: 'node' as const, packageJson };
       }
@@ -1026,6 +1080,25 @@ export class PreviewService {
 
   private async startModernFramework(preview: PreviewInstance, frameworkInfo: any, previewPath: string, files: any[], projectEnvVars: Record<string, string> = {}) {
     const port = preview.primaryPort;
+    const apiScript = frameworkInfo.packageJson.scripts?.api
+      ? 'api'
+      : frameworkInfo.packageJson.scripts?.server
+        ? 'server'
+        : frameworkInfo.packageJson.scripts?.['dev:server']
+          ? 'dev:server'
+          : null;
+    const apiPort = apiScript ? port + 1000 : null;
+    const frontendEnv = {
+      ...projectEnvVars,
+      PORT: port.toString(),
+      VITE_PORT: port.toString(),
+      DEV_SERVER_PORT: port.toString(),
+      ...(apiPort ? {
+        VITE_API_TARGET: `http://127.0.0.1:${apiPort}`,
+        API_URL: `http://127.0.0.1:${apiPort}`,
+      } : {}),
+    };
+
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
     
     try {
@@ -1086,12 +1159,7 @@ export class PreviewService {
 
     const childProcess = spawn(startCommand[0], startCommand.slice(1), {
       cwd: previewPath,
-      env: createSafeEnv({ 
-        ...projectEnvVars,
-        PORT: port.toString(),
-        VITE_PORT: port.toString(),
-        DEV_SERVER_PORT: port.toString()
-      })
+      env: createSafeEnv(frontendEnv)
     });
 
     this.setupProcessHandlers(preview, childProcess, port, `${frameworkInfo.type} dev server`);
@@ -1105,18 +1173,7 @@ export class PreviewService {
       description: `Main ${frameworkInfo.type} application`
     });
 
-    if (
-      frameworkInfo.packageJson.scripts?.api ||
-      frameworkInfo.packageJson.scripts?.server ||
-      frameworkInfo.packageJson.scripts?.['dev:server']
-    ) {
-      const apiPort = port + 1000;
-      const apiScript = frameworkInfo.packageJson.scripts?.api
-        ? 'api'
-        : frameworkInfo.packageJson.scripts?.server
-          ? 'server'
-          : 'dev:server';
-
+    if (apiScript && apiPort) {
       const apiProcess = spawn('npm', ['run', apiScript], {
         cwd: previewPath,
         env: createSafeEnv({ ...projectEnvVars, PORT: apiPort.toString() })
