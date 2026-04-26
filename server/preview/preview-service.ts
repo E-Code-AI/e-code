@@ -91,6 +91,33 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
           return originalReplaceState.call(this, state, title, url);
         };
 
+        document.addEventListener('click', function(event) {
+          var target = event.target;
+          if (!(target instanceof Element)) return;
+          var anchor = target.closest('a[href]');
+          if (!anchor) return;
+          var href = anchor.getAttribute('href');
+          if (!href) return;
+          anchor.setAttribute('href', preserveBootstrapInUrl(href));
+        }, true);
+
+        document.addEventListener('submit', function(event) {
+          var form = event.target;
+          if (!(form instanceof HTMLFormElement)) return;
+          var action = form.getAttribute('action');
+          if (action) {
+            form.setAttribute('action', preserveBootstrapInUrl(action));
+            return;
+          }
+          if (bootstrap && !window.location.search.includes('bootstrap=')) {
+            try {
+              var url = new URL(window.location.href);
+              url.searchParams.set('bootstrap', bootstrap);
+              history.replaceState(history.state, document.title, url.toString());
+            } catch {}
+          }
+        }, true);
+
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith('/preview/')) return url;
