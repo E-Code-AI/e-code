@@ -16,6 +16,7 @@ import {
 } from '@codemirror/view';
 import { StateField, StateEffect, Extension, RangeSetBuilder } from '@codemirror/state';
 import { formatDistanceToNow } from 'date-fns';
+import { apiRequest } from '@/lib/queryClient';
 
 interface BlameInfo {
   line: number;
@@ -283,19 +284,7 @@ export function GitBlameDecorator({
     const fetchBlameData = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/git/blame/${encodeURIComponent(filePath)}`, {
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          if (response.status === 400) {
-            setBlameData([]);
-            return;
-          }
-          throw new Error('Failed to fetch blame data');
-        }
-
-        const data: BlameResponse = await response.json();
+        const data = await apiRequest<BlameResponse>('GET', `/api/git/blame/${encodeURIComponent(filePath)}`);
 
         const parsedBlameData: BlameInfo[] = (data.blame || []).map(entry => ({
           line: entry.line,
@@ -309,7 +298,11 @@ export function GitBlameDecorator({
         }));
 
         setBlameData(parsedBlameData);
-      } catch (error) {
+      } catch (error: any) {
+        if (error?.status === 400) {
+          setBlameData([]);
+          return;
+        }
         console.error('Failed to fetch blame data:', error);
         setBlameData([]);
       } finally {

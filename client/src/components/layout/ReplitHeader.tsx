@@ -60,7 +60,7 @@ import { SpotlightSearch } from "@/components/SpotlightSearch";
 import { useIsMobile } from "@/hooks/use-media-query";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, withBootstrapHeaders } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 import { ECodeLogo } from "@/components/ECodeLogo";
@@ -284,8 +284,10 @@ export function ReplitHeader() {
                   className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]"
                   onClick={async () => {
                     try {
-                      const response = await fetch(`/api/projects/${projectId}/download`, {
-                        credentials: 'include'
+                      const downloadUrl = `/api/projects/${projectId}/download`;
+                      const response = await fetch(downloadUrl, {
+                        credentials: 'include',
+                        headers: withBootstrapHeaders(downloadUrl),
                       });
                       if (response.ok) {
                         const blob = await response.blob();
