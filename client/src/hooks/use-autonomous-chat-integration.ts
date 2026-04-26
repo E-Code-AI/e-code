@@ -792,6 +792,10 @@ export function useAutonomousChatIntegration({
             status: 'in_progress'
           };
           const updatedTasks = [...store.tasks, newTask];
+          const activeParallelCount = updatedTasks.filter(task => task.status === 'in_progress').length;
+          const taskStatusLine = activeParallelCount > 1
+            ? `Working on: ${taskName} • ${activeParallelCount} tasks running in parallel`
+            : `Working on: ${taskName}`;
           store.setTasks(updatedTasks);
           store.setCurrentTask(taskName);
           store.setPhase('building');
@@ -799,7 +803,7 @@ export function useAutonomousChatIntegration({
           // Create or update progress message
           if (lastMessageIdRef.current) {
             updateMessage(conversationId, lastMessageIdRef.current, {
-              content: `Working on: ${taskName}`,
+              content: taskStatusLine,
               isStreaming: true,
               autonomousPayload: {
                 phase: 'executing',
@@ -811,7 +815,7 @@ export function useAutonomousChatIntegration({
           } else {
             const msg = createAutonomousMessage(
               'autonomous_progress',
-              `Working on: ${taskName}`,
+              taskStatusLine,
               {
                 phase: 'executing',
                 currentTask: taskName,
@@ -850,19 +854,23 @@ export function useAutonomousChatIntegration({
           store.updateTask(taskId, { status: 'completed', progress: 100 });
           const completedCount = store.tasks.filter(t => t.status === 'completed').length + 1;
           const totalTasks = store.tasks.length;
+          const remainingParallelCount = store.tasks.filter(t => t.status === 'in_progress').length;
           let newProgress = store.progress;
           if (totalTasks > 0) {
             newProgress = Math.min(95, 35 + (completedCount / totalTasks) * 60);
             store.setProgress(newProgress);
           }
+          const completionLine = remainingParallelCount > 1
+            ? `Completed: ${taskName || taskId} • ${remainingParallelCount} tasks still running in parallel`
+            : `Completed: ${taskName || taskId}`;
           
           // Update progress message with completed task
           if (lastMessageIdRef.current) {
             updateMessage(conversationId, lastMessageIdRef.current, {
-              content: `Completed: ${taskName || taskId}`,
+              content: completionLine,
               autonomousPayload: {
                 phase: 'executing',
-                currentTask: `Completed: ${taskName || taskId}`,
+                currentTask: completionLine,
                 progress: newProgress,
                 tasks: store.tasks
               }
@@ -1334,12 +1342,15 @@ export function useAutonomousChatIntegration({
         const healthSummary = healthyProviders.length > 0
           ? `Providers ready: ${healthyProviders.join(', ')}`
           : 'No providers currently ready';
+        const healthMessage = healthyProviders.length > 1
+          ? `${healthSummary} • ${healthyProviders.length} providers available for parallel routing`
+          : healthSummary;
         const msg = createAutonomousMessage(
           'autonomous_working',
-          healthSummary,
+          healthMessage,
           {
             phase: 'executing',
-            currentTask: healthSummary,
+            currentTask: healthMessage,
             progress: store.progress
           }
         );
