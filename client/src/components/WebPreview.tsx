@@ -229,6 +229,9 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
     setIsFullscreen(!isFullscreen);
   };
 
+  const hasResolvedPreviewUrl = Boolean(url);
+  const isPreviewLive = hasResolvedPreviewUrl || previewStatus === 'running';
+
   const renderStatusOverlay = () => {
     if (previewStatus === 'starting' && !url) {
       return (
@@ -306,7 +309,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
           size="icon"
           onClick={handleRefresh}
           title="Refresh"
-          disabled={previewStatus !== 'running'}
+          disabled={!isPreviewLive}
         >
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -322,7 +325,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
             }
           }}
           title="Home"
-          disabled={previewStatus !== 'running'}
+          disabled={!isPreviewLive}
         >
           <Home className="h-4 w-4" />
         </Button>
@@ -372,7 +375,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
           size="icon"
           onClick={handleOpenInNewTab}
           title="Open in new tab"
-          disabled={previewStatus !== 'running'}
+          disabled={!isPreviewLive}
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
@@ -408,7 +411,7 @@ export function WebPreview({ projectId, isRunning = false, className = '' }: Web
             height: devicePresets[device].height
           }}
         >
-          {url && previewStatus === 'running' && (
+          {url && (
             <iframe
               key={iframeKey}
               ref={iframeRef}
