@@ -1766,19 +1766,12 @@ export function ReplitAgentPanelV3({
     }
 
     // Fire-and-forget: don't await, don't block
-    getCSRFToken().then(csrf => {
-      return fetch(`/api/agent/conversation/${conversationId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
-        credentials: 'include',
-        body: JSON.stringify({
-          role: message.role,
-          content: message.content,
-          timestamp: message.timestamp.toISOString(),
-          metadata: message.metadata || null,
-          extendedThinking: message.extendedThinking || null,
-        }),
-      });
+    void apiRequest('POST', `/api/agent/conversation/${conversationId}/messages`, {
+      role: message.role,
+      content: message.content,
+      timestamp: message.timestamp.toISOString(),
+      metadata: message.metadata || null,
+      extendedThinking: message.extendedThinking || null,
     }).catch(err => {
       console.error('[Persistence] Error persisting message:', err);
     });
