@@ -112,18 +112,16 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
   const fetchMetrics = async () => {
     try {
       setLoading(true);
-      const [systemRes, appRes] = await Promise.all([
-        fetch(`/api/monitoring/${projectId}/system`, { credentials: 'include' }),
-        fetch(`/api/monitoring/${projectId}/application`, { credentials: 'include' })
+      const [systemData, appData] = await Promise.all([
+        apiRequest<{ metrics: SystemMetrics }>('GET', `/api/monitoring/${projectId}/system`),
+        apiRequest<{ metrics: ApplicationMetrics }>('GET', `/api/monitoring/${projectId}/application`)
       ]);
-      
-      if (systemRes.ok) {
-        const systemData = await systemRes.json();
+
+      if (systemData?.metrics) {
         setSystemMetrics(systemData.metrics);
       }
-      
-      if (appRes.ok) {
-        const appData = await appRes.json();
+
+      if (appData?.metrics) {
         setAppMetrics(appData.metrics);
       }
     } catch (error) {
@@ -135,12 +133,8 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch(`/api/monitoring/${projectId}/alerts`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiRequest<{ alerts?: Alert[] }>('GET', `/api/monitoring/${projectId}/alerts`);
+      if (data) {
         setAlerts(data.alerts || []);
       }
     } catch (error) {

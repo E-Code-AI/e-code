@@ -81,12 +81,8 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
 
   const fetchBreakpoints = async () => {
     try {
-      const response = await fetch(`/api/debug/${projectId}/breakpoints`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiRequest<{ breakpoints?: Breakpoint[] }>('GET', `/api/debug/${projectId}/breakpoints`);
+      if (data) {
         setBreakpoints(data.breakpoints || []);
       }
     } catch (error) {
@@ -97,12 +93,8 @@ export function ReplitDevTools({ projectId }: ReplitDevToolsProps) {
   const startMetricsCollection = () => {
     metricsIntervalRef.current = setInterval(async () => {
       try {
-        const response = await fetch(`/api/metrics/${projectId}`, {
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
+        const data = await apiRequest<{ metrics: PerformanceMetrics }>('GET', `/api/metrics/${projectId}`);
+        if (data?.metrics) {
           setMetrics(data.metrics);
         }
       } catch (error) {

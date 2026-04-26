@@ -86,24 +86,22 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const checkGitStatus = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/status`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        // Transform data to match GitStatus interface
-        setGitStatus({
-          branch: data.branch || 'main',
-          remote: data.remote,
-          ahead: data.ahead || 0,
-          behind: data.behind || 0,
-          staged: data.added?.map((file: string) => ({ path: file, status: 'added' as const })) || [],
-          unstaged: data.modified?.map((file: string) => ({ path: file, status: 'modified' as const })) || [],
-          untracked: data.untracked || []
-        });
-        setIsInitialized(true);
-      } else if (response.status === 404) {
+      const data = await apiRequest<any>('GET', `/api/git/${projectId}/status`);
+      setGitStatus({
+        branch: data.branch || 'main',
+        remote: data.remote,
+        ahead: data.ahead || 0,
+        behind: data.behind || 0,
+        staged: data.added?.map((file: string) => ({ path: file, status: 'added' as const })) || [],
+        unstaged: data.modified?.map((file: string) => ({ path: file, status: 'modified' as const })) || [],
+        untracked: data.untracked || []
+      });
+      setIsInitialized(true);
+    } catch (error: any) {
+      if (typeof error?.message === 'string' && error.message.startsWith('404:')) {
         setIsInitialized(false);
+        return;
       }
-    } catch (error) {
       console.error('Failed to check git status:', error);
       setIsInitialized(false);
     }
@@ -111,16 +109,13 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadBranches = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/branches`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        const currentBranch = gitStatus?.branch || 'main';
-        setBranches(data.map((name: string) => ({
-          name,
-          current: name === currentBranch,
-          remote: `origin/${name}`
-        })));
-      }
+      const data = await apiRequest<string[]>('GET', `/api/git/${projectId}/branches`);
+      const currentBranch = gitStatus?.branch || 'main';
+      setBranches(data.map((name: string) => ({
+        name,
+        current: name === currentBranch,
+        remote: `origin/${name}`
+      })));
     } catch (error) {
       console.error('Failed to load branches:', error);
     }
@@ -128,14 +123,11 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const loadCommits = async () => {
     try {
-      const response = await fetch(`/api/git/${projectId}/commits`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setCommits(data.map((commit: any) => ({
-          ...commit,
-          date: commit.date instanceof Date ? commit.date.toISOString() : commit.date
-        })));
-      }
+      const data = await apiRequest<any[]>('GET', `/api/git/${projectId}/commits`);
+      setCommits(data.map((commit: any) => ({
+        ...commit,
+        date: commit.date instanceof Date ? commit.date.toISOString() : commit.date
+      })));
     } catch (error) {
       console.error('Failed to load commits:', error);
     }

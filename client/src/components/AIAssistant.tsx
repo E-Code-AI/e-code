@@ -164,14 +164,11 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
 
   const loadChatHistory = async () => {
     try {
-      const response = await fetch(`/api/ai/${projectId}/history`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })));
-      }
+      const data = await apiRequest<any[]>('GET', `/api/ai/${projectId}/history`);
+      setMessages(data.map((msg: any) => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      })));
     } catch (error) {
       console.error('Failed to load chat history:', error);
     }
