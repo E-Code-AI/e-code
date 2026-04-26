@@ -40,17 +40,14 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
   // Fetch custom prompts for this project
   const { data: customRules = [], isLoading } = useQuery<CustomPromptRule[]>({
     queryKey: ['/api/ai-rules', projectId],
-    queryFn: async () => {
-      return await apiRequest<CustomPromptRule[]>('GET', `/api/ai-rules/${projectId}`);
-    },
+    queryFn: () => apiRequest<CustomPromptRule[]>('GET', `/api/ai-rules/${projectId}`),
     enabled: isOpen,
   });
 
   // Create new rule
   const createRuleMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
-      return await apiRequest('POST', `/api/ai-rules/${projectId}`, data);
-    },
+    mutationFn: (data: typeof formData) =>
+      apiRequest('POST', `/api/ai-rules/${projectId}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ai-rules', projectId] });
       setFormData({ name: '', description: '', prompt: '' });
@@ -71,9 +68,8 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
 
   // Update existing rule
   const updateRuleMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<CustomPromptRule> }) => {
-      return await apiRequest('PATCH', `/api/ai-rules/${projectId}/${id}`, data);
-    },
+    mutationFn: ({ id, data }: { id: number; data: Partial<CustomPromptRule> }) =>
+      apiRequest('PATCH', `/api/ai-rules/${projectId}/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ai-rules', projectId] });
       setEditingRule(null);
@@ -93,9 +89,8 @@ export function CustomPromptsModal({ projectId, isOpen, onClose }: CustomPrompts
 
   // Delete rule
   const deleteRuleMutation = useMutation({
-    mutationFn: async (ruleId: number) => {
-      return await apiRequest('DELETE', `/api/ai-rules/${projectId}/${ruleId}`);
-    },
+    mutationFn: (ruleId: number) =>
+      apiRequest('DELETE', `/api/ai-rules/${projectId}/${ruleId}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ai-rules', projectId] });
       toast({

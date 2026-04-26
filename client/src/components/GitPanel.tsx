@@ -72,14 +72,10 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
     refetch: refetchGitStatus
   } = useQuery<GitStatus>({
     queryKey: ['/api/git/repositories', projectId],
-    queryFn: async () => {
-      try {
-        const data = await apiRequest('GET', `/api/git/${projectId}/status`);
-        return data;
-      } catch (error) {
+    queryFn: () =>
+      apiRequest<GitStatus>('GET', `/api/git/${projectId}/status`).catch((error) => {
         throw new Error(error instanceof Error ? error.message : 'Failed to get Git status');
-      }
-    },
+      }),
   });
   
   // Query for getting commit history
@@ -89,14 +85,10 @@ const GitPanel: React.FC<GitPanelProps> = ({ projectId }) => {
     refetch: refetchCommitHistory
   } = useQuery<CommitHistory>({
     queryKey: ['/api/git/history', projectId],
-    queryFn: async () => {
-      try {
-        const data = await apiRequest('GET', `/api/git/${projectId}/commits`);
-        return data;
-      } catch (error) {
+    queryFn: () =>
+      apiRequest<CommitHistory>('GET', `/api/git/${projectId}/commits`).catch((error) => {
         throw new Error(error instanceof Error ? error.message : 'Failed to get commit history');
-      }
-    },
+      }),
     enabled: !!gitStatus?.isRepo,
   });
 
