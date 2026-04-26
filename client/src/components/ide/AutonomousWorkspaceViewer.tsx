@@ -117,6 +117,8 @@ export function AutonomousWorkspaceViewer({
   const logsEndRef = useRef<HTMLDivElement>(null);
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
+  const activeTasksCount = tasks.filter(task => task.status === 'in_progress').length;
+  const completedTasksCount = tasks.filter(task => task.status === 'completed').length;
   // ✅ FIX (Dec 1, 2025): Track reconnect timer to clear on successful connection
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // ✅ FIX (Dec 11, 2025): Track if user intentionally hid the dialog to prevent auto-reopen
@@ -554,6 +556,11 @@ export function AutonomousWorkspaceViewer({
           <Badge variant={phase === 'planning' ? 'default' : phase === 'executing' ? 'secondary' : 'outline'}>
             {phase === 'planning' ? '🧠 Planning' : phase === 'executing' ? '⚡ Executing' : '✅ Complete'}
           </Badge>
+          {activeTasksCount > 1 && (
+            <Badge variant="outline" className="text-[10px] bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700">
+              {activeTasksCount} tasks in parallel
+            </Badge>
+          )}
           {generatedPlan && (
             <span className="text-[11px] text-muted-foreground">
               {generatedPlan.tasks?.length || 0} tasks • {generatedPlan.estimatedTime || 'Calculating...'}
@@ -596,6 +603,11 @@ export function AutonomousWorkspaceViewer({
             </h4>
             <div className="text-[11px] text-muted-foreground border rounded-md p-2 bg-muted/30">
               <p className="font-medium text-foreground">{generatedPlan.summary}</p>
+              {activeTasksCount > 1 && (
+                <p className="mt-2 text-violet-700 dark:text-violet-300">
+                  {activeTasksCount} workstreams are actively executing in parallel.
+                </p>
+              )}
               {generatedPlan.technologies?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {generatedPlan.technologies.slice(0, 6).map((tech: string, i: number) => (
@@ -612,7 +624,7 @@ export function AutonomousWorkspaceViewer({
           <div className="space-y-2 min-h-0">
             <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2">
               <Package className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-              Tasks ({tasks.filter(t => t.status === 'completed').length}/{tasks.length})
+              Tasks ({completedTasksCount}/{tasks.length})
             </h4>
             <ScrollArea className="h-20 sm:h-28 md:h-32 border rounded-md">
               <div className="p-2 space-y-1">
