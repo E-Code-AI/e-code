@@ -555,7 +555,7 @@ router.get('/url', async (req, res) => {
       return [];
     });
     const hasHtmlFile = files.some(f => (f.path || f.name || '').endsWith('.html') && !f.isDirectory);
-    const hasPackageJson = files.some(f => (f.name === 'package.json' || f.path === 'package.json') && !f.isDirectory);
+    const hasPackageJson = files.some(f => String(f.path || f.name || '').endsWith('package.json') && !f.isDirectory);
     const hasPythonFiles = files.some(f => (f.path || f.name || '').endsWith('.py') && !f.isDirectory);
     const hasWorkspaceRunnableFiles = await workspaceHasRunnableFiles(projectId).catch((error: any) => {
       console.error('[preview:url] Failed to scan workspace', { projectId, error: error?.message || error });
@@ -596,7 +596,7 @@ router.get('/url', async (req, res) => {
     
     if (!preview || preview.status !== 'running') {
       // For HTML-only projects, return static preview URL
-      if ((hasHtmlFile || hasWorkspaceRunnableFiles) && !hasPackageJson && !hasPythonFiles) {
+      if (hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
         const previewUrl = withBootstrapQuery(`/api/preview/projects/${projectId}/preview/`, req);
         return res.json({ 
           previewUrl,
@@ -1028,9 +1028,9 @@ router.get('/projects/:id/preview-url', ensureProjectAccess, async (req, res) =>
     
     // Check if it's an HTML project or has runnable code
     const files = await getMergedProjectFiles(projectId);
-    const hasHtmlFile = files.some(f => f.name.endsWith('.html') && !f.isDirectory);
-    const hasPackageJson = files.some(f => f.name === 'package.json' && !f.isDirectory);
-    const hasPythonFiles = files.some(f => f.name.endsWith('.py') && !f.isDirectory);
+    const hasHtmlFile = files.some(f => String(f.path || f.name || '').endsWith('.html') && !f.isDirectory);
+    const hasPackageJson = files.some(f => String(f.path || f.name || '').endsWith('package.json') && !f.isDirectory);
+    const hasPythonFiles = files.some(f => String(f.path || f.name || '').endsWith('.py') && !f.isDirectory);
     
     if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
       return res.status(400).json({ error: 'No runnable files found in project' });
