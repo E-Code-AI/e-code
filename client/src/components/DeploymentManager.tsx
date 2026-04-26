@@ -128,18 +128,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!actualProjectId) return;
     
     try {
-      const response = await fetch(`/api/projects/${actualProjectId}/deployments`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDeployments(data.deployments || []);
-        if (data.deployments && data.deployments.length > 0 && !selectedDeployment) {
-          setSelectedDeployment(data.deployments[0]);
-        }
-      } else {
-        console.error('Failed to load deployments:', response.status);
-        setDeployments([]);
+      const data = await apiRequest<{ deployments?: Deployment[] }>('GET', `/api/projects/${actualProjectId}/deployments`);
+      setDeployments(data.deployments || []);
+      if (data.deployments && data.deployments.length > 0 && !selectedDeployment) {
+        setSelectedDeployment(data.deployments[0]);
       }
     } catch (error) {
       console.error('Failed to load deployments:', error);
@@ -156,27 +148,10 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!actualProjectId) return;
     
     try {
-      const response = await fetch(`/api/projects/${actualProjectId}/deployments/stats`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.stats) {
-          setStats(data.stats);
-        } else {
-          setStats({
-            totalDeployments: 0,
-            activeDeployments: 0,
-            totalRequests: 0,
-            averageResponseTime: 0,
-            errorRate: 0,
-            bandwidth: '0 MB',
-            uptime: 0
-          });
-        }
+      const data = await apiRequest<any>('GET', `/api/projects/${actualProjectId}/deployments/stats`);
+      if (data.success && data.stats) {
+        setStats(data.stats);
       } else {
-        console.error('Failed to load stats:', response.status);
         setStats({
           totalDeployments: 0,
           activeDeployments: 0,
@@ -197,11 +172,8 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!actualProjectId) return;
     
     try {
-      const response = await fetch(`/api/projects/${actualProjectId}/container/status`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const status = await response.json();
+      const status = await apiRequest<any>('GET', `/api/projects/${actualProjectId}/container/status`);
+      if (status) {
         setContainerStatus(status);
         
         // Update deployment status based on container status
@@ -219,11 +191,8 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!actualProjectId) return;
     
     try {
-      const response = await fetch(`/api/projects/${actualProjectId}/container/logs`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
+      const data = await apiRequest<{ logs?: string[] }>('GET', `/api/projects/${actualProjectId}/container/logs`);
+      if (data) {
         setContainerLogs(data.logs || []);
       }
     } catch (error) {
@@ -233,21 +202,13 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
 
   const loadBuildLogs = async (deploymentId: number) => {
     try {
-      const response = await fetch(`/api/deployments/${deploymentId}/logs`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Convert logs array to BuildLog format
-        const formattedLogs: BuildLog[] = data.logs.map((log: string, index: number) => ({
-          timestamp: new Date().toLocaleTimeString(),
-          message: log,
-          level: 'info' as const
-        }));
-        setBuildLogs(formattedLogs);
-      } else {
-        setBuildLogs([]);
-      }
+      const data = await apiRequest<{ logs: string[] }>('GET', `/api/deployments/${deploymentId}/logs`);
+      const formattedLogs: BuildLog[] = data.logs.map((log: string) => ({
+        timestamp: new Date().toLocaleTimeString(),
+        message: log,
+        level: 'info' as const
+      }));
+      setBuildLogs(formattedLogs);
     } catch (error) {
       console.error('Failed to load build logs:', error);
       setBuildLogs([]);
@@ -259,21 +220,13 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     
     try {
       // Load environment variables from project - REAL BACKEND
-      const response = await fetch(`/api/environment/${actualProjectId}`, {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Map to our format
-        const vars: EnvironmentVariable[] = data.map((v: any) => ({
-          key: v.key,
-          value: v.isSecret ? '****' : v.value,
-          isSecret: v.isSecret
-        }));
-        setEnvVars(vars);
-      } else {
-        setEnvVars([]);
-      }
+      const data = await apiRequest<any[]>('GET', `/api/environment/${actualProjectId}`);
+      const vars: EnvironmentVariable[] = data.map((v: any) => ({
+        key: v.key,
+        value: v.isSecret ? '****' : v.value,
+        isSecret: v.isSecret
+      }));
+      setEnvVars(vars);
     } catch (error) {
       console.error('Failed to load env vars:', error);
       setEnvVars([]);

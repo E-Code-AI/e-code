@@ -45,6 +45,7 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { getCursorColor, getCursorStyle, CURSOR_COLORS } from '@/lib/cursor-colors';
+import { apiRequest } from '@/lib/queryClient';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
 import { WebsocketProvider } from 'y-websocket';
@@ -294,21 +295,16 @@ export function RealTimeCollaboration({
   useEffect(() => {
     const loadPersistedMessages = async () => {
       try {
-        const response = await fetch(`/api/collaboration/${projectId}/messages?limit=100`, {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const messages = await response.json();
-          const formattedMessages: ChatMessage[] = messages.map((msg: any) => ({
-            id: msg.id,
-            userId: String(msg.userId),
-            username: msg.username,
-            message: msg.content,
-            timestamp: new Date(msg.createdAt),
-            type: msg.type || 'text',
-          }));
-          setChatMessages(formattedMessages);
-        }
+        const messages = await apiRequest<any[]>('GET', `/api/collaboration/${projectId}/messages?limit=100`);
+        const formattedMessages: ChatMessage[] = messages.map((msg: any) => ({
+          id: msg.id,
+          userId: String(msg.userId),
+          username: msg.username,
+          message: msg.content,
+          timestamp: new Date(msg.createdAt),
+          type: msg.type || 'text',
+        }));
+        setChatMessages(formattedMessages);
       } catch (error) {
       }
     };
@@ -339,26 +335,15 @@ export function RealTimeCollaboration({
 
     try {
       // 8.8 FIX: Persist message via API
-      const response = await fetch(`/api/collaboration/${projectId}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          content: messageContent,
-          type: 'text',
-        }),
+      const savedMessage = await apiRequest<any>('POST', `/api/collaboration/${projectId}/messages`, {
+        content: messageContent,
+        type: 'text',
       });
-
-      if (response.ok) {
-        const savedMessage = await response.json();
-        // Update temp message with real ID
-        setChatMessages(prev => prev.map(msg =>
-          msg.id === tempMessage.id
-            ? { ...msg, id: savedMessage.id }
-            : msg
-        ));
-      } else {
-      }
+      setChatMessages(prev => prev.map(msg =>
+        msg.id === tempMessage.id
+          ? { ...msg, id: savedMessage.id }
+          : msg
+      ));
     } catch (error) {
     }
 

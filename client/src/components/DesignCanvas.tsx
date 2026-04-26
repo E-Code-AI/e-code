@@ -5,7 +5,7 @@ import {
   ChevronDown, Minus, RotateCcw, Sparkles
 } from "lucide-react";
 import type { CanvasFrame, CanvasAnnotation } from "@shared/schema";
-import { apiRequest, getCSRFToken } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import ConversionDialog from "./ConversionDialog";
 
 interface CanvasMessage {
@@ -77,12 +77,12 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
   const loadCanvasData = async () => {
     try {
       setLoading(true);
-      const [framesRes, annotationsRes] = await Promise.all([
-        fetch(`/api/projects/${projectId}/canvas/frames`, { credentials: "include" }),
-        fetch(`/api/projects/${projectId}/canvas/annotations`, { credentials: "include" }),
+      const [framesData, annotationsData] = await Promise.all([
+        apiRequest<CanvasFrame[]>("GET", `/api/projects/${projectId}/canvas/frames`),
+        apiRequest<CanvasAnnotation[]>("GET", `/api/projects/${projectId}/canvas/annotations`),
       ]);
-      if (framesRes.ok) setFrames(await framesRes.json());
-      if (annotationsRes.ok) setAnnotations(await annotationsRes.json());
+      setFrames(framesData || []);
+      setAnnotations(annotationsData || []);
     } catch (err) {
       console.error("Failed to load canvas data:", err);
     } finally {
@@ -92,22 +92,16 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
 
   const createFrame = async (x?: number, y?: number) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/canvas/frames`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-        body: JSON.stringify({
-          name: "Untitled Frame",
-          htmlContent: `<!DOCTYPE html>\n<html>\n<head><style>body { font-family: system-ui; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #1a1a2e; color: #fff; }</style></head>\n<body>\n<h1>New Frame</h1>\n</body>\n</html>`,
-          x: x ?? Math.round((-panOffset.x + 200) / zoom),
-          y: y ?? Math.round((-panOffset.y + 200) / zoom),
-          width: 400,
-          height: 300,
-          zIndex: frames.length,
-        }),
+      const frame = await apiRequest<CanvasFrame>("POST", `/api/projects/${projectId}/canvas/frames`, {
+        name: "Untitled Frame",
+        htmlContent: `<!DOCTYPE html>\n<html>\n<head><style>body { font-family: system-ui; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #1a1a2e; color: #fff; }</style></head>\n<body>\n<h1>New Frame</h1>\n</body>\n</html>`,
+        x: x ?? Math.round((-panOffset.x + 200) / zoom),
+        y: y ?? Math.round((-panOffset.y + 200) / zoom),
+        width: 400,
+        height: 300,
+        zIndex: frames.length,
       });
-      if (res.ok) {
-        const frame = await res.json();
+      if (frame) {
         setFrames(prev => [...prev, frame]);
       }
     } catch (err) {
@@ -124,23 +118,17 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
     };
     const d = defaults[type];
     try {
-      const res = await fetch(`/api/projects/${projectId}/canvas/annotations`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-        body: JSON.stringify({
-          type,
-          content: d.content,
-          x: Math.round((-panOffset.x + 300) / zoom),
-          y: Math.round((-panOffset.y + 300) / zoom),
-          width: d.w,
-          height: d.h,
-          color: colors[type],
-          zIndex: annotations.length,
-        }),
+      const annotation = await apiRequest<CanvasAnnotation>("POST", `/api/projects/${projectId}/canvas/annotations`, {
+        type,
+        content: d.content,
+        x: Math.round((-panOffset.x + 300) / zoom),
+        y: Math.round((-panOffset.y + 300) / zoom),
+        width: d.w,
+        height: d.h,
+        color: colors[type],
+        zIndex: annotations.length,
       });
-      if (res.ok) {
-        const annotation = await res.json();
+      if (annotation) {
         setAnnotations(prev => [...prev, annotation]);
       }
     } catch (err) {
@@ -150,14 +138,8 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
 
   const updateFrame = async (id: string, data: Partial<CanvasFrame>) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/canvas/frames/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const updated = await res.json();
+      const updated = await apiRequest<CanvasFrame>("PUT", `/api/projects/${projectId}/canvas/frames/${id}`, data);
+      if (updated) {
         setFrames(prev => prev.map(f => f.id === id ? updated : f));
       }
     } catch (err) {
@@ -167,14 +149,8 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
 
   const updateAnnotation = async (id: string, data: Partial<CanvasAnnotation>) => {
     try {
-      const res = await fetch(`/api/projects/${projectId}/canvas/annotations/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        const updated = await res.json();
+      const updated = await apiRequest<CanvasAnnotation>("PUT", `/api/projects/${projectId}/canvas/annotations/${id}`, data);
+      if (updated) {
         setAnnotations(prev => prev.map(a => a.id === id ? updated : a));
       }
     } catch (err) {
@@ -184,11 +160,7 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
 
   const deleteFrame = async (id: string) => {
     try {
-      await fetch(`/api/projects/${projectId}/canvas/frames/${id}`, {
-        method: "DELETE",
-        headers: { "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-      });
+      await apiRequest("DELETE", `/api/projects/${projectId}/canvas/frames/${id}`);
       setFrames(prev => prev.filter(f => f.id !== id));
       if (selectedItem?.id === id) setSelectedItem(null);
     } catch (err) {
@@ -198,11 +170,7 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
 
   const deleteAnnotation = async (id: string) => {
     try {
-      await fetch(`/api/projects/${projectId}/canvas/annotations/${id}`, {
-        method: "DELETE",
-        headers: { "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-      });
+      await apiRequest("DELETE", `/api/projects/${projectId}/canvas/annotations/${id}`);
       setAnnotations(prev => prev.filter(a => a.id !== id));
       if (selectedItem?.id === id) setSelectedItem(null);
     } catch (err) {
@@ -214,22 +182,16 @@ export default function DesignCanvas({ projectId, messages = [] }: DesignCanvasP
     const frame = frames.find(f => f.id === id);
     if (!frame) return;
     try {
-      const res = await fetch(`/api/projects/${projectId}/canvas/frames`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-csrf-token": await getCSRFToken() },
-        credentials: "include",
-        body: JSON.stringify({
-          name: `${frame.name} (copy)`,
-          htmlContent: frame.htmlContent,
-          x: frame.x + 40,
-          y: frame.y + 40,
-          width: frame.width,
-          height: frame.height,
-          zIndex: frames.length,
-        }),
+      const newFrame = await apiRequest<CanvasFrame>("POST", `/api/projects/${projectId}/canvas/frames`, {
+        name: `${frame.name} (copy)`,
+        htmlContent: frame.htmlContent,
+        x: frame.x + 40,
+        y: frame.y + 40,
+        width: frame.width,
+        height: frame.height,
+        zIndex: frames.length,
       });
-      if (res.ok) {
-        const newFrame = await res.json();
+      if (newFrame) {
         setFrames(prev => [...prev, newFrame]);
       }
     } catch (err) {

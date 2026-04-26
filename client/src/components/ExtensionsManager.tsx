@@ -84,13 +84,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
   const { data: marketplaceData, isLoading: isLoadingMarketplace, error: marketplaceError, refetch: refetchMarketplace } = useQuery<MarketplaceResponse>({
     queryKey: ['/api/extensions/marketplace'],
     queryFn: async () => {
-      const response = await fetch('/api/extensions/marketplace', {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch marketplace extensions');
-      }
-      return response.json();
+      return apiRequest<MarketplaceResponse>('GET', '/api/extensions/marketplace');
     },
     enabled: isOpen,
     staleTime: 60000,
@@ -100,13 +94,7 @@ export function ExtensionsManager({ isOpen, onClose, projectId }: ExtensionsMana
     queryKey: ['/api/extensions', projectId, 'installed'],
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/extensions/${projectId}/installed`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch installed extensions');
-      }
-      return response.json();
+      return apiRequest<InstalledExtension[]>('GET', `/api/extensions/${projectId}/installed`);
     },
     enabled: isOpen && !!projectId,
     staleTime: 30000,
