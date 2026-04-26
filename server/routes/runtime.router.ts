@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { ensureAuthenticated } from '../middleware/auth';
 import {
   getRuntimeDependencies,
+  getLanguageRecommendations,
   startProjectRuntime,
   stopProjectRuntime,
   getProjectRuntimeStatus,
@@ -16,11 +17,66 @@ import {
 import { storage } from '../storage';
 import { CodeExecutor } from '../execution/executor';
 import { createLogger } from '../utils/logger';
+import * as runtimeHealth from '../runtimes/runtime-health';
+import * as runtimeManager from '../runtimes/runtime-manager';
+import * as os from 'os';
 
 const logger = createLogger('runtime-router');
 const codeExecutor = new CodeExecutor();
 
 const router = Router();
+
+router.get('/runtime/dashboard', ensureAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const dependencies = await runtimeHealth.checkSystemDependencies();
+    const userProjects = await storage.getProjectsByUserId(userId);
+    const activeProjects = userProjects
+      .map((project) => {
+        const status = runtimeManager.getProjectStatus(String(project.id));
+        if (!status.isRunning) {
+          return null;
+        }
+
+        return {
+          id: project.id,
+          name: project.name,
+          status: {
+            ...status,
+            url: status.port ? `/preview/${project.id}/` : undefined,
+          },
+        };
+      })
+      .filter(Boolean);
+
+    const usedMemory = os.totalmem() - os.freemem();
+    const memoryPercent = os.totalmem() > 0 ? (usedMemory / os.totalmem()) * 100 : 0;
+
+    return res.json({
+      timestamp: new Date().toISOString(),
+      systemHealth: {
+        cpuUsage: os.loadavg()[0],
+        memoryUsage: `${memoryPercent.toFixed(1)}%`,
+        platform: process.platform,
+        arch: process.arch,
+        uptime: os.uptime(),
+      },
+      runtimeEnvironments: dependencies,
+      recommendations: getLanguageRecommendations(dependencies),
+      activeProjects,
+    });
+  } catch (error: any) {
+    logger.error('Failed to load runtime dashboard:', error);
+    return res.status(500).json({
+      error: 'Failed to load runtime dashboard',
+      details: error?.message,
+    });
+  }
+});
 
 /**
  * Middleware to ensure user has access to project
