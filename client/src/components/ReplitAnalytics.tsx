@@ -80,11 +80,11 @@ export function ReplitAnalytics({ projectId }: ReplitAnalyticsProps) {
       setLoading(true);
       const data = await apiRequest<any>('GET', `/api/analytics/${projectId}?period=${timeRange}`);
       setAnalytics(data.analytics);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching analytics:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch analytics data",
+        description: error?.message || "Failed to fetch analytics data",
         variant: "destructive"
       });
     } finally {
