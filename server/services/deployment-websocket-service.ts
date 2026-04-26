@@ -572,8 +572,9 @@ class DeploymentWebSocketService extends EventEmitter {
         timestamp: new Date().toISOString(),
       },
     });
-    
-    this.emit('error', deploymentId, error);
+
+    // Avoid Node's reserved EventEmitter "error" semantics causing unhandled exceptions
+    this.emit('deployment_error', deploymentId, error);
   }
   
   // Get connection stats (for monitoring)

@@ -1139,7 +1139,33 @@ router.get('/projects/:projectId/publish/status', ensureAuthenticated, async (re
     // Get all production deployments for the project
     const deployments = await storage.getProjectDeployments(projectId);
     const productionDeployments = deployments.filter(d => d.environment === 'production');
-    
+
+    if (!productionDeployments.length) {
+      const lastCodeChange = project.updatedAt || project.createdAt;
+      return res.json({
+        status: 'idle',
+        url: null,
+        deployedAt: null,
+        lastCodeChange: lastCodeChange ? new Date(lastCodeChange).toISOString() : null,
+        errorMessage: null,
+        success: true,
+        publish: {
+          isPublished: false,
+          url: null,
+          customDomain: null,
+          lastDeployedAt: null,
+          deploymentId: null,
+          deploymentType: null,
+          sslEnabled: true,
+          buildTime: null,
+          size: null,
+          status: 'idle',
+          liveStatus: null,
+          hasDeployments: false,
+        },
+      });
+    }
+
     const { currentDeployment, latestDeployment } = selectCurrentDeployment(productionDeployments);
     const activeDeployment = productionDeployments.find(d => d.status === 'active') || null;
 

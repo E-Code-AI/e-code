@@ -160,8 +160,7 @@ export default function NetworkingPanel({ projectId, onClose }: { projectId: str
 
   const addDomainMutation = useMutation({
     mutationFn: async (domain: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/networking/domains`, { domain });
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/networking/domains`, { domain });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "networking", "domains"] });
@@ -176,8 +175,7 @@ export default function NetworkingPanel({ projectId, onClose }: { projectId: str
 
   const verifyDomainMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("POST", `/api/projects/${projectId}/networking/domains/${id}/verify`);
-      return res.json();
+      return apiRequest("POST", `/api/projects/${projectId}/networking/domains/${id}/verify`);
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "networking", "domains"] });

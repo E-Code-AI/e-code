@@ -8,6 +8,27 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('networking-router');
 const router = Router();
 
+function isMissingRelationError(error: any) {
+  const directCode = error?.code;
+  const causeCode = error?.cause?.code;
+  const message = String(error?.message || '');
+  const causeMessage = String(error?.cause?.message || '');
+
+  return (
+    directCode === '42P01' ||
+    causeCode === '42P01' ||
+    /relation .* does not exist/i.test(message) ||
+    /relation .* does not exist/i.test(causeMessage)
+  );
+}
+
+function sendUnavailable(res: Response) {
+  return res.status(503).json({
+    error: 'Networking storage is not provisioned for this environment',
+    code: 'NETWORKING_STORAGE_UNAVAILABLE',
+  });
+}
+
 // ==========================================
 // Ports Management
 // ==========================================
@@ -20,6 +41,10 @@ router.get('/:projectId/networking/ports', ensureAuthenticated, async (req: Requ
     // Map IDs to strings to match frontend expectation
     res.json(ports.map(p => ({ ...p, id: p.id.toString(), projectId: p.projectId.toString() })));
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking ports table missing; returning empty list');
+      return res.json([]);
+    }
     logger.error('Failed to get ports', error);
     res.status(500).json({ error: error.message });
   }
@@ -42,6 +67,10 @@ router.post('/:projectId/networking/ports', ensureAuthenticated, async (req: Req
     
     res.json({ ...newPort, id: newPort.id.toString(), projectId: newPort.projectId.toString() });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking ports table missing; create unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to create port', error);
     res.status(500).json({ error: error.message });
   }
@@ -58,8 +87,16 @@ router.patch('/:projectId/networking/ports/:id', ensureAuthenticated, async (req
       .where(and(eq(networkingPorts.id, id), eq(networkingPorts.projectId, projectId)))
       .returning();
       
+    if (!updated) {
+      return res.status(404).json({ error: 'Port not found' });
+    }
+
     res.json({ ...updated, id: updated.id.toString(), projectId: updated.projectId.toString() });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking ports table missing; update unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to patch port', error);
     res.status(500).json({ error: error.message });
   }
@@ -73,6 +110,10 @@ router.delete('/:projectId/networking/ports/:id', ensureAuthenticated, async (re
     await db.delete(networkingPorts).where(and(eq(networkingPorts.id, id), eq(networkingPorts.projectId, projectId)));
     res.json({ success: true });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking ports table missing; delete unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to delete port', error);
     res.status(500).json({ error: error.message });
   }
@@ -99,6 +140,10 @@ router.get('/:projectId/networking/domains', ensureAuthenticated, async (req: Re
     const domains = await db.select().from(networkingDomains).where(eq(networkingDomains.projectId, projectId));
     res.json(domains.map(d => ({ ...d, id: d.id.toString(), projectId: d.projectId.toString() })));
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking domains table missing; returning empty list');
+      return res.json([]);
+    }
     logger.error('Failed to get domains', error);
     res.status(500).json({ error: error.message });
   }
@@ -120,6 +165,10 @@ router.post('/:projectId/networking/domains', ensureAuthenticated, async (req: R
     
     res.json({ ...newDomain, id: newDomain.id.toString(), projectId: newDomain.projectId.toString() });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking domains table missing; create unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to add domain', error);
     res.status(500).json({ error: error.message });
   }
@@ -136,8 +185,16 @@ router.post('/:projectId/networking/domains/:id/verify', ensureAuthenticated, as
       .where(and(eq(networkingDomains.id, id), eq(networkingDomains.projectId, projectId)))
       .returning();
       
+    if (!updated) {
+      return res.status(404).json({ error: 'Domain not found' });
+    }
+
     res.json({ ...updated, id: updated.id.toString(), projectId: updated.projectId.toString() });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking domains table missing; verify unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to verify domain', error);
     res.status(500).json({ error: error.message });
   }
@@ -151,6 +208,10 @@ router.delete('/:projectId/networking/domains/:id', ensureAuthenticated, async (
     await db.delete(networkingDomains).where(and(eq(networkingDomains.id, id), eq(networkingDomains.projectId, projectId)));
     res.json({ success: true });
   } catch (error: any) {
+    if (isMissingRelationError(error)) {
+      logger.warn('Networking domains table missing; delete unavailable');
+      return sendUnavailable(res);
+    }
     logger.error('Failed to delete domain', error);
     res.status(500).json({ error: error.message });
   }
