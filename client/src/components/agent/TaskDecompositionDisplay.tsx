@@ -112,6 +112,7 @@ export function TaskDecompositionDisplay({
 
   const completedCount = tasks.filter(t => t.status === 'completed').length;
   const failedCount = tasks.filter(t => t.status === 'failed').length;
+  const runningCount = tasks.filter(t => t.status === 'running').length;
   const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
   const toggleTask = (taskId: string) => {
@@ -149,9 +150,14 @@ export function TaskDecompositionDisplay({
                     <Badge variant="outline" className="text-[11px] bg-indigo-100 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700">
                       {completedCount}/{tasks.length}
                     </Badge>
+                    {runningCount > 1 && (
+                      <Badge variant="outline" className="text-[11px] bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300">
+                        {runningCount} parallel agents
+                      </Badge>
+                    )}
                   </h3>
                   <p className="text-[11px] text-indigo-600 dark:text-indigo-400">
-                    {failedCount > 0 ? `${failedCount} failed · ` : ''}{tasks.length - completedCount - failedCount} remaining
+                    {failedCount > 0 ? `${failedCount} failed · ` : ''}{tasks.length - completedCount - failedCount} remaining{runningCount > 1 ? ` · ${runningCount} active in parallel` : ''}
                   </p>
                 </div>
               </div>

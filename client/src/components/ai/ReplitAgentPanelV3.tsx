@@ -771,11 +771,7 @@ export function ReplitAgentPanelV3({
   // Fetch decomposed tasks for autonomy session
   const { data: orchestratorTasks, isLoading: isLoadingTasks } = useQuery<{ tasks: DecomposedTask[] }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'tasks'],
-    queryFn: async () => {
-      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/tasks`, { credentials: 'include' });
-      if (!res.ok) return { tasks: [] };
-      return res.json();
-    },
+    queryFn: async () => apiRequest('GET', `/api/autonomy/sessions/${autonomySessionId}/tasks`),
     enabled: Boolean(autonomySessionId),
     refetchInterval: 5000,
   });
@@ -789,11 +785,7 @@ export function ReplitAgentPanelV3({
     }
   }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'progress'],
-    queryFn: async () => {
-      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/progress`, { credentials: 'include' });
-      if (!res.ok) return { progress: null };
-      return res.json();
-    },
+    queryFn: async () => apiRequest('GET', `/api/autonomy/sessions/${autonomySessionId}/progress`),
     enabled: Boolean(autonomySessionId),
     refetchInterval: 3000,
   });
@@ -801,11 +793,7 @@ export function ReplitAgentPanelV3({
   // Fetch queued messages for autonomy session
   const { data: queuedMessagesData, isLoading: isLoadingQueuedMessages } = useQuery<{ messages: QueuedMessage[] }>({
     queryKey: ['/api/autonomy/sessions', autonomySessionId, 'messages'],
-    queryFn: async () => {
-      const res = await fetch(`/api/autonomy/sessions/${autonomySessionId}/messages`, { credentials: 'include' });
-      if (!res.ok) return { messages: [] };
-      return res.json();
-    },
+    queryFn: async () => apiRequest('GET', `/api/autonomy/sessions/${autonomySessionId}/messages`),
     enabled: Boolean(autonomySessionId),
     refetchInterval: 3000,
   });
