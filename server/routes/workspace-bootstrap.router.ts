@@ -317,6 +317,23 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
     });
     
     const [session, scaffoldResult] = await Promise.all([sessionPromise, scaffoldPromise]);
+
+    const scaffoldLooksHealthy = !!(
+      scaffoldResult &&
+      scaffoldResult.success &&
+      scaffoldResult.filesCreated.length > 0
+    );
+
+    if (!scaffoldLooksHealthy) {
+      const scaffoldReason = scaffoldResult?.error || 'Initial scaffold did not produce runnable files';
+      logger.error(`[Bootstrap] ❌ Scaffold did not complete successfully`, {
+        projectId: project.id,
+        sessionId: session.id,
+        scaffoldResult,
+        scaffoldReason,
+      });
+      throw new Error(`Workspace scaffold failed: ${scaffoldReason}`);
+    }
     
     if (scaffoldResult) {
       logger.info(`[Bootstrap] ✅ Parallel phase 1 completed in ${Date.now() - parallelStartTime}ms`, {
