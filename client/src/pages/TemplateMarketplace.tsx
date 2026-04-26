@@ -148,10 +148,10 @@ export default function TemplateMarketplace() {
           navigate(`/project/${response.project.id}`);
         }, 1500);
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Deployment Failed',
-        description: 'Failed to deploy template. Please try again.',
+        description: error?.message || 'Failed to deploy template. Please try again.',
         variant: 'destructive',
       });
     }

@@ -115,6 +115,12 @@ export default function PreviewWithDevTools() {
       setIsStartingPreview(true);
       await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
       await loadPreviewUrl();
+    } catch (error: any) {
+      toast({
+        title: 'Failed to start preview',
+        description: error?.message || 'An error occurred while starting the preview.',
+        variant: 'destructive',
+      });
     } finally {
       setIsStartingPreview(false);
     }

@@ -156,11 +156,11 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
           : "Deployment Started",
         description: "Your application is being deployed.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deployment failed:', error);
       toast({
         title: "Deployment Failed",
-        description: "Failed to start deployment. Please try again.",
+        description: error?.message || "Failed to start deployment. Please try again.",
         variant: "destructive"
       });
     }
