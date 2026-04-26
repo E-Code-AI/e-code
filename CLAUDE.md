@@ -57,8 +57,11 @@ Dernier état vérifié:
 - typecheck, build, audit high: PASS
 - boot dev contrôlé, `/health`, `/health/readiness`: PASS
 - workspace-core Playwright smoke: PASS
+- suite systématique panels ajoutée: `npm run test:e2e:panels`
+- suite panels `desktop-xl-1600`: PASS 23/23
+- validations ciblées suite panels: PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment
 - lint zéro warning: BLOCKED (3352 warnings)
-- certification exhaustive panels + génération multi-format + hardening + déploiement production: en cours
+- certification exhaustive panels 4 viewports + génération multi-format + hardening + déploiement production: en cours
 
 État précédent:
 

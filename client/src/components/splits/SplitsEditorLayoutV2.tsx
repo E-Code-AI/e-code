@@ -330,6 +330,9 @@ export function SplitsEditorLayoutV2({
       // Use store actions to update state properly
       setActivePane('left-dock');
       setActiveTab('left-dock', tabId); // Activate the specific tab by ID
+    } else if (tool === 'shell') {
+      setActivePane('center-bottom');
+      setActiveTab('center-bottom', 'terminal-tab');
     }
   };
 

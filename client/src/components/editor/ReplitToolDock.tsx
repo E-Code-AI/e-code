@@ -36,13 +36,14 @@ const tools: Tool[] = [
   { id: 'files', name: 'Files', icon: Folder, section: 'top' },
   { id: 'search', name: 'Search', icon: Search, section: 'top' },
   { id: 'git', name: 'Git', icon: GitBranch, section: 'top' },
-  { id: 'debug', name: 'Debugger', icon: Bug, section: 'top' },
+  { id: 'debugger', name: 'Debugger', icon: Bug, section: 'top' },
   { id: 'agent', name: 'AI Agent', icon: Sparkles, section: 'top' },
+  { id: 'testing', name: 'Testing', icon: Grid, section: 'top' },
   { id: 'database', name: 'Database', icon: Database, section: 'top' },
   { id: 'secrets', name: 'Secrets', icon: Lock, section: 'top' },
   { id: 'shell', name: 'Shell', icon: Terminal, section: 'top' },
   { id: 'packages', name: 'Packages', icon: Package, section: 'top' },
-  { id: 'storage', name: 'App Storage', icon: HardDrive, section: 'top' },
+  { id: 'history', name: 'History', icon: HardDrive, section: 'top' },
   // Bottom section
   { id: 'settings', name: 'Settings', icon: Settings, section: 'bottom' },
 ];
@@ -66,6 +67,8 @@ export function ReplitToolDock({
       <Tooltip key={tool.id} delayDuration={0}>
         <TooltipTrigger asChild>
           <button
+            data-testid={`tool-dock-${tool.id}`}
+            aria-label={tool.name}
             onClick={() => onToolChange(tool.id)}
             onMouseEnter={() => setHoveredTool(tool.id)}
             onMouseLeave={() => setHoveredTool(null)}

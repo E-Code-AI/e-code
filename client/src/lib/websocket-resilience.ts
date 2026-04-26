@@ -312,7 +312,7 @@ export class ResilientWebSocket {
       };
       
       this.ws.onerror = (error) => {
-        console.error('[ResilientWS] WebSocket error:', error);
+        console.warn('[ResilientWS] WebSocket error:', error);
       };
       
       this.ws.onmessage = this.handleMessage;

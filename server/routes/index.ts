@@ -307,15 +307,17 @@ export class MainRouter {
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
     app.use('/api/agent/build', tierRateLimiters.streaming, lazyAgentBuildRouter);
 
-    // Autonomous agent routes (authenticated users) - single mount point
+    // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
+    // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
+    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentRouter);
+
+    // Autonomous agent routes (authenticated users) - mounted after base agent routes
+    // so project-scoped panel APIs such as /api/agent/actions/:projectId are not
+    // captured by autonomous session routes such as /actions/:sessionId.
     app.use('/api/agent', tierRateLimiters.streaming, lazyAgentAutonomousRouter);
 
     // Agent workflow routes (feature generation, build selection) - authenticated users
     app.use('/api/agent', tierRateLimiters.api, lazyAgentWorkflowRouter);
-
-    // Agent routes (authenticated users) - schema warming, status, stream, conversation, messages
-    // Mounted at /api/agent for schema/warm, schema/status, schema/stream, conversation, and messages endpoints
-    app.use('/api/agent', tierRateLimiters.streaming, lazyAgentRouter);
 
     // Agent step cache routes (caching intermediate agent phases for cost optimization)
     app.use('/api/agent/step-cache', tierRateLimiters.api, lazyAgentStepCacheRouter);

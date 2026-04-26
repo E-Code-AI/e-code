@@ -206,6 +206,19 @@ app.post('/api/security/csp-report', express.json({ type: ['application/json', '
 // Log all rate limit violations for security monitoring
 app.use(logRateLimitViolations);
 
+// Deterministic local Playwright panel matrix: keep production rate limits intact,
+// but do not let one localhost worker exhaust user-tier API limits while opening
+// dozens of panels in sequence.
+app.use((req, _res, next) => {
+  if (process.env.PLAYWRIGHT_PANEL_E2E === 'true') {
+    const ip = req.ip || req.socket.remoteAddress || '';
+    if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') {
+      (req as any)._skipRateLimit = true;
+    }
+  }
+  next();
+});
+
 // Fortune 500 Tier-Based Rate Limiter - Intelligent limits per user subscription
 // Free: 100/min, Pro: 1000/min, Enterprise: 10000/min (10x multiplier in dev)
 app.use('/api', tierRateLimiters.api);
@@ -559,6 +572,9 @@ const trackServiceLoad = (serviceName: string) => {
   logger.info(`[Startup] ✅ ${serviceName} (${ready}/${total})`);
 };
 
+// The API must not report readiness before core routes are actually mounted.
+registerService('routes');
+
 // Mark server as listening immediately
 serverState.phase = 'listening';
 
@@ -638,8 +654,10 @@ httpServer.listen(port, "0.0.0.0", () => {
   // Must be AFTER session+passport setup (CSRF tokens stored in session)
   // Frontend in queryClient.ts already handles fetching + sending tokens
   try {
-    const { csrfProtection } = await import('./middleware/csrf');
+    const { csrfProtection, csrfTokenEndpoint } = await import('./middleware/csrf');
     app.use('/api', csrfProtection);
+    app.get('/api/csrf-token', csrfTokenEndpoint);
+    app.get('/api/auth/csrf-token', csrfTokenEndpoint);
     logger.info('[CSRF] ✅ Global CSRF protection enabled for all /api routes');
   } catch (error) {
     logger.error(`[CSRF] Failed to apply global CSRF protection: ${error}`);
@@ -657,10 +675,12 @@ httpServer.listen(port, "0.0.0.0", () => {
     const earlyStorage = getStorage();
     const earlyMainRouter = new MainRouter(earlyStorage);
     earlyMainRouter.registerRoutes(app);
+    markServiceReady('routes');
     serverState.phase = 'loading';
     logger.info('[Routes] ✅ All API routes registered');
     logger.info('[Startup] API is available; background services are still initializing');
   } catch (error) {
+    markServiceFailed('routes', String(error));
     logger.error(`[Routes] FATAL: Failed to register API routes: ${error}`);
     throw error; // Crash fast — no API routes means the app is broken
   }

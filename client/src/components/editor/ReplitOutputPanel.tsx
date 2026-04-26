@@ -139,7 +139,7 @@ export function ReplitOutputPanel({ projectId }: ReplitOutputPanelProps) {
     };
 
     ws.onerror = (error) => {
-      console.error('[Output] WebSocket error:', error);
+      console.warn('[Output] WebSocket error:', error);
     };
 
     ws.onclose = () => {};

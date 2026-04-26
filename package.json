@@ -25,6 +25,7 @@
     "test:integration": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --testMatch='**/test/integration/**/*.test.ts' --passWithNoTests",
     "test:file": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --runInBand --runTestsByPath",
     "test:e2e": "DOTENV_CONFIG_PATH=.env.test node -r dotenv/config ./node_modules/@playwright/test/cli.js test test/e2e",
+    "test:e2e:panels": "bash scripts/run-panel-playwright-systematic.sh",
     "test:coverage": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --coverage --passWithNoTests || echo 'Coverage: Install dependencies with npm install'",
     "test:watch": "NODE_OPTIONS=--max-old-space-size=6144 npx jest --config=jest.config.enterprise.js --watch --passWithNoTests",
     "test:full": "npm run test:ci && npm run test:unit && npm run test:integration && npm run test:e2e",

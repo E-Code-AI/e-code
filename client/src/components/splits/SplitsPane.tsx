@@ -168,6 +168,7 @@ export function SplitsPane({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        data-testid={`pane-${paneGroup.id}`}
         layout
         layoutId={paneGroup.id}
         initial={{ opacity: 0, scale: 0.95 }}
@@ -191,6 +192,9 @@ export function SplitsPane({
                   draggedTabId === tab.id && "opacity-50"
                 )}
                 onClick={() => handleTabSelect(tab.id, index)}
+                data-testid={`tab-${tab.id}`}
+                role="tab"
+                aria-selected={paneGroup.activeTabIndex === index}
                 draggable
                 onDragStart={(e) => handleTabDragStart(tab.id, e)}
                 onDragEnd={handleTabDragEnd}
@@ -242,7 +246,7 @@ export function SplitsPane({
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-5 w-5">
+                <Button variant="ghost" size="icon" className="h-5 w-5" data-testid={`button-pane-menu-${paneGroup.id}`}>
                   <MoreVertical className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>

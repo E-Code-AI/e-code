@@ -503,18 +503,26 @@ export function ShellPanel({ projectId, className }: ShellPanelProps) {
                       data-testid={`tab-shell-${tab.id}`}
                     >
                       <span className="truncate max-w-[60px] sm:max-w-[80px]">{tab.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-4 w-4 p-0 hover:bg-destructive/20"
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Close ${tab.name}`}
+                        className="inline-flex h-4 w-4 items-center justify-center rounded hover:bg-destructive/20"
                         onClick={(e) => {
                           e.stopPropagation();
                           closeTab(tab.id);
                         }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            closeTab(tab.id);
+                          }
+                        }}
                         data-testid={`button-close-tab-${tab.id}`}
                       >
                         <X className="h-3 w-3" />
-                      </Button>
+                      </span>
                     </TabsTrigger>
                   ))}
                 </TabsList>

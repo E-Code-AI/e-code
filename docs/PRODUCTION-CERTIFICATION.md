@@ -17,7 +17,7 @@ The repository already contains a previous `READY` note, but the current certifi
 | --- | --- | --- |
 | A — Discovery & Mapping | DONE | `docs/SURFACE-MAP.md` generated from repository wiring. |
 | B — Static Audit | BLOCKED | Typecheck, build, and audit pass. Lint exits 0 but reports 3352 warnings; strict zero-warning gate not met. |
-| C — Dynamic Verification | IN PROGRESS | Local DB bootstrap, migrations, boot, `/health`, `/health/readiness`, and workspace-core Playwright smoke pass. Remaining IDE panels still require specs. |
+| C — Dynamic Verification | IN PROGRESS | Local DB bootstrap, migrations, boot, `/health`, `/health/readiness`, workspace-core smoke, router contracts, and systematic panel-suite runner are present. `desktop-xl-1600` panel matrix passes 23/23; remaining 3 viewport projects are the next heavy gate. |
 | D — Generation Pipeline E2E | PENDING | Requires AI-provider key check; non-AI checks continue if keys are missing. |
 | E — Backend Hardening | PENDING | Session restart, headers, logs, rate limits, idempotent migrations, seed. |
 | F — Frontend Robustness | PENDING | Error boundary, loading states, persistence, conflicts, dark mode, shortcuts. |
@@ -39,7 +39,7 @@ The repository already contains a previous `READY` note, but the current certifi
 ### Internal blockers
 
 - `npm run lint` currently exits 0 but reports 3352 warnings. The requested certification gate is zero lint warnings.
-- Exhaustive Playwright coverage is not yet present for every mapped IDE panel. `test/e2e/panels/workspace-core.spec.ts` now validates workspace open, file-tree create/rename/delete, and preview URL resolution.
+- Exhaustive Playwright coverage is now scaffolded for core IDE panels in `test/e2e/panels/systematic-panels.spec.ts`, but the full 4-viewport matrix must still complete green before this certification can claim all mapped panels.
 - Generation E2E specs are not yet implemented for every supported app format in `docs/SURFACE-MAP.md`.
 - Backend hardening, frontend robustness, and production deployment smoke are not yet fully green.
 
@@ -64,6 +64,9 @@ Phase C current verified gates:
 - `/health` — PASS 200.
 - `/health/readiness` — PASS 200 after startup readiness.
 - `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/panels/workspace-core.spec.ts --reporter=line` — PASS (1/1).
+- `npm run test:e2e:panels -- --project=desktop-xl-1600 --reporter=line` — PASS (23/23).
+- `npm run test:e2e:panels` — ADDED; boots an isolated dev server, waits for JSON readiness, disables Sentry for deterministic local runs, seeds one fresh project and one project with representative files, then runs systematic panel coverage over 4 viewport projects.
+- Targeted systematic panel validations — PASS for Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, and Deployment after selector hardening and safe-button filtering.
 
 Fixes made during Phase C:
 
@@ -77,6 +80,12 @@ Fixes made during Phase C:
 - Added a local Playwright config and a workspace-core panel smoke spec.
 - Added `test/e2e/api/router-contracts.spec.ts` to lock the router contracts above.
 - Added `test/e2e/api/panel-router-contracts.spec.ts` and `docs/PANEL-ROUTER-INVENTORY.md`.
+- Added `playwright.panels.config.ts`, `scripts/run-panel-playwright-systematic.sh`, `scripts/playwright-seed-panels.mjs`, and shared IDE test helpers for repeatable panel × viewport coverage.
+- Fixed agent route mount ordering so `/api/agent/actions/:projectId` reaches the project actions router before autonomous session routes.
+- Added stable test ids for split panes, split tabs, pane menus, and tool dock entries needed by deterministic panel coverage.
+- Downgraded expected local WebSocket connection noise from `console.error` to `console.warn` so panel tests still fail on real UI errors without failing on optional socket unavailability.
+- Fixed ShellPanel DOM nesting by replacing the tab close child `<button>` inside `TabsTrigger` with a non-nested accessible control.
+- Added a localhost-only `PLAYWRIGHT_PANEL_E2E=true` rate-limit bypass and disabled Sentry in the panel runner so the panel matrix validates IDE behavior instead of external telemetry quota.
 
 Router validation:
 

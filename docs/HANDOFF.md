@@ -85,6 +85,9 @@ Services annexes si activés:
 - `test/e2e/panels/workspace-core.spec.ts` : PASS, couvre ouverture IDE, file tree create/rename/delete, preview URL
 - `test/e2e/api/router-contracts.spec.ts` : PASS, couvre templates statiques, projet public `/u/:username/:slug`, et `/api/agent/tools/status`
 - `test/e2e/api/panel-router-contracts.spec.ts` : PASS, couvre l’inventaire panels IDE → routers dans `docs/PANEL-ROUTER-INVENTORY.md`
+- `npm run test:e2e:panels` : ajouté — boot serveur isolé, seed deux projets (`fresh`, `with-files`), exécute une spec systématique panel × viewport sur 4 viewports desktop/compact, capture screenshots, et échoue sur erreur console/page.
+- Validation suite systématique `desktop-xl-1600` : PASS 23/23 panels.
+- Validations ciblées suite systématique : PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment après durcissement des sélecteurs et du filtrage de boutons non sûrs.
 
 Routers cassés corrigés:
 
@@ -95,6 +98,15 @@ Routers cassés corrigés:
 - Files history: `/:projectId/files/*` capturait `/files/:fileId/history`
 - Search: `/api/search/global` rejetait `projectId` numérique et ignorait `searchType`
 - Terminal: le panel appelait `/api/shell/:projectId/shell/create` sans mount backend compatible
+- Agent actions: `/api/agent/actions/:projectId` pouvait être capturé par les routes autonomes `/api/agent/actions/:sessionId`; ordre de montage corrigé.
+
+Nouvelle commande de validation panels:
+
+- `npm run test:e2e:panels`
+- Variables utiles: `PORT`, `HOST`, `BASE_URL`, `DATABASE_URL`, `TEST_USER_EMAIL`, `TEST_USER_PASSWORD`, `PANEL_TEST_SEED_FILE`
+- Le runner active uniquement en local `PLAYWRIGHT_PANEL_E2E=true`, désactive Sentry, bypass les rate-limits API pour localhost, seed les projets, puis lance les 4 viewports.
+- Config Playwright dédiée: `playwright.panels.config.ts`
+- Spec systématique: `test/e2e/panels/systematic-panels.spec.ts`
 
 Blockers externes confirmés pour le boot artefact production local:
 
