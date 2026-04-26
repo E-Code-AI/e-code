@@ -32,6 +32,7 @@ import {
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { withBootstrapHeaders } from '@/lib/queryClient';
 import { defaultGridOptions, sessionGridColDefs } from './ag-grid-config';
 import { gridCellRenderers } from './GridCellRenderers';
 import type { AgentSessionRow, SessionsGridResponse } from '@shared/types/agent-grid.types';
@@ -158,7 +159,14 @@ export function AgentSessionsGrid({
 
   const handleExport = useCallback(async (format: 'csv' | 'json') => {
     try {
-      const response = await fetch(`/api/agent-grid/export/sessions?format=${format}`, { credentials: 'include' });
+      const exportUrl = `/api/agent-grid/export/sessions?format=${format}`;
+      const response = await fetch(exportUrl, {
+        credentials: 'include',
+        headers: withBootstrapHeaders(exportUrl),
+      });
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

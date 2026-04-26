@@ -93,7 +93,7 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
   // Execute test mutation
   const executeMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/admin/agent/test/execute`, {
+      return apiRequest('POST', `/api/admin/agent/test/execute`, {
         sessionId,
         projectId,
         testScript,
@@ -105,7 +105,6 @@ export function TestRunner({ sessionId, projectId, className }: TestRunnerProps)
           viewport: { width: 1920, height: 1080 }
         }
       });
-      return await res.json();
     },
     onSuccess: (data: any) => {
       toast({
