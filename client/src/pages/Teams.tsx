@@ -84,10 +84,10 @@ export default function Teams() {
       setNewTeamName('');
       setNewTeamDescription('');
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to create team. Please try again.",
+        description: error.message || "Failed to create team. Please try again.",
         variant: "destructive",
       });
     }
@@ -105,6 +105,13 @@ export default function Teams() {
       toast({
         title: "Team joined!",
         description: "You've successfully joined the team.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to join team",
+        description: error.message || "Failed to join team",
+        variant: "destructive",
       });
     }
   });
