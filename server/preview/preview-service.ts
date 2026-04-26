@@ -94,23 +94,28 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
     </script>`;
 }
 
+function getPreviewBaseTag(projectId: string, primaryPort: number): string {
+  return `<base data-preview-base="true" href="/preview/${projectId}/${primaryPort}/">`;
+}
+
 function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null): string {
   const html = buffer.toString('utf8');
-  if (html.includes('data-preview-fetch-interceptor="true"')) {
+  if (html.includes('data-preview-fetch-interceptor="true"') || html.includes('data-preview-base="true"')) {
     return html;
   }
 
+  const baseTag = getPreviewBaseTag(projectId, primaryPort);
   const script = getPreviewFetchInterceptorScript(projectId, primaryPort, apiPort);
 
   if (/<head>/i.test(html)) {
-    return html.replace(/<head>/i, `<head>\n${script}`);
+    return html.replace(/<head>/i, `<head>\n${baseTag}\n${script}`);
   }
 
   if (/<html/i.test(html)) {
-    return html.replace(/<html([^>]*)>/i, `<html$1>\n<head>\n${script}\n</head>`);
+    return html.replace(/<html([^>]*)>/i, `<html$1>\n<head>\n${baseTag}\n${script}\n</head>`);
   }
 
-  return `${script}\n${html}`;
+  return `${baseTag}\n${script}\n${html}`;
 }
 
 /**
@@ -1119,16 +1124,16 @@ export class PreviewService {
 
     let startCommand: string[] = [];
     if (frameworkInfo.hasVite) {
-      // Use port-specific base so assets load through the correct proxy route.
+      // Keep Vite on its native root so direct preview domains do not get trapped
+      // behind a proxy-specific base path. The proxy HTML layer injects its own
+      // <base href="/preview/:projectId/:port/"> when serving proxied preview routes.
       // --clearScreen false prevents Vite from clearing stdout (keeps logs visible).
       // --strictPort prevents port auto-increment which would break the proxy.
-      const base = `/preview/${preview.projectId}/${port}/`;
       const localViteBin = path.join(previewPath, 'node_modules', '.bin', process.platform === 'win32' ? 'vite.cmd' : 'vite');
       const packagedViteBin = path.join(previewPath, 'node_modules', 'vite', 'bin', 'vite.js');
       const viteArgs = [
         '--port', port.toString(),
         '--host', '0.0.0.0',
-        '--base', base,
         '--clearScreen', 'false',
         '--strictPort',
       ];
