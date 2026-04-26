@@ -444,23 +444,48 @@ export const CreateProjectModal = ({
       
       // Invalidate projects cache immediately
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      
-      // Navigate to IDE immediately - scaffolding happens in background
-      setCreationProgress({ step: 'ready', progress: 100, message: 'Opening workspace...' });
-      
-      // Short delay for visual feedback, then navigate
-      setTimeout(() => {
-        onSubmit?.(project.name, project.id);
-        navigate(`/ide/${project.id}`);
-        onClose();
-        resetState();
-      }, 300);
-      
-      // Scaffold files in background (non-blocking)
-      if (creationTab === 'github' && values.githubUrl) {
-        importFromGitHub(project.id, values.githubUrl).catch(() => {});
-      } else {
-        scaffoldTemplateFiles(project.id, values.template).catch(() => {});
+
+      try {
+        if (creationTab === 'github' && values.githubUrl) {
+          await importFromGitHub(project.id, values.githubUrl);
+        } else {
+          setCreationProgress({
+            step: 'scaffolding',
+            progress: 70,
+            message: 'Scaffolding project files...'
+          });
+          await scaffoldTemplateFiles(project.id, values.template);
+        }
+
+        setCreationProgress({
+          step: 'configuring',
+          progress: 90,
+          message: 'Starting preview...'
+        });
+
+        await apiRequest('GET', `/api/preview/url?projectId=${project.id}`).catch(() => null);
+
+        setCreationProgress({ step: 'ready', progress: 100, message: 'Opening workspace...' });
+
+        setTimeout(() => {
+          onSubmit?.(project.name, project.id);
+          navigate(`/ide/${project.id}`);
+          onClose();
+          resetState();
+        }, 300);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to prepare project workspace';
+        setCreationProgress({
+          step: 'error',
+          progress: 0,
+          message: 'Project created but setup failed',
+          details: message
+        });
+        toast({
+          title: 'Workspace setup failed',
+          description: message,
+          variant: 'destructive',
+        });
       }
     },
     onError: (error: Error) => {
