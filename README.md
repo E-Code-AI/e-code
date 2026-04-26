@@ -114,15 +114,22 @@ npm install
 # 2. Set required environment variables (see Configuration below)
 # Use Replit Secrets or a .env file
 
-# 3. Push database schema
-npm run db:push
+# 3. Bootstrap a local Postgres + apply Drizzle schema (idempotent).
+#    Spawns docker container `e-code-postgres` on 127.0.0.1:5455 and
+#    writes DATABASE_URL into .env.local (never .env, which may hold prod creds).
+./scripts/setup-local-db.sh
 
-# 4. Start development server (frontend + backend on same port)
-npm run dev
+# 4. Start development server (frontend + backend on same port).
+#    Loads .env.local on top of .env so DATABASE_URL points at the local container.
+source .env.local && npm run dev
 
 # 5. Start the Runner microservice (separate terminal)
 npx tsx runner/index.ts
 ```
+
+> If you already have a running Postgres reachable via your existing `DATABASE_URL`,
+> skip step 3 and just run `npm run db:push` directly. Re-run `./scripts/setup-local-db.sh`
+> any time — it is idempotent (use `FORCE_RECREATE=1` to drop and respawn the container).
 
 The development server runs on port 5000 with Vite serving the frontend and Express handling API routes.
 
