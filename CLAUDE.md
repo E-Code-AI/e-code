@@ -64,6 +64,7 @@ Dernier état vérifié:
 - lint zéro warning: PASS
 - couche multi-modèles + orchestration agentique locale: PARTIAL GATE PASS — proxy unifié `/api/ai/proxy/*`, runner plan/act/observe/reflect, outils agent normalisés, smoke `pnpm run test:smoke:agent` validé 3 fois
 - front web React ciblé: PARTIAL GATE PASS — split editor réel, reveal file tree réel, security auto-update via agent, alertes bloquantes remplacées par toasts; typecheck/lint/build PASS, panels desktop 23/23 PASS
+- app desktop Electron: PARTIAL GATE PASS — Electron confirmé, preload sécurisé, bundle React local + fallback offline, dossiers locaux, Docker detect, safeStorage secrets, menus/tray/notifications/deep links/single-instance, electron-updater, workflow CI tag multi-plateforme; `desktop:smoke`, typecheck, lint, `desktop:pack` macOS arm64 PASS
 - génération multi-format + hardening + déploiement production: en cours
 
 État précédent:

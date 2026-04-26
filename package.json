@@ -1,6 +1,8 @@
 {
   "name": "rest-express",
   "version": "1.0.0",
+  "description": "E-Code cloud and desktop AI IDE",
+  "author": "E-Code AI",
   "type": "module",
   "main": "electron/main.js",
   "license": "MIT",
@@ -37,7 +39,9 @@
     "mobile:ios": "npx cap open ios",
     "mobile:setup": "bash scripts/mobile-setup.sh",
     "desktop:start": "electron .",
-    "desktop:build": "electron-builder -mwl"
+    "desktop:pack": "npm run build && electron-builder --dir",
+    "desktop:build": "npm run build && electron-builder -mwl",
+    "desktop:smoke": "node scripts/smoke-electron-desktop.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
@@ -96,6 +100,7 @@
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.7.0",
+    "electron-updater": "^6.8.3",
     "execa": "^9.6.0",
     "express": "^4.22.1",
     "express-rate-limit": "^8.0.1",
@@ -378,21 +383,64 @@
   "build": {
     "appId": "com.ecode.app",
     "productName": "E-Code",
+    "artifactName": "E-Code-${version}-${os}-${arch}.${ext}",
     "directories": {
       "output": "dist/desktop"
     },
+    "afterSign": "electron/notarize.cjs",
+    "files": [
+      "electron/**/*",
+      "dist/public/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
+    "protocols": [
+      {
+        "name": "E-Code Deep Links",
+        "schemes": [
+          "ecode"
+        ]
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "E-Code-AI",
+        "repo": "e-code"
+      }
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
-      "icon": "client/public/icons/icon-512x512.png"
+      "icon": "client/public/icons/icon-512x512.png",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.plist"
     },
     "win": {
-      "icon": "client/public/icons/icon-512x512.png"
+      "icon": "client/public/icons/icon-512x512.png",
+      "target": [
+        "nsis"
+      ]
     },
     "linux": {
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb"
       ],
-      "icon": "client/public/icons"
+      "icon": "client/public/icons",
+      "category": "Development"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
     }
   }
 }

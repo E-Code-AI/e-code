@@ -68,6 +68,47 @@ export interface ElectronDirectoryEntry {
 
 export type ThemeSource = 'system' | 'light' | 'dark';
 
+export interface ElectronLocalProject {
+  id: string;
+  name: string;
+  path: string;
+  openedAt: string;
+  tree: ElectronDirectoryNode;
+  sync: {
+    mode: 'offline-first';
+    cloudConnected: boolean;
+    lastSyncedAt: string | null;
+  };
+}
+
+export interface ElectronDirectoryNode extends ElectronDirectoryEntry {
+  path: string;
+  size: number;
+  modifiedAt: string;
+  children: ElectronDirectoryNode[];
+}
+
+export interface ElectronDockerStatus {
+  available: boolean;
+  runtime: 'docker';
+  version?: unknown;
+  info?: unknown;
+  error?: string;
+}
+
+export interface ElectronUpdateStatus {
+  status: 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded';
+  info?: unknown;
+  progress?: unknown;
+}
+
+export interface ElectronDeepLink {
+  url: string;
+  action: string;
+  projectId: string | null;
+  params: Record<string, string>;
+}
+
 export interface ElectronAPI {
   // Platform Detection
   readonly isElectron: true;
@@ -95,6 +136,9 @@ export interface ElectronAPI {
   writeFile(filePath: string, content: string): Promise<boolean>;
   fileExists(filePath: string): Promise<boolean>;
   readDirectory(dirPath: string): Promise<ElectronDirectoryEntry[]>;
+  openLocalProjectDialog(): Promise<{ canceled: true } | { canceled: false; project: ElectronLocalProject }>;
+  openLocalProjectPath(folderPath: string): Promise<ElectronLocalProject>;
+  listLocalProjects(): Promise<{ projects: ElectronLocalProject[] }>;
 
   // Shell APIs
   openExternal(url: string): Promise<void>;
@@ -113,10 +157,25 @@ export interface ElectronAPI {
   storeGet<T>(key: string, defaultValue?: T): Promise<T>;
   storeSet<T>(key: string, value: T): Promise<void>;
   storeDelete(key: string): Promise<void>;
+  secretSet(key: string, value: string): Promise<boolean>;
+  secretGet(key: string): Promise<string | null>;
+  secretDelete(key: string): Promise<boolean>;
 
   // Clipboard APIs
   clipboardWriteText(text: string): Promise<void>;
   clipboardReadText(): Promise<string>;
+
+  // Native Desktop APIs
+  showNativeNotification(options: { title: string; body?: string; silent?: boolean }): Promise<boolean>;
+  detectDockerRuntime(): Promise<ElectronDockerStatus>;
+  getCloudSyncStatus(): Promise<{ online: boolean; cloudUrl: string; mode: 'offline-first' }>;
+  checkForUpdates(): Promise<unknown>;
+  downloadUpdate(): Promise<unknown>;
+  installUpdate(): Promise<void>;
+  onDesktopCliArgs(callback: (args: { raw: string[]; deepLinks: string[]; folders: string[] }) => void): () => void;
+  onDeepLink(callback: (link: ElectronDeepLink) => void): () => void;
+  onUpdateStatus(callback: (status: ElectronUpdateStatus) => void): () => void;
+  onUpdateError(callback: (message: string) => void): () => void;
 
   // IPC Communication
   on(channel: string, callback: (...args: any[]) => void): () => void;
@@ -127,6 +186,7 @@ export interface ElectronAPI {
   // Menu Event Listeners
   onMenuNewProject(callback: () => void): () => void;
   onMenuOpenProject(callback: () => void): () => void;
+  onMenuOpenLocalFolder(callback: () => void): () => void;
   onMenuSave(callback: () => void): () => void;
   onMenuSaveAll(callback: () => void): () => void;
   onMenuPreferences(callback: () => void): () => void;
@@ -138,12 +198,14 @@ export interface ElectronAPI {
   onMenuToggleTerminal(callback: () => void): () => void;
   onMenuToggleAI(callback: () => void): () => void;
   onMenuQuickOpen(callback: () => void): () => void;
+  onMenuCommandPalette(callback: () => void): () => void;
   onMenuGoToLine(callback: () => void): () => void;
   onMenuGoToSymbol(callback: () => void): () => void;
   onMenuGoToDefinition(callback: () => void): () => void;
   onMenuRunCode(callback: () => void): () => void;
   onMenuStopExecution(callback: () => void): () => void;
   onMenuShowShortcuts(callback: () => void): () => void;
+  onMenuDetectDocker(callback: () => void): () => void;
 }
 
 // Extend Window interface

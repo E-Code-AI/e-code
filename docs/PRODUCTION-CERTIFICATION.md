@@ -150,3 +150,37 @@ Known limitations for this gate:
 
 - Full 4-viewport systematic panel matrix was not rerun in this pass; the previous certification run remains documented above as PASS 92/92.
 - Lighthouse >90 for the main shell was not certified in this pass.
+
+## Desktop Electron Gate — 2026-04-27
+
+Status: PARTIAL PRODUCTION GATE PASS for the Electron desktop shell. This confirms the repository uses Electron, not Tauri. The global platform verdict remains blocked until signed/notarized release artifacts are produced with real certificates and installation/update E2E is run on macOS, Windows, and Linux.
+
+Implemented:
+
+- Electron main process now loads the shared local React bundle from `dist/public/index.html` when available, with an offline fallback page for local projects.
+- Secure preload bridge added with explicit IPC surface and no renderer Node integration.
+- Native local folder workflow added: open local folder, persist recent local projects, read/write files, read directories, and expose offline-first project metadata.
+- Docker local runtime detection added through the native shell bridge.
+- OS keychain-backed secret storage added via Electron `safeStorage`.
+- Native menus completed for File, Edit, View, Run, Window, and Help, wired to React workbench commands.
+- Tray icon added with quick actions for show, new project, open local folder, settings, and quit.
+- Native notifications exposed to the React bundle.
+- `ecode://open/<projectId>` deep link handling added with single-instance forwarding and CLI folder argument forwarding.
+- `electron-updater` integrated, with update status/error streaming to the renderer.
+- Electron Builder config now includes protocol registration, macOS DMG/ZIP, Windows NSIS, Linux AppImage/deb, publish metadata, macOS hardened runtime entitlements, and notarization hook.
+- GitHub Actions desktop workflow now builds from the actual root Electron app on tag pushes across macOS, Windows, and Linux.
+
+Verified commands:
+
+- `node --check electron/main.js` — PASS.
+- `node --check electron/preload.js` — PASS.
+- `npm run desktop:smoke` — PASS.
+- `npm run typecheck` — PASS.
+- `npm run lint` — PASS.
+- `npm run desktop:pack` — PASS on local macOS arm64 directory build; React/server bundles built and Electron app assembled. macOS notarization was skipped because Apple credentials are not configured locally.
+
+Known limitations for this gate:
+
+- Production macOS signing/notarization requires `MACOS_CERTIFICATE`, `MACOS_CERTIFICATE_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` in GitHub secrets.
+- Production Windows signing requires `WINDOWS_CERTIFICATE` and `WINDOWS_CERTIFICATE_PASSWORD` in GitHub secrets.
+- Real installer E2E for `.dmg`, `.exe`, AppImage, and `.deb`, auto-update bump validation, cold start <2s measurement, and 1-hour leak test were not executed locally in this pass.

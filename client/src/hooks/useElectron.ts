@@ -119,6 +119,24 @@ export function useElectron() {
     return api.fileExists(filePath);
   }, []);
 
+  const openLocalProjectDialog = useCallback(async () => {
+    const api = getElectronAPI();
+    if (!api) return null;
+    return api.openLocalProjectDialog();
+  }, []);
+
+  const openLocalProjectPath = useCallback(async (folderPath: string) => {
+    const api = getElectronAPI();
+    if (!api) throw new Error('Not running in Electron');
+    return api.openLocalProjectPath(folderPath);
+  }, []);
+
+  const listLocalProjects = useCallback(async () => {
+    const api = getElectronAPI();
+    if (!api) return { projects: [] };
+    return api.listLocalProjects();
+  }, []);
+
   // Shell helpers
   const openExternal = useCallback(async (url: string) => {
     const api = getElectronAPI();
@@ -195,6 +213,42 @@ export function useElectron() {
     }
   }, []);
 
+  const setSecret = useCallback(async (key: string, value: string) => {
+    const api = getElectronAPI();
+    if (!api) throw new Error('Desktop keychain is only available in Electron');
+    return api.secretSet(key, value);
+  }, []);
+
+  const getSecret = useCallback(async (key: string) => {
+    const api = getElectronAPI();
+    if (!api) return null;
+    return api.secretGet(key);
+  }, []);
+
+  const deleteSecret = useCallback(async (key: string) => {
+    const api = getElectronAPI();
+    if (!api) return false;
+    return api.secretDelete(key);
+  }, []);
+
+  const showNativeNotification = useCallback(async (title: string, body?: string) => {
+    const api = getElectronAPI();
+    if (!api) return false;
+    return api.showNativeNotification({ title, body });
+  }, []);
+
+  const detectDockerRuntime = useCallback(async () => {
+    const api = getElectronAPI();
+    if (!api) return { available: false as const, runtime: 'docker' as const, error: 'Not running in Electron' };
+    return api.detectDockerRuntime();
+  }, []);
+
+  const getCloudSyncStatus = useCallback(async () => {
+    const api = getElectronAPI();
+    if (!api) return { online: navigator.onLine, cloudUrl: window.location.origin, mode: 'offline-first' as const };
+    return api.getCloudSyncStatus();
+  }, []);
+
   return {
     // State
     isDesktop,
@@ -215,6 +269,9 @@ export function useElectron() {
     readFile,
     writeFile,
     fileExists,
+    openLocalProjectDialog,
+    openLocalProjectPath,
+    listLocalProjects,
     
     // Shell methods
     openExternal,
@@ -236,6 +293,14 @@ export function useElectron() {
     // Store methods
     getStoredValue,
     setStoredValue,
+
+    // Native desktop methods
+    setSecret,
+    getSecret,
+    deleteSecret,
+    showNativeNotification,
+    detectDockerRuntime,
+    getCloudSyncStatus,
   };
 }
 
@@ -245,6 +310,7 @@ export function useElectron() {
 export function useElectronMenuEvents(handlers: {
   onNewProject?: () => void;
   onOpenProject?: () => void;
+  onOpenLocalFolder?: () => void;
   onSave?: () => void;
   onSaveAll?: () => void;
   onPreferences?: () => void;
@@ -256,12 +322,14 @@ export function useElectronMenuEvents(handlers: {
   onToggleTerminal?: () => void;
   onToggleAI?: () => void;
   onQuickOpen?: () => void;
+  onCommandPalette?: () => void;
   onGoToLine?: () => void;
   onGoToSymbol?: () => void;
   onGoToDefinition?: () => void;
   onRunCode?: () => void;
   onStopExecution?: () => void;
   onShowShortcuts?: () => void;
+  onDetectDocker?: () => void;
 }) {
   useEffect(() => {
     const api = getElectronAPI();
@@ -274,6 +342,9 @@ export function useElectronMenuEvents(handlers: {
     }
     if (handlers.onOpenProject) {
       cleanups.push(api.onMenuOpenProject(handlers.onOpenProject));
+    }
+    if (handlers.onOpenLocalFolder) {
+      cleanups.push(api.onMenuOpenLocalFolder(handlers.onOpenLocalFolder));
     }
     if (handlers.onSave) {
       cleanups.push(api.onMenuSave(handlers.onSave));
@@ -308,6 +379,9 @@ export function useElectronMenuEvents(handlers: {
     if (handlers.onQuickOpen) {
       cleanups.push(api.onMenuQuickOpen(handlers.onQuickOpen));
     }
+    if (handlers.onCommandPalette) {
+      cleanups.push(api.onMenuCommandPalette(handlers.onCommandPalette));
+    }
     if (handlers.onGoToLine) {
       cleanups.push(api.onMenuGoToLine(handlers.onGoToLine));
     }
@@ -325,6 +399,9 @@ export function useElectronMenuEvents(handlers: {
     }
     if (handlers.onShowShortcuts) {
       cleanups.push(api.onMenuShowShortcuts(handlers.onShowShortcuts));
+    }
+    if (handlers.onDetectDocker) {
+      cleanups.push(api.onMenuDetectDocker(handlers.onDetectDocker));
     }
 
     return () => {

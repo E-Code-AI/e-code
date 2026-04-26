@@ -626,6 +626,15 @@ function UnifiedIDELayout({
     onOpenProject: () => {
       setShowQuickFileSearch(true);
     },
+    onOpenLocalFolder: async () => {
+      const result = await window.electronAPI?.openLocalProjectDialog();
+      if (!result || result.canceled) return;
+      toast({
+        title: 'Local folder opened',
+        description: `${result.project.name} is available offline-first at ${result.project.path}.`,
+      });
+      window.dispatchEvent(new CustomEvent('ecode:desktop-local-project-opened', { detail: result.project }));
+    },
     onSave: () => {
       // Trigger save via Monaco editor command
       const event = new CustomEvent('electron-save');
@@ -673,6 +682,9 @@ function UnifiedIDELayout({
     onQuickOpen: () => {
       setShowQuickFileSearch(true);
     },
+    onCommandPalette: () => {
+      setShowCommandPalette(true);
+    },
     onGoToLine: () => {
       const event = new CustomEvent('electron-go-to-line');
       document.dispatchEvent(event);
@@ -694,7 +706,58 @@ function UnifiedIDELayout({
     onShowShortcuts: () => {
       setShowKeyboardShortcuts(true);
     },
+    onDetectDocker: async () => {
+      const status = await window.electronAPI?.detectDockerRuntime();
+      toast({
+        title: status?.available ? 'Docker runtime available' : 'Docker runtime unavailable',
+        description: status?.available ? 'Local Docker can be used as a desktop runtime.' : status?.error || 'Docker was not detected.',
+        variant: status?.available ? 'default' : 'destructive',
+      });
+    },
   });
+
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api) return;
+
+    const cleanups = [
+      api.onDeepLink((link) => {
+        if (link.action === 'open' && link.projectId) {
+          window.history.pushState(null, '', `/ide/${encodeURIComponent(link.projectId)}`);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+      }),
+      api.onDesktopCliArgs(async (args) => {
+        for (const folderPath of args.folders) {
+          try {
+            const project = await api.openLocalProjectPath(folderPath);
+            window.dispatchEvent(new CustomEvent('ecode:desktop-local-project-opened', { detail: project }));
+          } catch (error) {
+            toast({
+              title: 'Local folder failed',
+              description: error instanceof Error ? error.message : 'Unable to open local folder.',
+              variant: 'destructive',
+            });
+          }
+        }
+      }),
+      api.onUpdateStatus((status) => {
+        if (status.status === 'available' || status.status === 'downloaded') {
+          toast({
+            title: status.status === 'available' ? 'Desktop update available' : 'Desktop update ready',
+            description: status.status === 'available' ? 'Use Help > Check for Updates to download it.' : 'Restart E-Code to install the update.',
+          });
+        }
+      }),
+      api.onUpdateError((message) => {
+        toast({ title: 'Desktop update failed', description: message, variant: 'destructive' });
+      }),
+    ];
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  }, [toast]);
   
   const tabletSwipeStartX = useRef<number>(0);
 
