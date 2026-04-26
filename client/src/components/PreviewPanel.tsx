@@ -12,14 +12,21 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
-interface Deployment {
+interface PublishState {
   url: string;
   status?: string;
   customDomain?: string;
   sslEnabled?: boolean;
+  deployedAt?: string;
+}
+
+interface PreviewStatus {
+  previewUrl: string | null;
+  status: 'running' | 'stopped' | 'starting' | 'error' | 'static' | 'no_runnable_files';
+  message?: string;
 }
 
 interface PreviewPanelProps {
@@ -34,10 +41,19 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [customDomain, setCustomDomain] = useState('');
 
-  // Fetch deployment status
-  const { data: deployment } = useQuery<Deployment>({
-    queryKey: [`/api/projects/${projectId}/deployment/latest`],
+  const { data: publishState } = useQuery<PublishState>({
+    queryKey: ['/api/projects', projectId, 'publish', 'status'],
+    queryFn: () => apiRequest('GET', `/api/projects/${projectId}/publish/status`),
+    enabled: !!projectId,
   });
+
+  const { data: previewStatus, refetch: refetchPreviewStatus } = useQuery<PreviewStatus>({
+    queryKey: ['/api/preview/url', projectId],
+    queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
+    enabled: !!projectId,
+  });
+
+  const resolvedPreviewUrl = projectUrl || previewStatus?.previewUrl || '';
 
   const handleRefresh = () => {
     try {
@@ -48,6 +64,8 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
       if (iframe?.contentWindow) {
         iframe.contentWindow.location.reload();
       }
+
+      refetchPreviewStatus();
       
       // Reset refreshing state after animation
       setTimeout(() => setIsRefreshing(false), 1000);
@@ -64,15 +82,25 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
 
   const handleDeploy = async () => {
     try {
-      await apiRequest('POST', `/api/projects/${projectId}/deploy`, {
-        type: 'static',
+      const route = publishState?.status === 'live' || publishState?.status === 'needs-republish'
+        ? `/api/projects/${projectId}/republish`
+        : `/api/projects/${projectId}/publish`;
+
+      await apiRequest('POST', route, {
+        type: 'autoscale',
         regions: ['us-east-1'],
         environment: 'production',
+        forceRebuild: false,
         customDomain: customDomain || undefined,
-        sslEnabled: true,
       });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'publish', 'status'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'deployment', 'latest'] }),
+      ]);
       toast({
-        title: "Deployment Started",
+        title: publishState?.status === 'live' || publishState?.status === 'needs-republish'
+          ? "Republish Started"
+          : "Deployment Started",
         description: "Your application is being deployed.",
       });
     } catch (error) {
@@ -141,7 +169,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
               <div className="flex items-center gap-1.5 flex-1">
                 <Shield className="w-3 h-3 text-green-600" />
                 <Input
-                  value={projectUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
+                  value={resolvedPreviewUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
                   readOnly
                   className="h-8 flex-1 font-mono text-[13px]"
                 />
@@ -157,9 +185,9 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => projectUrl && window.open(projectUrl, '_blank')}
+                  onClick={() => resolvedPreviewUrl && window.open(resolvedPreviewUrl, '_blank')}
                   className="h-8 w-8 p-0"
-                  disabled={!projectUrl}
+                  disabled={!resolvedPreviewUrl}
                 >
                   <ExternalLink className="h-4 w-4" />
                 </Button>
@@ -170,9 +198,9 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
           {/* Preview Frame */}
           <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-4 overflow-auto">
             <div className={cn("mx-auto bg-white dark:bg-black rounded-lg shadow-lg overflow-hidden", getDeviceDimensions())}>
-              {projectUrl ? (
+              {resolvedPreviewUrl ? (
                 <iframe
-                  src={projectUrl}
+                  src={resolvedPreviewUrl}
                   className="w-full h-full border-0"
                   style={{ minHeight: '600px' }}
                   title="Project Preview"
@@ -294,18 +322,18 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
           </div>
 
           {/* Current Deployment Status */}
-          {deployment && (
+          {publishState?.url && (
             <Alert className="border-green-200 dark:border-green-800">
               <Check className="h-4 w-4 text-green-600" />
               <AlertDescription>
                 Your project is deployed at{' '}
                 <a 
-                  href={deployment.url} 
+                  href={publishState.url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="font-medium text-blue-600 hover:underline"
                 >
-                  {deployment.url}
+                  {publishState.url}
                 </a>
               </AlertDescription>
             </Alert>
