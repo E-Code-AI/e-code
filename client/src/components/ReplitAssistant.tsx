@@ -124,17 +124,11 @@ export function ReplitAssistant({
       };
 
       // Use Claude (Anthropic) as the provider
-      const response = await apiRequest('POST', `/api/ai/${projectId}/chat`, {
+      const data = await apiRequest('POST', `/api/ai/${projectId}/chat`, {
         message: userMessage.content,
         context,
         provider: 'anthropic' // Force Claude
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to get response');
-      }
-
-      const data = await response.json();
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

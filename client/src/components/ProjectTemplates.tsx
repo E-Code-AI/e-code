@@ -108,15 +108,10 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
   // Create project from template mutation
   const createProjectMutation = useMutation({
     mutationFn: async ({ template, name }: { template: Template; name: string }) => {
-      const response = await apiRequest('POST', '/api/projects/from-template', {
+      return apiRequest('POST', '/api/projects/from-template', {
         templateId: template.id,
         name: name || `My ${template.name}`,
       });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create project');
-      }
-      return response.json();
     },
     onSuccess: (project) => {
       toast({
@@ -124,7 +119,7 @@ export function ProjectTemplates({ onSelectTemplate, showCreateButton = true }: 
         description: `"${project.name}" has been created successfully.`,
       });
       // Navigate to the project with AI agent activated
-      const projectUrl = getProjectUrl(project, project.owner?.username || user?.username);
+      const projectUrl = getProjectUrl(project, project.owner?.username);
       navigate(`${projectUrl}?agent=true&prompt=Enhance this ${project.name} template`);
       setShowCreateDialog(false);
       setShowPreviewDialog(false);

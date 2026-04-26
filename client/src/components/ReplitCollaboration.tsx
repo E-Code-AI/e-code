@@ -72,19 +72,16 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
     if (!inviteEmail.trim()) return;
 
     try {
-      const response = await apiRequest('POST', `/api/collaboration/${projectId}/invite`, { 
+      await apiRequest('POST', `/api/collaboration/${projectId}/invite`, { 
         email: inviteEmail,
         role: 'editor' 
       });
-
-      if (response.ok) {
-        toast({
-          title: "Invitation Sent",
-          description: `Invited ${inviteEmail} to collaborate`
-        });
-        setInviteEmail('');
-        fetchCollaborators();
-      }
+      toast({
+        title: "Invitation Sent",
+        description: `Invited ${inviteEmail} to collaborate`
+      });
+      setInviteEmail('');
+      fetchCollaborators();
     } catch (error) {
       toast({
         title: "Error",
@@ -96,15 +93,12 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const updateCollaboratorRole = async (collaboratorId: string, role: string) => {
     try {
-      const response = await apiRequest('PATCH', `/api/collaboration/${projectId}/users/${collaboratorId}`, { role });
-
-      if (response.ok) {
-        fetchCollaborators();
-        toast({
-          title: "Role Updated",
-          description: `Collaborator role changed to ${role}`
-        });
-      }
+      await apiRequest('PATCH', `/api/collaboration/${projectId}/users/${collaboratorId}`, { role });
+      fetchCollaborators();
+      toast({
+        title: "Role Updated",
+        description: `Collaborator role changed to ${role}`
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -116,15 +110,12 @@ export function ReplitCollaboration({ projectId, isOwner }: ReplitCollaborationP
 
   const removeCollaborator = async (collaboratorId: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/collaboration/${projectId}/users/${collaboratorId}`);
-
-      if (response.ok) {
-        fetchCollaborators();
-        toast({
-          title: "Collaborator Removed",
-          description: "Collaborator has been removed from the project"
-        });
-      }
+      await apiRequest('DELETE', `/api/collaboration/${projectId}/users/${collaboratorId}`);
+      fetchCollaborators();
+      toast({
+        title: "Collaborator Removed",
+        description: "Collaborator has been removed from the project"
+      });
     } catch (error) {
       toast({
         title: "Error",
