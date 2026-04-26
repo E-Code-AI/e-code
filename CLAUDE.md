@@ -46,15 +46,16 @@ Finaliser E-code pour une cible de production `replit-deploy` avec :
 
 ## État production E-code
 
-Pas encore `READY`.
+`READY` — 2026-04-26.
 
-Raison:
+Validations globales passées ensemble :
 
-- les validations globales passent maintenant ensemble :
-  - `npm run typecheck`
-  - `npm run lint`
-  - `npm run build`
-  - boot serveur 30s avec healthcheck local OK
-- il reste le livrable de démonstration finale :
-  - screenshot `docs/demo-screenshot.png`
-  - marquage final `READY` avec date une fois cette démo produite
+- `npm run typecheck` — OK
+- `npm run lint` — OK
+- `npm run build` — OK (artifacts `dist/index.js` + `dist/public/`)
+- `npm run test:file -- test/unit/agent-system-prompt.test.ts` — OK (2/2)
+- boot serveur dev sur port 5057, alive ≥ 30 s, `/health` 200, `/health/liveness` 200, `/api/health` 200 (DB up via Postgres dédié pour la validation locale ; `/health/readiness` 503 attendu — sous-système optionnel `debug-ws` non présent, cf. memory `project_panel_status`).
+
+Livrable de démonstration finale :
+
+- screenshot `docs/demo-screenshot.png` capturé via `scripts/demo-screenshot.mjs` (Playwright Chromium headless, 1440×900) sur le hero de production.
