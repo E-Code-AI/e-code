@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConsoleMessage {
   id: string;
@@ -106,6 +107,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
   const [searchQuery, setSearchQuery] = useState('');
   const [isInspecting, setIsInspecting] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
+  const [isStartingPreview, setIsStartingPreview] = useState(false);
   const consoleEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -226,6 +228,27 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
     URL.revokeObjectURL(url);
   };
 
+  const handleStartPreview = async () => {
+    if (!projectId || isStartingPreview) return;
+
+    try {
+      setIsStartingPreview(true);
+      await apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
+      toast({
+        title: 'Preview starting',
+        description: 'Developer tools will connect as soon as the preview is live.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to start preview',
+        description: error?.message || 'An error occurred while starting the preview.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingPreview(false);
+    }
+  };
+
   const startElementInspection = () => {
     setIsInspecting(true);
     if (wsRef.current) {
@@ -313,13 +336,28 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
             Preview Developer Tools
           </CardTitle>
           <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-[11px]">
+              {previewUrl ? 'Connected to preview' : isStartingPreview ? 'Starting preview' : 'Preview not running'}
+            </Badge>
             <Button
               size="sm"
               variant="ghost"
               onClick={exportLogs}
+              disabled={!previewUrl && !consoleMessages.length && !networkRequests.length && !performanceMetrics.length}
             >
               <Download className="h-4 w-4" />
             </Button>
+            {!previewUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleStartPreview}
+                disabled={isStartingPreview}
+              >
+                <RefreshCw className={cn("h-4 w-4 mr-2", isStartingPreview && "animate-spin")} />
+                {isStartingPreview ? 'Starting...' : 'Run Preview'}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="ghost"
@@ -340,6 +378,23 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
         </div>
       </CardHeader>
       <CardContent className="p-0 h-[calc(100%-3rem)]">
+        {!previewUrl && !isStartingPreview ? (
+          <div className="h-full flex items-center justify-center p-8">
+            <div className="text-center space-y-4 max-w-md">
+              <Terminal className="h-10 w-10 mx-auto text-muted-foreground" />
+              <div className="space-y-1">
+                <h3 className="text-[15px] font-semibold">Preview required</h3>
+                <p className="text-[13px] text-muted-foreground">
+                  Start the preview to stream console logs, network requests, inspected elements, and performance metrics.
+                </p>
+              </div>
+              <Button onClick={handleStartPreview}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Run Preview
+              </Button>
+            </div>
+          </div>
+        ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
           <TabsList className="w-full justify-start rounded-none border-b">
             <TabsTrigger value="console" className="gap-2">
@@ -682,6 +737,7 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
             </ScrollArea>
           </TabsContent>
         </Tabs>
+        )}
       </CardContent>
     </Card>
   );
