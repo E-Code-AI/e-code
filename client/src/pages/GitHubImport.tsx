@@ -120,7 +120,7 @@ export default function GitHubImport() {
     }, 500);
 
     try {
-      const response = await apiRequest('POST', '/api/git/clone', { url: repoUrl });
+      const result = await apiRequest('POST', '/api/git/clone', { url: repoUrl });
 
       clearInterval(progressInterval);
       setImportProgress(100);
@@ -131,7 +131,6 @@ export default function GitHubImport() {
       });
 
       // Navigate to the new project
-      const result = await response.json();
       setTimeout(() => {
         setLocation(`/project/${result.projectId}`);
       }, 1000);
@@ -203,7 +202,7 @@ export default function GitHubImport() {
     }, 500);
 
     try {
-      const response = await apiRequest('POST', '/api/git/clone', { 
+      const result = await apiRequest('POST', '/api/git/clone', { 
         url: repo.html_url,
         branch: repo.default_branch
       });
@@ -216,7 +215,6 @@ export default function GitHubImport() {
         description: `${repo.name} imported successfully!`
       });
 
-      const result = await response.json();
       setTimeout(() => {
         setLocation(`/project/${result.projectId}`);
       }, 1000);

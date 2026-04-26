@@ -30,10 +30,12 @@ import { TemplateCard } from '@/components/marketplace/TemplateCard';
 import { TemplatePreview } from '@/components/marketplace/TemplatePreview';
 import { CommunityHub } from '@/components/marketplace/CommunityHub';
 import { cn } from '@/lib/utils';
+import { useLocation } from 'wouter';
 
 export default function TemplateMarketplace() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<string>('popularity');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');

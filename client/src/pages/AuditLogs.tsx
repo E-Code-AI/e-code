@@ -46,8 +46,7 @@ export function AuditLogs() {
       if (dateRange.from) params.append('from', dateRange.from.toISOString());
       if (dateRange.to) params.append('to', dateRange.to.toISOString());
       
-      const response = await apiRequest('GET', `/api/admin/audit-logs?${params.toString()}`);
-      return response.json();
+      return apiRequest('GET', `/api/admin/audit-logs?${params.toString()}`);
     }
   });
 
