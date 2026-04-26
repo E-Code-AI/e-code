@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { queryClient, apiRequest } from '@/lib/queryClient';
+import { queryClient, apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -349,9 +349,13 @@ export default function ChatGPTAdmin() {
     setMessages(prev => [...prev, assistantMsg]);
 
     try {
+      const csrfToken = await getCSRFToken();
       const response = await fetch('/api/admin/chatgpt/stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withBootstrapHeaders('/api/admin/chatgpt/stream', {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        }),
         body: JSON.stringify({ model: selectedModel, messages: apiMessages }),
         signal: ctrl.signal,
         credentials: 'include',

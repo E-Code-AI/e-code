@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
-import { apiRequest, getCSRFToken } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface ImportExportProps {
   projectId: number;
@@ -56,13 +56,14 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
     
     try {
       const csrfToken = await getCSRFToken();
-      const response = await fetch(`/api/import-export/${projectId}/export`, {
+      const exportUrl = `/api/import-export/${projectId}/export`;
+      const response = await fetch(exportUrl, {
         method: 'POST',
         credentials: 'include',
-        headers: {
+        headers: withBootstrapHeaders(exportUrl, {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken,
-        },
+        }),
         body: JSON.stringify({
         format: exportFormat,
         options: exportOptions
@@ -144,24 +145,26 @@ export function ImportExport({ projectId, className }: ImportExportProps) {
         const csrfToken = await getCSRFToken();
         const formData = new FormData();
         formData.append('file', selectedFile);
+        const importUrl = `/api/import-export/${projectId}/import`;
         
-        response = await fetch(`/api/import-export/${projectId}/import`, {
+        response = await fetch(importUrl, {
           method: 'POST',
           credentials: 'include',
-          headers: {
+          headers: withBootstrapHeaders(importUrl, {
             'X-CSRF-Token': csrfToken,
-          },
+          }),
           body: formData,
         });
       } else if (importSource === 'github') {
         const csrfToken = await getCSRFToken();
-        response = await fetch(`/api/import-export/${projectId}/import`, {
+        const importUrl = `/api/import-export/${projectId}/import`;
+        response = await fetch(importUrl, {
           method: 'POST',
           credentials: 'include',
-          headers: {
+          headers: withBootstrapHeaders(importUrl, {
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken,
-          },
+          }),
           body: JSON.stringify({
           source: 'github',
           url: githubUrl
