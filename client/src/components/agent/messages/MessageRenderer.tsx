@@ -16,6 +16,7 @@ import { VibingAnimation } from './VibingAnimation';
 import { MultiFileDiff } from './FileDiffViewer';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface MessageRendererProps {
   message: AgentMessage;
@@ -70,9 +71,13 @@ function useTTS(text: string) {
     setState('loading');
 
     try {
+      const csrfToken = await getCSRFToken();
       const res = await fetch('/api/voice/tts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withBootstrapHeaders('/api/voice/tts', {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        }),
         credentials: 'include',
         body: JSON.stringify({ text: clean, voice: 'alloy' }),
       });

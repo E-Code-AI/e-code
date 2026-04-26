@@ -222,6 +222,7 @@ export function WorkflowStatus({ projectId }: { projectId?: number }) {
   
   const workflows = data?.workflows || [];
   const activeCount = workflows.filter(w => w.status === 'in_progress').length;
+  const hasParallelWork = activeCount > 1;
   
   if (error) {
     return (
@@ -244,7 +245,7 @@ export function WorkflowStatus({ projectId }: { projectId?: number }) {
           {activeCount > 0 && (
             <Badge variant="default" className="gap-1">
               <Loader2 className="h-3 w-3 animate-spin" />
-              {activeCount} running
+              {hasParallelWork ? `${activeCount} running in parallel` : `${activeCount} running`}
             </Badge>
           )}
         </div>
@@ -289,6 +290,18 @@ export function WorkflowStatus({ projectId }: { projectId?: number }) {
       ) : workflows.length > 0 ? (
         <ScrollArea className="h-[500px] pr-4">
           <div className="space-y-4">
+            {hasParallelWork && (
+              <Card className="border-blue-500/20 bg-blue-500/5">
+                <CardContent className="p-4">
+                  <p className="text-sm font-medium text-blue-600">
+                    {activeCount} workstreams are active in parallel
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    The orchestrator is running multiple tasks at the same time for this project.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
             {workflows.map((workflow) => (
               <WorkflowCard key={workflow.id} workflow={workflow} />
             ))}
