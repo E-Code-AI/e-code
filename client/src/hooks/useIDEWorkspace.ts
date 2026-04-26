@@ -74,6 +74,7 @@ const normalizeToolId = (id?: string | null) => {
   if (id === 'database-browser') return 'database';
   if (id === 'package-viewer') return 'packages';
   if (id === 'webpreview') return 'preview';
+  if (id === 'terminal') return 'shell';
   return id;
 };
 
@@ -139,7 +140,6 @@ const getStoredAgentToolsSettings = (projectId: string): AgentToolsSettings | nu
 
 export const availableTools: AvailableTool[] = [
   { id: 'console', label: 'Console', icon: '🖥️' },
-  { id: 'terminal', label: 'Terminal', icon: '⌨️' },
   { id: 'git', label: 'Git', icon: '🔀' },
   { id: 'database', label: 'Database', icon: '💾' },
   { id: 'secrets', label: 'Secrets', icon: '🔐' },
@@ -214,6 +214,8 @@ export function useIDEWorkspace(projectId: string) {
               ? 'Database'
               : tab.id === 'webpreview'
                 ? 'Preview'
+                : tab.id === 'terminal'
+                  ? 'Shell'
                 : tab.label,
         }))
       : undefined,
@@ -506,16 +508,17 @@ export function useIDEWorkspace(projectId: string) {
   }, []);
 
   const handleAddTool = useCallback((toolId: string) => {
-    const tool = availableTools.find(t => t.id === toolId);
+    const normalizedToolId = normalizeToolId(toolId) || toolId;
+    const tool = availableTools.find(t => t.id === normalizedToolId);
     if (!tool) return;
     
-    if (tabs.find(t => t.id === toolId)) {
-      setActiveTab(toolId);
+    if (tabs.find(t => t.id === normalizedToolId)) {
+      setActiveTab(normalizedToolId);
       return;
     }
     
-    setTabs(prev => [...prev, { id: toolId, label: tool.label, closable: true }]);
-    setActiveTab(toolId);
+    setTabs(prev => [...prev, { id: normalizedToolId, label: tool.label, closable: true }]);
+    setActiveTab(normalizedToolId);
   }, [tabs]);
 
   const handleTabClose = useCallback((tabId: string) => {

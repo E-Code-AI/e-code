@@ -70,12 +70,12 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
   },
   'terminal': {
     id: 'terminal',
-    label: 'Terminal',
+    label: 'Shell',
     icon: Terminal,
     emoji: '⌨️',
     category: 'Development',
-    description: 'Shell access and command execution',
-    keywords: ['bash', 'shell', 'cli'],
+    description: 'Legacy alias for the Shell tool',
+    keywords: ['bash', 'shell', 'cli', 'legacy'],
   },
   'shell': {
     id: 'shell',

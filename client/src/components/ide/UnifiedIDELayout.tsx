@@ -1173,21 +1173,11 @@ function UnifiedIDELayout({
     }
 
     // Shell - Interactive PTY terminal with multi-session support
-    if (currentTab.id === 'shell') {
+    if (currentTab.id === 'shell' || currentTab.id === 'terminal') {
       if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
       return (
         <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Shell..." /></div>}>
           <ShellPanel projectId={projectId} />
-        </Suspense>
-      );
-    }
-
-    // Terminal - xterm-based terminal panel
-    if (currentTab.id === 'terminal') {
-      if (renderBootstrapPlaceholder(currentTab.id)) return renderBootstrapPlaceholder(currentTab.id);
-      return (
-        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Terminal..." /></div>}>
-          <ReplitTerminalPanel projectId={projectId} />
         </Suspense>
       );
     }
