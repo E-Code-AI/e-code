@@ -470,7 +470,10 @@ router.get('/url', async (req, res) => {
 
 // Redirect non-trailing-slash to trailing-slash for preview root
 router.get('/projects/:id/preview', (req, res) => {
-  res.redirect(301, `/api/preview/projects/${req.params.id}/preview/`);
+  const query = req.originalUrl.includes('?')
+    ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
+    : '';
+  res.redirect(307, `/api/preview/projects/${req.params.id}/preview/${query}`);
 });
 
 // Helper to find a file by path in the files array
