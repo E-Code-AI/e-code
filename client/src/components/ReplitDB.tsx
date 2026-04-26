@@ -20,6 +20,7 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitDBProps {
   projectId: number;
@@ -108,32 +109,29 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
   const loadEntries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/db/${projectId}`, { credentials: 'include' });
-      if (response.ok) {
-        const rawKeys = await response.text();
-        const keys = rawKeys
-          .split('\n')
-          .map((key) => key.trim())
-          .filter(Boolean);
-        const nextEntries: DBEntry[] = [];
-        
-        for (const key of keys) {
-          const valueResponse = await fetch(`/api/db/${projectId}/${encodeURIComponent(key)}`, { credentials: 'include' });
-          if (valueResponse.ok) {
-            const rawValue = await valueResponse.text();
-            const value = parseStoredValue(rawValue);
-            nextEntries.push({
-              key,
-              value,
-              type: getValueType(value),
-              size: JSON.stringify(value).length,
-              lastModified: new Date().toISOString()
-            });
-          }
+      const rawKeys = await apiRequest<string>('GET', `/api/db/${projectId}`);
+      const keys = rawKeys
+        .split('\n')
+        .map((key) => key.trim())
+        .filter(Boolean);
+      const nextEntries: DBEntry[] = [];
+
+      for (const key of keys) {
+        try {
+          const rawValue = await apiRequest<string>('GET', `/api/db/${projectId}/${encodeURIComponent(key)}`);
+          const value = parseStoredValue(rawValue);
+          nextEntries.push({
+            key,
+            value,
+            type: getValueType(value),
+            size: JSON.stringify(value).length,
+            lastModified: new Date().toISOString()
+          });
+        } catch {
         }
-        
-        setEntries(nextEntries);
       }
+
+      setEntries(nextEntries);
     } catch (error) {
       console.error('Failed to load DB entries:', error);
       toast({
@@ -180,13 +178,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = null;
       }
 
-      const response = await fetch(`/api/db/${projectId}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [newKey]: parsedValue }),
-      });
-      if (!response.ok) throw new Error('Failed to add entry');
+      await apiRequest('POST', `/api/db/${projectId}`, { [newKey]: parsedValue });
       await loadEntries();
       setShowAddDialog(false);
       setNewKey('');
@@ -219,13 +211,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = JSON.parse(editValue);
       }
 
-      const response = await fetch(`/api/db/${projectId}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [selectedEntry.key]: parsedValue }),
-      });
-      if (!response.ok) throw new Error('Failed to update entry');
+      await apiRequest('POST', `/api/db/${projectId}`, { [selectedEntry.key]: parsedValue });
       await loadEntries();
       setIsEditing(false);
       toast({
@@ -243,11 +229,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const handleDelete = async (key: string) => {
     try {
-      const response = await fetch(`/api/db/${projectId}/${encodeURIComponent(key)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!response.ok) throw new Error('Failed to delete entry');
+      await apiRequest('DELETE', `/api/db/${projectId}/${encodeURIComponent(key)}`);
       await loadEntries();
       if (selectedEntry?.key === key) {
         setSelectedEntry(null);
@@ -301,13 +283,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       const text = await file.text();
       const data = JSON.parse(text);
 
-      const response = await fetch(`/api/db/${projectId}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to import database');
+      await apiRequest('POST', `/api/db/${projectId}`, data);
       await loadEntries();
       toast({
         title: "Database Imported",

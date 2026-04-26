@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ResourceMonitorProps {
   projectId: number;
@@ -49,13 +50,7 @@ export function ResourceMonitor({ projectId, className }: ResourceMonitorProps) 
   const { data: apiResources, isLoading, isError } = useQuery<any>({
     queryKey: ['/api/resources', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/resources?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to fetch resources: ${response.statusText}`);
-      }
-      return response.json();
+      return apiRequest('GET', `/api/resources?projectId=${projectId}`);
     },
     enabled: !!projectId,
     refetchInterval: 30000,

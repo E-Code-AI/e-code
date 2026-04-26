@@ -12,7 +12,7 @@ import {
   RefreshCw, Copy, Check
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface DatabaseEntry {
   key: string;
@@ -46,14 +46,8 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
   const fetchEntries = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/kv-store?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setEntries(Array.isArray(data) ? data : []);
-      }
+      const data = await apiRequest<any[]>('GET', `/api/kv-store?projectId=${projectId}`);
+      setEntries(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching database entries:', error);
       toast({
@@ -164,8 +158,11 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const exportDatabase = async () => {
     try {
-      const response = await fetch(`/api/kv-store?projectId=${projectId}`, {
+      const exportUrl = `/api/kv-store?projectId=${projectId}`;
+      const response = await fetch(exportUrl, {
         credentials: 'include'
+        ,
+        headers: withBootstrapHeaders(exportUrl)
       });
       
       if (response.ok) {

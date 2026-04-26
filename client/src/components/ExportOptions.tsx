@@ -66,9 +66,7 @@ export function ExportOptions({ projectId }: ExportOptionsProps) {
   const { data: exportHistory = [] } = useQuery<ExportJob[]>({
     queryKey: ['/api/exports', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/exports/${projectId}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch export history');
-      return response.json();
+      return apiRequest<ExportJob[]>('GET', `/api/exports/${projectId}`);
     }
   });
 
