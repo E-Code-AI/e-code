@@ -93,6 +93,10 @@ function shouldStartPreviewForSystemWorkflow(workflow: Workflow): boolean {
   return ['run-command', 'project', 'start-application', 'dev'].includes(String(workflow.id));
 }
 
+function isOneOffSystemWorkflow(workflow: Workflow): boolean {
+  return workflow.isSystem === true && !shouldStartPreviewForSystemWorkflow(workflow);
+}
+
 export function ReplitConsolePanel({ 
   projectId, 
   userId, 
@@ -148,7 +152,12 @@ export function ReplitConsolePanel({
       setLatestRunStartIndex(logs.length);
     },
     onSuccess: (result, workflow) => {
-      if (workflow.isSystem && !shouldStartPreviewForSystemWorkflow(workflow)) {
+      if (isOneOffSystemWorkflow(workflow)) {
+        setRunningWorkflowIds(prev => {
+          const next = new Set(prev);
+          next.delete(String(workflow.id));
+          return next;
+        });
         const returnedLogs = Array.isArray((result as any)?.logs) ? (result as any).logs as string[] : [];
         if (returnedLogs.length > 0) {
           for (const line of returnedLogs) {
