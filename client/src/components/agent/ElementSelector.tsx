@@ -131,13 +131,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
     status: string;
   }>({
     queryKey: ['/api/preview/url', projectId],
-    queryFn: async () => {
-      const response = await fetch(`/api/preview/url?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to get preview status');
-      return response.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/preview/url?projectId=${projectId}`),
     enabled: !!projectId && activeTab === 'live',
   });
 
