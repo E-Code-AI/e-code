@@ -106,11 +106,7 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
   const { data, isLoading, error, refetch } = useQuery<InstalledPackagesResponse>({
     queryKey: ['/api/packages/installed', projectId],
     queryFn: async () => {
-      const response = await fetch(`/api/packages/installed?projectId=${projectId}`, {
-        credentials: 'include'
-      });
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      return response.json();
+      return apiRequest<InstalledPackagesResponse>('GET', `/api/packages/installed?projectId=${projectId}`);
     },
     enabled: !!projectId
   });
@@ -128,18 +124,10 @@ export function MobilePackagesPanel({ projectId, className }: MobilePackagesPane
   } = useQuery<PackageSearchResponse>({
     queryKey: ['/api/packages', projectId, 'search', debouncedSearchQuery, projectLanguage],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/packages/${projectId}/search?q=${encodeURIComponent(debouncedSearchQuery)}&language=${projectLanguage}`,
-        {
-          credentials: 'include',
-        }
+      return apiRequest<PackageSearchResponse>(
+        'GET',
+        `/api/packages/${projectId}/search?q=${encodeURIComponent(debouncedSearchQuery)}&language=${projectLanguage}`
       );
-
-      if (!response.ok) {
-        throw new Error('Failed to search packages');
-      }
-
-      return response.json();
     },
     enabled: !!projectId && activeTab === 'search' && debouncedSearchQuery.trim().length >= 2,
     staleTime: 60000,

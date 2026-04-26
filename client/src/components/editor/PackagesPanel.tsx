@@ -114,9 +114,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
     queryKey: packagesQueryKey,
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/packages/${projectId}/list`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch packages');
-      return response.json();
+      return apiRequest<PackagesResponse>('GET', `/api/packages/${projectId}/list`);
     },
     enabled: !!projectId,
     staleTime: 30000,
@@ -126,12 +124,7 @@ export function PackagesPanel({ projectId, language = 'nodejs', className }: Pac
     queryKey: ['/api/packages', projectId, 'search', debouncedSearch, language],
     queryFn: async () => {
       if (!debouncedSearch || debouncedSearch.length < 2) return { success: true, packages: [], query: '', language };
-      const response = await fetch(
-        `/api/packages/${projectId}/search?q=${encodeURIComponent(debouncedSearch)}&language=${language}`,
-        { credentials: 'include' }
-      );
-      if (!response.ok) throw new Error('Search failed');
-      return response.json();
+      return apiRequest<SearchResponse>('GET', `/api/packages/${projectId}/search?q=${encodeURIComponent(debouncedSearch)}&language=${language}`);
     },
     enabled: !!projectId && debouncedSearch.length >= 2 && showAddDialog,
     staleTime: 60000,

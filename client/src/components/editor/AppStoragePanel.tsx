@@ -272,9 +272,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
     queryKey,
     queryFn: async () => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await fetch(`/api/projects/${projectId}/storage`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch storage');
-      return response.json();
+      return apiRequest<StorageResponse>('GET', `/api/projects/${projectId}/storage`);
     },
     enabled: !!projectId,
     staleTime: 30000,
@@ -284,19 +282,8 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
-      const response = await fetch(`/api/projects/${projectId}/storage/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-      
-      return response.json();
+
+      return apiRequest('POST', `/api/projects/${projectId}/storage/upload`, formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'storage'] });

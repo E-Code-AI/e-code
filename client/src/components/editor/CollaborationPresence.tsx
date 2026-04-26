@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
 interface Collaborator {
   id: number;
@@ -42,9 +43,11 @@ export function CollaborationPresence({
   const { data: activeCollaborators } = useQuery<Collaborator[]>({
     queryKey: [`/api/collaboration/active`, projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/collaboration/active?projectId=${projectId}`, { credentials: 'include' });
-      if (!res.ok) return [];
-      return res.json();
+      try {
+        return await apiRequest<Collaborator[]>('GET', `/api/collaboration/active?projectId=${projectId}`);
+      } catch {
+        return [];
+      }
     },
     refetchInterval: 30000, // RATE LIMIT FIX: Increased from 5s to 30s
     refetchIntervalInBackground: false,

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { LazyMotionDiv } from '@/lib/motion';
 import { Badge } from '@/components/ui/badge';
+import { apiRequest, withBootstrapHeaders } from '@/lib/queryClient';
 
 interface LogEntry {
   timestamp: string;
@@ -40,10 +41,8 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
       if (projectId) params.append('projectId', projectId);
       if (level !== 'all') params.append('level', level);
       if (search) params.append('search', search);
-      
-      const response = await fetch(`/api/logs/query?${params}`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch logs');
-      return response.json();
+
+      return apiRequest('GET', `/api/logs/query?${params}`);
     },
     refetchInterval: autoRefresh ? 5000 : false
   });
@@ -54,6 +53,7 @@ export function LogsViewerPanel({ deploymentId, buildId, projectId }: LogsViewer
       const response = await fetch(`/api/logs/export?format=${exportFormat}`, {
         method: 'GET',
         credentials: 'include',
+        headers: withBootstrapHeaders(`/api/logs/export?format=${exportFormat}`),
       });
 
       if (!response.ok) throw new Error('Export failed');
