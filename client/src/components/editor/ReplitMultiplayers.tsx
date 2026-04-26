@@ -208,13 +208,7 @@ export function ReplitMultiplayers({
     queryKey: ['/api/collaboration', projectId, 'users'],
     queryFn: async () => {
       if (!projectId) return { collaborators: [], pendingInvites: [] };
-      const response = await fetch(`/api/collaboration/${projectId}/users`, {
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch collaborators');
-      }
-      return response.json();
+      return apiRequest<CollaboratorsResponse>('GET', `/api/collaboration/${projectId}/users`);
     },
     enabled: !!projectId,
     staleTime: 30000,

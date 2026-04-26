@@ -315,13 +315,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const { data: checkpointsData, isLoading: checkpointsLoading } = useQuery<CheckpointsAPIResponse>({
     queryKey: ['/api/projects', numericProjectId, 'checkpoints'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${numericProjectId}/checkpoints`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch checkpoints');
-      }
-      return response.json();
+      return apiRequest<CheckpointsAPIResponse>('GET', `/api/projects/${numericProjectId}/checkpoints`);
     },
     enabled: !!numericProjectId,
   });
@@ -329,13 +323,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const { data: filesWithHistoryData, isLoading: filesLoading } = useQuery<FilesWithHistoryAPIResponse>({
     queryKey: ['/api/projects', numericProjectId, 'files-with-history'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${numericProjectId}/files-with-history`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch files with history');
-      }
-      return response.json();
+      return apiRequest<FilesWithHistoryAPIResponse>('GET', `/api/projects/${numericProjectId}/files-with-history`);
     },
     enabled: !!numericProjectId && activeTab === 'files',
   });
@@ -343,13 +331,7 @@ export function ReplitHistoryPanel({ projectId }: { projectId?: string }) {
   const { data: fileVersionsData, isLoading: versionsLoading } = useQuery<FileVersionsAPIResponse>({
     queryKey: ['/api/projects', numericProjectId, 'files', selectedFile?.id, 'history'],
     queryFn: async () => {
-      const response = await fetch(`/api/projects/${numericProjectId}/files/${selectedFile!.id}/history`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch file versions');
-      }
-      return response.json();
+      return apiRequest<FileVersionsAPIResponse>('GET', `/api/projects/${numericProjectId}/files/${selectedFile!.id}/history`);
     },
     enabled: !!numericProjectId && !!selectedFile?.id,
   });

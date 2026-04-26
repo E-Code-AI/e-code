@@ -111,9 +111,7 @@ export function SecretsPanel({ projectId, className }: SecretsPanelProps) {
       const url = selectedEnvironment === 'all'
         ? `/api/projects/${projectId}/secrets`
         : `/api/projects/${projectId}/secrets?environment=${selectedEnvironment}`;
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch secrets');
-      return response.json();
+      return apiRequest<SecretsResponse>('GET', url);
     },
     enabled: !!projectId,
     staleTime: 30000,

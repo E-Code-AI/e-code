@@ -57,7 +57,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, withBootstrapHeaders } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface EnvVar {
@@ -320,8 +320,10 @@ export function ReplitSecretsPanel({ projectId }: { projectId?: string | number 
   const handleExport = useCallback(async () => {
     if (!projectId) return;
     try {
-      const response = await fetch(`/api/env-vars/${projectId}/export`, {
-        credentials: 'include'
+      const exportUrl = `/api/env-vars/${projectId}/export`;
+      const response = await fetch(exportUrl, {
+        credentials: 'include',
+        headers: withBootstrapHeaders(exportUrl),
       });
       if (!response.ok) throw new Error('Export failed');
       
