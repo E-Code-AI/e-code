@@ -32,10 +32,9 @@ export function EnvironmentVariables({ projectId }: EnvironmentVariablesProps) {
   // Fetch environment variables - REAL BACKEND (using secrets API)
   const { data: variables = [], isLoading } = useQuery({
     queryKey: ['/api/env-vars', projectId],
-    queryFn: async () => {
-      const data = await apiRequest<{ variables?: EnvironmentVariableType[] }>('GET', `/api/env-vars/${projectId}`);
-      return data.variables ?? [];
-    },
+    queryFn: () =>
+      apiRequest<{ variables?: EnvironmentVariableType[] }>('GET', `/api/env-vars/${projectId}`)
+        .then(data => data.variables ?? []),
   });
 
   // Create environment variable - REAL BACKEND

@@ -64,6 +64,34 @@ interface PackageExplorerProps {
   className?: string;
 }
 
+function normalizePackageMap(data: any): Record<string, PackageInfo> {
+  if (!data) return {};
+  if (data.packages && typeof data.packages === 'object') return data.packages;
+  if (typeof data === 'object' && !Array.isArray(data)) return data;
+  return {};
+}
+
+function buildPackageTree(packages: Record<string, PackageInfo>): PackageNode {
+  const packageEntries = Object.entries(packages);
+
+  return {
+    name: 'project',
+    version: '',
+    depth: 0,
+    dependencies: packageEntries.map(([name, pkg]) => ({
+      name,
+      version: pkg.version || 'unknown',
+      depth: 1,
+      dependencies: Object.entries(pkg.dependencies || {}).map(([depName, depVersion]) => ({
+        name: depName,
+        version: depVersion || 'unknown',
+        depth: 2,
+        dependencies: [],
+      })),
+    })),
+  };
+}
+
 export function ReplitPackageExplorer({ projectId, className }: PackageExplorerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [selectedPackage, setSelectedPackage] = useState<PackageInfo | null>(null);
@@ -76,12 +104,21 @@ export function ReplitPackageExplorer({ projectId, className }: PackageExplorerP
 
   // Fetch installed packages
   const { data: installedPackages = {} } = useQuery<Record<string, PackageInfo>>({
-    queryKey: [`/api/packages/${projectId}/list`]
+    queryKey: [`/api/packages/${projectId}/list`],
+    queryFn: async () => {
+      const data = await apiRequest<any>('GET', `/api/packages/${projectId}/list`);
+      return normalizePackageMap(data);
+    },
   });
 
   // Fetch package tree (no dedicated endpoint — reuse list)
   const { data: packageTree } = useQuery<PackageNode>({
-    queryKey: [`/api/packages/${projectId}/list`, 'tree']
+    queryKey: [`/api/packages/${projectId}/list`, 'tree'],
+    queryFn: async () => {
+      const data = await apiRequest<any>('GET', `/api/packages/${projectId}/list`);
+      return buildPackageTree(normalizePackageMap(data));
+    },
+    enabled: !!projectId,
   });
 
   // Search packages

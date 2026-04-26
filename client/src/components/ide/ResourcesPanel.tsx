@@ -94,9 +94,7 @@ export function ResourcesPanel({ projectId, className }: ResourcesPanelProps) {
 
   const { data: metrics, isLoading, isError, refetch } = useQuery<ResourceMetrics>({
     queryKey: ['/api/resources', projectId],
-    queryFn: async () => {
-      return await apiRequest('GET', `/api/resources?projectId=${projectId}`);
-    },
+    queryFn: () => apiRequest('GET', `/api/resources?projectId=${projectId}`),
     enabled: !!projectId,
     refetchInterval: 30000,
     refetchIntervalInBackground: false,
