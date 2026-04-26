@@ -117,7 +117,11 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
 
   const scanMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest("POST", `/api/workspace/projects/${projectId}/security-scans`);
+      return apiRequest("POST", `/api/workspace/projects/${projectId}/security-scans`, {
+        scanType: "full",
+        status: "queued",
+        scanner: "semgrep",
+      });
     },
     onSuccess: (data) => {
       setSelectedScanId(data.id);
