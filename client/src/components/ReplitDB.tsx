@@ -20,7 +20,6 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { apiRequest } from '@/lib/queryClient';
 
 interface ReplitDBProps {
   projectId: number;
@@ -62,7 +61,6 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   useEffect(() => {
     loadEntries();
-    loadStats();
   }, [projectId]);
 
   useEffect(() => {
@@ -73,21 +71,58 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
     setFilteredEntries(filtered);
   }, [entries, searchQuery]);
 
+  useEffect(() => {
+    const totalBytes = entries.reduce((sum, entry) => sum + entry.size, 0);
+    const largestEntry = entries.reduce<DBEntry | null>((largest, entry) => {
+      if (!largest || entry.size > largest.size) return entry;
+      return largest;
+    }, null);
+    setStats({
+      totalKeys: entries.length,
+      totalSize: formatSize(totalBytes),
+      largestKey: largestEntry?.key || '-',
+      oldestKey: entries[0]?.key || '-',
+      newestKey: entries[entries.length - 1]?.key || '-',
+    });
+  }, [entries]);
+
+  const parseStoredValue = (value: string): any => {
+    const trimmed = value.trim();
+    if (trimmed === '') return '';
+    if (trimmed === 'null') return null;
+    if (trimmed === 'true') return true;
+    if (trimmed === 'false') return false;
+    if (!Number.isNaN(Number(trimmed)) && /^-?\d+(\.\d+)?$/.test(trimmed)) {
+      return Number(trimmed);
+    }
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  };
+
   const loadEntries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/database/${projectId}/replitdb`, { credentials: 'include' });
+      const response = await fetch(`/api/db/${projectId}`, { credentials: 'include' });
       if (response.ok) {
-        const data = await response.json();
-          // Get all keys and their values
-        const keys = data.keys || [];
-        const entries: DBEntry[] = [];
+        const rawKeys = await response.text();
+        const keys = rawKeys
+          .split('\n')
+          .map((key) => key.trim())
+          .filter(Boolean);
+        const nextEntries: DBEntry[] = [];
         
         for (const key of keys) {
-          const valueResponse = await fetch(`/api/database/${projectId}/replitdb/${key}`, { credentials: 'include' });
+          const valueResponse = await fetch(`/api/db/${projectId}/${encodeURIComponent(key)}`, { credentials: 'include' });
           if (valueResponse.ok) {
-            const { value } = await valueResponse.json();
-            entries.push({
+            const rawValue = await valueResponse.text();
+            const value = parseStoredValue(rawValue);
+            nextEntries.push({
               key,
               value,
               type: getValueType(value),
@@ -97,7 +132,7 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
           }
         }
         
-        setEntries(entries);
+        setEntries(nextEntries);
       }
     } catch (error) {
       console.error('Failed to load DB entries:', error);
@@ -108,18 +143,6 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       });
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadStats = async () => {
-    try {
-      const response = await fetch(`/api/database/${projectId}/replitdb/stats`, { credentials: 'include' });
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Failed to load DB stats:', error);
     }
   };
 
@@ -157,18 +180,21 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = null;
       }
 
-      const response = await apiRequest('POST', `/api/database/${projectId}/replitdb`, { key: newKey, value: parsedValue });
-
-      if (response.ok) {
-        await loadEntries();
-        setShowAddDialog(false);
-        setNewKey('');
-        setNewValue('');
-        toast({
-          title: "Entry Added",
-          description: `Key "${newKey}" added successfully`,
-        });
-      }
+      const response = await fetch(`/api/db/${projectId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [newKey]: parsedValue }),
+      });
+      if (!response.ok) throw new Error('Failed to add entry');
+      await loadEntries();
+      setShowAddDialog(false);
+      setNewKey('');
+      setNewValue('');
+      toast({
+        title: "Entry Added",
+        description: `Key "${newKey}" added successfully`,
+      });
     } catch (error) {
       toast({
         title: "Failed to Add Entry",
@@ -193,16 +219,19 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
         parsedValue = JSON.parse(editValue);
       }
 
-      const response = await apiRequest('PUT', `/api/database/${projectId}/replitdb/${selectedEntry.key}`, { value: parsedValue });
-
-      if (response.ok) {
-        await loadEntries();
-        setIsEditing(false);
-        toast({
-          title: "Entry Updated",
-          description: `Key "${selectedEntry.key}" updated successfully`,
-        });
-      }
+      const response = await fetch(`/api/db/${projectId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [selectedEntry.key]: parsedValue }),
+      });
+      if (!response.ok) throw new Error('Failed to update entry');
+      await loadEntries();
+      setIsEditing(false);
+      toast({
+        title: "Entry Updated",
+        description: `Key "${selectedEntry.key}" updated successfully`,
+      });
     } catch (error) {
       toast({
         title: "Update Failed",
@@ -214,18 +243,19 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
 
   const handleDelete = async (key: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/database/${projectId}/replitdb/${key}`, {});
-
-      if (response.ok) {
-        await loadEntries();
-        if (selectedEntry?.key === key) {
-          setSelectedEntry(null);
-        }
-        toast({
-          title: "Entry Deleted",
-          description: `Key "${key}" deleted successfully`,
-        });
+      const response = await fetch(`/api/db/${projectId}/${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to delete entry');
+      await loadEntries();
+      if (selectedEntry?.key === key) {
+        setSelectedEntry(null);
       }
+      toast({
+        title: "Entry Deleted",
+        description: `Key "${key}" deleted successfully`,
+      });
     } catch (error) {
       toast({
         title: "Delete Failed",
@@ -271,15 +301,18 @@ export function ReplitDB({ projectId, className }: ReplitDBProps) {
       const text = await file.text();
       const data = JSON.parse(text);
 
-      const response = await apiRequest('POST', `/api/database/${projectId}/replitdb/import`, { data });
-
-      if (response.ok) {
-        await loadEntries();
-        toast({
-          title: "Database Imported",
-          description: "Your database has been imported successfully",
-        });
-      }
+      const response = await fetch(`/api/db/${projectId}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to import database');
+      await loadEntries();
+      toast({
+        title: "Database Imported",
+        description: "Your database has been imported successfully",
+      });
     } catch (error) {
       toast({
         title: "Import Failed",

@@ -219,6 +219,59 @@ async function fetchProjectEnvVars(projectId: string): Promise<Record<string, st
   return vars;
 }
 
+async function pathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function scriptReferencesMissingDirectories(script: string, cwd: string): Promise<string[]> {
+  const missing: string[] = [];
+  const matches = script.matchAll(/\bcd\s+([^\s;&|]+)/g);
+
+  for (const match of matches) {
+    const rawDir = match[1]?.replace(/^['"]|['"]$/g, '');
+    if (!rawDir || rawDir === '.' || rawDir.startsWith('/')) continue;
+    const fullPath = path.join(cwd, rawDir);
+    if (!(await pathExists(fullPath))) {
+      missing.push(rawDir);
+    }
+  }
+
+  return missing;
+}
+
+function detectNodeEntryFile(files: any[], packageJson: any): string | null {
+  const filePaths = files
+    .filter((file) => !file?.isDirectory && !file?.isFolder)
+    .map((file) => String(file.path || file.name || ''));
+
+  const candidates = [
+    packageJson?.main,
+    'src/index.ts',
+    'src/index.js',
+    'server/index.ts',
+    'server/index.js',
+    'index.ts',
+    'index.js',
+    'main.ts',
+    'main.js',
+    'app.ts',
+    'app.js',
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    if (filePaths.includes(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 interface PreviewInstance {
   projectId: string;
   runId: string;
@@ -1101,14 +1154,45 @@ export class PreviewService {
       preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
     }
 
+    const packageJson = frameworkInfo.packageJson || {};
+    const startScript = packageJson.scripts?.start as string | undefined;
+    const devScript = packageJson.scripts?.dev as string | undefined;
     let startCommand: string[] = [];
-    if (frameworkInfo.packageJson.scripts?.start) {
-      startCommand = ['npm', 'start'];
-    } else if (frameworkInfo.packageJson.scripts?.dev) {
-      startCommand = ['npm', 'run', 'dev'];
-    } else {
-      const mainFile = frameworkInfo.packageJson.main || 'index.js';
-      startCommand = ['node', mainFile];
+
+    if (startScript) {
+      const missingDirs = await scriptReferencesMissingDirectories(startScript, previewPath);
+      if (missingDirs.length === 0) {
+        startCommand = ['npm', 'start'];
+      } else {
+        preview.logs.push(`[WARN] Ignoring broken start script; missing directories: ${missingDirs.join(', ')}`);
+      }
+    }
+
+    if (startCommand.length === 0 && devScript) {
+      const missingDirs = await scriptReferencesMissingDirectories(devScript, previewPath);
+      if (missingDirs.length === 0) {
+        startCommand = ['npm', 'run', 'dev'];
+      } else {
+        preview.logs.push(`[WARN] Ignoring broken dev script; missing directories: ${missingDirs.join(', ')}`);
+      }
+    }
+
+    if (startCommand.length === 0) {
+      const entryFile = detectNodeEntryFile(files, packageJson);
+      if (!entryFile) {
+        throw new Error('No runnable Node entry file found after filtering invalid scripts');
+      }
+
+      if (entryFile.endsWith('.ts') || entryFile.endsWith('.tsx')) {
+        const localTsxBin = path.join(previewPath, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
+        if (await pathExists(localTsxBin)) {
+          startCommand = [localTsxBin, entryFile];
+        } else {
+          startCommand = ['npx', 'tsx', entryFile];
+        }
+      } else {
+        startCommand = ['node', entryFile];
+      }
     }
 
     const nodeProcess = spawn(startCommand[0], startCommand.slice(1), {

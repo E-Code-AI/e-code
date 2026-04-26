@@ -68,6 +68,48 @@ interface UserProfile {
   }[];
 }
 
+function buildContributionGrid(activities: UserProfile['recentActivity']) {
+  const countsByDay = new Map<string, number>();
+
+  activities.forEach((activity) => {
+    const key = new Date(activity.timestamp).toISOString().slice(0, 10);
+    countsByDay.set(key, (countsByDay.get(key) || 0) + 1);
+  });
+
+  const days: Array<{ key: string; count: number; label: string }> = [];
+  const today = new Date();
+
+  for (let offset = 83; offset >= 0; offset -= 1) {
+    const day = new Date(today);
+    day.setHours(0, 0, 0, 0);
+    day.setDate(today.getDate() - offset);
+    const key = day.toISOString().slice(0, 10);
+    days.push({
+      key,
+      count: countsByDay.get(key) || 0,
+      label: day.toLocaleDateString(),
+    });
+  }
+
+  const weeks: typeof days[] = [];
+  for (let i = 0; i < days.length; i += 7) {
+    weeks.push(days.slice(i, i + 7));
+  }
+
+  return {
+    weeks,
+    total: days.reduce((sum, day) => sum + day.count, 0),
+    max: Math.max(0, ...days.map((day) => day.count)),
+  };
+}
+
+function getContributionTone(count: number, maxCount: number) {
+  if (count === 0) return 'bg-muted';
+  if (maxCount <= 1 || count / maxCount < 0.34) return 'bg-emerald-200 dark:bg-emerald-950';
+  if (count / maxCount < 0.67) return 'bg-emerald-400 dark:bg-emerald-700';
+  return 'bg-emerald-600 dark:bg-emerald-500';
+}
+
 export default function UserProfile() {
   const { username } = useParams();
   const [, navigate] = useLocation();
@@ -76,6 +118,7 @@ export default function UserProfile() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [isFollowing, setIsFollowing] = useState(false);
+  const contributionGrid = profile ? buildContributionGrid(profile.recentActivity) : null;
 
   // Fetch user profile
   const { data: profile, isLoading, error} = useQuery<UserProfile>({
@@ -374,12 +417,39 @@ export default function UserProfile() {
             <Card>
               <CardHeader>
                 <CardTitle>Contribution Activity</CardTitle>
-                <CardDescription>Code contributions over the last year</CardDescription>
+                <CardDescription>Recent public activity over the last 12 weeks</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-32 bg-muted rounded flex items-center justify-center">
-                  <Activity className="h-8 w-8 text-muted-foreground" />
-                  <span className="ml-2 text-muted-foreground">Contribution graph coming soon</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium">{contributionGrid?.total ?? 0} activity events</p>
+                      <p className="text-xs text-muted-foreground">Last 12 weeks from public activity</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <span>Less</span>
+                      <span className="h-3 w-3 rounded-sm bg-muted" />
+                      <span className="h-3 w-3 rounded-sm bg-emerald-200 dark:bg-emerald-950" />
+                      <span className="h-3 w-3 rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+                      <span className="h-3 w-3 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+                      <span>More</span>
+                    </div>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <div className="inline-flex gap-1">
+                      {contributionGrid?.weeks.map((week, weekIndex) => (
+                        <div key={weekIndex} className="flex flex-col gap-1">
+                          {week.map((day) => (
+                            <div
+                              key={day.key}
+                              title={`${day.label}: ${day.count} event${day.count !== 1 ? 's' : ''}`}
+                              className={`h-4 w-4 rounded-[3px] ${getContributionTone(day.count, contributionGrid.max)} border border-border/40`}
+                            />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

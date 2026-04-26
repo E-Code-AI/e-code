@@ -61,6 +61,40 @@ interface Task {
   progress?: number;
 }
 
+interface ActivityLogEntry {
+  id: string;
+  timestamp: string;
+  icon: string;
+  text: string;
+  tone: 'info' | 'success' | 'warning' | 'error';
+  count: number;
+}
+
+const LOG_ICON_PATTERN = /^([\p{Extended_Pictographic}\u2600-\u27BF]+)\s*/u;
+
+function normalizeLogMessage(raw: string): string {
+  return raw
+    .replace(/\[[^\]]+\]\s*/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\.{4,}/g, '...')
+    .trim();
+}
+
+function toLogEntry(raw: string): Omit<ActivityLogEntry, 'id' | 'count'> {
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const normalized = normalizeLogMessage(raw);
+  const iconMatch = normalized.match(LOG_ICON_PATTERN);
+  const icon = iconMatch?.[1] || '•';
+  const text = normalized.replace(LOG_ICON_PATTERN, '').trim() || normalized;
+
+  let tone: ActivityLogEntry['tone'] = 'info';
+  if (icon === '✅' || icon === '🎉' || icon === '✨') tone = 'success';
+  else if (icon === '⚠️' || icon === '⏳') tone = 'warning';
+  else if (icon === '❌') tone = 'error';
+
+  return { timestamp, icon, text, tone };
+}
+
 export function AutonomousWorkspaceViewer({
   bootstrapToken,
   projectId,
@@ -70,7 +104,7 @@ export function AutonomousWorkspaceViewer({
   const [isOpen, setIsOpen] = useState(!!bootstrapToken);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'error' | 'closed'>('connecting');
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<ActivityLogEntry[]>([]);
   const [overallProgress, setOverallProgress] = useState(0);
   const [currentTask, setCurrentTask] = useState<string>('Initializing workspace...');
   const [isComplete, setIsComplete] = useState(false);
@@ -400,8 +434,30 @@ export function AutonomousWorkspaceViewer({
   };
 
   const addLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+    setLogs(prev => {
+      const next = toLogEntry(message);
+      const last = prev[prev.length - 1];
+
+      if (last && last.text === next.text && last.icon === next.icon && last.tone === next.tone) {
+        return [
+          ...prev.slice(0, -1),
+          {
+            ...last,
+            timestamp: next.timestamp,
+            count: last.count + 1,
+          }
+        ];
+      }
+
+      return [
+        ...prev,
+        {
+          id: `${Date.now()}-${prev.length}`,
+          count: 1,
+          ...next,
+        }
+      ];
+    });
   };
 
   // ✅ FIX (Dec 11, 2025): Separate hide (just closes dialog) from close (stops process)
@@ -582,13 +638,29 @@ export function AutonomousWorkspaceViewer({
         <div className="space-y-2 min-h-0">
           <h4 className="text-[11px] sm:text-[13px] font-medium flex items-center gap-2 bg-background py-1 sticky top-0 z-10">
             <Terminal className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-            Activity Log ({Math.min(logs.length, 30)}{logs.length > 30 ? '+' : ''})
+            Activity Log ({Math.min(logs.length, 24)}{logs.length > 24 ? '+' : ''})
           </h4>
-          <ScrollArea className="h-20 sm:h-24 md:h-28 border rounded-md bg-muted font-mono text-[9px] sm:text-[11px]" data-testid="activity-logs">
-            <div className="p-2 space-y-0.5">
-              {logs.slice(-30).map((log, index) => (
-                <div key={index} className="text-muted-foreground whitespace-pre-wrap break-words leading-tight">
-                  {log}
+          <ScrollArea className="h-24 sm:h-28 md:h-32 rounded-md border bg-muted/40" data-testid="activity-logs">
+            <div className="p-1.5 sm:p-2 space-y-1">
+              {logs.slice(-24).map((log) => (
+                <div
+                  key={log.id}
+                  className={cn(
+                    "flex items-center gap-2 rounded-md px-2 py-1 text-[10px] sm:text-[11px] leading-none",
+                    log.tone === 'success' && "bg-emerald-500/8 text-emerald-700 dark:text-emerald-300",
+                    log.tone === 'warning' && "bg-amber-500/8 text-amber-700 dark:text-amber-300",
+                    log.tone === 'error' && "bg-destructive/8 text-destructive",
+                    log.tone === 'info' && "text-muted-foreground"
+                  )}
+                >
+                  <span className="w-3.5 shrink-0 text-center">{log.icon}</span>
+                  <span className="min-w-0 flex-1 truncate">{log.text}</span>
+                  {log.count > 1 && (
+                    <Badge variant="secondary" className="h-4 shrink-0 px-1 text-[9px]">
+                      ×{log.count}
+                    </Badge>
+                  )}
+                  <span className="shrink-0 text-[9px] opacity-60 tabular-nums">{log.timestamp}</span>
                 </div>
               ))}
               <div ref={logsEndRef} />

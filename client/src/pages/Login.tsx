@@ -195,25 +195,11 @@ export default function Login() {
     });
   };
 
-  const handleSocialLogin = (provider: string) => {
-    const providerRoutes: Record<string, string> = {
-      'GitHub': '/api/auth/github',
-      'Google': '/api/auth/google',
-      'Twitter': '/api/auth/twitter',
-      'Apple': '/api/auth/apple'
-    };
-    
-    const route = providerRoutes[provider];
-    if (route) {
-      // Redirect to OAuth endpoint which will handle the OAuth flow
-      window.location.href = route;
-    } else {
-      toast({
-        title: "Coming Soon",
-        description: `${provider} login will be available soon!`,
-      });
-    }
-  };
+  const socialProviders = [
+    { name: 'GitHub', icon: Github, enabled: false },
+    { name: 'Google', icon: Chrome, enabled: false },
+    { name: 'Twitter', icon: Twitter, enabled: false },
+  ] as const;
 
   if (twoFactorChallenge) {
     return (
@@ -381,30 +367,22 @@ export default function Login() {
 
             {/* Social Login */}
             <div className="grid grid-cols-3 gap-3">
-              <Button 
-                type="button"
-                variant="outline" 
-                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => handleSocialLogin('GitHub')}
-              >
-                <Github className="h-5 w-5" />
-              </Button>
-              <Button 
-                type="button"
-                variant="outline" 
-                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => handleSocialLogin('Google')}
-              >
-                <Chrome className="h-5 w-5" />
-              </Button>
-              <Button 
-                type="button"
-                variant="outline" 
-                className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => handleSocialLogin('Twitter')}
-              >
-                <Twitter className="h-5 w-5" />
-              </Button>
+              {socialProviders.map((provider) => {
+                const Icon = provider.icon;
+                return (
+                  <Button
+                    key={provider.name}
+                    type="button"
+                    variant="outline"
+                    className="h-12 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    disabled={!provider.enabled}
+                    aria-label={provider.name}
+                    title={provider.enabled ? `Continue with ${provider.name}` : `${provider.name} sign-in unavailable`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </Button>
+                );
+              })}
             </div>
           </form>
 

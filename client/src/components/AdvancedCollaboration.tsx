@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,23 +8,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Users, 
-  Video, 
   Mic, 
   MicOff, 
-  VideoOff,
   ScreenShare,
   MessageSquare,
   Settings,
   UserPlus,
   Crown,
   Eye,
-  Edit,
-  Clock,
   Activity,
-  Headphones,
   Volume2,
   VolumeX,
   Phone,
@@ -80,13 +74,42 @@ interface ChatMessage {
   createdAt: string;
 }
 
+interface ProjectOption {
+  id: number;
+  name: string;
+}
+
+interface VoiceVideoSession {
+  id: string;
+  projectId: number;
+  type: 'voice' | 'video' | 'screen';
+  hostId: number;
+  peers?: unknown[];
+  recording?: boolean;
+}
+
 export function AdvancedCollaboration() {
-  const [selectedProject, setSelectedProject] = useState<number | null>(1);
-  const [voiceConnected, setVoiceConnected] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
-  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [chatInput, setChatInput] = useState('');
+
+  const { data: projects = [] } = useQuery<ProjectOption[]>({
+    queryKey: ['/api/projects'],
+    queryFn: async () => {
+      const response = await fetch('/api/projects', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to load projects');
+      const data = await response.json();
+      return Array.isArray(data) ? data : data.projects || [];
+    },
+    staleTime: 30000,
+  });
+
+  React.useEffect(() => {
+    if (!selectedProject && projects.length > 0) {
+      setSelectedProject(projects[0].id);
+    }
+  }, [projects, selectedProject]);
 
   // Fetch collaborators from API
   const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
@@ -95,19 +118,40 @@ export function AdvancedCollaboration() {
   });
   const collaborators = collaboratorsData?.collaborators || [];
 
-  // Fetch voice participants from API
-  const { data: voiceData } = useQuery<{ participants: VoiceParticipant[] }>({
-    queryKey: ['/api/collaboration', selectedProject, 'voice'],
-    enabled: !!selectedProject && voiceConnected,
-  });
-  const voiceParticipants = voiceData?.participants || [];
-
-  // Fetch screen shares from API
-  const { data: screenSharesData } = useQuery<{ shares: ScreenShare[] }>({
-    queryKey: ['/api/collaboration', selectedProject, 'screenshares'],
+  const { data: sessionsData } = useQuery<{ sessions: VoiceVideoSession[] }>({
+    queryKey: ['/api/voice-video', selectedProject, 'sessions'],
+    queryFn: async () => {
+      const response = await fetch(`/api/voice-video/projects/${selectedProject}/sessions`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to load voice/video sessions');
+      return response.json();
+    },
     enabled: !!selectedProject,
+    staleTime: 10000,
   });
-  const screenShares = screenSharesData?.shares || [];
+  const sessions = sessionsData?.sessions || [];
+  const voiceSession = useMemo(() => sessions.find((session) => session.type === 'voice') || null, [sessions]);
+  const screenSession = useMemo(() => sessions.find((session) => session.type === 'screen') || null, [sessions]);
+  const voiceConnected = !!voiceSession;
+  const isScreenSharing = !!screenSession;
+  const voiceParticipants: VoiceParticipant[] = voiceSession
+    ? [{
+        userId: voiceSession.hostId,
+        username: 'Host',
+        isMuted: false,
+        isDeafened: false,
+        isSpeaking: false,
+      }]
+    : [];
+  const screenShares: ScreenShare[] = screenSession
+    ? [{
+        userId: screenSession.hostId,
+        username: 'Host',
+        streamId: screenSession.id,
+        quality: 'medium',
+      }]
+    : [];
 
   const collaborationStats: CollaborationStats = {
     activeUsers: collaborators.filter(c => c.status === 'active').length,
@@ -128,20 +172,36 @@ export function AdvancedCollaboration() {
   // Mutation to send a new chat message
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      const response = await apiRequest('POST', `/api/collaboration/${selectedProject}/messages`, {
+      return apiRequest('POST', `/api/collaboration/${selectedProject}/messages`, {
         content,
         type: 'text',
       });
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/collaboration', selectedProject, 'messages'] });
     },
   });
 
-  const handleJoinVoice = () => {
-    setVoiceConnected(!voiceConnected);
-  };
+  const createSessionMutation = useMutation({
+    mutationFn: async (sessionType: 'voice' | 'screen') => {
+      if (!selectedProject) throw new Error('Project required');
+      return apiRequest('POST', '/api/voice-video/sessions', {
+        projectId: selectedProject,
+        sessionType,
+        maxParticipants: 10,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/voice-video', selectedProject, 'sessions'] });
+    },
+  });
+
+  const endSessionMutation = useMutation({
+    mutationFn: async (roomId: string) => apiRequest('POST', `/api/voice-video/sessions/${roomId}/end`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/voice-video', selectedProject, 'sessions'] });
+    },
+  });
 
   const handleToggleMute = () => {
     setIsMuted(!isMuted);
@@ -149,10 +209,6 @@ export function AdvancedCollaboration() {
 
   const handleToggleDeafen = () => {
     setIsDeafened(!isDeafened);
-  };
-
-  const handleToggleScreenShare = () => {
-    setIsScreenSharing(!isScreenSharing);
   };
 
   const getStatusColor = (status: string) => {
@@ -197,6 +253,18 @@ export function AdvancedCollaboration() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <Select value={selectedProject?.toString() || ''} onValueChange={(value) => setSelectedProject(Number(value))}>
+            <SelectTrigger className="w-[220px]">
+              <SelectValue placeholder="Select project" />
+            </SelectTrigger>
+            <SelectContent>
+              {projects.map((project) => (
+                <SelectItem key={project.id} value={String(project.id)}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge variant="outline" className="text-green-600 border-green-600">
             <Activity className="h-3 w-3 mr-1" />
             {collaborationStats.activeUsers} Active
@@ -373,20 +441,18 @@ export function AdvancedCollaboration() {
                       </Button>
                     </>
                   )}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Button disabled className="opacity-50 cursor-not-allowed">
-                            Join Voice
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Coming Soon - WebRTC integration in progress</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <Button
+                    onClick={() => {
+                      if (voiceSession) {
+                        endSessionMutation.mutate(voiceSession.id);
+                      } else {
+                        createSessionMutation.mutate('voice');
+                      }
+                    }}
+                    disabled={!selectedProject || createSessionMutation.isPending || endSessionMutation.isPending}
+                  >
+                    {voiceSession ? 'End Voice' : 'Start Voice'}
+                  </Button>
                 </div>
               </div>
 
@@ -440,21 +506,19 @@ export function AdvancedCollaboration() {
                     </div>
                   </div>
                 </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button disabled className="opacity-50 cursor-not-allowed">
-                          <ScreenShare className="h-4 w-4 mr-2" />
-                          Share Screen
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Coming Soon - Screen sharing in progress</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <Button
+                  onClick={() => {
+                    if (screenSession) {
+                      endSessionMutation.mutate(screenSession.id);
+                    } else {
+                      createSessionMutation.mutate('screen');
+                    }
+                  }}
+                  disabled={!selectedProject || createSessionMutation.isPending || endSessionMutation.isPending}
+                >
+                  <ScreenShare className="h-4 w-4 mr-2" />
+                  {screenSession ? 'End Share' : 'Share Screen'}
+                </Button>
               </div>
 
               {/* Active Screen Shares */}

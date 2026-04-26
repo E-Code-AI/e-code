@@ -4,9 +4,13 @@
  */
 
 import type { IStorage } from '../storage';
-import type { SecurityScan } from '@shared/schema';
+import type { SecurityScan, Vulnerability } from '@shared/schema';
 import { SecurityScanner, type SecurityIssue } from '../security/security-scanner';
 import { createLogger } from '../utils/logger';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import { spawn } from 'child_process';
 
 const logger = createLogger('scan-executor-service');
 
@@ -14,6 +18,22 @@ interface ScanJob {
   scanId: string;
   projectId: string;
   status: 'queued' | 'running' | 'completed' | 'failed';
+}
+
+interface ExternalFinding {
+  title: string;
+  description: string;
+  severity: 'critical' | 'high' | 'medium' | 'low';
+  type: 'security' | 'privacy' | 'secret' | 'config';
+  filePath?: string | null;
+  lineNumber?: number | null;
+  recommendation?: string | null;
+  cwe?: string | null;
+  references?: string[] | null;
+  packageName?: string | null;
+  vulnerableVersion?: string | null;
+  fixedVersion?: string | null;
+  toolAttribution: string;
 }
 
 export class ScanExecutorService {
@@ -25,6 +45,343 @@ export class ScanExecutorService {
   constructor(storage: IStorage) {
     this.storage = storage;
     this.scanner = new SecurityScanner();
+  }
+
+  private async collectWorkspaceFiles(projectId: string): Promise<Array<{ path: string; content: string }>> {
+    const workspacePath = getProjectWorkspacePath(projectId);
+    const files: Array<{ path: string; content: string }> = [];
+
+    const walk = async (dir: string): Promise<void> => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist' || entry.name === 'build' || entry.name === '.next' || entry.name === 'coverage') {
+          continue;
+        }
+
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          await walk(fullPath);
+          continue;
+        }
+
+        const relativePath = path.relative(workspacePath, fullPath);
+        try {
+          const stat = await fs.stat(fullPath);
+          if (stat.size > 1024 * 1024) continue;
+
+          const content = await fs.readFile(fullPath, 'utf8');
+          files.push({ path: relativePath, content });
+        } catch (error) {
+          logger.warn(`[ScanExecutor] Skipping unreadable file ${relativePath}: ${error}`);
+        }
+      }
+    };
+
+    await walk(workspacePath);
+    return files;
+  }
+
+  private async runCommand(command: string, args: string[], cwd: string): Promise<{ stdout: string; stderr: string; exitCode: number | null }> {
+    return new Promise((resolve) => {
+      const child = spawn(command, args, {
+        cwd,
+        env: process.env,
+        shell: false,
+      });
+      let stdout = '';
+      let stderr = '';
+
+      child.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
+      });
+
+      child.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
+
+      child.on('close', (exitCode) => resolve({ stdout, stderr, exitCode }));
+      child.on('error', (error) => resolve({ stdout, stderr: `${stderr}\n${error.message}`.trim(), exitCode: 1 }));
+    });
+  }
+
+  private async commandExists(command: string): Promise<boolean> {
+    const result = await this.runCommand('sh', ['-lc', `command -v ${command}`], process.cwd());
+    return result.exitCode === 0 && !!result.stdout.trim();
+  }
+
+  private mapSemgrepSeverity(severity?: string | null): 'critical' | 'high' | 'medium' | 'low' {
+    switch ((severity || '').toUpperCase()) {
+      case 'ERROR':
+        return 'high';
+      case 'WARNING':
+        return 'medium';
+      case 'INFO':
+        return 'low';
+      default:
+        return 'medium';
+    }
+  }
+
+  private mapSemgrepCheckIdToType(checkId?: string | null): 'security' | 'privacy' | 'secret' | 'config' {
+    const normalized = (checkId || '').toLowerCase();
+    if (normalized.includes('secret')) return 'secret';
+    if (normalized.includes('privacy')) return 'privacy';
+    if (normalized.includes('config')) return 'config';
+    return 'security';
+  }
+
+  private async runSemgrepScan(workspacePath: string): Promise<ExternalFinding[]> {
+    const semgrepAvailable = await this.commandExists(process.env.SEMGREP_BIN || 'semgrep');
+    if (!semgrepAvailable) {
+      return [];
+    }
+
+    const rulesPath = path.join(workspacePath, '.ecode-semgrep-rules.yml');
+    const semgrepRules = [
+      'rules:',
+      '  - id: ecode.security.sql-injection-string-concat',
+      '    message: Potential SQL injection via string interpolation in query construction.',
+      '    severity: ERROR',
+      '    languages: [javascript, typescript]',
+      '    patterns:',
+      '      - pattern-either:',
+      '          - pattern: $DB.query(`...${$X}...`)',
+      '          - pattern: $DB.query("..." + $X + "...")',
+      "          - pattern: $DB.query('...' + $X + '...')",
+      '          - pattern: prisma.$QUERYRAWUNSAFE(...)',
+      '  - id: ecode.security.xss-innerhtml',
+      '    message: Potential XSS risk from dynamic innerHTML assignment.',
+      '    severity: ERROR',
+      '    languages: [javascript, typescript]',
+      '    patterns:',
+      '      - pattern: $EL.innerHTML = $VALUE',
+      '      - metavariable-pattern:',
+      '          metavariable: $VALUE',
+      `          pattern-not: "'...'"`,
+      '  - id: ecode.security.command-injection',
+      '    message: Potential command injection risk in child_process execution.',
+      '    severity: ERROR',
+      '    languages: [javascript, typescript]',
+      '    patterns:',
+      '      - pattern-either:',
+      '          - pattern: exec($CMD)',
+      '          - pattern: execSync($CMD)',
+      '          - pattern: spawn($CMD, ...)',
+      '      - metavariable-pattern:',
+      '          metavariable: $CMD',
+      `          pattern-not: "'...'"`,
+      '  - id: ecode.security.hardcoded-secret',
+      '    message: Hardcoded secret-like value detected.',
+      '    severity: ERROR',
+      '    languages: [javascript, typescript, python, yaml, json]',
+      '    patterns:',
+      `      - pattern-regex: (?i)(api[_-]?key|secret|token|password)\\s*[:=]\\s*["'][A-Za-z0-9_\\-\\/\\+=]{12,}["']`,
+      '  - id: ecode.security.insecure-random',
+      '    message: Math.random is not suitable for security-sensitive randomness.',
+      '    severity: WARNING',
+      '    languages: [javascript, typescript]',
+      '    pattern: Math.random(...)',
+    ].join('\n');
+
+    await fs.writeFile(rulesPath, semgrepRules, 'utf8');
+
+    const command = process.env.SEMGREP_BIN || 'semgrep';
+    const args = ['scan', '--config', rulesPath, '--json', '--quiet', workspacePath];
+    const result = await this.runCommand(command, args, workspacePath);
+
+    try {
+      await fs.unlink(rulesPath);
+    } catch {}
+
+    if (result.exitCode !== 0 && !result.stdout.trim()) {
+      throw new Error(result.stderr || 'Semgrep scan failed');
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(result.stdout || '{}');
+    } catch (error) {
+      throw new Error(`Failed to parse Semgrep output: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
+
+    return (parsed?.results || []).map((finding: any): ExternalFinding => ({
+      title: finding.check_id || 'Semgrep finding',
+      description: finding.extra?.message || 'Security issue detected by Semgrep.',
+      severity: this.mapSemgrepSeverity(finding.extra?.severity),
+      type: this.mapSemgrepCheckIdToType(finding.check_id),
+      filePath: finding.path || null,
+      lineNumber: finding.start?.line || null,
+      recommendation: finding.extra?.metadata?.fix || finding.extra?.message || null,
+      cwe: Array.isArray(finding.extra?.metadata?.cwe) ? finding.extra.metadata.cwe[0] : finding.extra?.metadata?.cwe || null,
+      references: Array.isArray(finding.extra?.metadata?.references) ? finding.extra.metadata.references : null,
+      toolAttribution: 'semgrep',
+    }));
+  }
+
+  private async runHoundDogScan(workspacePath: string): Promise<ExternalFinding[]> {
+    const command = process.env.HOUNDDOG_BIN || 'hounddog';
+    const houndDogAvailable = await this.commandExists(command);
+    if (!houndDogAvailable) {
+      return [];
+    }
+
+    const result = await this.runCommand(command, ['scan', '--json', workspacePath], workspacePath);
+    if (result.exitCode !== 0 && !result.stdout.trim()) {
+      throw new Error(result.stderr || 'HoundDog scan failed');
+    }
+
+    let parsed: any = null;
+    try {
+      parsed = JSON.parse(result.stdout || '{}');
+    } catch (error) {
+      throw new Error(`Failed to parse HoundDog output: ${error instanceof Error ? error.message : 'unknown error'}`);
+    }
+
+    const findings = parsed?.findings || parsed?.issues || parsed?.results || [];
+    return findings.map((finding: any): ExternalFinding => ({
+      title: finding.title || finding.ruleId || finding.id || 'HoundDog finding',
+      description: finding.description || finding.message || 'Privacy issue detected by HoundDog.',
+      severity: ['critical', 'high', 'medium', 'low'].includes(String(finding.severity || '').toLowerCase())
+        ? String(finding.severity).toLowerCase() as ExternalFinding['severity']
+        : 'medium',
+      type: 'privacy',
+      filePath: finding.filePath || finding.path || null,
+      lineNumber: finding.lineNumber || finding.line || finding.location?.start?.line || null,
+      recommendation: finding.recommendation || finding.fix || null,
+      cwe: finding.cwe || null,
+      references: Array.isArray(finding.references) ? finding.references : null,
+      toolAttribution: 'hounddog',
+    }));
+  }
+
+  private async runPrivacyFallbackScan(files: Array<{ path: string; content: string }>): Promise<ExternalFinding[]> {
+    const findings: ExternalFinding[] = [];
+    const privacyPatterns = [
+      {
+        title: 'Potential PII logging',
+        pattern: /(console\.(log|info|debug)|logger\.(info|debug|warn)|print)\([^)]*(email|phone|ssn|address|dob|birth)/i,
+        recommendation: 'Avoid logging personal data or redact it before logging.',
+      },
+      {
+        title: 'Potential client-side storage of personal data',
+        pattern: /(localStorage|sessionStorage)\.(setItem)\([^)]*(email|phone|ssn|address|dob|birth|token)/i,
+        recommendation: 'Do not persist personal or sensitive data in browser storage without strict justification and protection.',
+      },
+      {
+        title: 'Potential analytics tracking of personal data',
+        pattern: /(analytics|track|identify)\([^)]*(email|phone|ssn|address|dob|birth)/i,
+        recommendation: 'Review telemetry payloads and avoid sending personal data to analytics providers.',
+      },
+    ];
+
+    for (const file of files) {
+      for (const candidate of privacyPatterns) {
+        const match = file.content.match(candidate.pattern);
+        if (!match || match.index == null) continue;
+        const lineNumber = file.content.slice(0, match.index).split('\n').length;
+        findings.push({
+          title: candidate.title,
+          description: 'Potential privacy issue detected during static analysis.',
+          severity: 'medium',
+          type: 'privacy',
+          filePath: file.path,
+          lineNumber,
+          recommendation: candidate.recommendation,
+          toolAttribution: 'privacy-rules',
+        });
+      }
+    }
+
+    return findings;
+  }
+
+  private fingerprintFinding(finding: Pick<ExternalFinding, 'toolAttribution' | 'type' | 'title' | 'filePath' | 'lineNumber' | 'packageName'>): string {
+    return [
+      finding.toolAttribution,
+      finding.type,
+      finding.title,
+      finding.filePath || '',
+      finding.lineNumber || '',
+      finding.packageName || '',
+    ].join('::');
+  }
+
+  private fingerprintVulnerability(vulnerability: Pick<Vulnerability, 'toolAttribution' | 'type' | 'title' | 'filePath' | 'lineNumber' | 'packageName'>): string {
+    return [
+      vulnerability.toolAttribution || '',
+      vulnerability.type,
+      vulnerability.title,
+      vulnerability.filePath || '',
+      vulnerability.lineNumber || '',
+      vulnerability.packageName || '',
+    ].join('::');
+  }
+
+  private async reconcileAndPersistFindings(job: ScanJob, findings: ExternalFinding[]): Promise<number> {
+    const existingOpen = (await this.storage.getProjectVulnerabilities(job.projectId, 'open'))
+      .filter((vulnerability) => ['semgrep', 'hounddog', 'privacy-rules', 'ecode-scanner'].includes(vulnerability.toolAttribution || ''));
+
+    const existingByFingerprint = new Map(existingOpen.map((vulnerability) => [this.fingerprintVulnerability(vulnerability), vulnerability]));
+    const seenFingerprints = new Set<string>();
+    let persistedCount = 0;
+
+    for (const finding of findings) {
+      const fingerprint = this.fingerprintFinding(finding);
+      seenFingerprints.add(fingerprint);
+      const existing = existingByFingerprint.get(fingerprint);
+
+      if (existing) {
+        await this.storage.updateVulnerability(existing.id, {
+          severity: finding.severity,
+          description: finding.description,
+          recommendation: finding.recommendation,
+          cwe: finding.cwe,
+          references: finding.references,
+          filePath: finding.filePath || null,
+          lineNumber: finding.lineNumber || null,
+          packageName: finding.packageName || null,
+          vulnerableVersion: finding.vulnerableVersion || null,
+          fixedVersion: finding.fixedVersion || null,
+          status: 'open',
+          resolvedAt: null,
+        });
+        persistedCount++;
+        continue;
+      }
+
+      await this.storage.createVulnerability({
+        scanId: job.scanId,
+        projectId: parseInt(job.projectId, 10),
+        title: finding.title,
+        description: finding.description,
+        severity: finding.severity,
+        type: finding.type,
+        status: 'open',
+        filePath: finding.filePath || null,
+        lineNumber: finding.lineNumber || null,
+        recommendation: finding.recommendation || null,
+        cwe: finding.cwe || null,
+        references: finding.references || null,
+        packageName: finding.packageName || null,
+        vulnerableVersion: finding.vulnerableVersion || null,
+        fixedVersion: finding.fixedVersion || null,
+        toolAttribution: finding.toolAttribution,
+        isHidden: false,
+      });
+      persistedCount++;
+    }
+
+    for (const vulnerability of existingOpen) {
+      const fingerprint = this.fingerprintVulnerability(vulnerability);
+      if (seenFingerprints.has(fingerprint)) continue;
+      await this.storage.updateVulnerability(vulnerability.id, {
+        status: 'fixed',
+        resolvedAt: new Date(),
+      });
+    }
+
+    return persistedCount;
   }
 
   /**
@@ -82,61 +439,79 @@ export class ScanExecutorService {
       });
       await this.broadcastScanUpdate(job.scanId);
 
-      // Get project files from database
-      const files = await this.storage.getProjectFiles(job.projectId);
-      
-      if (!files || files.length === 0) {
+      const settings = await this.storage.getSecurityScanSettings(job.projectId);
+      const workspaceFiles = await this.collectWorkspaceFiles(job.projectId);
+
+      if (!workspaceFiles || workspaceFiles.length === 0) {
         logger.info(`[ScanExecutor] No files found for project ${job.projectId}`);
         await this.completeScan(job, 0, startTime);
         return;
       }
 
-      // Convert files to scanner format
-      const scanFiles = files
-        .filter((f: any) => !f.isDirectory && f.content)
-        .map((f: any) => ({
-          path: f.path || f.name,
-          content: f.content || '',
-        }));
+      logger.info(`[ScanExecutor] Scanning ${workspaceFiles.length} workspace files for project ${job.projectId}`);
 
-      logger.info(`[ScanExecutor] Scanning ${scanFiles.length} files for project ${job.projectId}`);
+      const result = await this.scanner.scanProject(parseInt(job.projectId, 10), workspaceFiles);
+      const externalFindings: ExternalFinding[] = [];
+      const workspacePath = getProjectWorkspacePath(job.projectId);
 
-      // Run the security scanner
-      const result = await this.scanner.scanProject(
-        parseInt(job.projectId),
-        scanFiles
+      if (settings?.securityDetectionEnabled !== false) {
+        const semgrepFindings = await this.runSemgrepScan(workspacePath);
+        externalFindings.push(...semgrepFindings);
+      }
+
+      if (settings?.privacyDetectionEnabled !== false) {
+        const houndDogFindings = await this.runHoundDogScan(workspacePath);
+        if (houndDogFindings.length > 0) {
+          externalFindings.push(...houndDogFindings);
+        } else {
+          externalFindings.push(...await this.runPrivacyFallbackScan(workspaceFiles));
+        }
+      }
+
+      const fallbackFindings: ExternalFinding[] = result.issues.map((issue) => ({
+        title: issue.title,
+        description: issue.description,
+        severity: this.mapSeverity(issue.severity),
+        type: this.mapCategory(issue.type) as ExternalFinding['type'],
+        filePath: issue.file || null,
+        lineNumber: issue.line || null,
+        recommendation: issue.suggestion || null,
+        cwe: null,
+        references: null,
+        toolAttribution: 'ecode-scanner',
+      }));
+
+      const allFindings = [...externalFindings, ...fallbackFindings];
+      const dedupedFindings = Array.from(
+        new Map(allFindings.map((finding) => [this.fingerprintFinding(finding), finding])).values()
       );
 
-      // Create vulnerability records from scan results
       let vulnerabilityCount = 0;
-      for (const issue of result.issues) {
-        try {
-          await this.storage.createVulnerability({
-            scanId: job.scanId,
-            projectId: parseInt(job.projectId),
-            title: issue.title,
-            description: issue.description,
-            severity: this.mapSeverity(issue.severity),
-            type: this.mapCategory(issue.type),
-            status: 'open',
-            filePath: issue.file || null,
-            lineNumber: issue.line || null,
-            recommendation: issue.suggestion || null,
-            cwe: null,
-            toolAttribution: 'ecode-scanner',
-            isHidden: false,
-          });
-          vulnerabilityCount++;
-        } catch (error) {
-          logger.error(`[ScanExecutor] Error creating vulnerability:`, error);
-        }
+      if (dedupedFindings.length > 0) {
+        vulnerabilityCount = await this.reconcileAndPersistFindings(job, dedupedFindings);
+      } else {
+        await this.reconcileAndPersistFindings(job, []);
       }
 
       // Broadcast vulnerability updates
       await this.broadcastVulnerabilityUpdate(job.projectId);
 
       // Complete the scan
-      await this.completeScan(job, vulnerabilityCount, startTime, result.summary);
+      const summary = dedupedFindings.reduce(
+        (acc, finding) => {
+          acc[finding.severity]++;
+          return acc;
+        },
+        { critical: 0, high: 0, medium: 0, low: 0 }
+      );
+
+      await this.completeScan(job, vulnerabilityCount, startTime, {
+        critical: summary.critical,
+        high: summary.high,
+        medium: summary.medium,
+        low: summary.low,
+        info: 0,
+      });
 
     } catch (error) {
       logger.error(`[ScanExecutor] Error executing scan ${job.scanId}:`, error);

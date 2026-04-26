@@ -5026,7 +5026,8 @@ Constraints: {{constraints}}`,
     return await this.db.select().from(vulnerabilities)
       .where(and(
         eq(vulnerabilities.projectId, _num(projectId)),
-        eq(vulnerabilities.isHidden, isHidden)
+        eq(vulnerabilities.isHidden, isHidden),
+        eq(vulnerabilities.status, 'open')
       ))
       .orderBy(desc(vulnerabilities.discoveredAt));
   }

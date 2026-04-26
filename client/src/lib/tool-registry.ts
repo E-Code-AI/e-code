@@ -22,7 +22,6 @@ import {
   Rocket,
   Key,
   FolderInput,
-  PackageOpen,
   Bot,
   CreditCard,
   Puzzle,
@@ -209,15 +208,6 @@ export const TOOL_REGISTRY: Record<string, ToolMetadata> = {
     category: 'Tools',
     description: 'Manage project dependencies',
     keywords: ['npm', 'dependencies', 'install'],
-  },
-  'package-viewer': {
-    id: 'package-viewer',
-    label: 'Package Viewer',
-    icon: PackageOpen,
-    emoji: '📦',
-    category: 'Tools',
-    description: 'View package details',
-    keywords: ['npm', 'dependencies'],
   },
   'testing': {
     id: 'testing',

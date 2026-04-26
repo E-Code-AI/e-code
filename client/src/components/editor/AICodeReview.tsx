@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -63,6 +63,23 @@ interface ReviewResult {
   summary: string;
 }
 
+interface AnalyzeResponse {
+  success?: boolean;
+  summary?: string;
+  score?: number;
+  issues?: Array<{
+    id?: string | number;
+    severity?: 'error' | 'warning' | 'suggestion' | string;
+    title?: string;
+    description?: string;
+    line?: number;
+    endLine?: number;
+    code?: string;
+    fixSuggestion?: string;
+    filePath?: string;
+  }>;
+}
+
 interface AICodeReviewProps {
   projectId: string;
   fileId?: string;
@@ -91,6 +108,51 @@ export default function AICodeReview({
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
+  const normalizeReviewResult = useCallback((response: AnalyzeResponse): ReviewResult => {
+    const normalizedIssues: CodeIssue[] = (response.issues || []).map((issue, index) => {
+      const severityMap: Record<string, CodeIssue['severity']> = {
+        error: 'critical',
+        warning: 'medium',
+        suggestion: 'low',
+      };
+
+      return {
+        id: Number(issue.id) || index + 1,
+        line: issue.line || 1,
+        endLine: issue.endLine,
+        severity: severityMap[issue.severity || 'suggestion'] || 'info',
+        type: issue.title || 'Issue',
+        message: issue.title || issue.description || 'Review issue detected',
+        explanation: issue.description,
+        suggestion: issue.fixSuggestion,
+        fixCode: issue.code,
+        category: 'best-practice',
+        confidence: 0.85,
+      };
+    });
+
+    const metrics = normalizedIssues.reduce(
+      (acc, issue) => {
+        acc[`${issue.severity}Issues` as keyof typeof acc] += 1;
+        return acc;
+      },
+      {
+        codeQualityScore: response.score ?? 75,
+        criticalIssues: 0,
+        highIssues: 0,
+        mediumIssues: 0,
+        lowIssues: 0,
+        infoIssues: 0,
+      }
+    );
+
+    return {
+      issues: normalizedIssues,
+      metrics,
+      summary: response.summary || 'Code review complete',
+    };
+  }, []);
+
   const reviewMutation = useMutation<ReviewResult, Error, void>({
     mutationFn: async () => {
       setIsReviewing(true);
@@ -101,7 +163,7 @@ export default function AICodeReview({
       }, 200);
 
       try {
-        const response = await apiRequest<{ review: ReviewResult }>('POST', '/api/code-review/analyze', {
+        const response = await apiRequest<AnalyzeResponse>('POST', '/api/code-review/analyze', {
           projectId,
           fileId,
           filePath,
@@ -120,7 +182,7 @@ export default function AICodeReview({
 
         clearInterval(progressInterval);
         setProgress(100);
-        return response.review as ReviewResult;
+        return normalizeReviewResult(response);
       } finally {
         clearInterval(progressInterval);
         setIsReviewing(false);
@@ -143,9 +205,61 @@ export default function AICodeReview({
     }
   });
 
-  const { data: reviewData } = useQuery({
+  const { data: reviewData } = useQuery<ReviewResult>({
     queryKey: ['/api/code-review/current', projectId, filePath],
-    enabled: false
+    queryFn: async () => {
+      const response = await fetch(`/api/code-review/current?projectId=${projectId}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch current code review');
+      }
+
+      const data = await response.json();
+      const latestReview = (data.issues || []).find((issue: any) => issue.filePath === filePath) || data.issues?.[0];
+
+      if (!latestReview) {
+        return {
+          issues: [],
+          metrics: {
+            codeQualityScore: 0,
+            criticalIssues: 0,
+            highIssues: 0,
+            mediumIssues: 0,
+            lowIssues: 0,
+            infoIssues: 0,
+          },
+          summary: '',
+        };
+      }
+
+      return {
+        issues: [
+          {
+            id: Number(latestReview.id) || 1,
+            line: latestReview.lineStart || 1,
+            endLine: latestReview.lineEnd,
+            severity: latestReview.status === 'completed' ? 'info' : 'medium',
+            type: latestReview.title || 'Previous Review',
+            message: latestReview.title || 'Previous review available',
+            explanation: latestReview.description || '',
+            category: 'best-practice',
+            confidence: 0.5,
+          },
+        ],
+        metrics: {
+          codeQualityScore: latestReview.status === 'completed' ? 100 : 75,
+          criticalIssues: 0,
+          highIssues: 0,
+          mediumIssues: latestReview.status === 'completed' ? 0 : 1,
+          lowIssues: 0,
+          infoIssues: latestReview.status === 'completed' ? 1 : 0,
+        },
+        summary: latestReview.description || latestReview.title || '',
+      };
+    },
+    enabled: !!projectId,
+    staleTime: 30000,
   });
 
   const applyFixMutation = useMutation({

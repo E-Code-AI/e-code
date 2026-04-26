@@ -93,12 +93,10 @@ export function useCreateCheckpoint(projectId: number | string) {
   
   return useMutation({
     mutationFn: async (data: CreateCheckpointData) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/checkpoints`, {
+      return apiRequest('POST', `/api/projects/${projectId}/checkpoints`, {
         name: data.name || `Checkpoint ${new Date().toISOString()}`,
         description: data.description,
       });
-      if (!res.ok) throw new Error('Failed to create checkpoint');
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'checkpoints'] });
@@ -122,11 +120,9 @@ export function useRestoreCheckpoint(projectId: number | string) {
   
   return useMutation({
     mutationFn: async (checkpointId: number) => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, {
+      return apiRequest('POST', `/api/projects/${projectId}/checkpoints/${checkpointId}/restore`, {
         createBackup: true,
       });
-      if (!res.ok) throw new Error('Failed to restore checkpoint');
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'checkpoints'] });

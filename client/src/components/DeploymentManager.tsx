@@ -309,7 +309,7 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       try {
-        const response = await apiRequest('POST', `/api/projects/${actualProjectId}/deploy`, {
+        const result = await apiRequest<any>('POST', `/api/projects/${actualProjectId}/deploy`, {
           type: 'autoscale',
           regions: ['us-east-1'],
           environment: 'production',
@@ -325,24 +325,14 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
 
         clearTimeout(timeoutId);
 
-        if (response.ok) {
-          const result = await response.json();
-          await loadDeployments();
-          setShowDeployDialog(false);
-          setDeploymentName('');
-          setCustomDomain('');
-          toast({
-            title: "Deployment Started",
-            description: `Your application is being deployed. Deployment ID: ${result.deploymentId}`,
-          });
-        } else {
-          const error = await response.json();
-          toast({
-            title: "Deployment Failed",
-            description: error.message || "Failed to start deployment",
-            variant: "destructive"
-          });
-        }
+        await loadDeployments();
+        setShowDeployDialog(false);
+        setDeploymentName('');
+        setCustomDomain('');
+        toast({
+          title: "Deployment Started",
+          description: `Your application is being deployed. Deployment ID: ${result.deploymentId}`,
+        });
       } catch (fetchError: any) {
         clearTimeout(timeoutId);
         throw fetchError;
@@ -363,15 +353,12 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const handleRedeploy = async (deployment: Deployment) => {
     try {
       // Redeploy by calling the deploy endpoint again - REAL BACKEND
-      const response = await apiRequest('POST', `/api/deployment/${actualProjectId}/redeploy`, {});
-
-      if (response.ok) {
-        await loadDeployments();
-        toast({
-          title: "Redeployment Started",
-          description: `Redeploying version ${deployment.version}`,
-        });
-      }
+      await apiRequest('POST', `/api/deployment/${actualProjectId}/redeploy`, {});
+      await loadDeployments();
+      toast({
+        title: "Redeployment Started",
+        description: `Redeploying version ${deployment.version}`,
+      });
     } catch (error) {
       toast({
         title: "Redeployment Failed",
@@ -384,19 +371,16 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
   const handleStop = async (deployment: Deployment) => {
     try {
       // First stop the container
-      const containerResponse = await apiRequest('POST', `/api/projects/${actualProjectId}/container/stop`, {});
+      await apiRequest('POST', `/api/projects/${actualProjectId}/container/stop`, {});
 
       // Then update deployment status
-      const response = await apiRequest('POST', `/api/deployments/${deployment.id}/stop`, {});
-
-      if (response.ok && containerResponse.ok) {
-        await loadDeployments();
-        setContainerStatus(null);
-        toast({
-          title: "Deployment Stopped",
-          description: `Deployment ${deployment.version} and container have been stopped`,
-        });
-      }
+      await apiRequest('POST', `/api/deployments/${deployment.id}/stop`, {});
+      await loadDeployments();
+      setContainerStatus(null);
+      toast({
+        title: "Deployment Stopped",
+        description: `Deployment ${deployment.version} and container have been stopped`,
+      });
     } catch (error) {
       toast({
         title: "Stop Failed",
@@ -410,22 +394,19 @@ export function DeploymentManager({ projectId, project, isOpen = true, onClose, 
     if (!newEnvKey.trim()) return;
 
     try {
-      const response = await apiRequest('POST', `/api/environment/${actualProjectId}`, {
+      await apiRequest('POST', `/api/environment/${actualProjectId}`, {
         key: newEnvKey,
         value: newEnvValue,
         isSecret: newEnvSecret
       });
-
-      if (response.ok) {
-        await loadEnvVars(selectedDeployment?.id || 0);
-        setNewEnvKey('');
-        setNewEnvValue('');
-        setNewEnvSecret(false);
-        toast({
-          title: "Environment Variable Added",
-          description: `${newEnvKey} has been added`,
-        });
-      }
+      await loadEnvVars(selectedDeployment?.id || 0);
+      setNewEnvKey('');
+      setNewEnvValue('');
+      setNewEnvSecret(false);
+      toast({
+        title: "Environment Variable Added",
+        description: `${newEnvKey} has been added`,
+      });
     } catch (error) {
       toast({
         title: "Failed to Add Variable",

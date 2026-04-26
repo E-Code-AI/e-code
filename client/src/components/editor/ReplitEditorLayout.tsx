@@ -31,6 +31,15 @@ import { ReplitHistoryPanel } from './ReplitHistoryPanel';
 import { ShellPanel } from './ShellPanel';
 import { AppStoragePanel } from './AppStoragePanel';
 import { ResponsiveWebPreview } from './ResponsiveWebPreview';
+import { ReplitAuthPanel } from '@/components/ide/ReplitAuthPanel';
+import { ReplitProblemsPanel } from './ReplitProblemsPanel';
+import { ReplitOutputPanel } from './ReplitOutputPanel';
+import { UnifiedCheckpointsPanel } from '@/components/UnifiedCheckpointsPanel';
+import { ExtensionsMarketplace } from '@/components/ExtensionsMarketplace';
+import { AutomationsPanel } from '@/components/AutomationsPanel';
+import { MCPServersPanel } from '@/components/MCPServersPanel';
+import { MobileSecurityPanel } from '@/components/mobile/MobileSecurityPanel';
+import { MobileCollaborationPanel } from '@/components/mobile/MobileCollaborationPanel';
 
 const ReplitTerminalPanel = instrumentedLazy(() => 
   import('./ReplitTerminalPanel').then(module => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel'
@@ -229,16 +238,45 @@ export function ReplitEditorLayout({
         return <ShellPanel projectId={projectId || ''} />;
       case 'storage':
         return <AppStoragePanel projectId={projectId || ''} />;
+      case 'auth':
+        return <ReplitAuthPanel projectId={projectId || ''} />;
       case 'themes':
         return <ReplitThemesPanel projectId={projectId} />;
       case 'history':
         return <ReplitHistoryPanel projectId={projectId} />;
+      case 'problems':
+        return (
+          <ReplitProblemsPanel
+            projectId={projectId}
+            onFileNavigate={(filePath) => {
+              const target = files.find((file) => file.path === filePath || file.name === filePath);
+              if (target) {
+                onFileSelect?.(target);
+              }
+            }}
+          />
+        );
+      case 'output':
+        return <ReplitOutputPanel projectId={projectId} />;
+      case 'checkpoints':
+        return <UnifiedCheckpointsPanel projectId={projectId || ''} />;
+      case 'extensions':
+        return <ExtensionsMarketplace projectId={projectId ? parseInt(projectId, 10) : undefined} className="h-full" />;
+      case 'workflows':
+      case 'automations':
+        return <AutomationsPanel projectId={projectId} onClose={() => undefined} />;
+      case 'mcp-suite':
+        return <MCPServersPanel projectId={projectId ? Number(projectId) : undefined} />;
+      case 'security':
+        return <MobileSecurityPanel projectId={projectId || ''} className="h-full" />;
+      case 'collaboration':
+        return <MobileCollaborationPanel projectId={projectId || ''} className="h-full" />;
       case 'multiplayers':
         return <ReplitMultiplayers projectId={projectId} />;
       default:
         return (
           <div className="p-4 text-center text-muted-foreground">
-            <p className="text-[13px]">{activeTool} coming soon...</p>
+            <p className="text-[13px]">Panel unavailable: {activeTool}</p>
           </div>
         );
     }

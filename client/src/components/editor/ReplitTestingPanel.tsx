@@ -108,7 +108,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
   const [latestOutput, setLatestOutput] = useState('');
 
-  const { data: detectedTests, isLoading: detectionLoading, refetch: refetchDetection } = useQuery<{ files: string[]; framework: string }>({
+  const { data: detectedTests, isLoading: detectionLoading, refetch: refetchDetection } = useQuery<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>({
     queryKey: ['/api/workspace/projects', projectId, 'tests/detect'],
     queryFn: async () => {
       const res = await fetch(`/api/workspace/projects/${projectId}/tests/detect`, { credentials: 'include' });
@@ -226,6 +226,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const failedTests = latestRun?.failedTests || 0;
   const skippedTests = latestRun?.skippedTests || 0;
   const isLoading = detectionLoading || runsLoading || latestRunLoading;
+  const canRunTests = !!detectedTests?.hasRunnableCommand;
 
   return (
     <div className={cn("flex flex-col h-full bg-[var(--ecode-surface)]", className)}>
@@ -239,7 +240,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
             size="sm"
             variant="ghost"
             onClick={() => runTestsMutation.mutate()}
-            disabled={runTestsMutation.isPending || !detectedTests?.files?.length}
+            disabled={runTestsMutation.isPending || !canRunTests}
             className="h-7 px-2 rounded bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] disabled:opacity-50 text-white text-[10px]"
             data-testid="button-run-tests"
           >
@@ -256,6 +257,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
               <DropdownMenuItem onClick={() => refetchDetection()} className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Refresh detected tests</DropdownMenuItem>
               <DropdownMenuItem onClick={() => refetch()} className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Refresh recent runs</DropdownMenuItem>
               <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Framework: {detectedTests?.framework || 'none'}</DropdownMenuItem>
+              <DropdownMenuItem className="text-xs text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">Runner: {canRunTests ? 'ready' : 'unavailable'}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -340,8 +342,10 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
                 {searchQuery ? 'No tests match your search' : detectedTests?.files?.length ? 'No test results yet' : 'No tests found'}
               </p>
               <p className="text-[13px] text-muted-foreground max-w-[240px]">
-                {!detectedTests?.files?.length
-                  ? 'Create test files in the project workspace to get started'
+                {!canRunTests
+                  ? 'No runnable test command detected in this project workspace'
+                  : !detectedTests?.files?.length
+                  ? 'A test runner is available, but no test files were auto-detected yet'
                   : testRuns.length === 0
                   ? 'Run tests to see real results here'
                   : 'Adjust your search or run tests again'}

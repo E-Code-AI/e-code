@@ -22,15 +22,12 @@ import * as t from '@babel/types';
 import generate from '@babel/generator';
 import { storage } from '../storage';
 import { db } from '../db';
-import { visualEdits, type VisualEdit } from '@shared/schema';
-import { and, eq, desc } from 'drizzle-orm';
-import { createLogger } from '../utils/logger';
+import { fileVersions } from '@shared/schema';
+import { eq, sql } from 'drizzle-orm';
 
 // @babel/traverse default-export quirk under ESM interop.
 const traverse: typeof _traverse = (_traverse as any).default ?? _traverse;
 const generateCode: any = (generate as any).default ?? generate;
-
-const logger = createLogger('visual-edits-service');
 
 export interface VisualEditRequest {
   projectId: number;
@@ -53,7 +50,7 @@ export interface VisualEditRequest {
 }
 
 export interface VisualEditResult {
-  edit: VisualEdit;
+  edit: any;
   before: string;
   after: string;
   filePath: string;
@@ -131,6 +128,43 @@ async function resolveFile(projectId: number, fileName: string): Promise<{ id: n
   const match = all.find(f => !f.isDirectory && (f.path === rel || f.path?.endsWith(`/${rel}`) || f.path?.endsWith(rel)));
   if (match) return { id: match.id, path: match.path, content: match.content ?? '' };
   return null;
+}
+
+async function resolveFileByLocator(
+  projectId: number,
+  locator: NonNullable<VisualEditRequest['locator']>,
+): Promise<{ id: number; path: string; content: string } | null> {
+  const all = await storage.getFilesByProject(projectId);
+  const jsxFiles = all.filter(file => !file.isDirectory && isJsxLike(file.path));
+  const matches: Array<{ id: number; path: string; content: string }> = [];
+
+  for (const file of jsxFiles) {
+    const content = file.content ?? '';
+    let ast: t.File;
+    try {
+      ast = parse(content, {
+        sourceType: 'module',
+        errorRecovery: true,
+        plugins: ['jsx', 'typescript', 'decorators-legacy', 'classProperties', 'objectRestSpread'],
+      });
+    } catch {
+      continue;
+    }
+
+    const element = findJsxElementByHint(ast, locator);
+    if (element) {
+      matches.push({ id: file.id, path: file.path, content });
+      if (matches.length > 1) {
+        break;
+      }
+    }
+  }
+
+  if (matches.length !== 1) {
+    return null;
+  }
+
+  return matches[0];
 }
 
 function isJsxLike(filePath: string): boolean {
@@ -282,12 +316,22 @@ export async function applyVisualEdit(req: VisualEditRequest): Promise<VisualEdi
     throw new Error('Nothing to apply');
   }
 
-  let filePath: string | null = null;
-  if (req.debugSource?.fileName) filePath = req.debugSource.fileName;
-  if (!filePath) throw new Error('debugSource.fileName required to locate source file');
+  let resolved: { id: number; path: string; content: string } | null = null;
+  if (req.debugSource?.fileName) {
+    resolved = await resolveFile(req.projectId, req.debugSource.fileName);
+    if (!resolved) {
+      throw new Error(`Source file for ${req.debugSource.fileName} not found in project`);
+    }
+  } else if (req.locator) {
+    resolved = await resolveFileByLocator(req.projectId, req.locator);
+    if (!resolved) {
+      throw new Error('Could not uniquely resolve the selected element to a source file');
+    }
+  }
 
-  const resolved = await resolveFile(req.projectId, filePath);
-  if (!resolved) throw new Error(`Source file for ${filePath} not found in project`);
+  if (!resolved) {
+    throw new Error('debugSource.fileName or a unique element locator is required to locate source file');
+  }
   if (!isJsxLike(resolved.path)) throw new Error(`File ${resolved.path} is not a JSX-capable source file`);
 
   const before = resolved.content;
@@ -331,70 +375,118 @@ export async function applyVisualEdit(req: VisualEditRequest): Promise<VisualEdi
   if (changedText) parts.push('text');
   const summary = `Visual edit ${parts.join(' + ')} on ${resolved.path}`;
 
-  const [row] = await db.insert(visualEdits).values({
-    projectId: req.projectId,
-    userId: req.userId,
+  const [row] = await db.insert(fileVersions).values({
     fileId: resolved.id,
-    filePath: resolved.path,
-    beforeContent: before,
-    afterContent: after,
-    summary,
+    projectId: req.projectId,
+    content: after,
+    changeType: 'modified',
+    changeSummary: summary,
+    userId: req.userId,
     metadata: {
+      visualEdit: true,
+      status: 'applied',
+      filePath: resolved.path,
+      beforeContent: before,
+      afterContent: after,
+      summary,
       styles: changedStyles ? styles : null,
       text: changedText ? req.text : null,
       debugSource: req.debugSource ?? null,
     },
-    status: 'applied',
   }).returning();
 
   return { edit: row, before, after, filePath: resolved.path };
 }
 
-export async function undoLastEdit(projectId: number, userId: number): Promise<VisualEdit | null> {
+async function getLatestVisualEdit(projectId: number, status: 'applied' | 'undone') {
+  const rows = await db.execute(sql`
+    SELECT *
+    FROM file_versions
+    WHERE project_id = ${projectId}
+      AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
+      AND COALESCE(metadata->>'status', 'applied') = ${status}
+    ORDER BY created_at DESC, id DESC
+    LIMIT 1
+  `);
+
+  return (rows.rows?.[0] as any) ?? null;
+}
+
+async function updateVisualEditStatus(id: number, status: 'applied' | 'undone') {
+  const [updated] = await db.update(fileVersions)
+    .set({
+      metadata: sql`COALESCE(${fileVersions.metadata}, '{}'::jsonb) || ${JSON.stringify({ status })}::jsonb`,
+    })
+    .where(eq(fileVersions.id, id))
+    .returning();
+
+  return updated;
+}
+
+export async function undoLastEdit(projectId: number, userId: number): Promise<any | null> {
   const project = await storage.getProject(projectId);
   if (!project) throw new Error('Project not found');
   const hasAccess = await storage.isProjectCollaborator(projectId, userId);
   if (!hasAccess) throw new Error('Not authorized');
 
-  const rows = await db.select().from(visualEdits)
-    .where(and(eq(visualEdits.projectId, projectId), eq(visualEdits.status, 'applied')))
-    .orderBy(desc(visualEdits.createdAt))
-    .limit(1);
-  if (!rows.length) return null;
-  const row = rows[0];
+  const row = await getLatestVisualEdit(projectId, 'applied');
+  if (!row) return null;
 
-  await storage.updateFile(row.fileId, { content: row.beforeContent });
-  const [updated] = await db.update(visualEdits)
-    .set({ status: 'undone', updatedAt: new Date() })
-    .where(eq(visualEdits.id, row.id))
-    .returning();
+  const beforeContent = row.metadata?.beforeContent;
+  if (typeof beforeContent !== 'string') {
+    throw new Error('Visual edit history is missing prior file content');
+  }
+
+  await storage.updateFile(row.file_id, { content: beforeContent });
+  const updated = await updateVisualEditStatus(row.id, 'undone');
   return updated;
 }
 
-export async function redoLastEdit(projectId: number, userId: number): Promise<VisualEdit | null> {
+export async function redoLastEdit(projectId: number, userId: number): Promise<any | null> {
   const project = await storage.getProject(projectId);
   if (!project) throw new Error('Project not found');
   const hasAccess = await storage.isProjectCollaborator(projectId, userId);
   if (!hasAccess) throw new Error('Not authorized');
 
-  const rows = await db.select().from(visualEdits)
-    .where(and(eq(visualEdits.projectId, projectId), eq(visualEdits.status, 'undone')))
-    .orderBy(desc(visualEdits.updatedAt))
-    .limit(1);
-  if (!rows.length) return null;
-  const row = rows[0];
+  const row = await getLatestVisualEdit(projectId, 'undone');
+  if (!row) return null;
 
-  await storage.updateFile(row.fileId, { content: row.afterContent });
-  const [updated] = await db.update(visualEdits)
-    .set({ status: 'applied', updatedAt: new Date() })
-    .where(eq(visualEdits.id, row.id))
-    .returning();
+  const afterContent = row.metadata?.afterContent;
+  if (typeof afterContent !== 'string') {
+    throw new Error('Visual edit history is missing updated file content');
+  }
+
+  await storage.updateFile(row.file_id, { content: afterContent });
+  const updated = await updateVisualEditStatus(row.id, 'applied');
   return updated;
 }
 
-export async function getEditHistory(projectId: number, limit = 20): Promise<VisualEdit[]> {
-  return db.select().from(visualEdits)
-    .where(eq(visualEdits.projectId, projectId))
-    .orderBy(desc(visualEdits.createdAt))
-    .limit(limit);
+export async function getEditHistory(projectId: number, limit = 20): Promise<any[]> {
+  const rows = await db.execute(sql`
+    SELECT
+      id,
+      file_id,
+      project_id,
+      change_summary,
+      created_at,
+      updated_at,
+      metadata
+    FROM file_versions
+    WHERE project_id = ${projectId}
+      AND COALESCE(metadata->>'visualEdit', 'false') = 'true'
+    ORDER BY created_at DESC, id DESC
+    LIMIT ${limit}
+  `);
+
+  return (rows.rows as any[]).map((row) => ({
+    id: row.id,
+    fileId: row.file_id,
+    projectId: row.project_id,
+    filePath: row.metadata?.filePath ?? '',
+    summary: row.change_summary ?? row.metadata?.summary ?? 'Visual edit',
+    status: row.metadata?.status ?? 'applied',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    metadata: row.metadata ?? {},
+  }));
 }

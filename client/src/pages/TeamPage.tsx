@@ -211,6 +211,32 @@ export default function TeamPage() {
   };
 
   const canManageTeam = team?.role === 'owner' || team?.role === 'admin';
+  const recentActivity = [
+    ...members.map((member) => ({
+      id: `member-${member.userId}`,
+      title: `${member.username} joined the team`,
+      description: `${member.role} access granted`,
+      timestamp: member.joinedAt,
+      kind: 'member' as const,
+    })),
+    ...projects.map((project) => ({
+      id: `project-${project.id}`,
+      title: `${project.name} updated`,
+      description: `${project.language || 'Project'} workspace activity`,
+      timestamp: project.lastUpdated,
+      kind: 'project' as const,
+    })),
+    ...workspaces.map((workspace) => ({
+      id: `workspace-${workspace.id}`,
+      title: `${workspace.name} created`,
+      description: `${workspace.projectCount} project${workspace.projectCount === 1 ? '' : 's'} in workspace`,
+      timestamp: workspace.createdAt,
+      kind: 'workspace' as const,
+    })),
+  ]
+    .filter((entry) => entry.timestamp)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    .slice(0, 12);
 
   if (teamLoading) {
     return (
@@ -616,9 +642,34 @@ export default function TeamPage() {
         <TabsContent value="activity" className="space-y-4">
           <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
           <Card>
-            <CardContent className="p-8 text-center">
-              <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Activity tracking coming soon</p>
+            <CardContent className="p-6">
+              {recentActivity.length > 0 ? (
+                <div className="space-y-4">
+                  {recentActivity.map((entry, index) => (
+                    <div key={entry.id} className="flex items-start gap-3">
+                      <div className="mt-0.5 rounded-full bg-muted p-2">
+                        {entry.kind === 'member' && <Users className="h-4 w-4 text-muted-foreground" />}
+                        {entry.kind === 'project' && <Code className="h-4 w-4 text-muted-foreground" />}
+                        {entry.kind === 'workspace' && <Folder className="h-4 w-4 text-muted-foreground" />}
+                      </div>
+                      <div className="min-w-0 flex-1 border-b last:border-b-0 pb-4 last:pb-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-medium text-sm truncate">{entry.title}</p>
+                          <span className="text-[11px] text-muted-foreground shrink-0">
+                            {new Date(entry.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="text-[13px] text-muted-foreground mt-1">{entry.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No recent team activity available.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

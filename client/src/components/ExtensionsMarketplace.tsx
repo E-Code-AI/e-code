@@ -120,7 +120,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const installMutation = useMutation({
     mutationFn: async (extension: MarketplaceExtension) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('POST', `/api/extensions/${projectId}/install`, {
+      return apiRequest('POST', `/api/extensions/${projectId}/install`, {
         extensionId: extension.extensionId,
         name: extension.name,
         description: extension.description,
@@ -129,7 +129,6 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
         category: extension.category,
         icon: extension.icon,
       });
-      return response.json();
     },
     onSuccess: (_, extension) => {
       toast({
@@ -150,8 +149,7 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const uninstallMutation = useMutation({
     mutationFn: async (extensionId: string) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('DELETE', `/api/extensions/${projectId}/${extensionId}`, {});
-      return response.json();
+      return apiRequest('DELETE', `/api/extensions/${projectId}/${extensionId}`, {});
     },
     onSuccess: () => {
       toast({
@@ -172,10 +170,9 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   const toggleMutation = useMutation({
     mutationFn: async ({ extensionId, enabled }: { extensionId: string; enabled: boolean }) => {
       if (!projectId) throw new Error('Project ID required');
-      const response = await apiRequest('PATCH', `/api/extensions/${projectId}/${extensionId}`, {
+      return apiRequest('PATCH', `/api/extensions/${projectId}/${extensionId}`, {
         enabled,
       });
-      return response.json();
     },
     onSuccess: (updated) => {
       toast({
@@ -225,6 +222,10 @@ export function ExtensionsMarketplace({ projectId, className }: ExtensionsMarket
   };
 
   const isLoading = isLoadingMarketplace || isLoadingInstalled;
+  const isMutating =
+    installMutation.isPending ||
+    uninstallMutation.isPending ||
+    toggleMutation.isPending;
 
   if (!projectId) {
     return (

@@ -31,6 +31,7 @@ import {
   Crown,
   Shield,
   Award,
+  Circle,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -64,6 +65,36 @@ export default function Profile() {
   });
 
   const projects = Array.isArray(projectsData?.projects) ? projectsData.projects : [];
+  const normalizedActivity = (() => {
+    const profileActivity = Array.isArray(profile?.recentActivity) ? profile.recentActivity : [];
+    const timelineEntries = profileActivity.map((activity: any, index: number) => ({
+      id: `${activity?.type || 'activity'}-${activity?.time || index}-${index}`,
+      title: activity?.repl || activity?.title || 'Project activity',
+      description: activity?.type || activity?.description || 'Updated project',
+      timestamp: activity?.time || activity?.timestamp || null,
+    }));
+
+    if (timelineEntries.length > 0) {
+      return timelineEntries;
+    }
+
+    if (Array.isArray(activityData) && activityData.length > 0) {
+      return activityData
+        .filter((entry: any) => entry && (entry.title || entry.repl || entry.description || entry.type))
+        .map((entry: any, index: number) => ({
+          id: `${entry?.id || entry?.week || index}`,
+          title: entry?.title || entry?.repl || `Activity ${index + 1}`,
+          description: entry?.description || entry?.type || (
+            typeof entry?.contributions === 'number'
+              ? `${entry.contributions} contributions`
+              : 'Project activity'
+          ),
+          timestamp: entry?.timestamp || entry?.time || null,
+        }));
+    }
+
+    return [];
+  })();
 
   const getLanguageColor = (language: string) => {
     const colors: Record<string, string> = {
@@ -82,11 +113,7 @@ export default function Profile() {
   const { data: activityData = [], isLoading: activityLoading } = useQuery({
     queryKey: ['/api/users', username || currentUser?.username, 'activity'],
     queryFn: async () => {
-      // Fallback for activity data
-      return Array.from({ length: 52 }, (_, i) => ({
-        week: i,
-        contributions: Math.floor(Math.random() * 20),
-      }));
+      return [];
     },
     enabled: !!(username || currentUser?.username),
   });
@@ -435,11 +462,40 @@ export default function Profile() {
             <Card>
               <CardHeader>
                 <CardTitle>Activity Timeline</CardTitle>
+                <CardDescription>Recent public profile activity</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">
-                  Full activity timeline coming soon...
-                </p>
+                {normalizedActivity.length > 0 ? (
+                  <div className="space-y-4">
+                    {normalizedActivity.map((activity: any, index: number) => (
+                      <div key={activity.id} className="flex items-start gap-3">
+                        <div className="flex flex-col items-center pt-1">
+                          <Circle className="h-3 w-3 fill-current text-primary" />
+                          {index < normalizedActivity.length - 1 && (
+                            <div className="mt-1 h-10 w-px bg-border" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1 pb-2">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="font-medium text-sm truncate">{activity.title}</p>
+                            {activity.timestamp && (
+                              <span className="text-[11px] text-muted-foreground shrink-0">
+                                {activity.timestamp}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[13px] text-muted-foreground mt-1">
+                            {activity.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    No recent activity available.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

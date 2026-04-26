@@ -53,6 +53,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 interface TableSchema {
   name: string;
@@ -74,6 +75,11 @@ interface QueryResult {
   error?: string;
 }
 
+interface Project {
+  id: number;
+  name: string;
+}
+
 const SAMPLE_QUERIES = [
   { name: 'Select all users', query: 'SELECT * FROM users LIMIT 100;' },
   { name: 'Count projects', query: 'SELECT COUNT(*) as total FROM projects;' },
@@ -93,6 +99,7 @@ export default function DatabasePage() {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting'>('connecting');
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showConnectionSettings, setShowConnectionSettings] = useState(false);
+  const [selectedKvProjectId, setSelectedKvProjectId] = useState<string>('');
 
   const { data: schemasData, isLoading: schemasLoading, error: schemasError } = useQuery<{ tables: TableSchema[] }>({
     queryKey: ['/api/admin/database/tables'],
@@ -102,6 +109,13 @@ export default function DatabasePage() {
   });
 
   const schemas = schemasData?.tables || [];
+
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ['/api/projects'],
+    queryFn: async () => {
+      return await apiRequest<Project[]>('GET', '/api/projects');
+    },
+  });
   
   useEffect(() => {
     if (schemasData && connectionStatus === 'connecting') {
@@ -110,6 +124,12 @@ export default function DatabasePage() {
       setConnectionStatus('disconnected');
     }
   }, [schemasData, schemasError, connectionStatus]);
+
+  useEffect(() => {
+    if (!selectedKvProjectId && projects.length > 0) {
+      setSelectedKvProjectId(String(projects[0].id));
+    }
+  }, [projects, selectedKvProjectId]);
 
   const getTypeIcon = (type: string) => {
     if (type.includes('int') || type.includes('serial')) return <Hash className="h-3 w-3" />;
@@ -613,7 +633,41 @@ export default function DatabasePage() {
             </TabsContent>
 
             <TabsContent value="kv">
-              <ReplitDatabase projectId={1} />
+              <Card data-testid="card-kv-store">
+                <CardHeader>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle className="text-base">Project Key-Value Store</CardTitle>
+                      <CardDescription>
+                        Manage the real project-scoped KV store backed by the runtime service.
+                      </CardDescription>
+                    </div>
+                    <div className="w-full sm:w-[240px]">
+                      <Select value={selectedKvProjectId} onValueChange={setSelectedKvProjectId}>
+                        <SelectTrigger data-testid="select-kv-project">
+                          <SelectValue placeholder="Select project" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={String(project.id)}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {selectedKvProjectId ? (
+                    <ReplitDatabase projectId={Number(selectedKvProjectId)} />
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+                      Select a project to open its KV store.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

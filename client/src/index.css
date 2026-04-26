@@ -31,6 +31,29 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
+
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-\[17px\]:not(input):not(textarea):not(select) {
+    font-size: 0.9375rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-\[15px\]:not(input):not(textarea):not(select),
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-base:not(input):not(textarea):not(select),
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-lg:not(input):not(textarea):not(select) {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-\[14px\]:not(input):not(textarea):not(select) {
+    font-size: 0.8125rem !important;
+    line-height: 1.125rem !important;
+  }
+
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-\[13px\]:not(input):not(textarea):not(select),
+  .mobile-panel-density :is(h1, h2, h3, h4, h5, p, span, button, a, label, div).text-xs:not(input):not(textarea):not(select) {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
   
   .mobile-safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);

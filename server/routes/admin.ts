@@ -284,6 +284,16 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+router.get('/import-stats', async (req, res) => {
+  try {
+    const stats = await storage.getImportStatistics();
+    res.json(stats);
+  } catch (error) {
+    logger.error('Error fetching import statistics', { error: error instanceof Error ? error.message : error });
+    res.status(500).json({ message: 'Failed to fetch import statistics' });
+  }
+});
+
 // User management
 router.get('/users', async (req, res) => {
   try {

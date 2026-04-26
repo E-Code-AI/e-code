@@ -19,6 +19,7 @@ export interface ScreenshotStorageOptions {
   checkpointId?: number;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   fullPage?: boolean;
+  requireRealCapture?: boolean;
   metadata?: Record<string, string>;
 }
 
@@ -43,6 +44,7 @@ export class ScreenshotService {
   private browser: Browser | null = null;
   private objectStorageEnabled: boolean = false;
   private initialized: boolean = false;
+  private lastInitializationError: string | null = null;
 
   async initialize() {
     try {
@@ -53,8 +55,10 @@ export class ScreenshotService {
           headless: true,
           args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
+        this.lastInitializationError = null;
         logger.info('Screenshot service initialized with Playwright');
       } else {
+        this.lastInitializationError = 'Playwright package is not available';
         logger.info('Playwright not available, running in basic mode without browser automation');
       }
 
@@ -63,6 +67,7 @@ export class ScreenshotService {
         logger.info('Object storage integration enabled for screenshots');
       }
     } catch (error) {
+      this.lastInitializationError = error instanceof Error ? error.message : String(error);
       logger.error('Failed to initialize screenshot service:', error);
       logger.info('Running in basic mode without browser automation');
     } finally {
@@ -242,27 +247,13 @@ export class ScreenshotService {
             await page.close();
           }
         }
-      } else {
-        logger.warn('Browser not available, generating deterministic project preview');
-        
-        const projectPreview = await this.generateProjectPreview(projectId);
-        const svgBase64 = Buffer.from(projectPreview).toString('base64');
-        
-        return {
-          screenshotPath: `/screenshots/project-${projectId}-preview.png`,
-          base64Data: options.storeAsBase64 ? `data:image/svg+xml;base64,${svgBase64}` : undefined,
-          thumbnail: `data:image/svg+xml;base64,${svgBase64}`,
-          thumbnailBase64: svgBase64,
-          metadata: {
-            width: viewport.width,
-            height: viewport.height,
-            timestamp: new Date(),
-            projectId,
-            checkpointId: options.checkpointId,
-            storageType: 'base64'
-          }
-        };
       }
+
+      throw new Error(
+        this.lastInitializationError
+          ? `Real screenshot capture is unavailable: ${this.lastInitializationError}`
+          : 'Real screenshot capture is unavailable because the browser automation runtime is not configured'
+      );
     } catch (error) {
       logger.error(`Failed to capture screenshot for project ${projectId}:`, error);
       throw error;

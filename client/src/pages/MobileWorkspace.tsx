@@ -294,7 +294,7 @@ export default function MobileWorkspace() {
       )}
 
       {/* ── Tab Content ── */}
-      <div className={cn('flex-1 flex flex-col overflow-hidden relative', isPreviewTab && 'pb-16')}>
+      <div className={cn('mobile-panel-density flex-1 flex flex-col overflow-hidden relative', isPreviewTab && 'pb-16')}>
         {renderTabContent()}
 
         {/* ── Floating Preview Overlay (split-view mode) ── */}
@@ -341,7 +341,7 @@ export default function MobileWorkspace() {
 
       {/* Tool Panels */}
       <Sheet open={!!activeTool} onOpenChange={(open) => !open && setActiveTool(null)}>
-        <SheetContent side="bottom" className="h-[90vh] p-0">
+        <SheetContent side="bottom" className="mobile-panel-density h-[90vh] p-0">
           <SheetHeader className="px-4 py-3 border-b">
             <SheetTitle className="capitalize">{activeTool}</SheetTitle>
           </SheetHeader>

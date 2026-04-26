@@ -87,9 +87,7 @@ export default function KVStorePage() {
 
   const addEntryMutation = useMutation({
     mutationFn: async (entry: { key: string; value: any; type: string; ttl?: number }) => {
-      const res = await apiRequest('POST', '/api/kv-store', entry);
-      if (!res.ok) throw new Error('Failed to add entry');
-      return res.json();
+      return apiRequest('POST', '/api/kv-store', entry);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
@@ -112,9 +110,7 @@ export default function KVStorePage() {
 
   const updateEntryMutation = useMutation({
     mutationFn: async (entry: { key: string; value: any; type: string; ttl?: number }) => {
-      const res = await apiRequest('PUT', `/api/kv-store/${encodeURIComponent(entry.key)}`, entry);
-      if (!res.ok) throw new Error('Failed to update entry');
-      return res.json();
+      return apiRequest('PUT', `/api/kv-store/${encodeURIComponent(entry.key)}`, entry);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
@@ -130,9 +126,7 @@ export default function KVStorePage() {
 
   const deleteEntryMutation = useMutation({
     mutationFn: async (key: string) => {
-      const res = await apiRequest('DELETE', `/api/kv-store/${encodeURIComponent(key)}`);
-      if (!res.ok) throw new Error('Failed to delete entry');
-      return res.json();
+      return apiRequest('DELETE', `/api/kv-store/${encodeURIComponent(key)}`);
     },
     onSuccess: (_, key) => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
@@ -146,9 +140,7 @@ export default function KVStorePage() {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (keys: string[]) => {
-      const res = await apiRequest('DELETE', '/api/kv-store/bulk', { keys });
-      if (!res.ok) throw new Error('Failed to delete entries');
-      return res.json();
+      return apiRequest('DELETE', '/api/kv-store/bulk', { keys });
     },
     onSuccess: (_, keys) => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
@@ -162,9 +154,7 @@ export default function KVStorePage() {
 
   const importMutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
-      const res = await apiRequest('POST', '/api/kv-store/import', { data });
-      if (!res.ok) throw new Error('Failed to import data');
-      return res.json();
+      return apiRequest('POST', '/api/kv-store/import', { data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/kv-store'] });
@@ -843,4 +833,3 @@ export default function KVStorePage() {
     </PageShell>
   );
 }
-

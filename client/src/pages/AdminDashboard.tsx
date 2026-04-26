@@ -22,6 +22,7 @@ import NewsletterSubscribers from '@/components/admin/NewsletterSubscribers';
 import NewsletterComposer from '@/components/admin/NewsletterComposer';
 import UserManagement from '@/components/admin/UserManagement';
 import { ProjectManagement } from '@/components/admin/ProjectManagement';
+import { LogsViewerPanel } from '@/components/ide/LogsViewerPanel';
 
 interface SystemStatus {
   status?: string;
@@ -100,7 +101,7 @@ export default function AdminDashboard() {
   // Fetch import statistics
   const { data: importStats } = useQuery<ImportStats>({
     queryKey: ['/api/admin/import-stats'],
-    enabled: false // Endpoint not implemented yet
+    refetchInterval: 60000
   });
 
   // Fetch recent activities
@@ -478,13 +479,10 @@ export default function AdminDashboard() {
               <CardTitle>System Logs</CardTitle>
               <CardDescription>View application and error logs</CardDescription>
             </CardHeader>
-            <CardContent>
-              <Alert>
-                <BarChart3 className="h-4 w-4" />
-                <AlertDescription>
-                  Log viewer interface coming soon. Check server logs for now.
-                </AlertDescription>
-              </Alert>
+            <CardContent className="p-0">
+              <div className="h-[560px] border-t">
+                <LogsViewerPanel />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

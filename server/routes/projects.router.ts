@@ -12,6 +12,7 @@ import { aiSecurityService } from '../services/ai-security.service';
 import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { applyVisualEdit, getEditHistory, redoLastEdit, undoLastEdit } from '../services/visual-edits-service';
 
 const projectLogger = createLogger('projects-router');
 
@@ -959,12 +960,42 @@ export class ProjectsRouter {
       }
     });
 
+    // GET /visual-edits - List recent applied/undone visual edits
+    this.router.get('/:projectId/visual-edits', this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const projectId = Number(req.params.projectId);
+        const userId = (req.user as User).id;
+        const project = await this.storage.getProject(projectId);
+
+        if (!project) {
+          return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
+        }
+
+        const hasAccess = project.ownerId === userId || await this.storage.isProjectCollaborator(projectId, userId);
+        if (!hasAccess) {
+          return res.status(403).json({ error: 'Access denied', code: 'ACCESS_DENIED' });
+        }
+
+        const history = await getEditHistory(projectId, 20);
+        return res.json({
+          success: true,
+          history,
+        });
+      } catch (error: any) {
+        projectLogger.error('[VisualEdit] Error fetching edit history:', error);
+        return res.status(500).json({
+          error: error.message || 'Failed to fetch visual edit history',
+          code: 'VISUAL_EDIT_HISTORY_ERROR'
+        });
+      }
+    });
+
     // POST /visual-edit - Apply visual edits to source code
     this.router.post('/:projectId/visual-edit', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
-        const projectId = req.params.projectId;
+        const projectId = Number(req.params.projectId);
         const userId = (req.user as User).id;
-        const { elementPath, styles, text, sessionId } = req.body;
+        const { elementPath, styles, text, debugSource, locator } = req.body;
 
         if (!elementPath) {
           return res.status(400).json({ 
@@ -974,36 +1005,101 @@ export class ProjectsRouter {
         }
 
         const project = await this.storage.getProject(projectId);
-        if (!project || project.ownerId !== userId) {
+        if (!project) {
           return res.status(404).json({ error: 'Project not found', code: 'NOT_FOUND' });
         }
 
-        const visualEditResult = {
+        const result = await applyVisualEdit({
+          projectId,
+          userId,
+          debugSource,
+          locator,
+          styles,
+          text,
+        });
+
+        return res.json({
           success: true,
           projectId,
           elementPath,
+          filePath: result.filePath,
+          edit: result.edit,
           appliedStyles: styles || {},
           appliedText: text,
-          timestamp: new Date().toISOString(),
-          message: 'Visual edit recorded. Use AI agent to apply changes to source code.',
-          suggestion: this.generateCodeSuggestion(elementPath, styles, text)
-        };
+          timestamp: result.edit.createdAt,
+          message: 'Visual edit applied to project source code.',
+        });
 
-        projectLogger.info('[VisualEdit] Visual edit recorded:', {
+        projectLogger.info('[VisualEdit] Visual edit applied:', {
           projectId,
           userId,
           elementPath,
+          filePath: result.filePath,
           stylesApplied: Object.keys(styles || {}).length,
           textChanged: !!text
         });
-
-        return res.json(visualEditResult);
 
       } catch (error: any) {
         projectLogger.error('[VisualEdit] Error applying visual edit:', error);
         return res.status(500).json({ 
           error: error.message || 'Failed to apply visual edit',
           code: 'VISUAL_EDIT_ERROR' 
+        });
+      }
+    });
+
+    // POST /visual-edit/undo - Undo last visual edit
+    this.router.post('/:projectId/visual-edit/undo', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = Number(req.params.projectId);
+        const userId = (req.user as User).id;
+        const edit = await undoLastEdit(projectId, userId);
+
+        if (!edit) {
+          return res.status(404).json({
+            error: 'No applied visual edits to undo',
+            code: 'NO_VISUAL_EDIT_TO_UNDO'
+          });
+        }
+
+        return res.json({
+          success: true,
+          edit,
+          message: 'Visual edit undone',
+        });
+      } catch (error: any) {
+        projectLogger.error('[VisualEdit] Error undoing visual edit:', error);
+        return res.status(500).json({
+          error: error.message || 'Failed to undo visual edit',
+          code: 'VISUAL_EDIT_UNDO_ERROR'
+        });
+      }
+    });
+
+    // POST /visual-edit/redo - Reapply last undone visual edit
+    this.router.post('/:projectId/visual-edit/redo', this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = Number(req.params.projectId);
+        const userId = (req.user as User).id;
+        const edit = await redoLastEdit(projectId, userId);
+
+        if (!edit) {
+          return res.status(404).json({
+            error: 'No undone visual edits to redo',
+            code: 'NO_VISUAL_EDIT_TO_REDO'
+          });
+        }
+
+        return res.json({
+          success: true,
+          edit,
+          message: 'Visual edit reapplied',
+        });
+      } catch (error: any) {
+        projectLogger.error('[VisualEdit] Error redoing visual edit:', error);
+        return res.status(500).json({
+          error: error.message || 'Failed to redo visual edit',
+          code: 'VISUAL_EDIT_REDO_ERROR'
         });
       }
     });

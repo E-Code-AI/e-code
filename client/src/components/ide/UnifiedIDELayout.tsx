@@ -1508,16 +1508,6 @@ function UnifiedIDELayout({
       );
     }
 
-    // Package viewer - inline
-    if (currentTab.id === 'package-viewer') {
-      return (
-        <Suspense fallback={<div className="flex items-center justify-center h-full"><ECodeLoading size="md" text="Loading Package Viewer..." /></div>}>
-          <ReplitPackagesPanel projectId={projectId} />
-        </Suspense>
-      );
-    }
-
-    
     if (currentTab.id === 'automations') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><AutomationsPanel projectId={projectId} onClose={() => handleTabClose('automations')} /></Suspense>;
     if (currentTab.id === 'backup') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><BackupRecoverySection projectId={projectId} /></Suspense>;
     if (currentTab.id === 'config') return renderBootstrapPlaceholder(currentTab.id) || <Suspense fallback={<ECodeLoading size="md" />}><ConfigPanel projectId={projectId} onClose={() => handleTabClose('config')} /></Suspense>;

@@ -237,13 +237,11 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
   const createWorkflowMutation = useMutation({
     mutationFn: async (workflow: typeof newWorkflow) => {
-      const res = await apiRequest('POST', '/api/workflows', {
+      return apiRequest('POST', '/api/workflows', {
         ...workflow,
         projectId,
         tasks: [{ taskType: 'shell', command: 'npm run dev', orderIndex: 0 }],
       });
-      if (!res.ok) throw new Error('Failed to create workflow');
-      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
@@ -255,9 +253,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
   const updateWorkflowMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<WorkflowWithTasks> }) => {
-      const res = await apiRequest('PATCH', `/api/workflows/${id}`, data);
-      if (!res.ok) throw new Error('Failed to update workflow');
-      return res.json();
+      return apiRequest('PATCH', `/api/workflows/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
@@ -266,9 +262,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
   const deleteWorkflowMutation = useMutation({
     mutationFn: async (workflowId: number) => {
-      const res = await apiRequest('DELETE', `/api/workflows/${workflowId}`);
-      if (!res.ok) throw new Error('Failed to delete workflow');
-      return res.json();
+      return apiRequest('DELETE', `/api/workflows/${workflowId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });
@@ -278,9 +272,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
   const runWorkflowMutation = useMutation({
     mutationFn: async (workflowId: number) => {
-      const res = await apiRequest('POST', `/api/workflows/${workflowId}/run`);
-      if (!res.ok) throw new Error('Failed to run workflow');
-      return res.json();
+      return apiRequest('POST', `/api/workflows/${workflowId}/run`);
     },
     onSuccess: (_, workflowId) => {
       const workflow = workflows.find(w => w.id === workflowId);
@@ -290,9 +282,7 @@ export default function Workflows({ onBack, embedded = false, projectId }: Workf
 
   const setRunButtonMutation = useMutation({
     mutationFn: async (workflowId: number) => {
-      const res = await apiRequest('POST', `/api/workflows/${workflowId}/set-run-button`);
-      if (!res.ok) throw new Error('Failed to set run button');
-      return res.json();
+      return apiRequest('POST', `/api/workflows/${workflowId}/set-run-button`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/workflows', projectId] });

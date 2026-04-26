@@ -17,6 +17,7 @@ import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 import { createSecureUpload, validateUpload, sanitizeFilename } from '../middleware/upload-validation';
+import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 
 const logger = createLogger('agent-router');
 const router = Router();
@@ -1172,8 +1173,8 @@ router.post('/workflows/:workflowId/restore', ensureAdmin, async (req, res) => {
 router.get('/context/:projectId', ensureAdmin, async (req, res) => {
   try {
     const { projectId } = req.params;
-    const projectPath = projectId ? 
-      `./projects/${projectId}` : 
+    const projectPath = projectId ?
+      getProjectWorkspacePath(projectId) :
       process.cwd();
 
     const context = await agentOrchestrator.getProjectContext(projectPath);

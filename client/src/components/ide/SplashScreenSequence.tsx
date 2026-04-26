@@ -114,15 +114,15 @@ interface SplashScreenSequenceProps {
 
 function DotIndicator({ total, active, onDotClick }: { total: number; active: number; onDotClick: (i: number) => void }) {
   return (
-    <div className="flex items-center gap-2" data-testid="splash-dot-indicator">
+    <div className="flex items-center gap-1.5 sm:gap-2" data-testid="splash-dot-indicator">
       {Array.from({ length: total }).map((_, i) => (
         <button
           key={i}
           onClick={() => onDotClick(i)}
           className={cn(
-            "w-2 h-2 rounded-full transition-all duration-300 cursor-pointer",
+            "h-1.5 w-1.5 rounded-full transition-all duration-300 cursor-pointer sm:h-2 sm:w-2",
             i === active
-              ? "bg-primary scale-125"
+              ? "bg-primary scale-110 sm:scale-125"
               : i < active
                 ? "bg-gray-400 dark:bg-zinc-500"
                 : "bg-gray-300 dark:bg-zinc-600 hover:bg-gray-400 dark:hover:bg-zinc-500"

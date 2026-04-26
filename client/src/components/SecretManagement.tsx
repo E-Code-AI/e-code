@@ -1,35 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Copy, Eye, EyeOff, Key, Lock, Plus, Search, Shield, Trash2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,59 +11,36 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Shield,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Copy,
-  RefreshCw,
-  Key,
-  AlertCircle,
-  CheckCircle,
-  Lock,
-  Unlock,
-  Database,
-  Cloud,
-  Globe,
-  Terminal,
-  FileText,
-  Settings
-} from 'lucide-react';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
-interface Secret {
-  id: number;
-  name: string;
-  value?: string;
-  description?: string;
-  category: string;
-  lastUpdated: string;
-  isRevealed?: boolean;
-  usageCount: number;
-  scope: 'project' | 'workspace' | 'global';
-}
-
-interface SecretCategory {
+interface SecretRecord {
   id: string;
-  name: string;
-  icon: React.ReactNode;
-  description: string;
+  key: string;
+  value: string;
+  environment: "development" | "staging" | "production";
+  isSecret: boolean;
+  updatedAt: string;
 }
 
-const SECRET_CATEGORIES: SecretCategory[] = [
-  { id: 'api', name: 'API Keys', icon: <Key className="w-4 h-4" />, description: 'External service API keys' },
-  { id: 'database', name: 'Database', icon: <Database className="w-4 h-4" />, description: 'Database connection strings' },
-  { id: 'cloud', name: 'Cloud Services', icon: <Cloud className="w-4 h-4" />, description: 'Cloud provider credentials' },
-  { id: 'auth', name: 'Authentication', icon: <Lock className="w-4 h-4" />, description: 'OAuth and auth tokens' },
-  { id: 'deployment', name: 'Deployment', icon: <Globe className="w-4 h-4" />, description: 'Deployment configurations' },
-  { id: 'other', name: 'Other', icon: <Settings className="w-4 h-4" />, description: 'Other environment variables' },
-];
+interface SecretsResponse {
+  secrets: SecretRecord[];
+}
 
 interface SecretManagementProps {
   projectId: string;
@@ -100,414 +49,277 @@ interface SecretManagementProps {
 export function SecretManagement({ projectId }: SecretManagementProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [editingSecret, setEditingSecret] = useState<Secret | null>(null);
-  const [revealedSecrets, setRevealedSecrets] = useState<Set<number>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Fetch secrets - REAL BACKEND
-  const { data: secrets = [], isLoading } = useQuery({
-    queryKey: ['/api/secrets'],
-    enabled: true
+  const [searchTerm, setSearchTerm] = useState("");
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [deleteSecretId, setDeleteSecretId] = useState<string | null>(null);
+  const [revealedValues, setRevealedValues] = useState<Record<string, string>>({});
+  const [showValues, setShowValues] = useState<Record<string, boolean>>({});
+  const [newSecret, setNewSecret] = useState({
+    key: "",
+    value: "",
+    environment: "development" as "development" | "staging" | "production",
   });
 
-  // Create secret mutation - REAL BACKEND
+  const secretsQuery = useQuery<SecretsResponse>({
+    queryKey: ["/api/projects", projectId, "secrets"],
+    queryFn: async () => {
+      return apiRequest("GET", `/api/projects/${projectId}/secrets`);
+    },
+    enabled: !!projectId,
+  });
+
   const createSecretMutation = useMutation({
-    mutationFn: (secretData: Partial<Secret>) => 
-      apiRequest('POST', '/api/secrets', secretData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
-      toast({
-        title: "Secret Created",
-        description: "Your secret has been securely stored.",
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/projects/${projectId}/secrets`, {
+        key: newSecret.key,
+        value: newSecret.value,
+        environment: newSecret.environment,
+        isSecret: true,
       });
-      setIsAddDialogOpen(false);
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create secret.",
-        variant: "destructive",
-      });
-    }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "secrets"] });
+      setCreateDialogOpen(false);
+      setNewSecret({ key: "", value: "", environment: "development" });
+      toast({ title: "Secret created", description: "The project secret has been stored." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to create secret", description: error.message, variant: "destructive" });
+    },
   });
 
-  // Update secret mutation - REAL BACKEND
-  const updateSecretMutation = useMutation({
-    mutationFn: ({ id, ...data }: Partial<Secret> & { id: number }) => 
-      apiRequest('PUT', `/api/secrets/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
-      toast({
-        title: "Secret Updated",
-        description: "Your secret has been updated.",
-      });
-      setEditingSecret(null);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update secret.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  // Delete secret mutation - REAL BACKEND
   const deleteSecretMutation = useMutation({
-    mutationFn: (id: number) => 
-      apiRequest('DELETE', `/api/secrets/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/secrets'] });
-      toast({
-        title: "Secret Deleted",
-        description: "The secret has been removed.",
-      });
+    mutationFn: async (secretId: string) => {
+      return apiRequest("DELETE", `/api/projects/${projectId}/secrets/${secretId}`);
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete secret.",
-        variant: "destructive",
+    onSuccess: (_, secretId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId, "secrets"] });
+      setDeleteSecretId(null);
+      setRevealedValues((prev) => {
+        const next = { ...prev };
+        delete next[secretId];
+        return next;
       });
+      setShowValues((prev) => {
+        const next = { ...prev };
+        delete next[secretId];
+        return next;
+      });
+      toast({ title: "Secret deleted", description: "The project secret has been removed." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to delete secret", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const revealSecretMutation = useMutation({
+    mutationFn: async (secretId: string) => {
+      return apiRequest<{ value: string }>("POST", `/api/projects/${projectId}/secrets/${secretId}/reveal`);
+    },
+    onSuccess: (data, secretId) => {
+      setRevealedValues((prev) => ({ ...prev, [secretId]: data.value }));
+      setShowValues((prev) => ({ ...prev, [secretId]: true }));
+    },
+    onError: (error: Error) => {
+      toast({ title: "Failed to reveal secret", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const secrets = secretsQuery.data?.secrets || [];
+  const filteredSecrets = useMemo(() => {
+    const q = searchTerm.toLowerCase();
+    return secrets.filter((secret) => secret.key.toLowerCase().includes(q));
+  }, [searchTerm, secrets]);
+
+  const handleToggleSecret = async (secret: SecretRecord) => {
+    if (showValues[secret.id]) {
+      setShowValues((prev) => ({ ...prev, [secret.id]: false }));
+      return;
     }
-  });
 
-  const toggleRevealSecret = (secretId: number) => {
-    setRevealedSecrets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(secretId)) {
-        newSet.delete(secretId);
-      } else {
-        newSet.add(secretId);
+    if (!revealedValues[secret.id]) {
+      await revealSecretMutation.mutateAsync(secret.id);
+      return;
+    }
+
+    setShowValues((prev) => ({ ...prev, [secret.id]: true }));
+  };
+
+  const handleCopySecret = async (secret: SecretRecord) => {
+    try {
+      let value = revealedValues[secret.id];
+      if (!value) {
+        const data = await revealSecretMutation.mutateAsync(secret.id);
+        value = data.value;
       }
-      return newSet;
-    });
+      await navigator.clipboard.writeText(value);
+      toast({ title: "Copied", description: `${secret.key} copied to clipboard.` });
+    } catch (error: any) {
+      toast({ title: "Copy failed", description: error.message || "Could not copy secret.", variant: "destructive" });
+    }
   };
 
-  const copyToClipboard = (value: string, name: string) => {
-    navigator.clipboard.writeText(value);
-    toast({
-      description: `${name} copied to clipboard`,
-      duration: 2000,
-    });
-  };
-
-  const filteredSecrets = (secrets as Secret[]).filter((secret: Secret) => {
-    const matchesCategory = selectedCategory === 'all' || secret.category === selectedCategory;
-    const matchesSearch = secret.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         secret.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
-  const SecretForm = ({ secret, onSubmit }: { secret?: Secret | null, onSubmit: (data: any) => void }) => {
-    const [formData, setFormData] = useState({
-      name: secret?.name || '',
-      value: secret?.value || '',
-      description: secret?.description || '',
-      category: secret?.category || 'api',
-      scope: secret?.scope || 'project'
-    });
-
+  if (secretsQuery.isLoading) {
     return (
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit(formData);
-      }}>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Secret Name</Label>
-            <Input
-              id="name"
-              placeholder="e.g., OPENAI_API_KEY"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-            <p className="text-[13px] text-muted-foreground mt-1">
-              Use UPPER_SNAKE_CASE for environment variables
-            </p>
-          </div>
-          
-          <div>
-            <Label htmlFor="value">Secret Value</Label>
-            <Textarea
-              id="value"
-              placeholder="Enter your secret value"
-              value={formData.value}
-              onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              required
-              className="font-mono"
-              rows={3}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="category">Category</Label>
-            <select
-              id="category"
-              className="w-full p-2 border rounded-md"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            >
-              {SECRET_CATEGORIES.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <Label htmlFor="scope">Scope</Label>
-            <select
-              id="scope"
-              className="w-full p-2 border rounded-md"
-              value={formData.scope}
-              onChange={(e) => setFormData({ ...formData, scope: e.target.value as any })}
-            >
-              <option value="project">Project only</option>
-              <option value="workspace">Workspace</option>
-              <option value="global">Global</option>
-            </select>
-          </div>
-          
-          <div>
-            <Label htmlFor="description">Description (optional)</Label>
-            <Input
-              id="description"
-              placeholder="What is this secret used for?"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-        </div>
-        
-        <DialogFooter className="mt-6">
-          <Button type="submit">
-            {secret ? 'Update Secret' : 'Create Secret'}
-          </Button>
-        </DialogFooter>
-      </form>
+      <div className="flex min-h-[320px] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading project secrets...</p>
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Project Secrets</h1>
+          <p className="text-sm text-muted-foreground">Manage encrypted environment variables for project {projectId}.</p>
+        </div>
+        <Button onClick={() => setCreateDialogOpen(true)} data-testid="button-new-project-secret">
+          <Plus className="mr-2 h-4 w-4" />
+          New Secret
+        </Button>
+      </div>
+
+      <Alert>
+        <Shield className="h-4 w-4" />
+        <AlertTitle>Real backend storage</AlertTitle>
+        <AlertDescription>
+          Secrets on this page are read and written through the project-scoped secrets API. Values stay masked until you explicitly reveal them.
+        </AlertDescription>
+      </Alert>
+
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5" />
-                Secret Management
-              </CardTitle>
-              <CardDescription>
-                Securely manage API keys, tokens, and environment variables
-              </CardDescription>
-            </div>
-            
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Secret
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Secret</DialogTitle>
-                  <DialogDescription>
-                    Create a new secret that will be available as an environment variable
-                  </DialogDescription>
-                </DialogHeader>
-                <SecretForm onSubmit={(data) => createSecretMutation.mutate(data)} />
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          <div className="space-y-4">
-            {/* Search and filters */}
-            <div className="flex gap-4">
-              <Input
-                placeholder="Search secrets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
-              
-              <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="flex-1">
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  {SECRET_CATEGORIES.map(cat => (
-                    <TabsTrigger key={cat.id} value={cat.id}>
-                      {cat.icon}
-                      <span className="ml-2">{cat.name}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-            </div>
-            
-            {/* Secrets table */}
-            {isLoading ? (
-              <div className="text-center py-8">Loading secrets...</div>
-            ) : filteredSecrets.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                {searchTerm || selectedCategory !== 'all' 
-                  ? 'No secrets found matching your criteria' 
-                  : 'No secrets yet. Add your first secret to get started.'}
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Scope</TableHead>
-                    <TableHead>Last Updated</TableHead>
-                    <TableHead>Usage</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredSecrets.map((secret: Secret) => (
-                    <TableRow key={secret.id}>
-                      <TableCell className="font-mono font-medium">
-                        {secret.name}
-                        {secret.description && (
-                          <p className="text-[13px] text-muted-foreground font-sans">
-                            {secret.description}
-                          </p>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <code className="text-[13px]">
-                            {revealedSecrets.has(secret.id) 
-                              ? secret.value 
-                              : '•'.repeat(20)}
-                          </code>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRevealSecret(secret.id)}
-                          >
-                            {revealedSecrets.has(secret.id) ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </Button>
-                          {secret.value && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(secret.value!, secret.name)}
-                            >
-                              <Copy className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {SECRET_CATEGORIES.find(c => c.id === secret.category)?.name || secret.category}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={secret.scope === 'global' ? 'default' : 'outline'}>
-                          {secret.scope}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-[13px] text-muted-foreground">
-                        {new Date(secret.lastUpdated).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {secret.usageCount} uses
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Dialog 
-                            open={editingSecret?.id === secret.id} 
-                            onOpenChange={(open) => !open && setEditingSecret(null)}
-                          >
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setEditingSecret(secret)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Edit Secret</DialogTitle>
-                                <DialogDescription>
-                                  Update the secret value or details
-                                </DialogDescription>
-                              </DialogHeader>
-                              <SecretForm 
-                                secret={editingSecret} 
-                                onSubmit={(data) => updateSecretMutation.mutate({ 
-                                  id: secret.id, 
-                                  ...data 
-                                })} 
-                              />
-                            </DialogContent>
-                          </Dialog>
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Secret</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{secret.name}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteSecretMutation.mutate(secret.id)}
-                                  className="bg-destructive text-destructive-foreground"
-                                >
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
-          
-          {/* Security notice */}
-          <div className="mt-6 p-4 bg-muted rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-            <div className="text-[13px] text-muted-foreground">
-              <p className="font-medium mb-1">Security Notice</p>
-              <p>
-                Secrets are encrypted at rest and in transit. They are only accessible to your project 
-                during runtime and are never exposed in logs or version control.
-              </p>
-            </div>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search secrets..." className="pl-9" />
           </div>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Secrets</CardTitle>
+            <Badge variant="secondary">{filteredSecrets.length}</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!filteredSecrets.length ? (
+            <div className="py-10 text-center">
+              <Key className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+              <p className="text-sm font-medium text-foreground">No secrets found</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {searchTerm ? "No secrets match the current search." : "Create the first secret for this project."}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredSecrets.map((secret) => {
+                const visibleValue = showValues[secret.id] ? revealedValues[secret.id] || secret.value : "********";
+                return (
+                  <div key={secret.id} className="rounded-lg border p-4" data-testid={`project-secret-${secret.id}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <code className="break-all text-sm font-semibold">{secret.key}</code>
+                          <Badge variant="outline">{secret.environment}</Badge>
+                          <Badge variant="secondary">
+                            <Lock className="mr-1 h-3 w-3" />
+                            secret
+                          </Badge>
+                        </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Last updated {new Date(secret.updatedAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleToggleSecret(secret)}>
+                          {showValues[secret.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleCopySecret(secret)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteSecretId(secret.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Input readOnly value={visibleValue} type={showValues[secret.id] ? "text" : "password"} className="mt-3 font-mono text-sm" />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Project Secret</DialogTitle>
+            <DialogDescription>Add a real encrypted environment variable for this project.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="project-secret-key">Key</Label>
+              <Input
+                id="project-secret-key"
+                value={newSecret.key}
+                onChange={(event) => setNewSecret((prev) => ({ ...prev, key: event.target.value.toUpperCase() }))}
+                placeholder="API_KEY"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="project-secret-value">Value</Label>
+              <Input
+                id="project-secret-value"
+                type="password"
+                value={newSecret.value}
+                onChange={(event) => setNewSecret((prev) => ({ ...prev, value: event.target.value }))}
+                placeholder="secret value"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Environment</Label>
+              <Select value={newSecret.environment} onValueChange={(value: "development" | "staging" | "production") => setNewSecret((prev) => ({ ...prev, environment: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="development">development</SelectItem>
+                  <SelectItem value="staging">staging</SelectItem>
+                  <SelectItem value="production">production</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => createSecretMutation.mutate()} disabled={!newSecret.key.trim() || !newSecret.value.trim() || createSecretMutation.isPending}>
+              {createSecretMutation.isPending ? "Creating..." : "Create Secret"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteSecretId} onOpenChange={(open) => !open && setDeleteSecretId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Secret</AlertDialogTitle>
+            <AlertDialogDescription>This removes the secret from the project.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteSecretId && deleteSecretMutation.mutate(deleteSecretId)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

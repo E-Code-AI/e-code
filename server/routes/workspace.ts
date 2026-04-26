@@ -14,10 +14,16 @@ export function createWorkspaceRoutes(storage: IStorage) {
   const TEST_FILE_PATTERNS = [
     /\.test\.[jt]sx?$/i,
     /\.spec\.[jt]sx?$/i,
+    /\.test\.(mjs|cjs)$/i,
+    /\.spec\.(mjs|cjs)$/i,
     /__tests__\/.*\.[jt]sx?$/i,
+    /__tests__\/.*\.(mjs|cjs)$/i,
     /test_.*\.py$/i,
+    /.*_test\.py$/i,
+    /tests\/.*\.py$/i,
     /_test\.go$/i,
     /spec\/.*\.(rb|js|ts)$/i,
+    /spec\/.*\.(jsx|tsx|mjs|cjs)$/i,
   ];
 
   async function getProjectWorkspace(projectId: string): Promise<string> {
@@ -49,7 +55,7 @@ export function createWorkspaceRoutes(storage: IStorage) {
     return files.sort();
   }
 
-  async function detectTestSetup(projectDir: string): Promise<{ framework: string; files: string[]; command: string[] | null }> {
+  async function detectTestSetup(projectDir: string): Promise<{ framework: string; files: string[]; command: string[] | null; hasRunnableCommand: boolean }> {
     const files = await collectTestFiles(projectDir);
 
     let packageJson: any = null;
@@ -62,18 +68,18 @@ export function createWorkspaceRoutes(storage: IStorage) {
       ...(packageJson?.devDependencies || {}),
     };
 
-    if (deps.vitest) return { framework: 'vitest', files, command: ['npx', 'vitest', 'run', '--reporter=json'] };
-    if (deps.jest) return { framework: 'jest', files, command: ['npx', 'jest', '--runInBand', '--json'] };
-    if (deps['@playwright/test'] || deps.playwright) return { framework: 'playwright', files, command: ['npx', 'playwright', 'test', '--reporter=json'] };
-    if (packageJson?.scripts?.test) return { framework: 'npm', files, command: ['npm', 'test'] };
+    if (deps.vitest) return { framework: 'vitest', files, command: ['npx', 'vitest', 'run', '--reporter=json'], hasRunnableCommand: true };
+    if (deps.jest) return { framework: 'jest', files, command: ['npx', 'jest', '--runInBand', '--json'], hasRunnableCommand: true };
+    if (deps['@playwright/test'] || deps.playwright) return { framework: 'playwright', files, command: ['npx', 'playwright', 'test', '--reporter=json'], hasRunnableCommand: true };
+    if (packageJson?.scripts?.test) return { framework: 'npm', files, command: ['npm', 'test'], hasRunnableCommand: true };
 
     try {
       await fs.access(path.join(projectDir, 'pytest.ini'));
-      return { framework: 'pytest', files, command: ['pytest', '-q'] };
+      return { framework: 'pytest', files, command: ['pytest', '-q'], hasRunnableCommand: true };
     } catch {}
 
-    if (files.some((file) => file.endsWith('.py'))) return { framework: 'pytest', files, command: ['pytest', '-q'] };
-    return { framework: files.length > 0 ? 'detected' : 'none', files, command: null };
+    if (files.some((file) => file.endsWith('.py'))) return { framework: 'pytest', files, command: ['pytest', '-q'], hasRunnableCommand: true };
+    return { framework: files.length > 0 ? 'detected' : 'none', files, command: null, hasRunnableCommand: false };
   }
 
   function extractJsonObject(stdout: string): any | null {
@@ -401,6 +407,7 @@ export function createWorkspaceRoutes(storage: IStorage) {
       res.json({
         files: detected.files,
         framework: detected.framework,
+        hasRunnableCommand: detected.hasRunnableCommand,
       });
     } catch (error) {
       console.error('[API] Error detecting tests:', error);
@@ -415,16 +422,12 @@ export function createWorkspaceRoutes(storage: IStorage) {
       const projectDir = await getProjectWorkspace(projectId);
       const detected = await detectTestSetup(projectDir);
 
-      if (!detected.files.length) {
-        return res.status(400).json({ error: 'No test files detected' });
-      }
-
       if (!detected.command) {
         return res.status(400).json({ error: 'No supported test runner detected' });
       }
 
       const filesToRun = requestedFile ? detected.files.filter((file) => file === requestedFile) : detected.files;
-      if (!filesToRun.length) {
+      if (requestedFile && !filesToRun.length) {
         return res.status(400).json({ error: 'Requested test file not found in project workspace' });
       }
 

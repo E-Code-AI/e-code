@@ -117,8 +117,7 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
 
   const scanMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/workspace/projects/${projectId}/security-scans`);
-      return res.json();
+      return apiRequest("POST", `/api/workspace/projects/${projectId}/security-scans`);
     },
     onSuccess: (data) => {
       setSelectedScanId(data.id);
@@ -137,8 +136,7 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
 
   const hideMutation = useMutation({
     mutationFn: async (findingId: string) => {
-      const res = await apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: true });
-      return res.json();
+      return apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"] });
@@ -148,8 +146,7 @@ export default function SecurityScannerPanel({ projectId, onClose }: SecuritySca
 
   const unhideMutation = useMutation({
     mutationFn: async (findingId: string) => {
-      const res = await apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: false });
-      return res.json();
+      return apiRequest("PATCH", `/api/workspace/vulnerabilities/${findingId}/hide`, { isHidden: false });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workspace/security-scans", selectedScanId, "vulnerabilities"] });

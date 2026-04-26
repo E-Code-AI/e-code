@@ -46,13 +46,13 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
   const fetchEntries = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/database/${projectId}`, {
+      const response = await fetch(`/api/kv-store?projectId=${projectId}`, {
         credentials: 'include'
       });
       
       if (response.ok) {
         const data = await response.json();
-        setEntries(data.entries || []);
+        setEntries(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error fetching database entries:', error);
@@ -111,21 +111,20 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
           break;
       }
 
-      const response = await apiRequest('POST', `/api/database/${projectId}`, {
+      await apiRequest('POST', `/api/kv-store?projectId=${projectId}`, {
         key: newEntry.key,
-        value: parsedValue
+        value: parsedValue,
+        type: newEntry.type,
       });
 
-      if (response.ok) {
-        toast({
-          title: "Entry Added",
-          description: `Database entry "${newEntry.key}" has been added`
-        });
-        
-        setNewEntry({ key: '', value: '', type: 'string' });
-        setShowAddDialog(false);
-        fetchEntries();
-      }
+      toast({
+        title: "Entry Added",
+        description: `Database entry "${newEntry.key}" has been added`
+      });
+      
+      setNewEntry({ key: '', value: '', type: 'string' });
+      setShowAddDialog(false);
+      fetchEntries();
     } catch (error) {
       toast({
         title: "Error",
@@ -137,15 +136,12 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const deleteEntry = async (key: string) => {
     try {
-      const response = await apiRequest('DELETE', `/api/database/${projectId}/${encodeURIComponent(key)}`, {});
-
-      if (response.ok) {
-        toast({
-          title: "Entry Deleted",
-          description: `Database entry "${key}" has been removed`
-        });
-        fetchEntries();
-      }
+      await apiRequest('DELETE', `/api/kv-store/${encodeURIComponent(key)}?projectId=${projectId}`, {});
+      toast({
+        title: "Entry Deleted",
+        description: `Database entry "${key}" has been removed`
+      });
+      fetchEntries();
     } catch (error) {
       toast({
         title: "Error",
@@ -168,12 +164,13 @@ export function ReplitDatabase({ projectId }: ReplitDatabaseProps) {
 
   const exportDatabase = async () => {
     try {
-      const response = await fetch(`/api/database/${projectId}/export`, {
+      const response = await fetch(`/api/kv-store?projectId=${projectId}`, {
         credentials: 'include'
       });
       
       if (response.ok) {
-        const blob = await response.blob();
+        const entries = await response.json();
+        const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

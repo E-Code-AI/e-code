@@ -43,7 +43,27 @@ interface ElementInfo {
     borderRadius?: string;
     opacity?: string;
   };
+  debugSource?: {
+    fileName: string;
+    lineNumber: number;
+    columnNumber: number;
+  };
+  locator?: {
+    tagName: string;
+    text?: string;
+    className?: string;
+    id?: string;
+  };
   canEdit: boolean;
+}
+
+interface VisualEditRecord {
+  id: number;
+  filePath: string;
+  summary: string;
+  status: 'applied' | 'undone';
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface VisualEditorPanelProps {
@@ -81,8 +101,6 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
   const [viewportPreset, setViewportPreset] = useState(VIEWPORT_PRESETS[5]);
   const [zoom, setZoom] = useState(100);
   const [showOutlines, setShowOutlines] = useState(true);
-  const [undoStack, setUndoStack] = useState<any[]>([]);
-  const [redoStack, setRedoStack] = useState<any[]>([]);
 
   const { data: previewStatus, isLoading: isStatusLoading, refetch: refetchStatus } = useQuery<{
     previewUrl: string | null;
@@ -106,6 +124,38 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
     }
   });
 
+  const { data: editHistoryData, refetch: refetchEditHistory } = useQuery<{ success: boolean; history: VisualEditRecord[] }>({
+    queryKey: ['/api/projects', projectId, 'visual-edits'],
+    queryFn: () => apiRequest('GET', `/api/projects/${projectId}/visual-edits`),
+    enabled: !!projectId,
+    staleTime: 5000,
+  });
+
+  const editHistory = editHistoryData?.history ?? [];
+  const canUndo = editHistory.some((edit) => edit.status === 'applied');
+  const canRedo = editHistory.some((edit) => edit.status === 'undone');
+
+  const invalidateProjectData = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'visual-edits'] }),
+      queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey.some((part) => String(part).includes(`/api/projects/${projectId}/files`))
+      }),
+      queryClient.invalidateQueries({
+        predicate: (query) => Array.isArray(query.queryKey) && query.queryKey.some((part) => String(part).includes('/api/files'))
+      }),
+    ]);
+  }, [projectId, queryClient]);
+
+  const reloadPreviewFrame = useCallback(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !previewStatus?.previewUrl) return;
+
+    const url = new URL(previewStatus.previewUrl, window.location.origin);
+    url.searchParams.set('_t', Date.now().toString());
+    iframe.src = url.toString();
+  }, [previewStatus?.previewUrl]);
+
   const startPreviewMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {});
@@ -116,6 +166,76 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
     },
     onError: (error: any) => {
       toast({ title: 'Failed to start preview', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const applyVisualEditMutation = useMutation({
+    mutationFn: (payload: {
+      elementPath: string;
+      styles: Partial<ElementInfo['styles']>;
+      text?: string;
+      debugSource?: ElementInfo['debugSource'];
+      locator?: ElementInfo['locator'];
+    }) => apiRequest<{
+      success: true;
+      filePath: string;
+      message: string;
+    }>('POST', `/api/projects/${projectId}/visual-edit`, payload),
+    onSuccess: async (result, variables) => {
+      iframeRef.current?.contentWindow?.postMessage({
+        type: 'apply-styles',
+        styles: variables.styles,
+        text: variables.text,
+      }, '*');
+
+      await invalidateProjectData();
+      await refetchEditHistory();
+      refetchStatus();
+      setEditedStyles({});
+      setTimeout(reloadPreviewFrame, 300);
+
+      if (onCodeChange) {
+        onCodeChange(
+          result.filePath,
+          JSON.stringify({ styles: variables.styles, text: variables.text }, null, 2),
+        );
+      }
+
+      toast({ title: 'Changes saved', description: result.filePath });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Failed to save visual edit', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const undoMutation = useMutation({
+    mutationFn: () => apiRequest('POST', `/api/projects/${projectId}/visual-edit/undo`, {}),
+    onSuccess: async () => {
+      await invalidateProjectData();
+      await refetchEditHistory();
+      refetchStatus();
+      setSelectedElement(null);
+      setEditedStyles({});
+      setEditedText('');
+      setTimeout(reloadPreviewFrame, 300);
+      toast({ title: 'Last visual edit undone' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Undo failed', description: error.message, variant: 'destructive' });
+    }
+  });
+
+  const redoMutation = useMutation({
+    mutationFn: () => apiRequest('POST', `/api/projects/${projectId}/visual-edit/redo`, {}),
+    onSuccess: async () => {
+      await invalidateProjectData();
+      await refetchEditHistory();
+      refetchStatus();
+      setTimeout(reloadPreviewFrame, 300);
+      toast({ title: 'Visual edit reapplied' });
+    },
+    onError: (error: any) => {
+      toast({ title: 'Redo failed', description: error.message, variant: 'destructive' });
     }
   });
 
@@ -161,6 +281,26 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
           function getElementInfo(el) {
             const rect = el.getBoundingClientRect();
             const styles = window.getComputedStyle(el);
+            const keys = Object.keys(el);
+            const fiberKey = keys.find(key => key.startsWith('__reactFiber$') || key.startsWith('__reactInternalInstance$'));
+            let fiber = fiberKey ? el[fiberKey] : null;
+            let debugSource = null;
+            const visited = new Set();
+
+            while (fiber && !visited.has(fiber)) {
+              visited.add(fiber);
+              const candidate = fiber._debugSource || fiber._debugOwner?._debugSource || fiber.return?._debugSource;
+              if (candidate?.fileName) {
+                debugSource = {
+                  fileName: candidate.fileName,
+                  lineNumber: candidate.lineNumber,
+                  columnNumber: candidate.columnNumber,
+                };
+                break;
+              }
+              fiber = fiber.return || fiber._debugOwner || null;
+            }
+
             return {
               tagName: el.tagName,
               id: el.id || undefined,
@@ -182,6 +322,13 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                 margin: styles.margin,
                 borderRadius: styles.borderRadius,
                 opacity: styles.opacity
+              },
+              debugSource: debugSource || undefined,
+              locator: {
+                tagName: el.tagName,
+                text: el.innerText?.substring(0, 120) || undefined,
+                className: el.className || undefined,
+                id: el.id || undefined,
               },
               canEdit: ['P','H1','H2','H3','H4','H5','H6','SPAN','A','BUTTON','DIV','SECTION','ARTICLE','HEADER','FOOTER','LABEL'].includes(el.tagName)
             };
@@ -313,22 +460,21 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
 
     const changes = { ...editedStyles };
     const textChanged = editedText !== selectedElement.text;
+    const hasStyleChanges = Object.keys(changes).length > 0;
 
-    setUndoStack(prev => [...prev, { element: selectedElement, styles: editedStyles, text: textChanged ? editedText : undefined }]);
-    setRedoStack([]);
-
-    iframeRef.current?.contentWindow?.postMessage({
-      type: 'apply-styles',
-      styles: changes,
-      text: textChanged ? editedText : undefined
-    }, '*');
-
-    toast({ title: 'Changes applied', description: 'Style changes applied to preview' });
-
-    if (onCodeChange) {
-      onCodeChange(selectedElement.path, JSON.stringify({ styles: changes, text: textChanged ? editedText : undefined }));
+    if (!hasStyleChanges && !textChanged) {
+      toast({ title: 'No changes to save' });
+      return;
     }
-  }, [selectedElement, editedStyles, editedText, onCodeChange]);
+
+    applyVisualEditMutation.mutate({
+      elementPath: selectedElement.path,
+      styles: changes,
+      text: textChanged ? editedText : undefined,
+      debugSource: selectedElement.debugSource,
+      locator: selectedElement.locator,
+    });
+  }, [selectedElement, editedStyles, editedText, applyVisualEditMutation]);
 
   const handleRefresh = useCallback(() => {
     const iframe = iframeRef.current;
@@ -470,10 +616,22 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[13px] font-semibold">Element Inspector</h3>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={undoStack.length === 0}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    disabled={!canUndo || undoMutation.isPending}
+                    onClick={() => undoMutation.mutate()}
+                  >
                     <Undo2 className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled={redoStack.length === 0}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    disabled={!canRedo || redoMutation.isPending}
+                    onClick={() => redoMutation.mutate()}
+                  >
                     <Redo2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -496,6 +654,11 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                       )}
                     </div>
                     <p className="text-[10px] text-muted-foreground truncate">{selectedElement.path}</p>
+                    {selectedElement.debugSource?.fileName && (
+                      <p className="text-[10px] text-muted-foreground truncate mt-1">
+                        {selectedElement.debugSource.fileName}:{selectedElement.debugSource.lineNumber}
+                      </p>
+                    )}
                   </div>
 
                   {selectedElement.canEdit && selectedElement.text && (
@@ -680,10 +843,42 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                       <X className="h-3.5 w-3.5 mr-1" />
                       Cancel
                     </Button>
-                    <Button size="sm" className="flex-1" onClick={applyChanges}>
+                    <Button
+                      size="sm"
+                      className="flex-1"
+                      onClick={applyChanges}
+                      disabled={applyVisualEditMutation.isPending}
+                    >
                       <Save className="h-3.5 w-3.5 mr-1" />
-                      Apply
+                      {applyVisualEditMutation.isPending ? 'Saving' : 'Apply'}
                     </Button>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-[11px]">Recent edits</Label>
+                      <Badge variant="outline" className="h-5 text-[10px]">
+                        {editHistory.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1.5">
+                      {editHistory.slice(0, 4).map((edit) => (
+                        <div key={edit.id} className="rounded-md border px-2 py-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-medium truncate">{edit.summary}</span>
+                            <Badge variant={edit.status === 'applied' ? 'secondary' : 'outline'} className="h-4 text-[9px]">
+                              {edit.status}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground truncate mt-1">{edit.filePath}</p>
+                        </div>
+                      ))}
+                      {editHistory.length === 0 && (
+                        <p className="text-[10px] text-muted-foreground">No persisted visual edits yet.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ) : (

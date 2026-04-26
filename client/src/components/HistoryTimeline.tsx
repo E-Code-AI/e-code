@@ -210,6 +210,15 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
     setExpandedEntry(expandedEntry === entryId ? null : entryId);
   };
 
+  const groupedByBranch = history.reduce<Record<string, HistoryEntry[]>>((acc, entry) => {
+    const branchName = entry.branch || 'main';
+    if (!acc[branchName]) {
+      acc[branchName] = [];
+    }
+    acc[branchName].push(entry);
+    return acc;
+  }, {});
+
   return (
     <Card className={cn("h-full", className)}>
       <CardHeader className="pb-3">
@@ -416,12 +425,63 @@ export function HistoryTimeline({ projectId, className }: HistoryTimelineProps) 
                 ))}
               </div>
             ) : (
-              // Graph View Placeholder
-              <div className="flex items-center justify-center h-96 text-muted-foreground">
-                <div className="text-center">
-                  <GitPullRequest className="h-12 w-12 mx-auto mb-2" />
-                  <p className="text-[13px]">Graph view coming soon</p>
-                </div>
+              <div className="space-y-4">
+                {Object.entries(groupedByBranch).map(([branchName, entries]) => (
+                  <div key={branchName} className="rounded-lg border p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <GitBranch className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-[13px] font-medium">{branchName}</span>
+                      <Badge variant="outline" className="text-[11px]">
+                        {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-3">
+                      {entries.map((entry, index) => (
+                        <div key={entry.id} className="flex gap-3">
+                          <div className="flex flex-col items-center">
+                            <div
+                              className={cn(
+                                "flex h-8 w-8 items-center justify-center rounded-full border-2 bg-background",
+                                getEntryColor(entry.type)
+                              )}
+                            >
+                              {getEntryIcon(entry.type)}
+                            </div>
+                            {index < entries.length - 1 && (
+                              <div className="mt-1 h-8 w-0.5 bg-border" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1 rounded-md bg-muted/40 px-3 py-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-medium truncate">{entry.title}</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">
+                                  {entry.author.name} · {formatTime(entry.timestamp)} · <span className="font-mono">{entry.hash}</span>
+                                </p>
+                              </div>
+                              {entry.isRestorePoint && (
+                                <Badge variant="secondary" className="text-[11px] shrink-0">
+                                  Restore Point
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {history.length === 0 && (
+                  <div className="flex items-center justify-center h-96 text-muted-foreground">
+                    <div className="text-center">
+                      <GitPullRequest className="h-12 w-12 mx-auto mb-2" />
+                      <p className="text-[13px]">No history available</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
