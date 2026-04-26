@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { useParams } from 'wouter';
 
 interface Breakpoint {
   id: string;
@@ -135,20 +136,22 @@ function EmptyState({
   );
 }
 
-export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string }) {
+export function ReplitDebuggerPanel({ projectId }: { projectId?: string }) {
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const [activeTab, setActiveTab] = useState('breakpoints');
   const [expandedVariables, setExpandedVariables] = useState<Set<string>>(new Set());
   const [newWatchExpression, setNewWatchExpression] = useState('');
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const { data: session, refetch, isLoading } = useQuery<DebugSession>({
-    queryKey: [`/api/debug/session/${projectId}`],
-    enabled: !!projectId,
+    queryKey: [`/api/debug/session/${resolvedProjectId}`],
+    enabled: !!resolvedProjectId,
   });
 
   const startDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/start/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/start/${resolvedProjectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -161,7 +164,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const stopDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/stop/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/stop/${resolvedProjectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -171,7 +174,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const pauseDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/pause/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/pause/${resolvedProjectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -181,7 +184,7 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const continueDebugMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/continue/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/continue/${resolvedProjectId}`, {});
     },
     onSuccess: () => {
       refetch();
@@ -191,42 +194,42 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const stepOverMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/step-over/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/step-over/${resolvedProjectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const stepIntoMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/step-into/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/step-into/${resolvedProjectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const stepOutMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/debug/step-out/${projectId}`, {});
+      return apiRequest('POST', `/api/debug/step-out/${resolvedProjectId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const toggleBreakpointMutation = useMutation({
     mutationFn: async ({ breakpointId }: { breakpointId: string }) => {
-      return apiRequest('POST', `/api/debug/breakpoint/enable/${projectId}/${breakpointId}`, {});
+      return apiRequest('POST', `/api/debug/breakpoint/enable/${resolvedProjectId}/${breakpointId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const deleteBreakpointMutation = useMutation({
     mutationFn: async ({ breakpointId }: { breakpointId: string }) => {
-      return apiRequest('DELETE', `/api/debug/breakpoint/${projectId}/${breakpointId}`, {});
+      return apiRequest('DELETE', `/api/debug/breakpoint/${resolvedProjectId}/${breakpointId}`, {});
     },
     onSuccess: () => refetch(),
   });
 
   const addWatchMutation = useMutation({
     mutationFn: async ({ expression }: { expression: string }) => {
-      return apiRequest('POST', `/api/debug/watch/add/${projectId}`, { expression });
+      return apiRequest('POST', `/api/debug/watch/add/${resolvedProjectId}`, { expression });
     },
     onSuccess: () => {
       refetch();
@@ -236,10 +239,20 @@ export function ReplitDebuggerPanel({ projectId = '1' }: { projectId?: string })
 
   const deleteWatchMutation = useMutation({
     mutationFn: async ({ index }: { index: number }) => {
-      return apiRequest('DELETE', `/api/debug/watch/${projectId}/${index}`, {});
+      return apiRequest('DELETE', `/api/debug/watch/${resolvedProjectId}/${index}`, {});
     },
     onSuccess: () => refetch(),
   });
+
+  if (!resolvedProjectId) {
+    return (
+      <EmptyState
+        icon={AlertCircle}
+        title="No project selected"
+        description="Open the debugger from a real workspace to start a debug session."
+      />
+    );
+  }
 
   const toggleVariableExpansion = (name: string) => {
     const newExpanded = new Set(expandedVariables);
