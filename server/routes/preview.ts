@@ -1032,20 +1032,61 @@ router.get('/projects/:id/preview-url', ensureProjectAccess, async (req, res) =>
     const hasPackageJson = files.some(f => String(f.path || f.name || '').endsWith('package.json') && !f.isDirectory);
     const hasPythonFiles = files.some(f => String(f.path || f.name || '').endsWith('.py') && !f.isDirectory);
     
-    if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+    const hasWorkspaceRunnableFiles = await workspaceHasRunnableFiles(projectId).catch(() => false);
+
+    if (!hasHtmlFile && !hasPackageJson && !hasPythonFiles && !hasWorkspaceRunnableFiles) {
       return res.status(400).json({ error: 'No runnable files found in project' });
     }
     
     const { previewService } = await import('../preview/preview-service');
     const preview = previewService.getPreview(projectId);
+
+    if (preview && preview.status === 'starting') {
+      return res.json({
+        previewUrl: null,
+        status: 'starting',
+        message: 'Preview server is starting...'
+      });
+    }
+
+    if (preview && preview.status === 'error') {
+      return res.json({
+        previewUrl: null,
+        status: 'error',
+        message: preview.errorMessage || 'Preview server failed to start'
+      });
+    }
     
     if (!preview || preview.status !== 'running') {
-      // Return potential preview URL for client to start preview
-      const previewUrl = withBootstrapQuery(`/api/preview/projects/${projectId}/preview/`, req);
+      if (hasHtmlFile && !hasPackageJson && !hasPythonFiles) {
+        const previewUrl = withBootstrapQuery(`/api/preview/projects/${projectId}/preview/`, req);
+        return res.json({ 
+          previewUrl,
+          status: 'static',
+          message: 'Static HTML preview available'
+        });
+      }
+
+      if (!preview || preview.status === 'stopped') {
+        try {
+          await previewService.startPreviewFromProject(projectId);
+          return res.json({
+            previewUrl: null,
+            status: 'starting',
+            message: 'Preview server is starting...'
+          });
+        } catch (startError: any) {
+          return res.status(500).json({
+            error: 'Failed to get preview URL',
+            message: startError?.message || 'Failed to auto-start preview'
+          });
+        }
+      }
+
       return res.json({ 
-        previewUrl,
-        status: 'stopped',
-        message: 'Preview server not running. Click start to begin.'
+        previewUrl: null,
+        status: preview?.status || 'stopped',
+        message: preview?.errorMessage || 'Preview server not running'
       });
     }
     
