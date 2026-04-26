@@ -101,14 +101,11 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
   // Mutation to create environment
   const createEnvironmentMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/projects/${projectId}/environment`, {
+    mutationFn: () =>
+      apiRequest('POST', `/api/projects/${projectId}/environment`, {
         memory: parseInt(memoryLimit),
         cpu: parseInt(cpuLimit)
-      });
-      if (!res.ok) throw new Error('Failed to create environment');
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         queryKey: [`/api/projects/${projectId}/environment`] 
@@ -129,11 +126,8 @@ export const IsolationManager: React.FC<IsolationManagerProps> = ({
 
   // Mutation to stop environment
   const stopEnvironmentMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest('DELETE', `/api/projects/${projectId}/environment`);
-      if (!res.ok) throw new Error('Failed to stop environment');
-      return res.json();
-    },
+    mutationFn: () =>
+      apiRequest('DELETE', `/api/projects/${projectId}/environment`),
     onSuccess: () => {
       queryClient.invalidateQueries({ 
         queryKey: [`/api/projects/${projectId}/environment`] 

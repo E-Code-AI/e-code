@@ -110,9 +110,7 @@ export default function CodeReviewPanel({
 
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
     queryKey: ['/api/code-review/issues', projectId],
-    queryFn: async () => {
-      return await apiRequest('GET', `/api/code-review/issues/${projectId}?limit=50`);
-    }
+    queryFn: () => apiRequest('GET', `/api/code-review/issues/${projectId}?limit=50`)
   });
 
   const exportReportMutation = useMutation({

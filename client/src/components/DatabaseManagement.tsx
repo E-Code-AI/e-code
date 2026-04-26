@@ -165,8 +165,7 @@ export function DatabaseManagement({ projectId }: DatabaseManagementProps) {
     onMutate: () => {
       setIsQueryLoading(true);
     },
-    onSuccess: async (response: Response) => {
-      const data = await response.json() as QueryResult;
+    onSuccess: (data: QueryResult) => {
       setQueryResults(data);
       toast({
         description: `Query executed in ${data.executionTime}ms`,

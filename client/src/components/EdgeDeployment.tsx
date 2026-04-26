@@ -56,16 +56,8 @@ export function EdgeDeployment({ projectId }: { projectId: string }) {
 
   // Deploy to edge mutation
   const deployMutation = useMutation({
-    mutationFn: async (configData: EdgeDeploymentConfig) => {
-      const response = await apiRequest('POST', `/api/edge-deployment/${projectId}/deploy`, configData);
-      
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || 'Failed to deploy to edge');
-      }
-      
-      return response.json();
-    },
+    mutationFn: (configData: EdgeDeploymentConfig) =>
+      apiRequest('POST', `/api/edge-deployment/${projectId}/deploy`, configData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/edge-deployment/${projectId}/status`] });
       toast({
