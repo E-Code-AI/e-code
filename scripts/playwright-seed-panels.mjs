@@ -64,6 +64,30 @@ async function createFile(projectId, file) {
 
 async function seedStaticAssets(projectId) {
   await createFile(projectId, {
+    name: 'index.html',
+    path: 'index.html',
+    parentId: null,
+    isDirectory: false,
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-code Panel Preview</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #101827; color: #f8fafc; }
+    main { min-height: 100vh; display: grid; place-items: center; }
+    section { max-width: 520px; padding: 32px; }
+  </style>
+</head>
+<body>
+  <main><section><h1>Panel preview ready</h1><p>Static preview smoke content loaded.</p></section></main>
+  <script>console.log("panel seed ready");</script>
+</body>
+</html>
+`,
+  });
+  await createFile(projectId, {
     name: 'style.css',
     path: 'style.css',
     parentId: null,

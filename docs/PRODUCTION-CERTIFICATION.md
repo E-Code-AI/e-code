@@ -16,8 +16,8 @@ The repository already contains a previous `READY` note, but the current certifi
 | Phase | Status | Notes |
 | --- | --- | --- |
 | A — Discovery & Mapping | DONE | `docs/SURFACE-MAP.md` generated from repository wiring. |
-| B — Static Audit | BLOCKED | Typecheck, build, and audit pass. Lint exits 0 but reports 3352 warnings; strict zero-warning gate not met. |
-| C — Dynamic Verification | IN PROGRESS | Local DB bootstrap, migrations, boot, `/health`, `/health/readiness`, workspace-core smoke, router contracts, and systematic panel-suite runner are present. `desktop-xl-1600` panel matrix passes 23/23; remaining 3 viewport projects are the next heavy gate. |
+| B — Static Audit | BLOCKED | Typecheck, build, and audit pass. Lint exits 0 but reports 3351 warnings; strict zero-warning gate not met. |
+| C — Dynamic Verification | DONE FOR CORE IDE PANELS | Local DB bootstrap, migrations, boot, `/health`, `/health/readiness`, workspace-core smoke, router contracts, and systematic panel-suite runner are present. Full systematic panel matrix passes 92/92 across 23 panels and 4 viewports. |
 | D — Generation Pipeline E2E | PENDING | Requires AI-provider key check; non-AI checks continue if keys are missing. |
 | E — Backend Hardening | PENDING | Session restart, headers, logs, rate limits, idempotent migrations, seed. |
 | F — Frontend Robustness | PENDING | Error boundary, loading states, persistence, conflicts, dark mode, shortcuts. |
@@ -38,8 +38,8 @@ The repository already contains a previous `READY` note, but the current certifi
 
 ### Internal blockers
 
-- `npm run lint` currently exits 0 but reports 3352 warnings. The requested certification gate is zero lint warnings.
-- Exhaustive Playwright coverage is now scaffolded for core IDE panels in `test/e2e/panels/systematic-panels.spec.ts`, but the full 4-viewport matrix must still complete green before this certification can claim all mapped panels.
+- `npm run lint` currently exits 0 but reports 3351 warnings. The requested certification gate is zero lint warnings.
+- Exhaustive Playwright coverage is now green for core IDE panels in `test/e2e/panels/systematic-panels.spec.ts`: 23 panels × 4 viewports = 92/92 passing.
 - Generation E2E specs are not yet implemented for every supported app format in `docs/SURFACE-MAP.md`.
 - Backend hardening, frontend robustness, and production deployment smoke are not yet fully green.
 
@@ -53,7 +53,7 @@ The repository already contains a previous `READY` note, but the current certifi
 Phase B global gates:
 
 - `npm run typecheck` — PASS
-- `npm run lint` — BLOCKED: exits 0, reports 3352 warnings
+- `npm run lint` — BLOCKED: exits 0, reports 3351 warnings
 - `npm run build` — PASS
 - `npm audit --audit-level=high` — PASS
 
@@ -65,7 +65,8 @@ Phase C current verified gates:
 - `/health/readiness` — PASS 200 after startup readiness.
 - `BASE_URL=http://127.0.0.1:5063 npx playwright test --config=playwright.local.config.ts test/e2e/panels/workspace-core.spec.ts --reporter=line` — PASS (1/1).
 - `npm run test:e2e:panels -- --project=desktop-xl-1600 --reporter=line` — PASS (23/23).
-- `npm run test:e2e:panels` — ADDED; boots an isolated dev server, waits for JSON readiness, disables Sentry for deterministic local runs, seeds one fresh project and one project with representative files, then runs systematic panel coverage over 4 viewport projects.
+- `npm run test:e2e:panels -- --grep "Preview panel|Deployment panel|Deploy Left Panel" --reporter=line` — PASS (12/12) after fixing deployment latest empty state, preview seed assets, and sandboxed iframe storage guards.
+- `npm run test:e2e:panels -- --reporter=line` — PASS (92/92, 19.0m); boots an isolated dev server, waits for JSON readiness, disables Sentry for deterministic local runs, seeds one fresh project and one project with representative files, then runs systematic panel coverage over 4 viewport projects.
 - Targeted systematic panel validations — PASS for Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, and Deployment after selector hardening and safe-button filtering.
 
 Fixes made during Phase C:
@@ -86,6 +87,10 @@ Fixes made during Phase C:
 - Downgraded expected local WebSocket connection noise from `console.error` to `console.warn` so panel tests still fail on real UI errors without failing on optional socket unavailability.
 - Fixed ShellPanel DOM nesting by replacing the tab close child `<button>` inside `TabsTrigger` with a non-nested accessible control.
 - Added a localhost-only `PLAYWRIGHT_PANEL_E2E=true` rate-limit bypass and disabled Sentry in the panel runner so the panel matrix validates IDE behavior instead of external telemetry quota.
+- Fixed `GET /api/projects/:projectId/deployment/latest` for new projects: no deployment is now a successful empty state instead of a console-noisy 404.
+- Hardened proxied static preview asset serving so assets requested under `/preview/:projectId/:port/*` resolve to real files or 404 instead of falling back to HTML.
+- Made the panel preview seed self-contained with inline CSS/JS so the systematic Preview panel validates frame loading without brittle starter-template asset references.
+- Guarded IDE `sessionStorage` init in Playwright helpers so sandboxed preview frames cannot raise access-denied page errors.
 
 Router validation:
 

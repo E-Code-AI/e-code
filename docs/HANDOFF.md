@@ -79,15 +79,15 @@ Services annexes si activés:
 - `npm run typecheck` : PASS
 - `npm run build` : PASS
 - `npm audit --audit-level=high` : PASS
-- `npm run lint` : BLOCKED — 3352 warnings à résorber pour satisfaire le gate zéro warning
+- `npm run lint` : BLOCKED — 3351 warnings à résorber pour satisfaire le gate zéro warning
 - `setup-local-db.sh` : PASS avec Postgres local idempotent
 - `/health` et `/health/readiness` : PASS en boot dev contrôlé
 - `test/e2e/panels/workspace-core.spec.ts` : PASS, couvre ouverture IDE, file tree create/rename/delete, preview URL
 - `test/e2e/api/router-contracts.spec.ts` : PASS, couvre templates statiques, projet public `/u/:username/:slug`, et `/api/agent/tools/status`
 - `test/e2e/api/panel-router-contracts.spec.ts` : PASS, couvre l’inventaire panels IDE → routers dans `docs/PANEL-ROUTER-INVENTORY.md`
-- `npm run test:e2e:panels` : ajouté — boot serveur isolé, seed deux projets (`fresh`, `with-files`), exécute une spec systématique panel × viewport sur 4 viewports desktop/compact, capture screenshots, et échoue sur erreur console/page.
+- `npm run test:e2e:panels` : PASS 92/92 — boot serveur isolé, seed deux projets (`fresh`, `with-files`), exécute une spec systématique panel × viewport sur 4 viewports desktop/compact, capture screenshots, et échoue sur erreur console/page.
 - Validation suite systématique `desktop-xl-1600` : PASS 23/23 panels.
-- Validations ciblées suite systématique : PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment après durcissement des sélecteurs et du filtrage de boutons non sûrs.
+- Validations ciblées suite systématique : PASS 12/12 sur Preview, Deployment, Deploy Left Panel après correction des routes/preview.
 
 Routers cassés corrigés:
 
@@ -99,6 +99,9 @@ Routers cassés corrigés:
 - Search: `/api/search/global` rejetait `projectId` numérique et ignorait `searchType`
 - Terminal: le panel appelait `/api/shell/:projectId/shell/create` sans mount backend compatible
 - Agent actions: `/api/agent/actions/:projectId` pouvait être capturé par les routes autonomes `/api/agent/actions/:sessionId`; ordre de montage corrigé.
+- Deployment latest: `/api/projects/:projectId/deployment/latest` renvoyait 404 pour un projet neuf sans déploiement; le contrat renvoie maintenant 200 avec état vide.
+- Preview proxifiée: les assets sous `/preview/:projectId/:port/style.css` et `script.js` pouvaient être servis comme HTML de fallback; le serveur statique résout maintenant les assets réels et le seed panel utilise une page inline stable.
+- Preview sandbox: l’init Playwright `sessionStorage` s’exécutait dans l’iframe preview sandboxée; le helper limite maintenant l’écriture au chemin `/ide/*`.
 
 Nouvelle commande de validation panels:
 

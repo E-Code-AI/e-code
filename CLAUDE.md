@@ -59,9 +59,10 @@ Dernier état vérifié:
 - workspace-core Playwright smoke: PASS
 - suite systématique panels ajoutée: `npm run test:e2e:panels`
 - suite panels `desktop-xl-1600`: PASS 23/23
+- suite panels complète 4 viewports: PASS 92/92
 - validations ciblées suite panels: PASS sur Files, Terminal/Shell, Testing, Git, Agent, Actions, Preview, Output, Console, Deployment
-- lint zéro warning: BLOCKED (3352 warnings)
-- certification exhaustive panels 4 viewports + génération multi-format + hardening + déploiement production: en cours
+- lint zéro warning: BLOCKED (3351 warnings)
+- génération multi-format + hardening + déploiement production: en cours
 
 État précédent:
 

@@ -1255,9 +1255,10 @@ router.get('/projects/:projectId/deployment/latest', ensureAuthenticated, async 
     const deployments = await storage.getProjectDeployments(projectId);
     
     if (deployments.length === 0) {
-      return res.status(404).json({
-        success: false,
-        error: 'NO_DEPLOYMENTS',
+      return res.json({
+        success: true,
+        deployment: null,
+        latestDeployment: null,
         message: 'No deployments found for this project'
       });
     }
@@ -1265,9 +1266,10 @@ router.get('/projects/:projectId/deployment/latest', ensureAuthenticated, async 
     const { currentDeployment, latestDeployment } = selectCurrentDeployment(deployments);
 
     if (!latestDeployment) {
-      return res.status(404).json({
-        success: false,
-        error: 'NO_DEPLOYMENTS',
+      return res.json({
+        success: true,
+        deployment: null,
+        latestDeployment: null,
         message: 'No deployments found for this project'
       });
     }

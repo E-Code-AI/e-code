@@ -70,6 +70,28 @@ export async function createFile(
 
 export async function seedStaticAssets(request: APIRequestContext, projectId: number) {
   await createFile(request, projectId, {
+    name: 'index.html',
+    path: 'index.html',
+    content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-code Panel Preview</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; background: #101827; color: #f8fafc; }
+    main { min-height: 100vh; display: grid; place-items: center; }
+    section { max-width: 520px; padding: 32px; }
+  </style>
+</head>
+<body>
+  <main><section><h1>Panel preview ready</h1><p>Static preview smoke content loaded.</p></section></main>
+  <script>console.log("panel seed ready");</script>
+</body>
+</html>
+`,
+  });
+  await createFile(request, projectId, {
     name: 'style.css',
     path: 'style.css',
     content: 'body { font-family: system-ui, sans-serif; margin: 0; background: #101827; color: #f8fafc; }\n',
@@ -153,7 +175,13 @@ export async function ensureSeedProjects(request: APIRequestContext): Promise<Se
 
 export async function openWorkspace(page: Page, projectId: number) {
   await page.addInitScript(([key, state]) => {
-    window.sessionStorage.setItem(key as string, JSON.stringify(state));
+    try {
+      if (window.location.pathname.startsWith('/ide/')) {
+        window.sessionStorage.setItem(key as string, JSON.stringify(state));
+      }
+    } catch {
+      // Sandboxed preview frames can deny storage access before the IDE loads.
+    }
   }, [
     `ide-state-${projectId}`,
     {

@@ -1516,6 +1516,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const root = ${JSON.stringify(previewPath)};
+const projectId = ${JSON.stringify(preview.projectId)};
+const port = ${JSON.stringify(String(port))};
 const mimeMap = {
   '.html':'text/html','.css':'text/css','.js':'application/javascript',
   '.json':'application/json','.png':'image/png','.jpg':'image/jpeg',
@@ -1524,11 +1526,36 @@ const mimeMap = {
   '.ttf':'font/ttf','.ts':'text/plain','.tsx':'text/plain','.jsx':'text/plain'
 };
 http.createServer((req, res) => {
-  const safePath = path.normalize(req.url.split('?')[0]);
+  let urlPath = req.url.split('?')[0];
+  const proxiedPrefix = '/preview/' + projectId + '/' + port + '/';
+  const projectPrefix = '/preview/' + projectId + '/';
+  if (urlPath.startsWith(proxiedPrefix)) {
+    urlPath = '/' + urlPath.slice(proxiedPrefix.length);
+  } else if (urlPath.startsWith(projectPrefix)) {
+    urlPath = '/' + urlPath.slice(projectPrefix.length);
+  }
+  const safePath = path.normalize(urlPath);
   let target = path.join(root, safePath);
   let stat;
   try { stat = fs.statSync(target); } catch {}
-  if (!stat || stat.isDirectory()) { target = path.join(root, 'index.html'); }
+  if (!stat && path.extname(safePath)) {
+    const assetFallback = path.join(root, path.basename(safePath));
+    try {
+      const fallbackStat = fs.statSync(assetFallback);
+      if (fallbackStat && !fallbackStat.isDirectory()) {
+        target = assetFallback;
+        stat = fallbackStat;
+      }
+    } catch {}
+  }
+  if (!stat || stat.isDirectory()) {
+    const hasExtension = Boolean(path.extname(safePath));
+    if (hasExtension) {
+      res.writeHead(404, 'Not Found', { 'Content-Type': 'text/plain' });
+      return res.end('404');
+    }
+    target = path.join(root, 'index.html');
+  }
   fs.readFile(target, (err, data) => {
     if (err) { res.writeHead(404,'Not Found',{'Content-Type':'text/plain'}); return res.end('404'); }
     const ext = path.extname(target).toLowerCase();
