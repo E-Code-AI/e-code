@@ -150,17 +150,14 @@ export function ReplitMonitoring({ projectId }: ReplitMonitoringProps) {
 
   const resolveAlert = async (alertId: string) => {
     try {
-      const response = await apiRequest('POST', `/api/monitoring/${projectId}/alerts/${alertId}/resolve`);
-
-      if (response.ok) {
-        setAlerts(prev => prev.map(alert => 
-          alert.id === alertId ? { ...alert, resolved: true } : alert
-        ));
-        toast({
-          title: "Alert Resolved",
-          description: "Alert has been marked as resolved"
-        });
-      }
+      await apiRequest('POST', `/api/monitoring/${projectId}/alerts/${alertId}/resolve`);
+      setAlerts(prev => prev.map(alert => 
+        alert.id === alertId ? { ...alert, resolved: true } : alert
+      ));
+      toast({
+        title: "Alert Resolved",
+        description: "Alert has been marked as resolved"
+      });
     } catch (error) {
       toast({
         title: "Error",

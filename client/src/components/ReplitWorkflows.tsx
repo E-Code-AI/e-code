@@ -342,7 +342,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!validateNewWorkflow()) return;
 
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectIdParam}/workflows`, {
+      await apiRequest('POST', `/api/projects/${projectIdParam}/workflows`, {
         name: newWorkflow.name.trim(),
         description: newWorkflow.description.trim(),
         trigger: newWorkflow.trigger,
@@ -356,10 +356,6 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
         })),
         enabled: newWorkflow.enabled
       });
-
-      if (!response.ok) {
-        throw new Error('Unable to create workflow');
-      }
 
       toast({
         title: 'Workflow created',
@@ -383,13 +379,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!projectIdParam) return;
 
     try {
-      const response = await apiRequest('POST', `/api/projects/${projectIdParam}/workflows/${workflowId}/run`);
-
-      if (!response.ok) {
-        throw new Error('Unable to start workflow');
-      }
-
-      const run = await response.json();
+      const run = await apiRequest('POST', `/api/projects/${projectIdParam}/workflows/${workflowId}/run`);
 
       toast({
         title: 'Workflow started',
@@ -420,11 +410,7 @@ export function ReplitWorkflows({ projectId }: ReplitWorkflowsProps) {
     if (!projectIdParam) return;
 
     try {
-      const response = await apiRequest('PATCH', `/api/projects/${projectIdParam}/workflows/${workflowId}`, { enabled });
-
-      if (!response.ok) {
-        throw new Error('Unable to update workflow');
-      }
+      await apiRequest('PATCH', `/api/projects/${projectIdParam}/workflows/${workflowId}`, { enabled });
 
       setWorkflows(prev =>
         prev.map(workflow =>

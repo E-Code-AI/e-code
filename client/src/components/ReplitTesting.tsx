@@ -151,57 +151,54 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
     try {
       setRunning(true);
       pollingAttemptsRef.current = 0;
-      const response = await apiRequest('POST', `/api/tests/${projectId}/run`);
-
-      if (response.ok) {
-        toast({
-          title: "Tests Started",
-          description: "Running all test suites..."
-        });
-        
-        // Poll for updates with guaranteed cleanup
-        pollingIntervalRef.current = setInterval(async () => {
-          // Security: Max attempts to prevent infinite polling
-          pollingAttemptsRef.current++;
-          if (pollingAttemptsRef.current >= MAX_POLLING_ATTEMPTS) {
-            stopPolling();
-            toast({
-              title: "Timeout",
-              description: "Test polling timed out after 5 minutes",
-              variant: "destructive"
-            });
-            return;
-          }
-
-          await fetchTestSuites();
-          await fetchTestRuns();
-          
-          // Check if tests are complete
-          try {
-            const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
-              credentials: 'include'
-            });
-            
-            if (updatedResponse.ok) {
-              const status = await updatedResponse.json();
-              if (status.running === false) {
-                stopPolling();
-                toast({
-                  title: "Tests Completed",
-                  description: `${status.results.passed}/${status.results.total} tests passed`
-                });
-              }
-            }
-          } catch (e) {
-            // Network error during polling - continue polling
-          }
-        }, 1000);
-        
-        // Backup timeout to stop polling after 5 minutes
-        pollingTimeoutRef.current = setTimeout(() => {
+      await apiRequest('POST', `/api/tests/${projectId}/run`);
+      toast({
+        title: "Tests Started",
+        description: "Running all test suites..."
+      });
+      
+      // Poll for updates with guaranteed cleanup
+      pollingIntervalRef.current = setInterval(async () => {
+        // Security: Max attempts to prevent infinite polling
+        pollingAttemptsRef.current++;
+        if (pollingAttemptsRef.current >= MAX_POLLING_ATTEMPTS) {
           stopPolling();
-        }, 300000);
-      }
+          toast({
+            title: "Timeout",
+            description: "Test polling timed out after 5 minutes",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        await fetchTestSuites();
+        await fetchTestRuns();
+        
+        // Check if tests are complete
+        try {
+          const updatedResponse = await fetch(`/api/tests/${projectId}/status`, {
+            credentials: 'include'
+          });
+          
+          if (updatedResponse.ok) {
+            const status = await updatedResponse.json();
+            if (status.running === false) {
+              stopPolling();
+              toast({
+                title: "Tests Completed",
+                description: `${status.results.passed}/${status.results.total} tests passed`
+              });
+            }
+          }
+        } catch (e) {
+          // Network error during polling - continue polling
+        }
+      }, 1000);
+      
+      // Backup timeout to stop polling after 5 minutes
+      pollingTimeoutRef.current = setTimeout(() => {
+        stopPolling();
+      }, 300000);
     } catch (error) {
       stopPolling();
       toast({
@@ -214,16 +211,13 @@ export function ReplitTesting({ projectId }: ReplitTestingProps) {
 
   const runSuite = async (suiteId: string) => {
     try {
-      const response = await apiRequest('POST', `/api/tests/${projectId}/suites/${suiteId}/run`);
-
-      if (response.ok) {
-        toast({
-          title: "Test Suite Started",
-          description: "Running selected test suite..."
-        });
-        fetchTestSuites();
-        fetchTestRuns();
-      }
+      await apiRequest('POST', `/api/tests/${projectId}/suites/${suiteId}/run`);
+      toast({
+        title: "Test Suite Started",
+        description: "Running selected test suite..."
+      });
+      fetchTestSuites();
+      fetchTestRuns();
     } catch (error) {
       toast({
         title: "Error",
