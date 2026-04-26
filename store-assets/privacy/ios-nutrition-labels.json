@@ -1,0 +1,10 @@
+{
+  "dataLinkedToUser": ["Contact Info", "User Content", "Identifiers", "Usage Data", "Diagnostics"],
+  "dataUsedForTracking": [],
+  "sensitiveData": {
+    "preciseLocation": false,
+    "contacts": false,
+    "health": false,
+    "financial": true
+  }
+}

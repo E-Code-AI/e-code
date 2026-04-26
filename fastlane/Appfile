@@ -1,0 +1,5 @@
+app_identifier("app.ecode.mobile")
+apple_id("release@ecode.app")
+team_id(ENV.fetch("APPLE_TEAM_ID", ""))
+json_key_file(ENV.fetch("SUPPLY_JSON_KEY", "fastlane/google-play-service-account.json"))
+package_name("app.ecode.mobile")

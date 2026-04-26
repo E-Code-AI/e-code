@@ -1,0 +1,6 @@
+{
+  "collectedData": ["email", "user_ids", "project_files", "photos_or_videos_optional", "audio_optional", "app_activity", "crash_logs"],
+  "sharedData": ["payment_info_with_processor"],
+  "encryptedInTransit": true,
+  "deletionRequestUrl": "https://ecode.app/privacy/delete-account"
+}

@@ -1,0 +1,4 @@
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-keep class app.ecode.mobile.** { *; }
+-dontwarn org.bouncycastle.**
