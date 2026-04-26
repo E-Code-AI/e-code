@@ -3,20 +3,31 @@
  * Provides UI for viewing and managing language runtimes
  */
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import { LanguageEnvironments, Language, languageConfigs } from '@/components/LanguageEnvironments';
 import { RuntimePanel } from '@/components/RuntimePanel';
 import { apiRequest } from '@/lib/queryClient';
 import { normalizeRuntimeDependencies } from '@/lib/runtimeDependencies';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { InfoIcon, AlertCircle } from 'lucide-react';
 
+interface ProjectSummary {
+  id: number;
+  name: string;
+  description?: string | null;
+}
+
 export default function RuntimesPage() {
+  const [location, navigate] = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(window.location.search), [location]);
+  const projectIdFromQuery = searchParams.get('projectId') || '';
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('nodejs');
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState(projectIdFromQuery);
   
   const { data: dependencies, isLoading: isLoadingDependencies } = useQuery({
     queryKey: ['/api/runtime/dependencies'],
@@ -24,16 +35,34 @@ export default function RuntimesPage() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: projects, isLoading: isLoadingProjects } = useQuery({
+  const { data: projects = [], isLoading: isLoadingProjects } = useQuery<ProjectSummary[]>({
     queryKey: ['/api/projects'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/projects');
-      // Handle paginated response format
+      const res = await apiRequest<any>('GET', '/api/projects');
       return (res.projects && Array.isArray(res.projects)) ? res.projects : (Array.isArray(res) ? res : []);
     },
     refetchInterval: false,
   });
   const { dockerAvailable, nixAvailable } = normalizeRuntimeDependencies(dependencies);
+
+  useEffect(() => {
+    if (!selectedProjectId && projects.length > 0) {
+      const fallbackProjectId = String(projects[0].id);
+      setSelectedProjectId(fallbackProjectId);
+      const nextParams = new URLSearchParams(window.location.search);
+      nextParams.set('projectId', fallbackProjectId);
+      navigate(`/runtimes?${nextParams.toString()}`, { replace: true });
+    }
+  }, [navigate, projects, selectedProjectId]);
+
+  const selectedProject = projects.find((project) => String(project.id) === selectedProjectId) || null;
+
+  const handleProjectChange = (value: string) => {
+    setSelectedProjectId(value);
+    const nextParams = new URLSearchParams(window.location.search);
+    nextParams.set('projectId', value);
+    navigate(`/runtimes?${nextParams.toString()}`, { replace: true });
+  };
 
   // If neither Docker nor Nix is available, show a warning
   const showDependencyWarning = !isLoadingDependencies && !dockerAvailable && !nixAvailable;
@@ -82,10 +111,25 @@ export default function RuntimesPage() {
         
         <div className="lg:col-span-3">
           <Tabs defaultValue="info" className="h-full" data-testid="tabs-runtimes">
-            <TabsList>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <TabsList>
               <TabsTrigger value="info" data-testid="tab-language-info">Language Info</TabsTrigger>
               <TabsTrigger value="runtime" data-testid="tab-runtime">Runtime</TabsTrigger>
-            </TabsList>
+              </TabsList>
+
+              <Select value={selectedProjectId} onValueChange={handleProjectChange} disabled={isLoadingProjects || projects.length === 0}>
+                <SelectTrigger className="w-full sm:w-[280px]" data-testid="select-runtimes-project">
+                  <SelectValue placeholder={isLoadingProjects ? 'Loading projects...' : 'Select a project'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={String(project.id)}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             
             <TabsContent value="info" className="h-[calc(100%-2rem)]">
               <Card className="h-full">
@@ -155,6 +199,15 @@ export default function RuntimesPage() {
                           }
                         </p>
                       </div>
+
+                      {selectedProject && (
+                        <div>
+                          <h3 className="text-[13px] font-medium">Selected Project</h3>
+                          <p className="text-[13px] text-muted-foreground mt-1">
+                            {selectedProject.name}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -163,7 +216,7 @@ export default function RuntimesPage() {
             
             <TabsContent value="runtime" className="h-[calc(100%-2rem)]">
               {selectedProjectId ? (
-                <RuntimePanel projectId={selectedProjectId} />
+                <RuntimePanel projectId={Number(selectedProjectId)} />
               ) : (
                 <Card className="h-full">
                   <CardHeader>
