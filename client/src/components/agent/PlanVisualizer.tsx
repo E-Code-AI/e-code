@@ -115,6 +115,7 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
 
   const completedTasks = plan.tasks?.filter(t => t.status === 'completed').length ?? 0; // 🔧 Safe access
   const progress = plan.tasks ? (completedTasks / plan.tasks.length) * 100 : 0; // 🔧 Safe division
+  const parallelGroups = (plan.parallelizableTasks || []).filter(group => group.length > 1);
 
   return (
     <div className="space-y-4">
@@ -170,6 +171,11 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
       <Card className="border-[var(--ecode-border)]">
         <CardHeader>
           <CardTitle className="text-base">Execution Steps</CardTitle>
+          {parallelGroups.length > 0 && (
+            <CardDescription className="text-[13px]">
+              {parallelGroups.length} parallel workstream{parallelGroups.length > 1 ? 's' : ''} identified for multi-agent execution
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent className="space-y-2">
           {plan.tasks?.map((task, index) => {
@@ -276,6 +282,47 @@ export function PlanVisualizer({ plan, onTaskClick, onApprove, onReject }: PlanV
           })}
         </CardContent>
       </Card>
+
+      {parallelGroups.length > 0 && (
+        <Card className="border-violet-200 dark:border-violet-800">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <GitBranch className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+              Parallel Workstreams
+            </CardTitle>
+            <CardDescription className="text-[13px]">
+              These task groups can run at the same time when multiple orchestrated agents are available.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {parallelGroups.map((group, index) => {
+              const groupedTasks = group
+                .map(taskId => plan.tasks?.find(task => task.id === taskId))
+                .filter((task): task is Task => Boolean(task));
+
+              return (
+                <div key={`${group.join('-')}-${index}`} className="rounded-lg border border-violet-200 dark:border-violet-800 p-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    <Badge variant="outline" className="text-[11px] bg-violet-100 dark:bg-violet-900/30 border-violet-300 dark:border-violet-700">
+                      Group {index + 1}
+                    </Badge>
+                    <span className="text-[13px] text-muted-foreground">
+                      {groupedTasks.length} tasks in parallel
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {groupedTasks.map(task => (
+                      <Badge key={task.id} variant="secondary" className="text-[11px]">
+                        {task.title}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Risk Assessment & Mitigation */}
       {plan.riskAssessment?.highRiskTasks && plan.riskAssessment.highRiskTasks.length > 0 && (

@@ -136,6 +136,7 @@ export function PlanApprovalModal({
             <SheetDescription>
               Review the AI-generated plan before execution starts.
               {plan.tasks?.length && ` ${plan.tasks.length} tasks, ~${plan.totalEstimatedMinutes} minutes`}
+              {plan.parallelizableTasks?.some(group => group.length > 1) && ' Parallel workstreams available.'}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 overflow-hidden px-6 py-4">
@@ -164,6 +165,7 @@ export function PlanApprovalModal({
             <br />
             <span className="text-[13px] text-muted-foreground">
               {plan.tasks?.length} tasks • ~{plan.totalEstimatedMinutes} minutes • Risk: {plan.riskAssessment?.overallRisk}/100
+              {plan.parallelizableTasks?.some(group => group.length > 1) ? ' • Multi-agent parallel execution available' : ''}
             </span>
           </DialogDescription>
         </DialogHeader>
