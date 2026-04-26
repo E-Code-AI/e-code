@@ -201,6 +201,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
               {resolvedPreviewUrl ? (
                 <iframe
                   src={resolvedPreviewUrl}
+                  data-preview="true"
                   className="w-full h-full border-0"
                   style={{ minHeight: '600px' }}
                   title="Project Preview"

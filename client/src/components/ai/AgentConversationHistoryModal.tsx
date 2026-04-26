@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 
 interface ConversationHistoryItem {
   id: number;
@@ -36,15 +37,7 @@ export function AgentConversationHistoryModal({
 }: AgentConversationHistoryModalProps) {
   const { data, isLoading } = useQuery<{ conversations: ConversationHistoryItem[] }>({
     queryKey: ['/api/agent/projects', projectId, 'conversations'],
-    queryFn: async () => {
-      const res = await fetch(`/api/agent/projects/${projectId}/conversations`, {
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        throw new Error('Failed to load conversations');
-      }
-      return res.json();
-    },
+    queryFn: () => apiRequest('GET', `/api/agent/projects/${projectId}/conversations`),
     enabled: open && projectId > 0,
   });
 
