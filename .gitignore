@@ -73,3 +73,15 @@ backups/*.sql
 .env.deploy
 .env.*.local
 .pgdata/
+
+# Local agent workspace artifacts
+.claude/
+logs/
+screenshots/
+AGENTS.md
+HEARTBEAT.md
+IDENTITY.md
+IDE_PANELS_AUDIT.md
+SOUL.md
+TOOLS.md
+USER.md
