@@ -632,6 +632,29 @@ function findIndexInDirectory(files: any[], dirPath: string): any | null {
   }) || null;
 }
 
+function findPreferredPreviewIndex(files: any[]): any | null {
+  const candidates = [
+    'index.html',
+    'client/index.html',
+    'frontend/index.html',
+    'app/index.html',
+    'public/index.html',
+  ];
+
+  for (const candidate of candidates) {
+    const match = findFileByPath(files, candidate);
+    if (match) {
+      return match;
+    }
+  }
+
+  return files.find((file) => {
+    if (file.isDirectory) return false;
+    const filePath = file.path?.startsWith('/') ? file.path.slice(1) : file.path;
+    return filePath?.endsWith('/index.html');
+  }) || null;
+}
+
 // Helper to set cache control headers for all preview responses
 function setCacheHeaders(res: any): void {
   res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -677,10 +700,9 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
       return res.status(404).send(`File not found: ${fileParam}`);
     }
     
-    // Find root index.html by path (not just name) to avoid matching nested index.html
-    const rootIndexFile = findFileByPath(files, 'index.html');
-    if (rootIndexFile) {
-      const content = rootIndexFile.content ?? '';
+    const previewIndexFile = findPreferredPreviewIndex(files);
+    if (previewIndexFile) {
+      const content = previewIndexFile.content ?? '';
       if (!content) {
         res.type('html').send('');
         return;
@@ -690,8 +712,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
       return;
     }
     
-    // No root index.html found, return 404
-    return res.status(404).send('No index.html found in project root');
+    return res.status(404).send('No preview index.html found in project');
   } catch (error) {
     console.error('Error serving preview root:', error);
     res.status(500).send('Failed to serve preview');
