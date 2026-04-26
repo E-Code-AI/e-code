@@ -480,8 +480,9 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
     refetchStatus();
   }, [previewStatus?.previewUrl, refetchStatus]);
 
+  const hasResolvedPreviewUrl = Boolean(previewStatus?.previewUrl);
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
-  const canShowPreview = isPreviewRunning && previewStatus?.previewUrl;
+  const canShowPreview = hasResolvedPreviewUrl && (isPreviewRunning || previewStatus?.status === 'starting');
 
   const currentStyles = {
     color: editedStyles.color || selectedElement?.styles.color || '#000000',
