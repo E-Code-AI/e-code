@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,7 @@ import {
   ChevronRight, Lock, AlertCircle, Check
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,6 +54,31 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
   });
 
   const resolvedPreviewUrl = projectUrl || previewStatus?.previewUrl || '';
+  const displayPreviewValue = useMemo(() => {
+    if (resolvedPreviewUrl) return resolvedPreviewUrl;
+    if (previewStatus?.status === 'starting') return 'Starting preview...';
+    if (previewStatus?.status === 'error') return previewStatus.message || 'Preview failed to start';
+    if (previewStatus?.status === 'no_runnable_files') return 'Preview ready to start';
+    return 'Preview not running';
+  }, [resolvedPreviewUrl, previewStatus?.status, previewStatus?.message]);
+
+  const startPreviewMutation = useMutation({
+    mutationFn: async () => apiRequest('POST', `/api/preview/projects/${projectId}/preview/start`, {}),
+    onSuccess: async () => {
+      await refetchPreviewStatus();
+      toast({
+        title: 'Preview starting',
+        description: 'Your app is starting.',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Failed to start preview',
+        description: error?.message || 'An error occurred while starting the preview.',
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleRefresh = () => {
     try {
@@ -169,7 +194,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
               <div className="flex items-center gap-1.5 flex-1">
                 <Shield className="w-3 h-3 text-green-600" />
                 <Input
-                  value={resolvedPreviewUrl || (typeof window !== 'undefined' ? window.location.origin : '')}
+                  value={displayPreviewValue}
                   readOnly
                   className="h-8 flex-1 font-mono text-[13px]"
                 />
@@ -211,7 +236,22 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                 <div className="flex items-center justify-center h-96 text-muted-foreground">
                   <div className="text-center">
                     <Globe className="h-12 w-12 mx-auto mb-4" />
-                    <p className="text-[13px]">Run your project to see the preview</p>
+                    <p className="text-[13px] mb-4">
+                      {previewStatus?.status === 'starting'
+                        ? 'Preview is starting...'
+                        : previewStatus?.status === 'error'
+                          ? (previewStatus.message || 'Preview failed to start')
+                          : 'Run your project to see the preview'}
+                    </p>
+                    {previewStatus?.status !== 'starting' && (
+                      <Button
+                        onClick={() => startPreviewMutation.mutate()}
+                        disabled={startPreviewMutation.isPending}
+                        data-testid="button-start-preview"
+                      >
+                        {startPreviewMutation.isPending ? 'Starting...' : 'Run Preview'}
+                      </Button>
+                    )}
                   </div>
                 </div>
               )}
