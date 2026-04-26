@@ -73,7 +73,7 @@ export function ReplitThemesPanel({ projectId }: { projectId?: string }) {
   const [borderRadius, setBorderRadius] = useState([4]);
 
   // Fetch theme settings from API
-  const { data: themeSettings, isLoading, isSuccess } = useQuery<ThemeSettings>({
+  const { data: themeSettings, isLoading, isSuccess } = useQuery<ThemeSettings | null>({
     queryKey: ['/api/projects', projectId, 'themes'],
     queryFn: async () => {
       if (!projectId) return null;

@@ -324,7 +324,7 @@ export function PreviewPanel({
         ) : canShowPreview ? (
           <iframe
             id="preview-iframe"
-            src={previewStatus.previewUrl}
+            src={previewStatus.previewUrl ?? undefined}
             className="w-full h-full border-0"
             title="Project Preview"
             sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads"

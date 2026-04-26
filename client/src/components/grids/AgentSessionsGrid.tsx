@@ -33,6 +33,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { withBootstrapHeaders } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { defaultGridOptions, sessionGridColDefs } from './ag-grid-config';
 import { gridCellRenderers } from './GridCellRenderers';
 import type { AgentSessionRow, SessionsGridResponse } from '@shared/types/agent-grid.types';
@@ -113,11 +114,12 @@ function SessionCard({
   );
 }
 
-export function AgentSessionsGrid({ 
+export function AgentSessionsGrid({
   projectId, 
   onSessionSelect,
   height = 500 
 }: AgentSessionsGridProps) {
+  const { toast } = useToast();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [gridApi, setGridApi] = useState<GridApi | null>(null);
   const [page, setPage] = useState(1);

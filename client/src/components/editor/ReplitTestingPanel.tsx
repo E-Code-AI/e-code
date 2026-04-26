@@ -231,7 +231,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => runTestsMutation.mutate()}
+            onClick={() => runTestsMutation.mutate(undefined)}
             disabled={runTestsMutation.isPending || !canRunTests}
             className="h-7 px-2 rounded bg-[hsl(142,72%,42%)] hover:bg-[hsl(142,72%,38%)] disabled:opacity-50 text-white text-[10px]"
             data-testid="button-run-tests"

@@ -110,6 +110,7 @@ interface SplashScreenSequenceProps {
   currentTask?: string;
   progress?: number;
   loopUntilComplete?: boolean;
+  phase?: 'planning' | 'scaffolding' | 'building' | 'styling' | 'finalizing' | 'error';
 }
 
 function DotIndicator({ total, active, onDotClick }: { total: number; active: number; onDotClick: (i: number) => void }) {

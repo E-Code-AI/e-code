@@ -164,6 +164,7 @@ export default function MobileWorkspace() {
     code: 'Code',
     terminal: 'Shell',
     preview: 'Preview',
+    deploy: 'Deploy',
     more: 'Tools',
   };
 

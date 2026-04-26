@@ -18,10 +18,56 @@ function getHotReloadScript(projectId: string): string {
         const projectId = '${projectId}';
         let ws = null;
         let reconnectAttempts = 0;
+        let consecutiveFailures = 0;
+        let silentRetryStopped = false;
         const maxReconnectAttempts = 10;
         const reconnectDelay = 2000;
+
+        function ensureRetryBanner() {
+          let banner = document.getElementById('preview-retry-banner');
+          if (banner) return banner;
+
+          banner = document.createElement('div');
+          banner.id = 'preview-retry-banner';
+          banner.style.position = 'fixed';
+          banner.style.right = '16px';
+          banner.style.bottom = '16px';
+          banner.style.zIndex = '2147483647';
+          banner.style.display = 'none';
+          banner.style.maxWidth = '360px';
+          banner.style.padding = '12px 14px';
+          banner.style.borderRadius = '14px';
+          banner.style.background = 'rgba(15, 23, 42, 0.96)';
+          banner.style.color = '#fff';
+          banner.style.boxShadow = '0 18px 48px rgba(15, 23, 42, 0.35)';
+          banner.innerHTML =
+            '<div style="font: 600 13px system-ui; margin-bottom: 8px;">Preview reconnect is unstable</div>' +
+            '<div style="font: 400 12px system-ui; opacity: 0.86; margin-bottom: 12px;">3 consecutive hot-reload failures detected. You can stop silent retries and keep the current preview state visible.</div>' +
+            '<button id="preview-stop-silent-retry" style="border:0; border-radius:10px; padding:8px 10px; background:#fff; color:#0f172a; font:600 12px system-ui; cursor:pointer;">Stop silent retry</button>';
+          document.body.appendChild(banner);
+
+          const button = document.getElementById('preview-stop-silent-retry');
+          if (button) {
+            button.addEventListener('click', function() {
+              silentRetryStopped = true;
+              banner.style.display = 'none';
+              console.warn('[Hot-Reload] Silent retry disabled by user');
+            });
+          }
+
+          return banner;
+        }
+
+        function showRetryBanner() {
+          const banner = ensureRetryBanner();
+          banner.style.display = 'block';
+        }
         
         function connect() {
+          if (silentRetryStopped) {
+            console.warn('[Hot-Reload] Silent retry disabled, aborting reconnect');
+            return;
+          }
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
           const wsUrl = protocol + '//' + window.location.host + '/ws/preview' + (bootstrap ? ('?bootstrap=' + encodeURIComponent(bootstrap) + '&projectId=' + encodeURIComponent(projectId)) : ('?projectId=' + encodeURIComponent(projectId)));
@@ -32,6 +78,9 @@ function getHotReloadScript(projectId: string): string {
             ws.onopen = function() {
               console.log('[Hot-Reload] Connected to preview server');
               reconnectAttempts = 0;
+              consecutiveFailures = 0;
+              const banner = document.getElementById('preview-retry-banner');
+              if (banner) banner.style.display = 'none';
               // Subscribe to this project's updates
               ws.send(JSON.stringify({ type: 'subscribe', projectId: parseInt(projectId) }));
             };
@@ -68,19 +117,28 @@ function getHotReloadScript(projectId: string): string {
             
             ws.onclose = function() {
               console.log('[Hot-Reload] Connection closed');
+              consecutiveFailures++;
               attemptReconnect();
             };
             
             ws.onerror = function(error) {
               console.error('[Hot-Reload] WebSocket error:', error);
+              consecutiveFailures++;
             };
           } catch (e) {
             console.error('[Hot-Reload] Failed to create WebSocket:', e);
+            consecutiveFailures++;
             attemptReconnect();
           }
         }
         
         function attemptReconnect() {
+          if (silentRetryStopped) {
+            return;
+          }
+          if (consecutiveFailures >= 3) {
+            showRetryBanner();
+          }
           if (reconnectAttempts < maxReconnectAttempts) {
             reconnectAttempts++;
             console.log('[Hot-Reload] Reconnecting in ' + reconnectDelay + 'ms (attempt ' + reconnectAttempts + ')');

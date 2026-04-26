@@ -272,7 +272,7 @@ export default function ObjectStorage() {
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setCreateFolderDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={() => createFolderMutation.mutate()} disabled={!newFolderName.trim() || createFolderMutation.isPending}>
+                  <Button onClick={() => createFolderMutation.mutate(undefined)} disabled={!newFolderName.trim() || createFolderMutation.isPending}>
                     {createFolderMutation.isPending ? "Creating..." : "Create"}
                   </Button>
                 </DialogFooter>

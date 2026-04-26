@@ -1023,6 +1023,15 @@ export class ProjectsRouter {
           text,
         });
 
+        projectLogger.info('[VisualEdit] Visual edit applied:', {
+          projectId,
+          userId,
+          elementPath,
+          filePath: result.filePath,
+          stylesApplied: Object.keys(styles || {}).length,
+          textChanged: !!text
+        });
+
         return res.json({
           success: true,
           projectId,
@@ -1033,15 +1042,6 @@ export class ProjectsRouter {
           appliedText: text,
           timestamp: result.edit.createdAt,
           message: 'Visual edit applied to project source code.',
-        });
-
-        projectLogger.info('[VisualEdit] Visual edit applied:', {
-          projectId,
-          userId,
-          elementPath,
-          filePath: result.filePath,
-          stylesApplied: Object.keys(styles || {}).length,
-          textChanged: !!text
         });
 
       } catch (error: any) {

@@ -5814,6 +5814,7 @@ let sessionStore: any = new MemoryStore({
   checkPeriod: 86400000,
 });
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 async function initSessionStore() {
   const redisUrl = process.env.REDIS_URL;
@@ -5896,37 +5897,41 @@ async function initSessionStore() {
     }
   }
 
-  if (!isProduction) {
-    console.log('[Session Store] Using MemoryStore for development');
+  const sessionDbUrl = getSessionDatabaseUrl();
+  if (sessionDbUrl) {
+    const pgPool = new Pool({
+      connectionString: sessionDbUrl,
+      max: isProduction ? 20 : 10,
+      min: isProduction ? 2 : 0,
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 60000,
+      maxUses: 7500,
+      allowExitOnIdle: false,
+    });
+
+    const pgStore = connectPg(session);
+    sessionStore = new pgStore({
+      pool: pgPool,
+      createTableIfMissing: true,
+      ttl: 7 * 24 * 60 * 60,
+      tableName: 'user_sessions',
+    });
+    console.log(`[Session Store] Using PostgreSQL store for ${isProduction ? 'production' : 'development'}`);
+    return;
+  }
+
+  if (!isProduction || isTest) {
+    console.log(`[Session Store] Using MemoryStore fallback for ${isTest ? 'test' : 'development without DATABASE_URL'}`);
     sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
     return;
   }
 
-  const sessionDbUrl = getSessionDatabaseUrl();
   if (!sessionDbUrl) {
     console.error('[CRITICAL] No Redis or DATABASE_URL available in production');
     process.exit(1);
   }
-
-  const pgPool = new Pool({
-    connectionString: sessionDbUrl,
-    max: 20,
-    min: 2,
-    idleTimeoutMillis: 60000,
-    connectionTimeoutMillis: 60000,
-    maxUses: 7500,
-    allowExitOnIdle: false,
-  });
-
-  const pgStore = connectPg(session);
-  sessionStore = new pgStore({
-    pool: pgPool,
-    createTableIfMissing: true,
-    ttl: 7 * 24 * 60 * 60,
-  });
-  console.log('[Session Store] Using PostgreSQL store for production (Redis unavailable)');
 }
 
 const sessionStoreReady: Promise<void> = (async () => {

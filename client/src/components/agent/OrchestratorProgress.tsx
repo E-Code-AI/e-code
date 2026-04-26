@@ -143,7 +143,10 @@ export function OrchestratorProgress({
             <div className="flex items-center gap-2">
               {getStatusBadge(progress.status)}
               {progress.currentTaskDelegation && (
-                <AIModelBadge delegation={progress.currentTaskDelegation} />
+                <AIModelBadge
+                  tier={progress.currentTaskDelegation.tier}
+                  model={`${progress.currentTaskDelegation.provider}/${progress.currentTaskDelegation.model}`}
+                />
               )}
               {activeParallelCapacity > 0 && (
                 <Badge variant="secondary" className="text-[10px]">

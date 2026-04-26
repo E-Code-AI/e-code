@@ -584,7 +584,7 @@ export function ElementSelector({ sessionId, projectId, previewUrl, onCodeChange
                       Preview not available. Start the preview to use live element picking.
                     </p>
                     <Button
-                      onClick={() => startPreviewMutation.mutate()}
+                      onClick={() => startPreviewMutation.mutate(undefined)}
                       disabled={startPreviewMutation.isPending}
                       className="min-h-[44px] gap-2"
                       data-testid="button-start-live-preview"

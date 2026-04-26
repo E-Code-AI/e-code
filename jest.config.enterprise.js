@@ -10,8 +10,15 @@
  */
 
 export default {
-  preset: 'ts-jest',
   testEnvironment: 'node',
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: {
+        esModuleInterop: true,
+        allowSyntheticDefaultImports: true,
+      },
+    }],
+  },
 
   // Test directories
   roots: [
@@ -22,6 +29,9 @@ export default {
 
   // Test patterns
   testMatch: [
+    '**/test/unit/**/*.test.ts',
+    '**/test/integration/**/*.test.ts',
+    '**/test/e2e/**/*.test.ts',
     '**/__tests__/**/*.test.ts',
     '**/__tests__/**/*.spec.ts',
     '**/tests/**/*.spec.ts',
@@ -85,16 +95,6 @@ export default {
   },
 
   // Setup files - commented out since we don't need it yet  // setupFilesAfterEnv: ['<rootDir>/tests/setup/jest.setup.ts'],
-
-  // Globals
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true
-      }
-    }
-  },
 
   // Timeout for async tests
   testTimeout: 10000,

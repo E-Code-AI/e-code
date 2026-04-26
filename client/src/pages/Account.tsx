@@ -129,7 +129,7 @@ export default function Account() {
         description="Manage the account and billing data exposed by the current backend."
         icon={User}
         actions={(
-          <Button onClick={() => updateProfileMutation.mutate()} disabled={updateProfileMutation.isPending} data-testid="button-save-account">
+          <Button onClick={() => updateProfileMutation.mutate(undefined)} disabled={updateProfileMutation.isPending} data-testid="button-save-account">
             {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         )}
@@ -255,7 +255,7 @@ export default function Account() {
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteAccountOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => deleteAccountMutation.mutate()} disabled={deleteAccountMutation.isPending}>
+            <Button variant="destructive" onClick={() => deleteAccountMutation.mutate(undefined)} disabled={deleteAccountMutation.isPending}>
               {deleteAccountMutation.isPending ? "Deleting..." : "Delete Account"}
             </Button>
           </DialogFooter>

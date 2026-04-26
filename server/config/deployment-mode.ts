@@ -10,8 +10,9 @@ import { createLogger } from '../utils/logger';
 const logger = createLogger('deployment-mode');
 
 export type DeploymentMode = 'single-vm' | 'kubernetes' | 'hybrid';
+export type SupportedDeploymentTarget = 'replit-deploy' | 'single-vm' | 'kubernetes' | 'hybrid';
 
-const DEPLOYMENT_MODE = (process.env.DEPLOYMENT_MODE || 'single-vm') as DeploymentMode;
+const DEPLOYMENT_MODE = (process.env.DEPLOYMENT_MODE || 'replit-deploy') as SupportedDeploymentTarget;
 const KUBERNETES_ENABLED = process.env.KUBERNETES_ENABLED === 'true';
 
 /**
@@ -30,6 +31,10 @@ export function isSingleVMMode(): boolean {
   return DEPLOYMENT_MODE === 'single-vm';
 }
 
+export function isReplitDeployMode(): boolean {
+  return DEPLOYMENT_MODE === 'replit-deploy';
+}
+
 /**
  * Check if running in hybrid mode (some K8s features enabled)
  */
@@ -40,7 +45,7 @@ export function isHybridMode(): boolean {
 /**
  * Get the current deployment mode
  */
-export function getDeploymentMode(): DeploymentMode {
+export function getDeploymentMode(): SupportedDeploymentTarget {
   return DEPLOYMENT_MODE;
 }
 
@@ -51,6 +56,7 @@ export function getDeploymentConfig() {
   return {
     mode: DEPLOYMENT_MODE,
     kubernetesEnabled: KUBERNETES_ENABLED,
+    isReplitDeploy: isReplitDeployMode(),
     isSingleVM: isSingleVMMode(),
     isHybrid: isHybridMode(),
   };

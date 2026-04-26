@@ -86,7 +86,7 @@ export function ReplitSearchPanel({ projectId, onFileSelect }: { projectId?: str
         useRegex,
       });
 
-      const results: SearchResult[] = (response.results || []).flatMap((result) => {
+      const results: SearchResult[] = (response.results || []).flatMap<SearchResult>((result) => {
         if (searchType === 'files') {
           return [{
             id: `file-${result.id}`,

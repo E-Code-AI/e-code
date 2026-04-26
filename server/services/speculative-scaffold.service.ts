@@ -22,9 +22,9 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createLogger } from '../utils/logger';
-import { EventEmitter } from 'events';
 import { storage } from '../storage';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { postProcessGeneratedWorkspace } from '../ai/post-processing';
 
 const logger = createLogger('speculative-scaffold');
 
@@ -54,6 +54,12 @@ export interface ScaffoldProgressEvent {
   message: string;
   progress: number;
   filePath?: string;
+}
+
+interface AppIdentity {
+  title: string;
+  description: string;
+  packageName: string;
 }
 
 // ============================================
@@ -663,7 +669,7 @@ export class SpeculativeScaffoldService {
     return 'default';
   }
 
-  private buildAppIdentity(projectName?: string, prompt?: string) {
+  private buildAppIdentity(projectName?: string, prompt?: string): AppIdentity {
     const fallbackPrompt = prompt?.trim() || 'AI Generated App';
     const rawTitle = (projectName?.trim() || fallbackPrompt)
       .replace(/\s+/g, ' ')
@@ -750,6 +756,337 @@ export class SpeculativeScaffoldService {
     return nextContent;
   }
 
+  private buildModernPackageJson(existing: string, appIdentity: AppIdentity): string {
+    const parsed = JSON.parse(existing);
+    parsed.name = appIdentity.packageName;
+    parsed.description = appIdentity.description;
+    parsed.dependencies = {
+      ...(parsed.dependencies || {}),
+      'framer-motion': '^12.23.24',
+      '@radix-ui/react-slot': '^1.2.4',
+      'class-variance-authority': '^0.7.1',
+      'clsx': '^2.1.1',
+      'tailwind-merge': '^3.3.1',
+    };
+    return JSON.stringify(parsed, null, 2);
+  }
+
+  private buildPromptAwareHomePage(appIdentity: AppIdentity, prompt?: string): string {
+    const intent = (prompt || '').toLowerCase();
+    const looksLikeTodo = intent.includes('todo') || intent.includes('task') || intent.includes('kanban') || intent.includes('productivity');
+    const productSummary = appIdentity.description.replace(/`/g, "'");
+
+    const featureCards = looksLikeTodo
+      ? `
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-border/60 bg-card/70 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Focus</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{todos.filter((todo) => !todo.done).length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Tasks still in motion</p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/70 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Completed</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{todos.filter((todo) => todo.done).length}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Momentum preserved with dark-mode clarity</p>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/70 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Theme</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">{dark ? 'Dark' : 'Light'}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Semantic HSL palette with instant toggle</p>
+            </div>
+          </div>`
+      : `
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              ['Experience', 'Latest-generation UI surface with motion and HSL tokens'],
+              ['Foundation', 'Shadcn-style components and production-safe app shell'],
+              ['Delivery', 'Dark mode, strong hierarchy, and extensible code structure'],
+            ].map(([label, copy]) => (
+              <div key={label} className="rounded-2xl border border-border/60 bg-card/70 p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
+                <p className="mt-3 text-sm text-foreground">{copy}</p>
+              </div>
+            ))}
+          </div>`;
+
+    const primaryPanel = looksLikeTodo
+      ? `
+          <motion.section
+            layout
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="rounded-[28px] border border-border/60 bg-card/85 p-6 shadow-[0_24px_120px_hsl(var(--foreground)/0.10)] backdrop-blur"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Today</p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">Build flow</h2>
+              </div>
+              <Button variant="outline" onClick={() => setDark((value) => !value)}>
+                {dark ? 'Switch to light' : 'Switch to dark'}
+              </Button>
+            </div>
+
+            <form
+              className="mt-6 flex flex-col gap-3 md:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!draft.trim()) return;
+                setTodos((items) => [
+                  { id: Date.now().toString(), title: draft.trim(), done: false },
+                  ...items,
+                ]);
+                setDraft('');
+              }}
+            >
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Add a focused task"
+                className="h-11 flex-1 rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-ring"
+                data-testid="input-new-task"
+              />
+              <Button type="submit" data-testid="button-add-task">
+                Add task
+              </Button>
+            </form>
+
+            <div className="mt-6 space-y-3">
+              <AnimatePresence initial={false}>
+                {todos.map((todo) => (
+                  <motion.div
+                    key={todo.id}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/70 px-4 py-3"
+                  >
+                    <button
+                      className="flex items-center gap-3 text-left"
+                      onClick={() =>
+                        setTodos((items) =>
+                          items.map((item) => (item.id === todo.id ? { ...item, done: !item.done } : item))
+                        )
+                      }
+                      type="button"
+                    >
+                      <span
+                        className={cn(
+                          'flex h-5 w-5 items-center justify-center rounded-full border transition',
+                          todo.done
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border bg-background'
+                        )}
+                      >
+                        {todo.done ? '✓' : ''}
+                      </span>
+                      <span className={cn('text-sm text-foreground', todo.done && 'text-muted-foreground line-through')}>
+                        {todo.title}
+                      </span>
+                    </button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setTodos((items) => items.filter((item) => item.id !== todo.id))}
+                    >
+                      Remove
+                    </Button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </motion.section>`
+      : `
+          <motion.section
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="rounded-[28px] border border-border/60 bg-card/85 p-6 shadow-[0_24px_120px_hsl(var(--foreground)/0.10)] backdrop-blur"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Product surface</p>
+                <h2 className="mt-2 text-2xl font-semibold text-foreground">Modern starter experience</h2>
+              </div>
+              <Button variant="outline" onClick={() => setDark((value) => !value)}>
+                {dark ? 'Switch to light' : 'Switch to dark'}
+              </Button>
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground">${productSummary}</p>
+          </motion.section>`;
+
+    return `import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
+
+export default function HomePage() {
+  const [dark, setDark] = useState(true);
+  const [draft, setDraft] = useState('');
+  const [todos, setTodos] = useState([
+    { id: '1', title: 'Review product structure', done: false },
+    { id: '2', title: 'Polish dark mode interactions', done: true },
+    { id: '3', title: 'Connect real data source', done: false },
+  ]);
+
+  const completion = useMemo(() => {
+    if (todos.length === 0) return 0;
+    return Math.round((todos.filter((todo) => todo.done).length / todos.length) * 100);
+  }, [todos]);
+
+  return (
+    <main className={cn(dark && 'dark')}>
+      <div className="min-h-screen bg-background text-foreground transition-colors">
+        <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-8 px-4 py-8 md:px-6 lg:px-8">
+          <motion.header
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden rounded-[32px] border border-border/60 bg-gradient-to-br from-primary/16 via-card to-background p-6 md:p-8"
+          >
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-xs uppercase tracking-[0.28em] text-primary">Generated app</p>
+                <h1 className="mt-4 text-4xl font-semibold tracking-tight text-balance md:text-5xl">${appIdentity.title}</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
+                  ${productSummary}
+                </p>
+              </div>
+              <div className="grid min-w-[220px] gap-3 rounded-[28px] border border-border/60 bg-background/70 p-4 backdrop-blur">
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Readiness</p>
+                <p className="text-3xl font-semibold text-foreground">{completion}%</p>
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <motion.div
+                    className="h-full rounded-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: completion + '%' }}
+                    transition={{ duration: 0.45 }}
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.header>
+
+          ${featureCards}
+
+          ${primaryPanel}
+        </div>
+      </div>
+    </main>
+  );
+}`;
+  }
+
+  private buildModernReactOverrides(appIdentity: AppIdentity, prompt?: string): Record<string, string> {
+    return {
+      'package.json': this.buildModernPackageJson(
+        FRAMEWORK_TEMPLATES['react-vite-fullstack'].files['package.json'],
+        appIdentity
+      ),
+      'client/src/App.tsx': `import HomePage from './pages/HomePage';
+
+export default function App() {
+  return <HomePage />;
+}`,
+      'client/src/lib/utils.ts': `import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}`,
+      'client/src/components/ui/button.tsx': `import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
+
+const buttonVariants = cva(
+  'inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
+  {
+    variants: {
+      variant: {
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        outline: 'border border-border bg-background hover:bg-accent hover:text-accent-foreground',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+      },
+      size: {
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-lg px-3',
+        lg: 'h-11 rounded-xl px-6',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'default',
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : 'button';
+    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+  }
+);
+
+Button.displayName = 'Button';
+
+export { Button, buttonVariants };`,
+      'client/src/index.css': `@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 262 100% 97%;
+    --accent-foreground: 262 83% 58%;
+    --border: 220 13% 91%;
+    --ring: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 20% 98%;
+    --card: 222 40% 11%;
+    --card-foreground: 210 20% 98%;
+    --primary: 263 85% 67%;
+    --primary-foreground: 224 71% 4%;
+    --muted: 223 27% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 223 27% 18%;
+    --accent-foreground: 210 20% 98%;
+    --border: 223 21% 24%;
+    --ring: 263 85% 67%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}`,
+      'client/src/pages/HomePage.tsx': this.buildPromptAwareHomePage(appIdentity, prompt),
+    };
+  }
+
   /**
    * Create speculative scaffold for a project
    * This runs in parallel with AI plan generation
@@ -784,25 +1121,25 @@ export class SpeculativeScaffoldService {
         logger.debug(`[Scaffold] Created directory: ${dir}`);
       }
 
-      // Create template files (only if they don't exist - don't overwrite)
-      for (const [filePath, templateContent] of Object.entries(template.files)) {
+      const writeFileToWorkspaceAndStorage = async (filePath: string, content: string, overwrite = false) => {
         const fullPath = path.join(projectDir, filePath);
-        const content = this.personalizeTemplateContent(templateContent, filePath, appIdentity);
-        
+
         try {
-          await fs.access(fullPath);
-          // File exists, skip
-          logger.debug(`[Scaffold] Skipping existing file: ${filePath}`);
+          if (!overwrite) {
+            await fs.access(fullPath);
+            logger.debug(`[Scaffold] Skipping existing file: ${filePath}`);
+            return;
+          }
         } catch {
-          // File doesn't exist, create it
-          await fs.writeFile(fullPath, content, 'utf-8');
-          filesCreated.push(filePath);
-          logger.debug(`[Scaffold] Created file: ${filePath}`);
         }
 
-        // Keep IDE storage in sync with the workspace filesystem.
-        // Without this, prompt bootstrap can create runnable files on disk
-        // while the file explorer/editor still show an empty project.
+        await fs.mkdir(path.dirname(fullPath), { recursive: true });
+        await fs.writeFile(fullPath, content, 'utf-8');
+        if (!filesCreated.includes(filePath)) {
+          filesCreated.push(filePath);
+        }
+        logger.debug(`[Scaffold] Created file: ${filePath}`);
+
         try {
           const existingFile = await storage.getFileByPath(projectId, filePath);
           if (!existingFile) {
@@ -818,7 +1155,32 @@ export class SpeculativeScaffoldService {
             error: storageError?.message || String(storageError),
           });
         }
+      };
+
+      // Create template files (only if they don't exist - don't overwrite)
+      for (const [filePath, templateContent] of Object.entries(template.files)) {
+        const content = this.personalizeTemplateContent(templateContent, filePath, appIdentity);
+        await writeFileToWorkspaceAndStorage(filePath, content, false);
       }
+
+      if (detectedFramework === 'react-vite-fullstack') {
+        const overrides = this.buildModernReactOverrides(appIdentity, prompt);
+        for (const [filePath, content] of Object.entries(overrides)) {
+          await writeFileToWorkspaceAndStorage(filePath, content, true);
+        }
+      }
+
+      await Promise.resolve(
+        postProcessGeneratedWorkspace({
+          workspacePath: projectDir,
+          filePaths: filesCreated,
+        })
+      ).catch((error: any) => {
+        logger.warn('[Scaffold] Post-processing failed (non-blocking)', {
+          projectId,
+          error: error?.message || String(error),
+        });
+      });
 
       const durationMs = Date.now() - startTime;
       logger.info(`[Scaffold] Scaffolding completed in ${durationMs}ms`, {

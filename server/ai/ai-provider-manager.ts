@@ -33,6 +33,7 @@ export interface AIModel {
  * Fortune 500-grade model catalog
  */
 export const MODELFARM_MODELS = new Set([
+  'gpt-5-codex',
   'gpt-4.1', 'gpt-4.1-mini', 'gpt-4.1-nano',
   'gpt-4o', 'gpt-4o-mini',
   'o4-mini', 'o3', 'o3-mini',
@@ -69,6 +70,15 @@ export const AI_MODELS: AIModel[] = [
   },
 
   // ── OpenAI — GPT-4.1 family ───────────────────────────────────────────────────
+  {
+    id: 'gpt-5-codex',
+    name: 'GPT-5 Codex',
+    provider: 'openai',
+    description: 'Best OpenAI coding model for agentic code generation and repair',
+    maxTokens: 400000,
+    supportsStreaming: true,
+    costPer1kTokens: 0.004
+  },
   {
     id: 'gpt-4.1',
     name: 'GPT-4.1',
@@ -315,11 +325,11 @@ export const AI_MODELS: AIModel[] = [
  * UPDATED January 2025: kimi-k2-0711-preview → kimi-k2-0905-preview (September 2025 upgrade)
  */
 const PROVIDER_FALLBACK_CHAIN = [
-  'gpt-4.1',                   // Free via Replit ModelFarm
-  'claude-sonnet-4-6',  // Anthropic Claude 4 Sonnet
-  'gemini-2.5-flash',          // Google Gemini 2.5 Flash
-  'grok-3',                    // xAI Grok 3
-  'moonshot-v1-32k'            // Moonshot Kimi 32K
+  'claude-opus-4-7',
+  'claude-sonnet-4-6',
+  'gpt-5-codex',
+  'gpt-4.1',
+  'claude-haiku-4-5-20251001',
 ];
 
 export class AIProviderManager {

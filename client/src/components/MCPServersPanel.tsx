@@ -264,7 +264,7 @@ export function MCPServersPanel({ projectId }: { projectId?: number } = {}) {
           </Button>
         </div>
         {projectId ? (
-          <MCPPanel projectId={String(projectId)} />
+          <MCPPanel projectId={String(projectId)} onClose={() => setSelected(null)} />
         ) : (
           <Card>
             <CardHeader>

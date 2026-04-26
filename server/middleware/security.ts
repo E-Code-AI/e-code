@@ -19,6 +19,13 @@ import {
 import { securityMonitoring as securityMonitoringService } from '../services/security-monitoring';
 
 const logger = createLogger('security');
+const isDevelopment = process.env.NODE_ENV === 'development';
+const isProduction = process.env.NODE_ENV === 'production';
+const isReplitPreview = Boolean(
+  process.env.REPL_ID ||
+  process.env.REPL_SLUG ||
+  process.env.REPLIT_DEV_DOMAIN
+);
 
 /**
  * Content Security Policy Configuration
@@ -37,13 +44,22 @@ const baseCSPDirectives = {
     "https://fonts.gstatic.com",
     "data:"
   ],
-  mediaSrc: ["'self'"],
+  mediaSrc: ["'self'", "blob:", "data:"],
   objectSrc: ["'none'"],
-  frameSrc: ["'self'", "https://js.stripe.com"],
+  frameSrc: [
+    "'self'",
+    "https://js.stripe.com",
+    "https://hooks.stripe.com",
+    "https://*.replit.dev",
+    "https://*.replit.app",
+    "https://*.repl.co",
+  ],
   workerSrc: ["'self'", "blob:"],
   childSrc: ["'self'", "blob:"],
   formAction: ["'self'"],
-  frameAncestors: ["'none'"],
+  frameAncestors: isReplitPreview
+    ? ["'self'", "https://replit.com", "https://*.replit.dev", "https://*.replit.app", "https://*.repl.co"]
+    : ["'self'"],
   baseUri: ["'self'"],
   manifestSrc: ["'self'"],
   blockAllMixedContent: [],
@@ -56,17 +72,19 @@ const productionCSPDirectives: CSPDirectives = {
   scriptSrc: [
     "'self'",
     "'nonce-{{nonce}}'",
+    "'unsafe-inline'",
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
     "https://unpkg.com",
-    "https://js.stripe.com"
+    "https://js.stripe.com",
+    "blob:"
   ],
   styleSrc: [
     "'self'",
-    "'nonce-{{nonce}}'", // Nonce for inline styles
+    "'unsafe-inline'",
+    "'nonce-{{nonce}}'",
     "https://fonts.googleapis.com",
     "https://cdn.jsdelivr.net"
-    // NO 'unsafe-inline' in production
   ],
   imgSrc: [
     "'self'",
@@ -76,10 +94,16 @@ const productionCSPDirectives: CSPDirectives = {
   ],
   connectSrc: [
     "'self'",
+    "https://api.openai.com",
     "wss:",
+    "ws:",
     "https://api.anthropic.com",
+    "https://api.openai.com",
     "https://*.googleapis.com",
-    "https://api.stripe.com"
+    "https://api.stripe.com",
+    "https://*.replit.dev",
+    "https://*.replit.app",
+    "https://*.repl.co"
   ],
   upgradeInsecureRequests: [],
   reportUri: ['/api/security/csp-report']
@@ -117,7 +141,9 @@ const developmentCSPDirectives: CSPDirectives = {
     "ws://localhost:*", // WebSocket for HMR
     "http://localhost:*", // HTTP for dev server
     "wss:",
+    "ws:",
     "https://api.anthropic.com",
+    "https://api.openai.com",
     "https://*.googleapis.com"
   ],
   reportUri: ['/api/security/csp-report']
@@ -128,7 +154,6 @@ const developmentCSPDirectives: CSPDirectives = {
  * SECURITY: Production automatically uses secure directives
  */
 function getCSPDirectives(): CSPDirectives {
-  const isProduction = process.env.NODE_ENV === 'production';
   return isProduction ? productionCSPDirectives : developmentCSPDirectives;
 }
 
@@ -215,8 +240,6 @@ function applyCSP(req: Request, res: Response, next: NextFunction) {
 export const securityMiddleware = (): RequestHandler[] => {
   const middlewares: RequestHandler[] = [];
   
-  const isProduction = process.env.NODE_ENV === 'production';
-
   // 1. Generate CSP nonce first (required for CSP)
   middlewares.push(generateCSPNonce);
 
@@ -229,7 +252,7 @@ export const securityMiddleware = (): RequestHandler[] => {
     contentSecurityPolicy: false, // We handle CSP ourselves for nonce support
     crossOriginEmbedderPolicy: isProduction,
     crossOriginOpenerPolicy: isProduction ? { policy: "same-origin" } : { policy: "unsafe-none" },
-    crossOriginResourcePolicy: isProduction ? { policy: "same-origin" } : { policy: "cross-origin" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     originAgentCluster: true,
     hsts: isProduction ? {
       maxAge: 31536000,
@@ -237,7 +260,7 @@ export const securityMiddleware = (): RequestHandler[] => {
       preload: true
     } : false,
     dnsPrefetchControl: { allow: false },
-    xFrameOptions: isProduction ? { action: 'deny' } : false,
+    xFrameOptions: false,
     xPoweredBy: false,
     xContentTypeOptions: true,
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
@@ -246,10 +269,6 @@ export const securityMiddleware = (): RequestHandler[] => {
 
   // Enhanced security headers
   middlewares.push((req: Request, res: Response, next: NextFunction) => {
-    if (isProduction) {
-      res.setHeader('X-Frame-Options', 'DENY');
-    }
-    
     // Prevent MIME type sniffing
     res.setHeader('X-Content-Type-Options', 'nosniff');
     
@@ -271,7 +290,9 @@ export const securityMiddleware = (): RequestHandler[] => {
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
     res.setHeader('X-Download-Options', 'noopen');
     res.setHeader('X-DNS-Prefetch-Control', 'off');
-    res.setHeader('Expect-CT', 'max-age=86400, enforce');
+    if (isProduction && !isReplitPreview) {
+      res.setHeader('Expect-CT', 'max-age=86400, enforce');
+    }
     
     // Clear site data on logout
     if (req.path === '/api/logout') {

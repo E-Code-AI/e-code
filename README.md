@@ -11,7 +11,8 @@
     <a href="#architecture">Architecture</a> •
     <a href="#quick-start">Quick Start</a> •
     <a href="#deployment">Deployment</a> •
-    <a href="#security">Security</a>
+    <a href="#security">Security</a> •
+    <a href="docs/ARCHITECTURE.md">Architecture Doc</a>
   </p>
 </div>
 
@@ -102,6 +103,7 @@ E-Code uses a two-service architecture:
 - Node.js 20.x LTS or higher
 - PostgreSQL 16.x
 - Redis (optional, used for caching)
+- Replit Deploy for the supported production target
 
 ### Development Setup
 
@@ -123,6 +125,14 @@ npx tsx runner/index.ts
 ```
 
 The development server runs on port 5000 with Vite serving the frontend and Express handling API routes.
+
+### Local Validation Before Shipping
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
 
 ### Configuration
 
@@ -154,7 +164,15 @@ npm run db:push
 
 ## Deployment
 
-The platform deploys as a VM with WebSocket support. Build and run commands:
+The supported production target is `replit-deploy`.
+
+See:
+
+- [DEPLOYMENT.md](DEPLOYMENT.md)
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/HANDOFF.md](docs/HANDOFF.md)
+
+Build and run commands:
 
 ```bash
 # Production build (prunes node_modules to native packages only)

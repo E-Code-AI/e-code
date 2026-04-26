@@ -118,7 +118,6 @@ export default function UserProfile() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
   const [isFollowing, setIsFollowing] = useState(false);
-  const contributionGrid = profile ? buildContributionGrid(profile.recentActivity) : null;
 
   // Fetch user profile
   const { data: profile, isLoading, error} = useQuery<UserProfile>({
@@ -128,6 +127,7 @@ export default function UserProfile() {
     },
     enabled: !!username
   });
+  const contributionGrid = profile ? buildContributionGrid(profile.recentActivity) : null;
 
   // Follow/unfollow mutation
   const followMutation = useMutation({

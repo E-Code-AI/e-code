@@ -123,7 +123,7 @@ export default function SSH() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddKeyDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => addKeyMutation.mutate()} disabled={!newKey.label.trim() || !newKey.publicKey.trim() || addKeyMutation.isPending}>
+                <Button onClick={() => addKeyMutation.mutate(undefined)} disabled={!newKey.label.trim() || !newKey.publicKey.trim() || addKeyMutation.isPending}>
                   {addKeyMutation.isPending ? "Adding..." : "Add Key"}
                 </Button>
               </DialogFooter>

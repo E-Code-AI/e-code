@@ -471,7 +471,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
                   </Button>
                   <Button
                     className="h-8"
-                    onClick={() => saveMutation.mutate()}
+                    onClick={() => saveMutation.mutate(undefined)}
                     disabled={saveMutation.isPending}
                     data-testid="button-save-settings"
                   >

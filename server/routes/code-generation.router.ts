@@ -4,6 +4,8 @@ import { aiProviderManager } from '../ai/ai-provider-manager';
 import { createLogger } from '../utils/logger';
 import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
+import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
 
 const logger = createLogger('code-generation-router');
 const router = Router();
@@ -43,20 +45,25 @@ router.post('/generate', tierRateLimiters.api, async (req, res) => {
     }
     
     // Build system prompt
-    const systemPrompt = `You are an expert ${language || 'code'} developer. Generate clean, production-ready code based on the user's requirements.
+    const systemPrompt = `You are an expert ${language || 'code'} developer. Generate complete, production-ready application code based on the user's requirements.
+
+${DESIGN_SYSTEM_PROMPT}
+
+${MODERN_DESIGN_SYSTEM_PROMPT}
 
 ${context ? `Context: ${context}` : ''}
 
 ${files && files.length > 0 ? `Referenced Files:\n${files.map(f => `\n--- ${f.path} ---\n${f.content}`).join('\n')}` : ''}
 
-Requirements:
-1. Write ${language || 'code'} code only (no explanations unless asked)
-2. Follow best practices and conventions for ${language || 'the language'}
-3. Include proper error handling
-4. Add comments for complex logic
-5. Make code production-ready and maintainable
+Hard requirements:
+1. Write ${language || 'code'} only. No markdown fences.
+2. For React UI, prefer shadcn/ui-style component architecture, HSL theme tokens, dark mode, and Framer Motion.
+3. Include robust loading, empty, and error states.
+4. Include proper typing and production-safe error handling.
+5. Avoid placeholder “Welcome” starter copy. Use the product intent from the prompt.
+6. Output maintainable code that can be formatted and type-checked automatically.
 
-Generate the code now:`;
+Generate the code now.`;
 
     const messages = [
       { role: 'system' as const, content: systemPrompt },
@@ -64,7 +71,7 @@ Generate the code now:`;
     ];
     
     // Get model or use default
-    const model = modelId || 'gpt-4.1';
+    const model = modelId || 'claude-opus-4-7';
     logger.info('[Code Generation] Using model:', model);
     
     const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-4.1/.test(model);
@@ -151,7 +158,7 @@ router.get('/models', tierRateLimiters.api, async (req, res) => {
     
     res.json({
       models: codeGenModels,
-      defaultModel: 'gpt-4.1'
+      defaultModel: 'claude-opus-4-7'
     });
   } catch (error: any) {
     logger.error('[Code Generation] Error getting models:', error);

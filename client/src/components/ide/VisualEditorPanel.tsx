@@ -616,7 +616,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                     size="sm"
                     className="h-6 w-6 p-0"
                     disabled={!canUndo || undoMutation.isPending}
-                    onClick={() => undoMutation.mutate()}
+                    onClick={() => undoMutation.mutate(undefined)}
                   >
                     <Undo2 className="h-3.5 w-3.5" />
                   </Button>
@@ -625,7 +625,7 @@ export function VisualEditorPanel({ projectId, onCodeChange, className }: Visual
                     size="sm"
                     className="h-6 w-6 p-0"
                     disabled={!canRedo || redoMutation.isPending}
-                    onClick={() => redoMutation.mutate()}
+                    onClick={() => redoMutation.mutate(undefined)}
                   >
                     <Redo2 className="h-3.5 w-3.5" />
                   </Button>

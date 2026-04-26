@@ -424,7 +424,8 @@ async function getLatestVisualEdit(projectId: number, status: 'applied' | 'undon
       LIMIT 1
     `);
 
-    return (rows.rows?.[0] as any) ?? null;
+    const resultRows = Array.isArray((rows as any).rows) ? (rows as any).rows : (Array.isArray(rows) ? rows : []);
+    return (resultRows[0] as any) ?? null;
   } catch (error) {
     if (isMissingVisualEditStorage(error)) {
       return null;
@@ -500,7 +501,8 @@ export async function getEditHistory(projectId: number, limit = 20): Promise<any
       LIMIT ${limit}
     `);
 
-    return (rows.rows as any[]).map((row) => ({
+    const resultRows = Array.isArray((rows as any).rows) ? (rows as any).rows : (Array.isArray(rows) ? rows : []);
+    return resultRows.map((row: any) => ({
       id: row.id,
       fileId: row.file_id,
       projectId: row.project_id,

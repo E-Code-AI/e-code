@@ -1,18 +1,18 @@
 # Production Deployment
 
-This runbook is for deploying `e-code` to a production VM or container host with PostgreSQL, Redis, TLS termination, durable object storage, and GitHub Actions.
+This runbook is now centered on `replit-deploy`, which is the single active production target for `e-code`.
+
+Legacy VM, Kubernetes, buildpack, and autoscale-specific strategies are archived conceptually in [archive/deploy-strategies/README.md](/Users/hb/dev/e-code/archive/deploy-strategies/README.md) and are no longer the primary deployment path.
 
 ## 1. Prerequisites
 
 - Node.js `20.x`
-- Docker and Docker Compose plugin
 - PostgreSQL `15+`
 - Redis `7+`
-- A reverse proxy or load balancer terminating TLS
 - Durable object storage:
   - Replit Object Storage, or
   - S3-compatible bucket
-- GitHub Actions secrets and variables configured
+- Replit Deploy environment and secrets configured
 
 ## 2. Required Secrets And Variables
 
@@ -81,42 +81,34 @@ Expected build artifacts:
 
 The frontend build already uses Vite code splitting and vendor chunking via `vite.config.ts`.
 
-## 5. Container Deployment
+## 5. Replit Deploy
 
-For a VM-based production deployment:
+For the supported production path:
 
-1. Provision PostgreSQL, Redis, and object storage.
-2. Put the repository on the target host.
-3. Inject production secrets with your secret manager, `.env`, or CI.
-4. Start the stack:
+1. Provision PostgreSQL, optional Redis, and object storage.
+2. Configure production secrets in Replit Deploy.
+3. Build and deploy the current `main` revision.
+4. Validate:
+   - `/health/liveness`
+   - `/health/readiness`
+   - `/api/health`
 
-```bash
-docker compose -f docker-compose.prod.yml up -d --build
-```
-
-The application container will:
+The application runtime will:
 
 - validate production env
-- wait for PostgreSQL readiness
-- run `npm run db:migrate`
-- start `dist/index.js`
+- initialize the persistent session store
+- run database bootstrap checks
+- start the bundled Node server
 
-## 6. Reverse Proxy And TLS
+## 6. TLS, Proxy, And Public URL
 
-Terminate TLS at Nginx, Caddy, Traefik, Cloudflare, or your cloud load balancer.
+Replit Deploy handles the public edge. `APP_URL` must match the final `https://` production URL.
 
 Requirements:
 
 - forward `X-Forwarded-Proto`, `X-Forwarded-For`, and `Host`
 - set `APP_URL` to the public `https://` URL
 - set `TRUST_PROXY_HOPS` to match the number of trusted proxies in front of the app
-
-Recommended Nginx upstream behavior:
-
-- proxy WebSocket upgrades
-- preserve `Host`
-- enable HTTP/2 or HTTP/3 at the edge
-- redirect HTTP to HTTPS
 
 ## 7. Health Checks And Monitoring
 

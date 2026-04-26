@@ -68,6 +68,7 @@ function getInteractiveShellArgs(shellBinary: string): string[] {
 
 function buildShellEnv(userHome: string, userId: number, shellBinary: string): NodeJS.ProcessEnv {
   return {
+    ...process.env,
     PATH: process.env.PATH || '/usr/local/bin:/usr/bin:/bin',
     HOME: userHome,
     PWD: userHome,

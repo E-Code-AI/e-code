@@ -121,6 +121,7 @@ export function ResponsiveWebPreview({
   });
 
   const previewUrl = previewData?.previewUrl || '';
+  const previewStatus = previewData?.status;
   const headerPreviewUrl =
     previewUrl ||
     (previewStatus === 'starting'
@@ -130,7 +131,6 @@ export function ResponsiveWebPreview({
         : previewStatus === 'error'
           ? 'Preview unavailable'
           : 'Preview not ready');
-  const previewStatus = previewData?.status;
   const {
     data: previewDiagnostics,
     refetch: refetchDiagnostics,

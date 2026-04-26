@@ -3,6 +3,7 @@ import os from 'os';
 import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { resourcesRateLimiter } from '../middleware/custom-rate-limiter';
+import { storage } from '../storage';
 
 const resourcesQuerySchema = z.object({
   projectId: z.coerce.number().int().positive().optional()
@@ -199,6 +200,10 @@ router.get('/resources', resourcesRateLimiter, ensureAuthenticated, async (req: 
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    if (!projectId) {
+      return res.status(400).json({ error: 'projectId is required' });
+    }
+
     const hasAccess = await storage.isProjectCollaborator(projectId, userId);
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied to this project' });
@@ -206,7 +211,7 @@ router.get('/resources', resourcesRateLimiter, ensureAuthenticated, async (req: 
     
     const cpu = getCpuUsage();
     const memory = getMemoryMetrics();
-    const storage = getStorageMetrics();
+    const storageMetrics = getStorageMetrics();
     const network = getNetworkMetrics();
     const processes = getProcesses();
     const uptime = process.uptime();
@@ -214,7 +219,7 @@ router.get('/resources', resourcesRateLimiter, ensureAuthenticated, async (req: 
     res.json({
       cpu,
       memory,
-      storage,
+      storage: storageMetrics,
       network,
       processes,
       uptime,

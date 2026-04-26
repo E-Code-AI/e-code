@@ -907,17 +907,9 @@ httpServer.listen(port, "0.0.0.0", () => {
       markServiceFailed('preview-ws', String(error));
     }
 
-    // Setup Debugger WebSocket server for real-time pause/resume/log events
+    // Debugger WebSocket service is not wired in this build; keep status explicit.
     registerService('debug-ws');
-    try {
-      const { debugWebSocketService } = await import("./debugger/debug-websocket");
-      debugWebSocketService.initialize(httpServer);
-      markServiceReady('debug-ws');
-      logger.info('[Debug WebSocket] Service initialized at /ws/debugger');
-    } catch (error) {
-      logger.error(`[WORKING SERVER] Failed to setup Debug WebSocket: ${error}`);
-      markServiceFailed('debug-ws', String(error));
-    }
+    markServiceFailed('debug-ws', 'Debugger WebSocket service is not available in this build');
 
     // Make session store available globally for WebSocket authentication
     (global as any).sessionStore = sessionStore;
@@ -1307,7 +1299,7 @@ httpServer.listen(port, "0.0.0.0", () => {
     try {
       const { seedDatabase } = await import("./db-seed");
       await seedDatabase();
-      logger.info('✅ Test user seeded (testuser@test.com / testpass123)');
+      logger.info('✅ Development seed completed', { user: 'testuser@test.com' });
     } catch (error) {
       logger.warn(`[WORKING SERVER] Database seeding failed (non-critical): ${error.message}`);
     }

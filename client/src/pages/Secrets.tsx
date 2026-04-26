@@ -340,7 +340,7 @@ export default function Secrets() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
             <Button
-              onClick={() => createSecretMutation.mutate()}
+              onClick={() => createSecretMutation.mutate(undefined)}
               disabled={!selectedProjectId || !newSecret.key.trim() || !newSecret.value.trim() || createSecretMutation.isPending}
               data-testid="button-confirm-create-secret"
             >

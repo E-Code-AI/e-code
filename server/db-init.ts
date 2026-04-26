@@ -7,8 +7,15 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { createLogger } from './utils/logger';
+import crypto from 'crypto';
 
 const logger = createLogger('db-init');
+
+function generateBootstrapPassword(label: string): string {
+  const generated = crypto.randomBytes(18).toString('base64url');
+  process.stdout.write(`[DB Init] ${label} generated once: ${generated}\n`);
+  return generated;
+}
 const scryptAsync = promisify(scrypt);
 
 const CORE_TABLES: string[] = [
@@ -173,7 +180,8 @@ export async function initializeDatabase() {
       }
     
     // Create admin user
-    const adminPassword = await hashPassword("admin");
+    const adminPlaintext = process.env.DB_INIT_ADMIN_PASSWORD || generateBootstrapPassword('DB_INIT_ADMIN_PASSWORD');
+    const adminPassword = await hashPassword(adminPlaintext);
     const [admin] = await db.insert(schema.users).values({
       username: "admin",
       password: adminPassword,
@@ -183,7 +191,8 @@ export async function initializeDatabase() {
     }).returning();
     
     // Create demo user
-    const demoPassword = await hashPassword("password");
+    const demoPlaintext = process.env.DB_INIT_DEMO_PASSWORD || generateBootstrapPassword('DB_INIT_DEMO_PASSWORD');
+    const demoPassword = await hashPassword(demoPlaintext);
     const [demo] = await db.insert(schema.users).values({
       username: "demo",
       password: demoPassword,

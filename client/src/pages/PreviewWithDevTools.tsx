@@ -8,6 +8,7 @@ import { PreviewDevTools } from '@/components/PreviewDevTools';
 import { useParams } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Globe, 
   Smartphone, 
@@ -44,6 +45,7 @@ export default function PreviewWithDevTools() {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isStartingPreview, setIsStartingPreview] = useState(false);
+  const { toast } = useToast();
 
   // Get project details
   const { data: project } = useQuery({

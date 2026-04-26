@@ -532,7 +532,7 @@ router.post('/global', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   req.url = '/global';
-  return router.handle(req, res);
+  return res.redirect(307, '/api/search/global');
 });
 
 /**

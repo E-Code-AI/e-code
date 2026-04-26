@@ -272,7 +272,7 @@ export function PreviewPanel({ projectId, projectUrl, className }: PreviewPanelP
                     )}
                     {previewStatus?.status !== 'starting' && (
                       <Button
-                        onClick={() => startPreviewMutation.mutate()}
+                        onClick={() => startPreviewMutation.mutate(undefined)}
                         disabled={startPreviewMutation.isPending}
                         data-testid="button-start-preview"
                       >

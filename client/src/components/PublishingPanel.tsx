@@ -182,7 +182,7 @@ function OverviewTab({ projectId }: { projectId: string }) {
         </div>
       ) : null}
 
-      <Button className="w-full h-8 text-xs" onClick={() => publishMutation.mutate()} disabled={publishMutation.isPending || status === "publishing"}>
+      <Button className="w-full h-8 text-xs" onClick={() => publishMutation.mutate(undefined)} disabled={publishMutation.isPending || status === "publishing"}>
         {publishMutation.isPending || status === "publishing" ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Rocket className="w-3.5 h-3.5 mr-1.5" />}
         {status === "live" || status === "needs-republish" ? "Republish" : "Publish"}
       </Button>

@@ -6,6 +6,12 @@ import { createLogger } from './utils/logger';
 const logger = createLogger('db-seed');
 const isProduction = process.env.NODE_ENV === 'production';
 
+function buildOneTimePassword(label: string): string {
+  const generated = crypto.randomBytes(18).toString('base64url');
+  process.stdout.write(`[DB Seed] ${label} generated once: ${generated}\n`);
+  return generated;
+}
+
 // Generate secure random password for production if not provided
 function getSecurePassword(envVar: string, devDefault: string): string {
   const envPassword = process.env[envVar];
@@ -15,10 +21,7 @@ function getSecurePassword(envVar: string, devDefault: string): string {
   }
   
   if (isProduction) {
-    // In production, generate random password and log it securely
-    const randomPassword = crypto.randomBytes(32).toString('hex');
-    logger.warn(`[Security] ${envVar} not set - generated random password (check logs)`);
-    return randomPassword;
+    return buildOneTimePassword(envVar);
   }
   
   // Only use hardcoded defaults in development/test
@@ -183,11 +186,7 @@ This project is automatically created for E2E testing.
       });
       
       // ✅ B-C2 FIX: Don't leak password in logs - only show if using dev default
-      if (!process.env.ADMIN_USER_PASSWORD && !isProduction) {
-        logger.info('✅ Admin user seeded (admin@test.com / adminpass123 - DEV ONLY)');
-      } else {
-        logger.info('✅ Admin user seeded (admin@test.com / [password from env or random])');
-      }
+      logger.info('✅ Admin user seeded', { email: 'admin@test.com', passwordSource: process.env.ADMIN_USER_PASSWORD ? 'env' : (isProduction ? 'generated-once' : 'dev-default') });
     } else if (!existingAdmin.emailVerified || existingAdmin.role !== 'admin') {
       // Update existing admin to have email verified and admin role
       await storage.updateUser(String(existingAdmin.id), {

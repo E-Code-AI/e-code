@@ -11,6 +11,8 @@
 
 import { createLogger } from '../utils/logger';
 import type { AIProviderManager } from '../ai/ai-provider-manager';
+import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
+import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
 
 const logger = createLogger('agent-content-generator');
 
@@ -140,13 +142,16 @@ class AgentContentGeneratorService {
         codeType = 'Go code';
       }
       
-      const systemPrompt = `You are an expert developer that generates complete, production-ready code files. 
+      const systemPrompt = `You are an expert developer that generates complete, production-ready code files.
+${DESIGN_SYSTEM_PROMPT}
+${MODERN_DESIGN_SYSTEM_PROMPT}
 IMPORTANT RULES:
 - Generate ONLY the raw code - no explanations, no markdown code blocks
 - The code must be complete, functional, and production-ready
 - Include all necessary imports at the top
 - Include proper TypeScript types if applicable
 - Follow modern best practices and coding conventions
+- For React UI, prefer shadcn/ui-style architecture, HSL tokens, dark mode support, and Framer Motion when motion adds value
 - Start with the first line of actual code (import, declaration, or content)`;
       
       const userPrompt = `Generate a complete, working ${codeType} file for: ${path}
@@ -171,10 +176,11 @@ Generate the complete ${fileName} file:`;
       // Try multiple models with fallback for code generation
       // Use actual model IDs from provider configuration
       const fallbackModels = [
-        'gpt-4.1',            // OpenAI GPT-4.1 (best verified ModelFarm model)
-        'gpt-4.1-nano',         // OpenAI GPT-4.1 Nano (fastest, free via ModelFarm)
-        'gemini-2.5-flash',   // Google Gemini 2.5 Flash (stable production)
-        'gpt-4.1-mini',       // OpenAI GPT-4.1 Mini (legacy, still supported)
+        'claude-opus-4-7',
+        'claude-sonnet-4-6',
+        'gpt-5-codex',
+        'gpt-4.1',
+        'claude-haiku-4-5-20251001',
       ];
       let result: string | null = null;
       let lastError: string | null = null;

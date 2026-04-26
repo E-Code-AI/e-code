@@ -296,7 +296,7 @@ export function SecretManagement({ projectId }: SecretManagementProps) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => createSecretMutation.mutate()} disabled={!newSecret.key.trim() || !newSecret.value.trim() || createSecretMutation.isPending}>
+            <Button onClick={() => createSecretMutation.mutate(undefined)} disabled={!newSecret.key.trim() || !newSecret.value.trim() || createSecretMutation.isPending}>
               {createSecretMutation.isPending ? "Creating..." : "Create Secret"}
             </Button>
           </DialogFooter>

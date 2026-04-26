@@ -12,7 +12,7 @@ import { useAgentConversationStore } from '@/stores/agentConversationStore';
 import { useAutonomousBuildStore } from '@/stores/autonomousBuildStore';
 import { useSchemaWarmingStore } from '@/stores/schemaWarmingStore';
 import { AgentEventBus } from '@/lib/agentEvents';
-import { queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Message, AutonomousWorkspacePayload, AutonomousBuildTask } from '@/stores/agentConversationStore';
 import type { AutonomousBuildPhase } from '@/stores/autonomousBuildStore';
 

@@ -264,13 +264,13 @@ export function ReplitEditorLayout({
         return <ExtensionsMarketplace projectId={projectId ? parseInt(projectId, 10) : undefined} className="h-full" />;
       case 'workflows':
       case 'automations':
-        return <AutomationsPanel projectId={projectId} onClose={() => undefined} />;
+        return <AutomationsPanel projectId={projectId || ''} onClose={() => undefined} />;
       case 'mcp-suite':
         return <MCPServersPanel projectId={projectId ? Number(projectId) : undefined} />;
       case 'security':
         return <MobileSecurityPanel projectId={projectId || ''} className="h-full" />;
       case 'collaboration':
-        return <MobileCollaborationPanel projectId={projectId || ''} className="h-full" />;
+        return <MobileCollaborationPanel projectId={projectId ? parseInt(projectId, 10) : 0} isOpen onClose={() => undefined} />;
       case 'multiplayers':
         return <ReplitMultiplayers projectId={projectId} />;
       default:
