@@ -142,10 +142,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Git Initialized",
         description: "Git repository initialized successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Initialization Failed",
-        description: "Failed to initialize git repository",
+        description: error?.message || "Failed to initialize git repository",
         variant: "destructive"
       });
     }
@@ -163,10 +163,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Repository Cloned",
         description: "Successfully cloned the repository",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Clone Failed",
-        description: "Failed to clone repository",
+        description: error?.message || "Failed to clone repository",
         variant: "destructive"
       });
     }
@@ -225,10 +225,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Changes Committed",
         description: "Your changes have been committed successfully",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Commit Failed",
-        description: "Failed to commit changes",
+        description: error?.message || "Failed to commit changes",
         variant: "destructive"
       });
     } finally {
@@ -245,10 +245,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Changes Pushed",
         description: "Successfully pushed to remote repository",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Push Failed",
-        description: "Failed to push changes",
+        description: error?.message || "Failed to push changes",
         variant: "destructive"
       });
     } finally {
@@ -266,10 +266,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Changes Pulled",
         description: "Successfully pulled from remote repository",
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Pull Failed",
-        description: "Failed to pull changes",
+        description: error?.message || "Failed to pull changes",
         variant: "destructive"
       });
     } finally {
@@ -289,10 +289,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Branch Created",
         description: `Branch "${newBranchName}" created successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Branch Creation Failed",
-        description: "Failed to create branch",
+        description: error?.message || "Failed to create branch",
         variant: "destructive"
       });
     }
@@ -307,10 +307,10 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         title: "Branch Changed",
         description: `Switched to branch "${branchName}"`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Checkout Failed",
-        description: "Failed to switch branch",
+        description: error?.message || "Failed to switch branch",
         variant: "destructive"
       });
     }
