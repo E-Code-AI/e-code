@@ -380,7 +380,48 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     if (fileName.endsWith('index.css') && (description.toLowerCase().includes('tailwind') || description.includes('@tailwind'))) {
       return `@tailwind base;
 @tailwind components;
-@tailwind utilities;`;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 210 20% 98%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 262 100% 97%;
+    --accent-foreground: 262 83% 58%;
+    --border: 220 13% 91%;
+    --ring: 262 83% 58%;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 20% 98%;
+    --card: 222 40% 11%;
+    --card-foreground: 210 20% 98%;
+    --primary: 263 85% 67%;
+    --primary-foreground: 224 71% 4%;
+    --muted: 223 27% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 223 27% 18%;
+    --accent-foreground: 210 20% 98%;
+    --border: 223 21% 24%;
+    --ring: 263 85% 67%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+}`;
     }
 
     // Vite configuration
@@ -410,9 +451,29 @@ export default defineConfig({
     // Tailwind configuration
     if (fileName.endsWith('tailwind.config.js') || fileName.endsWith('tailwind.config.ts')) {
       return `export default {
-  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}', './client/index.html', './client/src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: 'hsl(var(--card))',
+        'card-foreground': 'hsl(var(--card-foreground))',
+        primary: 'hsl(var(--primary))',
+        'primary-foreground': 'hsl(var(--primary-foreground))',
+        muted: 'hsl(var(--muted))',
+        'muted-foreground': 'hsl(var(--muted-foreground))',
+        accent: 'hsl(var(--accent))',
+        'accent-foreground': 'hsl(var(--accent-foreground))',
+        ring: 'hsl(var(--ring))',
+      },
+      borderRadius: {
+        lg: '1rem',
+        md: 'calc(1rem - 2px)',
+        sm: 'calc(1rem - 4px)',
+      },
+    },
   },
   plugins: [],
 }`;
