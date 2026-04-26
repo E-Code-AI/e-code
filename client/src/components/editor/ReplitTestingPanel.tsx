@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useParams } from 'wouter';
 import { LazyMotionDiv } from '@/lib/motion';
 import { 
   PlayCircle, 
@@ -100,28 +101,30 @@ function LoadingSkeleton() {
   );
 }
 
-export function ReplitTestingPanel({ projectId = 'default-project', className }: ReplitTestingPanelProps) {
+export function ReplitTestingPanel({ projectId, className }: ReplitTestingPanelProps) {
   const { toast } = useToast();
+  const params = useParams<{ id?: string; projectId?: string }>();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'passed' | 'failed' | 'pending'>('all');
   const [expandedSuites, setExpandedSuites] = useState<Set<string>>(new Set());
   const [latestOutput, setLatestOutput] = useState('');
+  const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
   const { data: detectedTests, isLoading: detectionLoading, refetch: refetchDetection } = useQuery<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>({
-    queryKey: ['/api/workspace/projects', projectId, 'tests/detect'],
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'tests/detect'],
     queryFn: async () =>
-      apiRequest<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>('GET', `/api/workspace/projects/${projectId}/tests/detect`).catch(() => ({
+      apiRequest<{ files: string[]; framework: string; hasRunnableCommand?: boolean }>('GET', `/api/workspace/projects/${resolvedProjectId}/tests/detect`).catch(() => ({
         files: [],
         framework: 'none',
       })),
-    enabled: !!projectId,
+    enabled: !!resolvedProjectId,
   });
 
   const { data: testRuns = [], isLoading: runsLoading, refetch } = useQuery<TestRun[]>({
-    queryKey: ['/api/workspace/projects', projectId, 'test-runs'],
-    queryFn: async () => apiRequest<TestRun[]>('GET', `/api/workspace/projects/${projectId}/test-runs`).catch(() => []),
-    enabled: !!projectId,
+    queryKey: ['/api/workspace/projects', resolvedProjectId, 'test-runs'],
+    queryFn: async () => apiRequest<TestRun[]>('GET', `/api/workspace/projects/${resolvedProjectId}/test-runs`).catch(() => []),
+    enabled: !!resolvedProjectId,
     refetchInterval: (query) => query.state.data?.[0]?.status === 'running' ? 1500 : false,
   });
 
@@ -135,7 +138,7 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
 
   const runTestsMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest('POST', `/api/workspace/projects/${projectId}/tests/run`, {});
+      return apiRequest('POST', `/api/workspace/projects/${resolvedProjectId}/tests/run`, {});
     },
     onSuccess: async (data: any) => {
       setLatestOutput(data.output || '');
@@ -218,6 +221,18 @@ export function ReplitTestingPanel({ projectId = 'default-project', className }:
   const failedTests = latestRun?.failedTests || 0;
   const skippedTests = latestRun?.skippedTests || 0;
   const isLoading = detectionLoading || runsLoading || latestRunLoading;
+
+  if (!resolvedProjectId) {
+    return (
+      <div className={cn("h-full flex items-center justify-center p-4 text-center", className)}>
+        <div>
+          <FlaskConical className="w-8 h-8 text-muted-foreground opacity-40 mx-auto mb-3" />
+          <p className="text-[15px] leading-[20px] text-foreground mb-1">No project selected</p>
+          <p className="text-[13px] text-muted-foreground">Open the testing panel from a real workspace to run project tests.</p>
+        </div>
+      </div>
+    );
+  }
   const canRunTests = !!detectedTests?.hasRunnableCommand;
 
   return (
