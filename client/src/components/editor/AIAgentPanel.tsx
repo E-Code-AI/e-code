@@ -115,7 +115,21 @@ export function AIAgentPanel({ projectId, onClose, selectedCode, currentFilePath
       });
 
       if (!response.ok) {
-        throw new Error('Failed to start streaming');
+        let errorMessage = 'Failed to start streaming';
+        try {
+          const errorText = await response.text();
+          if (errorText.startsWith('{')) {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          } else {
+            errorMessage = `HTTP ${response.status}`;
+          }
+        } catch {
+          errorMessage = `HTTP ${response.status}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();

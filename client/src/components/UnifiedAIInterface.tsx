@@ -137,7 +137,18 @@ export function UnifiedAIInterface({
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        let errorMessage = `API error: ${response.status}`;
+        try {
+          const errorText = await response.text();
+          if (errorText.startsWith("{")) {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+          } else if (errorText.trim().length > 0) {
+            errorMessage = errorText;
+          }
+        } catch {
+        }
+        throw new Error(errorMessage);
       }
 
       const reader = response.body?.getReader();

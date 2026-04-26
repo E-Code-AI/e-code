@@ -123,7 +123,18 @@ export function CodeGenerationPanel() {
     }))
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+          try {
+            const errorText = await response.text();
+            if (errorText.startsWith('{')) {
+              const errorJson = JSON.parse(errorText);
+              errorMessage = errorJson.message || errorJson.error || errorMessage;
+            } else if (errorText.trim().length > 0) {
+              errorMessage = errorText;
+            }
+          } catch {
+          }
+          throw new Error(errorMessage);
         }
         
         if (!response.body) {
