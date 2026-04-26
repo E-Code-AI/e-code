@@ -165,6 +165,7 @@ export function PreviewPanel({
     stopPreviewMutation.mutate(undefined);
   }, [stopPreviewMutation]);
 
+  const hasResolvedPreviewUrl = Boolean(previewStatus?.previewUrl);
   const isPreviewRunning = previewStatus?.status === 'running' || previewStatus?.status === 'static';
   const isPreviewStarting = previewStatus?.status === 'starting' || startPreviewMutation.isPending;
   const isPreviewError = previewStatus?.status === 'error';
@@ -182,7 +183,7 @@ export function PreviewPanel({
       setSplashDismissed(false);
     }
   }, [isPreviewStarting]);
-  const canShowPreview = isPreviewRunning && previewStatus?.previewUrl;
+  const canShowPreview = hasResolvedPreviewUrl && (isPreviewRunning || previewStatus?.status === 'starting');
   // ✅ FIX (Dec 1, 2025): Use mutation.isPending for loading state instead of local timeout
   const isRefreshing = startPreviewMutation.isPending || stopPreviewMutation.isPending;
 
@@ -243,7 +244,7 @@ export function PreviewPanel({
             </Button>
           )}
           
-          {(isPreviewRunning || isPreviewStarting) && (
+          {(canShowPreview || isPreviewStarting) && (
             <Button
               variant="ghost"
               size="sm"
@@ -320,7 +321,7 @@ export function PreviewPanel({
               </Button>
             </div>
           </div>
-        ) : previewStatus?.previewUrl && isPreviewRunning ? (
+        ) : canShowPreview ? (
           <iframe
             id="preview-iframe"
             src={previewStatus.previewUrl}
