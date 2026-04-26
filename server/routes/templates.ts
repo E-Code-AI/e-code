@@ -8,7 +8,7 @@
  * - POST/PATCH/DELETE: Auth required + CSRF protection
  */
 
-import { Router } from 'express';
+import { Router, type NextFunction } from 'express';
 import { db } from '../db';
 import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import {
@@ -212,9 +212,12 @@ router.get('/featured', async (req, res) => {
  * GET /api/templates/:id
  * Get single template by ID
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req, res, next: NextFunction) => {
   try {
     const { id } = req.params;
+    if (['categories', 'collections', 'suggestions'].includes(id)) {
+      return next();
+    }
 
     const [template] = await db
       .select()

@@ -5914,7 +5914,7 @@ async function initSessionStore() {
       pool: pgPool,
       createTableIfMissing: true,
       ttl: 7 * 24 * 60 * 60,
-      tableName: 'user_sessions',
+      tableName: 'sessions',
     });
     console.log(`[Session Store] Using PostgreSQL store for ${isProduction ? 'production' : 'development'}`);
     return;

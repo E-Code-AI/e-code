@@ -102,6 +102,28 @@ export function ReplitFileExplorer({
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<FileNode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const fileQueryKeys = [
+    [`/api/projects/${projectId}/files`],
+    ['/api/projects', String(projectId), 'files'],
+    ['/api/projects', Number(projectId), 'files'],
+  ] as const;
+
+  const invalidateFileQueries = () => {
+    fileQueryKeys.forEach((queryKey) => {
+      queryClient.invalidateQueries({ queryKey: queryKey as any });
+    });
+  };
+
+  const getParentPath = (parentId: number | null) => {
+    if (parentId == null) return '';
+    return files.find((file) => file.id === parentId)?.path || '';
+  };
+
+  const getItemPath = (name: string, parentId: number | null) => {
+    const cleanName = name.replace(/^\/+|\/+$/g, '');
+    const parentPath = getParentPath(parentId).replace(/\/+$/g, '');
+    return parentPath ? `${parentPath}/${cleanName}` : cleanName;
+  };
 
   // Fetch files from API - REAL BACKEND
   // During bootstrap (autonomous workspace creation), refetch more aggressively
@@ -116,11 +138,17 @@ export function ReplitFileExplorer({
   // File operations mutations - REAL BACKEND
   const createFileMutation = useMutation({
     mutationFn: async (data: { name: string; isFolder: boolean; parentId: number | null; content?: string }) => {
-      const result = await apiRequest("POST", `/api/projects/${projectId}/files`, data);
+      const result = await apiRequest("POST", `/api/projects/${projectId}/files`, {
+        name: data.name,
+        path: getItemPath(data.name, data.parentId),
+        parentId: data.parentId,
+        isDirectory: data.isFolder,
+        content: data.isFolder ? '' : (data.content ?? ''),
+      });
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      invalidateFileQueries();
       toast({ title: "Success", description: "File created successfully" });
       setNewItemDialog(null);
     },
@@ -135,7 +163,7 @@ export function ReplitFileExplorer({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; content?: string; parentId?: number | null; path?: string }) =>
       apiRequest("PATCH", `/api/projects/${projectId}/files/by-id/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      invalidateFileQueries();
       toast({ title: "Success", description: "File updated successfully" });
       setRenameDialog(null);
     },
@@ -153,7 +181,7 @@ export function ReplitFileExplorer({
       return apiRequest("DELETE", `/api/projects/${projectId}/files/${file.path}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+      invalidateFileQueries();
       toast({ title: "Success", description: "File deleted successfully" });
       setDeleteConfirmDialog(null);
     },

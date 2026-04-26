@@ -151,6 +151,8 @@ export class MainRouter {
    * Register all routers with the Express application
    */
   registerRoutes(app: Application): void {
+    app.locals.storage = this.storage;
+
     let cachedChatGPTRouter: Router | undefined;
     const lazyChatGPTRouter = async (req: any, res: any, next: any) => {
       try {

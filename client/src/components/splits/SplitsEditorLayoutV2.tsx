@@ -64,8 +64,11 @@ function ProjectEditorPane({ projectId }: { projectId: string }) {
   const saveTimeoutsRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const lastSaveToastAtRef = useRef(0);
   const { activeFileId, openFile } = useLayoutStore();
+  const fileListKey = [`/api/projects/${projectId}/files`];
+  const workspaceFileListKey = ['/api/projects', projectId, 'files'];
   const { data: files = [] } = useQuery<File[]>({
-    queryKey: [`/api/projects/${projectId}/files`],
+    queryKey: fileListKey,
+    queryFn: () => apiRequest<File[]>('GET', `/api/projects/${projectId}/files`),
     enabled: !!projectId,
   });
 
@@ -73,9 +76,13 @@ function ProjectEditorPane({ projectId }: { projectId: string }) {
     mutationFn: async ({ fileId, content }: { fileId: number; content: string }) =>
       apiRequest<File>('PATCH', `/api/projects/${projectId}/files/by-id/${fileId}`, { content }),
     onSuccess: (updatedFile) => {
-      queryClient.setQueryData<File[]>([`/api/projects/${projectId}/files`], (existing = []) =>
-        existing.map((file) => (file.id === updatedFile.id ? { ...file, ...updatedFile } : file))
-      );
+      const updateFileList = (existing: File[] = []) =>
+        existing.map((file) => (file.id === updatedFile.id ? { ...file, ...updatedFile } : file));
+
+      queryClient.setQueryData<File[]>(fileListKey, updateFileList);
+      queryClient.setQueryData<File[]>(workspaceFileListKey, updateFileList);
+      queryClient.invalidateQueries({ queryKey: fileListKey });
+      queryClient.invalidateQueries({ queryKey: workspaceFileListKey });
 
       if (Date.now() - lastSaveToastAtRef.current > 4000) {
         lastSaveToastAtRef.current = Date.now();

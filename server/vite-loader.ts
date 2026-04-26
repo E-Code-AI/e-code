@@ -14,6 +14,7 @@ import expressStatic from 'express';
 import pathModule from 'path';
 import fsModule from 'fs';
 import { fileURLToPath } from 'url';
+import net from 'net';
 
 const logger = createLogger('vite-loader');
 const runtimeDir = pathModule.dirname(fileURLToPath(import.meta.url));
@@ -22,6 +23,23 @@ function resolveDistPublicPath() {
   return runtimeDir.endsWith(`${pathModule.sep}dist`)
     ? pathModule.resolve(runtimeDir, 'public')
     : pathModule.resolve(runtimeDir, '..', 'dist', 'public');
+}
+
+async function findAvailablePort(preferredPort: number): Promise<number> {
+  const tryPort = (port: number) => new Promise<boolean>((resolve) => {
+    const probe = net.createServer();
+    probe.once('error', () => resolve(false));
+    probe.once('listening', () => {
+      probe.close(() => resolve(true));
+    });
+    probe.listen(port, '0.0.0.0');
+  });
+
+  for (let port = preferredPort; port < preferredPort + 20; port += 1) {
+    if (await tryPort(port)) return port;
+  }
+
+  return 0;
 }
 
 /**
@@ -98,7 +116,9 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
     // Root cause: Vite's internal HMR logic rejects sockets that don't match HMR protocol
     // Solution: Use separate HMR port (24678) instead of sharing HTTP server
     //           This completely isolates Vite HMR from our WebSocket services
-    const VITE_HMR_PORT = 24678;
+    const VITE_HMR_PORT = await findAvailablePort(
+      Number(process.env.VITE_HMR_PORT || process.env.ECODE_VITE_HMR_PORT || 24678),
+    );
     
     if (process.env.NODE_ENV === 'development') {
       // Import vite module ONLY in development - importing in production causes package.json errors
@@ -109,7 +129,10 @@ export async function safeSetupVite(app: Application, server: Server): Promise<b
       
       // Listen on separate port for HMR WebSocket connections
       viteHmrServer.listen(VITE_HMR_PORT, '0.0.0.0', () => {
-        logger.info(`[Vite HMR] Dedicated WebSocket server listening on port ${VITE_HMR_PORT}`);
+        const address = viteHmrServer.address();
+        const boundPort = typeof address === 'object' && address ? address.port : VITE_HMR_PORT;
+        process.env.VITE_HMR_PORT = String(boundPort);
+        logger.info(`[Vite HMR] Dedicated WebSocket server listening on port ${boundPort}`);
       });
       
       // ✅ CRITICAL FIX (Dec 1, 2025): Add early guard middleware for WebSocket paths

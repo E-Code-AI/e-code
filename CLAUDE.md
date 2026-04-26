@@ -46,11 +46,19 @@ Finaliser E-code pour une cible de production `replit-deploy` avec :
 
 ## État production E-code
 
-`CERTIFICATION EN COURS` — 2026-04-26.
+`CERTIFICATION EN COURS — BLOCKED` — 2026-04-26.
 
 Nouvelle certification stricte lancée sur la branche `codex/production-certification-20260426`.
 Source de cartographie exhaustive: `docs/SURFACE-MAP.md`.
 Journal de certification: `docs/PRODUCTION-CERTIFICATION.md`.
+
+Dernier état vérifié:
+
+- typecheck, build, audit high: PASS
+- boot dev contrôlé, `/health`, `/health/readiness`: PASS
+- workspace-core Playwright smoke: PASS
+- lint zéro warning: BLOCKED (3352 warnings)
+- certification exhaustive panels + génération multi-format + hardening + déploiement production: en cours
 
 État précédent:
 

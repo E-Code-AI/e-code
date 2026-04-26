@@ -46,6 +46,38 @@ export class FilesRouter {
     return typeof req.isAuthenticated === 'function' && req.isAuthenticated() && !!req.user;
   }
 
+  private async normalizeCreateFileRequest(projectId: number, body: any) {
+    const isDirectory = Boolean(body.isDirectory ?? body.isFolder ?? (body.type === 'folder'));
+    const parentId = body.parentId ?? null;
+    let filePath = body.path;
+    const name = body.name || (filePath ? path.posix.basename(String(filePath)) : undefined);
+
+    if (!filePath && name) {
+      if (parentId) {
+        const parent = await this.storage.getFile(parentId);
+        if (!parent || parent.projectId !== projectId || !parent.isDirectory) {
+          const error = new Error("PARENT_NOT_FOUND");
+          (error as any).code = "PARENT_NOT_FOUND";
+          throw error;
+        }
+        filePath = path.posix.join(parent.path || parent.name, name);
+      } else {
+        filePath = name;
+      }
+    }
+
+    return {
+      ...body,
+      projectId,
+      name,
+      path: filePath,
+      parentId,
+      isDirectory,
+      content: isDirectory ? '' : (body.content ?? ''),
+      type: isDirectory ? 'folder' : (body.type === 'folder' ? undefined : body.type),
+    };
+  }
+
   private ensureReadAccess = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
@@ -282,10 +314,7 @@ export class FilesRouter {
           });
         }
         
-        const requestData = { ...req.body, projectId };
-        if (!requestData.name && requestData.path) {
-          requestData.name = requestData.path.split('/').pop() || requestData.path;
-        }
+        const requestData = await this.normalizeCreateFileRequest(projectId, req.body);
         
         const validatedData = insertFileSchema.parse(requestData);
         
@@ -316,7 +345,10 @@ export class FilesRouter {
           
           if (existingFile) {
             const updated = await scopedQueries.updateFile(projectId, existingFile.id, {
-              content: validatedData.content || ''
+              content: validatedData.content || '',
+              isDirectory: validatedData.isDirectory,
+              parentId: validatedData.parentId,
+              name: validatedData.name,
             });
             return { file: updated, isUpdate: true };
           } else {
@@ -354,6 +386,12 @@ export class FilesRouter {
         syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
       } catch (error: any) {
         console.error('Error saving file:', error);
+        if (error?.code === 'PARENT_NOT_FOUND' || error?.message === 'PARENT_NOT_FOUND') {
+          return res.status(400).json({
+            message: "Parent folder not found",
+            code: "PARENT_NOT_FOUND"
+          });
+        }
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             error: "Invalid file data",
@@ -445,7 +483,7 @@ export class FilesRouter {
       }
     });
 
-    this.router.delete("/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
+    this.router.delete("/:projectId/files/*", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response, next: NextFunction) => {
       try {
         const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
         if (!projectIdResult.success) {
@@ -458,6 +496,10 @@ export class FilesRouter {
         const projectId = projectIdResult.data;
         const userId = req.user!.id;
         let filePath = req.params[0];
+
+        if (filePath?.startsWith('by-id/')) {
+          return next();
+        }
         
         if (!filePath) {
           return res.status(400).json({
@@ -829,30 +871,8 @@ export class FilesRouter {
         const projectId = projectIdResult.data;
         const userId = req.user!.id;
         
-        let filePath = req.body.path;
-        
-        if (!filePath && req.body.name) {
-          const { name, parentId } = req.body;
-          
-          if (parentId) {
-            const parent = await this.storage.getFile(parentId);
-            if (!parent) {
-              return res.status(400).json({
-                message: "Parent folder not found",
-                code: "PARENT_NOT_FOUND"
-              });
-            }
-            filePath = parent.path.endsWith('/') ? `${parent.path}${name}` : `${parent.path}/${name}`;
-          } else {
-            filePath = name;
-          }
-        }
-        
-        const validatedData = insertFileSchema.parse({
-          ...req.body,
-          path: filePath,
-          projectId
-        });
+        const requestData = await this.normalizeCreateFileRequest(projectId, req.body);
+        const validatedData = insertFileSchema.parse(requestData);
         
         const { aiSecurityService } = await import('../services/ai-security.service');
         const pathValidation = aiSecurityService.validatePath(validatedData.path);
@@ -917,6 +937,12 @@ export class FilesRouter {
         syncFileToDisc(projectId, validatedData.path, validatedData.content || '', !!validatedData.isDirectory).catch(() => {});
       } catch (error: any) {
         console.error('Error saving file:', error);
+        if (error?.code === 'PARENT_NOT_FOUND' || error?.message === 'PARENT_NOT_FOUND') {
+          return res.status(400).json({
+            message: "Parent folder not found",
+            code: "PARENT_NOT_FOUND"
+          });
+        }
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             error: "Invalid file data",

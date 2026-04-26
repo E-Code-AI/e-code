@@ -538,9 +538,12 @@ export class ProjectsRouter {
     });
 
     // Get a specific project
-    this.router.get("/:projectId", this.ensureProjectAccess, async (req: Request, res: Response) => {
+    this.router.get("/:projectId", this.ensureProjectAccess, async (req: Request, res: Response, next: NextFunction) => {
       try {
         const projectId = req.params.projectId;
+        if (projectId === 'u') {
+          return next();
+        }
         const project = await this.storage.getProject(projectId);
         
         if (!project) {
