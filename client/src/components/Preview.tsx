@@ -612,6 +612,9 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
         borderRadius: '8px',
         overflow: 'hidden'
       };
+
+  const hasResolvedPreview = Boolean(previewUrl);
+  const isPreviewLive = hasResolvedPreview || previewStatus.status === 'running';
   
   return (
     <div className={`flex flex-col h-full ${isFullscreen ? 'fixed inset-0 z-50 bg-background' : ''}`}>
@@ -621,7 +624,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           <h3 className="text-[11px] sm:text-[13px] font-semibold whitespace-nowrap">Preview</h3>
           
           {/* Status indicator */}
-          {previewStatus.status === 'running' && (
+          {isPreviewLive && (
             <div className="flex items-center gap-1">
               <span className="flex items-center gap-1 text-[11px] text-green-600 dark:text-green-400">
                 <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-600 dark:bg-green-400 rounded-full animate-pulse" />
@@ -688,7 +691,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
           )}
           
           {/* Start/Stop button - uses mutation isPending to prevent double-clicks */}
-          {previewStatus.status !== 'running' ? (
+          {!isPreviewLive ? (
             <Button
               variant="ghost"
               size="icon"
@@ -861,7 +864,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
       {/* Preview iframe or status message - Responsive container */}
       <div className={`flex-1 bg-muted/50 overflow-hidden ${deviceMode !== 'desktop' ? 'p-2 sm:p-4 md:p-6 flex items-center justify-center' : ''}`}>
         {/* Loading state when starting */}
-        {previewStatus.status === 'starting' && !previewUrl && (
+          {previewStatus.status === 'starting' && !previewUrl && (
           <div className="flex flex-col items-center justify-center h-full p-4 sm:p-6 md:p-8">
             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md space-y-3 sm:space-y-4">
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -895,7 +898,7 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
               data-testid="preview-iframe"
             />
           </div>
-        ) : previewStatus.status !== 'starting' && (
+        ) : !previewUrl && previewStatus.status !== 'starting' && (
           <div className="flex flex-col items-center justify-center h-full text-center p-4 sm:p-6 md:p-8 lg:p-12">
             <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 text-muted-foreground mb-3 sm:mb-4" />
             <h3 className="text-base sm:text-[15px] md:text-xl font-semibold mb-1.5 sm:mb-2">
