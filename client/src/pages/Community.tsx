@@ -259,9 +259,7 @@ export default function Community() {
   // Like post mutation
   const likePostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      const res = await apiRequest('POST', `/api/community/posts/${postId}/like`);
-      if (!res.ok) throw new Error('Failed to like post');
-      return res.json();
+      return apiRequest('POST', `/api/community/posts/${postId}/like`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/community/posts'] });
@@ -271,9 +269,7 @@ export default function Community() {
   // Bookmark post mutation
   const bookmarkPostMutation = useMutation({
     mutationFn: async (postId: string) => {
-      const res = await apiRequest('POST', `/api/community/posts/${postId}/bookmark`);
-      if (!res.ok) throw new Error('Failed to bookmark post');
-      return res.json();
+      return apiRequest('POST', `/api/community/posts/${postId}/bookmark`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/community/posts'] });

@@ -143,15 +143,13 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleInit = async () => {
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/init`, {});
-      if (response.ok) {
-        setIsInitialized(true);
-        await checkGitStatus();
-        toast({
-          title: "Git Initialized",
-          description: "Git repository initialized successfully",
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/init`, {});
+      setIsInitialized(true);
+      await checkGitStatus();
+      toast({
+        title: "Git Initialized",
+        description: "Git repository initialized successfully",
+      });
     } catch (error) {
       toast({
         title: "Initialization Failed",
@@ -165,17 +163,14 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!cloneUrl) return;
     
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/clone`, { url: cloneUrl });
-      
-      if (response.ok) {
-        setShowCloneDialog(false);
-        setCloneUrl('');
-        await checkGitStatus();
-        toast({
-          title: "Repository Cloned",
-          description: "Successfully cloned the repository",
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/clone`, { url: cloneUrl });
+      setShowCloneDialog(false);
+      setCloneUrl('');
+      await checkGitStatus();
+      toast({
+        title: "Repository Cloned",
+        description: "Successfully cloned the repository",
+      });
     } catch (error) {
       toast({
         title: "Clone Failed",
@@ -187,11 +182,8 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleStageFile = async (path: string) => {
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/stage`, { paths: [path] });
-      
-      if (response.ok) {
-        await checkGitStatus();
-      }
+      await apiRequest('POST', `/api/git/${projectId}/stage`, { paths: [path] });
+      await checkGitStatus();
     } catch (error) {
       console.error('Failed to stage file:', error);
       // For demo, update local state
@@ -210,11 +202,8 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleUnstageFile = async (path: string) => {
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/unstage`, { paths: [path] });
-      
-      if (response.ok) {
-        await checkGitStatus();
-      }
+      await apiRequest('POST', `/api/git/${projectId}/unstage`, { paths: [path] });
+      await checkGitStatus();
     } catch (error) {
       console.error('Failed to unstage file:', error);
       // For demo, update local state
@@ -236,17 +225,14 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     
     setIsCommitting(true);
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/commit`, { message: commitMessage });
-      
-      if (response.ok) {
-        setCommitMessage('');
-        await checkGitStatus();
-        await loadCommits();
-        toast({
-          title: "Changes Committed",
-          description: "Your changes have been committed successfully",
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/commit`, { message: commitMessage });
+      setCommitMessage('');
+      await checkGitStatus();
+      await loadCommits();
+      toast({
+        title: "Changes Committed",
+        description: "Your changes have been committed successfully",
+      });
     } catch (error) {
       toast({
         title: "Commit Failed",
@@ -261,15 +247,12 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePush = async () => {
     setIsPushing(true);
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/push`, {});
-      
-      if (response.ok) {
-        await checkGitStatus();
-        toast({
-          title: "Changes Pushed",
-          description: "Successfully pushed to remote repository",
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/push`, {});
+      await checkGitStatus();
+      toast({
+        title: "Changes Pushed",
+        description: "Successfully pushed to remote repository",
+      });
     } catch (error) {
       toast({
         title: "Push Failed",
@@ -284,16 +267,13 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
   const handlePull = async () => {
     setIsPulling(true);
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/pull`, {});
-      
-      if (response.ok) {
-        await checkGitStatus();
-        await loadCommits();
-        toast({
-          title: "Changes Pulled",
-          description: "Successfully pulled from remote repository",
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/pull`, {});
+      await checkGitStatus();
+      await loadCommits();
+      toast({
+        title: "Changes Pulled",
+        description: "Successfully pulled from remote repository",
+      });
     } catch (error) {
       toast({
         title: "Pull Failed",
@@ -309,17 +289,14 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
     if (!newBranchName.trim()) return;
     
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/branch`, { name: newBranchName });
-      
-      if (response.ok) {
-        setShowBranchDialog(false);
-        setNewBranchName('');
-        await loadBranches();
-        toast({
-          title: "Branch Created",
-          description: `Branch "${newBranchName}" created successfully`,
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/branch`, { name: newBranchName });
+      setShowBranchDialog(false);
+      setNewBranchName('');
+      await loadBranches();
+      toast({
+        title: "Branch Created",
+        description: `Branch "${newBranchName}" created successfully`,
+      });
     } catch (error) {
       toast({
         title: "Branch Creation Failed",
@@ -331,16 +308,13 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
 
   const handleCheckout = async (branchName: string) => {
     try {
-      const response = await apiRequest('POST', `/api/git/${projectId}/checkout`, { branch: branchName });
-      
-      if (response.ok) {
-        await checkGitStatus();
-        await loadBranches();
-        toast({
-          title: "Branch Changed",
-          description: `Switched to branch "${branchName}"`,
-        });
-      }
+      await apiRequest('POST', `/api/git/${projectId}/checkout`, { branch: branchName });
+      await checkGitStatus();
+      await loadBranches();
+      toast({
+        title: "Branch Changed",
+        description: `Switched to branch "${branchName}"`,
+      });
     } catch (error) {
       toast({
         title: "Checkout Failed",

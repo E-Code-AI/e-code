@@ -84,9 +84,7 @@ export default function CommunityPost() {
   // Like post mutation
   const likePostMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/community/posts/${id}/like`);
-      if (!res.ok) throw new Error('Failed to like post');
-      return res.json();
+      return apiRequest('POST', `/api/community/posts/${id}/like`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/community/posts/${id}`] });
@@ -96,9 +94,7 @@ export default function CommunityPost() {
   // Bookmark post mutation
   const bookmarkPostMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', `/api/community/posts/${id}/bookmark`);
-      if (!res.ok) throw new Error('Failed to bookmark post');
-      return res.json();
+      return apiRequest('POST', `/api/community/posts/${id}/bookmark`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/community/posts/${id}`] });
@@ -112,9 +108,7 @@ export default function CommunityPost() {
   // Add comment mutation
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
-      const res = await apiRequest('POST', `/api/community/posts/${id}/comments`, { content });
-      if (!res.ok) throw new Error('Failed to add comment');
-      return res.json();
+      return apiRequest('POST', `/api/community/posts/${id}/comments`, { content });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/community/posts/${id}`] });
