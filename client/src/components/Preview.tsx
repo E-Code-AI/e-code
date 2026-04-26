@@ -358,7 +358,12 @@ const Preview = ({ openFiles, projectId }: PreviewProps) => {
     if (!projectId) return;
     
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/preview`;
+    const params = new URLSearchParams({ projectId: String(projectId) });
+    const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+    if (bootstrapToken) {
+      params.set('bootstrap', bootstrapToken);
+    }
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/preview?${params.toString()}`;
     
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;

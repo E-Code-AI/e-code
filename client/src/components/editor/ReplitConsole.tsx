@@ -55,7 +55,12 @@ export function ReplitConsole({ projectId, userId, isRunning, executionId, class
     if (previewWsRef.current && previewWsRef.current.readyState === WebSocket.OPEN) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/preview`;
+    const params = new URLSearchParams({ projectId: String(projectId) });
+    const bootstrapToken = new URLSearchParams(window.location.search).get('bootstrap');
+    if (bootstrapToken) {
+      params.set('bootstrap', bootstrapToken);
+    }
+    const wsUrl = `${protocol}//${window.location.host}/ws/preview?${params.toString()}`;
 
     try {
       const ws = new WebSocket(wsUrl);
