@@ -93,16 +93,12 @@ export function FileUploadDropzone({
         ));
 
         // Upload to server
-        const response = await apiRequest('POST', `/api/projects/${projectId}/files`, {
+        await apiRequest('POST', `/api/projects/${projectId}/files`, {
           name: uploadFile.file.name,
           content: content,
           isFolder: false,
           parentId: currentPath ? parseInt(currentPath) : null
         });
-
-        if (!response.ok) {
-          throw new Error('Upload failed');
-        }
 
         // Mark as success
         setUploadFiles(prev => prev.map(f => 

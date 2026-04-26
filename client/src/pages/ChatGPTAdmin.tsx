@@ -432,7 +432,7 @@ export default function ChatGPTAdmin() {
     setFileContent(file.content || '');
     if (!file.content) {
       try {
-        const data = await apiRequest<ProjectFile>(`/api/admin/chatgpt/projects/${file.projectId}/files/${file.id}`);
+        const data = await apiRequest<ProjectFile>('GET', `/api/admin/chatgpt/projects/${file.projectId}/files/${file.id}`);
         setFileContent(data.content || '');
         setSelectedFile(data);
       } catch (err) {

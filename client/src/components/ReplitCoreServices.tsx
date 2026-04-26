@@ -122,7 +122,7 @@ export function ReplitCoreServices() {
         });
       }, 200);
 
-      const response = await apiRequest('POST', '/api/security/quick-scan', {
+      const issues = await apiRequest<any[]>('POST', '/api/security/quick-scan', {
         code: `
           const API_KEY = "sk-1234567890abcdef";
           const password = "p@ssw0rd";
@@ -130,8 +130,6 @@ export function ReplitCoreServices() {
           eval(userInput);
         `
       });
-
-      const issues = await response.json();
       setSecurityIssues(issues);
       setScanProgress(100);
       
@@ -203,6 +201,7 @@ export function ReplitCoreServices() {
   const fetchSSHKeys = async () => {
     try {
       const response = await fetch('/api/ssh/keys', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch SSH keys');
       const keys = await response.json();
       setSSHKeys(keys);
     } catch (error) {
@@ -241,6 +240,7 @@ export function ReplitCoreServices() {
   const fetchDatabases = async () => {
     try {
       const response = await fetch('/api/database/instances', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch databases');
       const instances = await response.json();
       setDatabases(instances);
     } catch (error) {
@@ -281,6 +281,7 @@ export function ReplitCoreServices() {
   const fetchSystemStatus = async () => {
     try {
       const response = await fetch('/api/status', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch system status');
       const status = await response.json();
       setSystemStatus(status);
     } catch (error) {

@@ -94,17 +94,11 @@ export default function AdvancedAIPanel({ projectId, selectedCode = '', selected
 
     setLoading(true);
     try {
-      const response = await apiRequest('POST', `/api/ai/${projectId}/${endpoint}`, {
+      const data = await apiRequest('POST', `/api/ai/${projectId}/${endpoint}`, {
         code,
         language,
         ...extraParams
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to analyze code');
-      }
-
-      const data = await response.json();
       setResults((prev: any) => ({ ...prev, [activeTab]: data }));
       
       toast({
