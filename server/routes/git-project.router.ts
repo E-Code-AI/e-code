@@ -556,6 +556,29 @@ router.post('/:projectId/branch', async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /:projectId/branch/:name
+router.delete('/:projectId/branch/:name(*)', async (req: Request, res: Response) => {
+  const { projectId, name } = req.params;
+  const force = req.query.force === 'true';
+  if (!name) {
+    return res.status(400).json({ error: 'Branch name is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const current = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: projectDir })
+      .then(r => r.stdout.trim())
+      .catch(() => 'main');
+    if (name === current) {
+      return res.status(400).json({ error: 'Cannot delete the current branch' });
+    }
+    await execa('git', ['branch', force ? '-D' : '-d', name], { cwd: projectDir });
+    res.json({ success: true, deleted: name });
+  } catch (error: any) {
+    res.status(500).json({ error: error.stderr || error.message });
+  }
+});
+
 // POST /:projectId/checkout
 router.post('/:projectId/checkout', async (req: Request, res: Response) => {
   const { projectId } = req.params;
@@ -573,6 +596,34 @@ router.post('/:projectId/checkout', async (req: Request, res: Response) => {
   }
 });
 
+// POST /:projectId/merge
+router.post('/:projectId/merge', async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const { branch, message } = req.body;
+  if (!branch) {
+    return res.status(400).json({ error: 'Branch name is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const args = ['merge', String(branch)];
+    if (message) args.push('-m', String(message));
+    const { stdout, stderr } = await execa('git', args, { cwd: projectDir });
+    await syncDiskToDb(projectId, projectDir);
+    res.json({ success: true, output: stdout || stderr });
+  } catch (error: any) {
+    const output = error.stderr || error.stdout || error.message || '';
+    if (output.includes('CONFLICT')) {
+      return res.status(409).json({
+        error: 'Merge conflict',
+        conflicts: output.split('\n').filter((line: string) => line.includes('CONFLICT')),
+        output,
+      });
+    }
+    res.status(500).json({ error: output || 'Merge failed' });
+  }
+});
+
 // GET /:projectId/diff/:filePath
 router.get('/:projectId/diff/:filePath(*)', async (req: Request, res: Response) => {
   const { projectId, filePath } = req.params;
@@ -587,6 +638,78 @@ router.get('/:projectId/diff/:filePath(*)', async (req: Request, res: Response) 
     res.json({ diff: stdout, filePath });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /:projectId/blame/:filePath
+router.get('/:projectId/blame/:filePath(*)', async (req: Request, res: Response) => {
+  const { projectId, filePath } = req.params;
+  if (!filePath) {
+    return res.status(400).json({ error: 'File path is required' });
+  }
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['blame', '--porcelain', '--', filePath], { cwd: projectDir }).catch(() => ({ stdout: '' }));
+    const blame: any[] = [];
+    let current: any = {};
+    let lineNumber = 0;
+    for (const line of stdout.split('\n')) {
+      if (/^[0-9a-f]{40}\s/.test(line)) {
+        const parts = line.split(' ');
+        current = { hash: parts[0], shortHash: parts[0].slice(0, 7) };
+        lineNumber = Number(parts[2]) || 0;
+      } else if (line.startsWith('author ')) {
+        current.author = line.slice(7);
+      } else if (line.startsWith('author-time ')) {
+        current.date = new Date(Number(line.slice(12)) * 1000).toISOString();
+      } else if (line.startsWith('summary ')) {
+        current.message = line.slice(8);
+      } else if (line.startsWith('\t') && current.hash && lineNumber > 0) {
+        blame.push({
+          line: lineNumber,
+          commit: {
+            hash: current.hash,
+            shortHash: current.shortHash,
+            message: current.message || '',
+            author: current.author || 'Unknown',
+            date: current.date || '',
+          },
+        });
+        current = {};
+      }
+    }
+    res.json({ blame });
+  } catch (error: any) {
+    res.status(500).json({ error: error.stderr || error.message });
+  }
+});
+
+// POST /:projectId/stash
+router.post('/:projectId/stash', async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const message = String(req.body?.message || 'e-code-stash');
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['stash', 'push', '--include-untracked', '-m', message], { cwd: projectDir });
+    res.json({ success: true, output: stdout });
+  } catch (error: any) {
+    res.status(500).json({ error: error.stderr || error.message });
+  }
+});
+
+// POST /:projectId/stash/pop
+router.post('/:projectId/stash/pop', async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  try {
+    const projectDir = await getProjectDir(projectId);
+    await ensureGitInitialized(projectDir);
+    const { stdout } = await execa('git', ['stash', 'pop'], { cwd: projectDir });
+    await syncDiskToDb(projectId, projectDir);
+    res.json({ success: true, output: stdout });
+  } catch (error: any) {
+    res.status(500).json({ error: error.stderr || error.message });
   }
 });
 

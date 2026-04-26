@@ -27,6 +27,7 @@ interface ContainerConfig {
   projectDir: string;
   environmentVariables?: Record<string, string>;
   port?: number;
+  image?: string;
 }
 
 // Container creation result
@@ -51,22 +52,43 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
     await prepareProjectDir(projectDir, language);
     
     // Set up Docker run command with appropriate image based on language
-    const dockerImage = getDockerImage(language);
+    const dockerImage = config.image || getDockerImage(language);
     const containerPort = port || 8080;
     const hostPort = port || 8080;
-    
-    // Prepare environment variables for the container
-    const envArgs = Object.entries(environmentVariables).map(([key, value]) => 
-      `--env ${key}=${value}`
-    ).join(' ');
-    
-    // Construct the Docker run command
-    const dockerCommand = `docker run --name ${containerId} -d -p ${hostPort}:${containerPort} -v ${projectDir}:/app ${envArgs} ${dockerImage}`;
+    const cacheDir = path.join('/tmp/e-code-package-cache', projectId);
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const envArgs = Object.entries(environmentVariables).flatMap(([key, value]) => ['--env', `${key}=${value}`]);
+    const dockerArgs = [
+      'run',
+      '--name', containerId,
+      '-d',
+      '-p', `${hostPort}:${containerPort}`,
+      '--memory', process.env.ECODE_CONTAINER_MEMORY || '1024m',
+      '--cpus', process.env.ECODE_CONTAINER_CPUS || '1.0',
+      '--pids-limit', process.env.ECODE_CONTAINER_PIDS || '256',
+      '--tmpfs', '/tmp:rw,nosuid,nodev,size=256m',
+      '--cap-drop', 'ALL',
+      '--security-opt', 'no-new-privileges:true',
+      '--network', process.env.ECODE_CONTAINER_NETWORK || 'bridge',
+      '-v', `${projectDir}:/app:rw`,
+      '-v', `${cacheDir}:/cache:rw`,
+      '--env', 'HOME=/app',
+      '--env', 'npm_config_cache=/cache/npm',
+      '--env', 'PNPM_HOME=/cache/pnpm',
+      '--env', 'PIP_CACHE_DIR=/cache/pip',
+      '--env', 'CARGO_HOME=/cache/cargo',
+      ...envArgs,
+      '-w', '/app',
+      dockerImage,
+      'sh',
+      '-lc',
+      'sleep infinity',
+    ];
     
     logger.info(`Starting container for project ${projectId} with language ${language}`);
     
     // Start the container
-    const containerProcess = spawn('sh', ['-c', dockerCommand]);
+    const containerProcess = spawn('docker', dockerArgs);
     const logs: string[] = [];
     
     containerProcess.stdout.on('data', (data: Buffer) => {
@@ -154,11 +176,10 @@ export async function createContainer(config: ContainerConfig): Promise<Containe
     // Execute run command in container
     if (container.status === 'running') {
       const runCommand = languageConfig.runCommand;
-      const execCommand = `docker exec -d ${containerId} sh -c "cd /app && ${runCommand}"`;
       
       logger.info(`Running command in container: ${runCommand}`);
       
-      const execProcess = spawn('sh', ['-c', execCommand]);
+      const execProcess = spawn('docker', ['exec', '-d', '-w', '/app', containerId, 'sh', '-lc', runCommand]);
       
       execProcess.stdout.on('data', (data: Buffer) => {
         const logEntry = data.toString().trim();

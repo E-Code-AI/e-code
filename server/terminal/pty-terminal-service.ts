@@ -257,6 +257,10 @@ export class PTYTerminalService {
       const url = new URL(request.url || '', `http://${request.headers.host}`);
       // Allow connections without projectId by using 'default' workspace
       const projectId = url.searchParams.get('projectId') || 'default';
+      const terminalId = (url.searchParams.get('terminalId') || url.searchParams.get('sessionId') || 'main')
+        .replace(/[^a-zA-Z0-9_-]/g, '')
+        .slice(0, 64) || 'main';
+      const sessionKey = `${projectId}:${terminalId}`;
 
       logger.info(`handleConnection called for project ${projectId}`);
 
@@ -337,7 +341,7 @@ export class PTYTerminalService {
 
       logger.info(`Terminal connection for project ${projectId} (user=${authenticatedUserId})`);
 
-      let session = this.sessions.get(projectId);
+      let session = this.sessions.get(sessionKey);
 
       if (!session) {
         if (this.sessions.size >= this.maxSessions) {
@@ -345,7 +349,7 @@ export class PTYTerminalService {
           return;
         }
 
-        const redisSession = await redisSessionManager.getSession(`terminal-${projectId}`);
+        const redisSession = await redisSessionManager.getSession(`terminal-${sessionKey}`);
         if (redisSession) {
           logger.info(`Found Redis checkpoint for project ${projectId} (ended=${redisSession.sessionEnded})`);
         }
@@ -361,8 +365,8 @@ export class PTYTerminalService {
           return;
         }
         session = newSession;
-        this.sessions.set(projectId, session);
-        logger.info(`Session created successfully for project ${projectId}`);
+        this.sessions.set(sessionKey, session);
+        logger.info(`Session created successfully for project ${projectId}, terminal ${terminalId}`);
 
         if (redisSession) {
           if (redisSession.sessionEnded) {
@@ -405,16 +409,16 @@ export class PTYTerminalService {
           ws.send(JSON.stringify({ type: 'error', data: 'Message too large' }));
           return;
         }
-        this.handleMessage(projectId, ws, data);
+        this.handleMessage(sessionKey, ws, data);
       });
 
       ws.on('close', () => {
-        this.handleDisconnect(projectId, ws);
+        this.handleDisconnect(sessionKey, ws);
       });
 
       ws.on('error', (error) => {
         logger.error(`WebSocket error for project ${projectId}:`, error);
-        this.handleDisconnect(projectId, ws);
+        this.handleDisconnect(sessionKey, ws);
       });
 
     } catch (error) {
@@ -575,14 +579,16 @@ export class PTYTerminalService {
           type: 'exit',
           data: `Terminal session ended`
         });
-        this.cleanupSession(projectId);
+        const key = this.getSessionKey(session);
+        if (key) this.cleanupSession(key);
       });
 
       dockerProcess.on('error', async (error) => {
         logger.error(`Docker terminal error for project ${projectId}:`, error);
         
         // Clean up the failed Docker session
-        this.sessions.delete(projectId);
+        const key = this.getSessionKey(session);
+        if (key) this.sessions.delete(key);
         
         // CRITICAL SECURITY: If Docker is required, NEVER fallback to local PTY
         if (getRequireDockerTerminal()) {
@@ -605,7 +611,7 @@ export class PTYTerminalService {
           try {
             const fallbackSession = await this.createLocalSession(projectId);
             if (fallbackSession) {
-              this.sessions.set(projectId, fallbackSession);
+              this.sessions.set(`${projectId}:main`, fallbackSession);
               this.broadcastToSession(fallbackSession, {
                 type: 'output',
                 data: '\r\n[DEV NOTICE] Docker unavailable, using local terminal (INSECURE).\r\n'
@@ -695,7 +701,8 @@ export class PTYTerminalService {
           type: 'exit',
           data: `Process exited with code ${exitCode}`
         });
-        this.cleanupSession(projectId);
+        const key = this.getSessionKey(session);
+        if (key) this.cleanupSession(key);
       });
 
       return session;
@@ -819,8 +826,8 @@ export class PTYTerminalService {
     return ['--login'];
   }
 
-  private handleMessage(projectId: string, ws: WebSocket, rawData: any): void {
-    const session = this.sessions.get(projectId);
+  private handleMessage(sessionKey: string, ws: WebSocket, rawData: any): void {
+    const session = this.sessions.get(sessionKey);
     if (!session) return;
 
     session.lastActivity = Date.now();
@@ -872,33 +879,34 @@ export class PTYTerminalService {
     }
   }
 
-  private handleDisconnect(projectId: string, ws: WebSocket): void {
-    const session = this.sessions.get(projectId);
+  private handleDisconnect(sessionKey: string, ws: WebSocket): void {
+    const session = this.sessions.get(sessionKey);
     if (!session) return;
 
     session.clients.delete(ws);
-    logger.info(`Client disconnected from project ${projectId}, remaining: ${session.clients.size}`);
+    logger.info(`Client disconnected from terminal ${sessionKey}, remaining: ${session.clients.size}`);
 
     if (session.clients.size === 0) {
       setTimeout(() => {
-        const currentSession = this.sessions.get(projectId);
+        const currentSession = this.sessions.get(sessionKey);
         if (currentSession && currentSession.clients.size === 0) {
-          this.cleanupSession(projectId);
+          this.cleanupSession(sessionKey);
         }
       }, 30000);
     }
   }
 
-  private async cleanupSession(projectId: string): Promise<void> {
-    const session = this.sessions.get(projectId);
+  private async cleanupSession(sessionKey: string): Promise<void> {
+    const session = this.sessions.get(sessionKey);
     if (!session) return;
+    const projectId = session.projectId;
 
-    logger.info(`Cleaning up terminal session for project ${projectId}`);
+    logger.info(`Cleaning up terminal session ${sessionKey} for project ${projectId}`);
 
     const outputSnapshot = session.outputBuffer.getHistory().join('').slice(-8192);
     const shellPid = session.ptyProcess?.pid || undefined;
     await redisSessionManager.saveSession({
-      sessionId: `terminal-${projectId}`,
+      sessionId: `terminal-${sessionKey}`,
       projectId,
       commandHistory: session.commandHistory,
       currentDirectory: session.currentDirectory,
@@ -944,7 +952,14 @@ export class PTYTerminalService {
       }
     }
 
-    this.sessions.delete(projectId);
+    this.sessions.delete(sessionKey);
+  }
+
+  private getSessionKey(target: PTYSession): string | null {
+    for (const [key, session] of this.sessions.entries()) {
+      if (session === target) return key;
+    }
+    return null;
   }
 
   private broadcastToSession(session: PTYSession, message: any): void {

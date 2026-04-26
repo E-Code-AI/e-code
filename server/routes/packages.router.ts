@@ -244,30 +244,11 @@ router.post('/:projectId/install', ensureAuthenticated, ensureProjectAccess, asy
       });
     }
     
-    // Determine package manager
-    let packageManager: string;
-    let installArgs: string[];
-    
-    try {
-      await fs.access(path.join(workingDir, 'package.json'));
-      // Node.js project
-      packageManager = 'npm';
-      installArgs = ['install', version ? `${pkgToInstall}@${version}` : pkgToInstall];
-    } catch {
-      try {
-        await fs.access(path.join(workingDir, 'requirements.txt'));
-        // Python project
-        packageManager = 'pip';
-        installArgs = ['install', version ? `${pkgToInstall}==${version}` : pkgToInstall];
-      } catch {
-        // Default to npm
-        packageManager = 'npm';
-        installArgs = ['install', version ? `${pkgToInstall}@${version}` : pkgToInstall];
-      }
-    }
+    const { manager: packageManager } = await detectProjectManager(workingDir);
+    const { cmd, args: installArgs } = getInstallCommand(packageManager, pkgToInstall, version);
     
     // Execute installation using spawn (secure)
-    const { stdout, stderr } = await spawnPackageManager(packageManager, installArgs, workingDir);
+    const { stdout, stderr } = await spawnPackageManager(cmd, installArgs, workingDir);
     
     if (stderr && !stderr.includes('npm WARN')) {
       console.error(`[Packages] Installation warnings:`, stderr);
@@ -329,26 +310,10 @@ router.post('/:projectId/uninstall', ensureAuthenticated, ensureProjectAccess, a
       });
     }
     
-    // Determine package manager
-    let packageManager: string;
-    let uninstallArgs: string[];
+    const { manager: packageManager } = await detectProjectManager(workingDir);
+    const { cmd, args: uninstallArgs } = getUninstallCommand(packageManager, packageName);
     
-    try {
-      await fs.access(path.join(workingDir, 'package.json'));
-      packageManager = 'npm';
-      uninstallArgs = ['uninstall', packageName];
-    } catch {
-      try {
-        await fs.access(path.join(workingDir, 'requirements.txt'));
-        packageManager = 'pip';
-        uninstallArgs = ['uninstall', '-y', packageName];
-      } catch {
-        packageManager = 'npm';
-        uninstallArgs = ['uninstall', packageName];
-      }
-    }
-    
-    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(cmd, uninstallArgs, workingDir);
     
     res.json({
       success: true,
@@ -576,25 +541,13 @@ router.post('/:projectId/update', ensureAuthenticated, ensureProjectAccess, asyn
       });
     }
     
-    let packageManager: string;
-    let updateArgs: string[];
+    const { manager: packageManager } = await detectProjectManager(workingDir);
+    const updateSpec = version && packageManager !== 'pip' ? `${pkgToUpdate}@${version}` : pkgToUpdate;
+    const { cmd, args: updateArgs } = packageManager === 'pip' && version
+      ? { cmd: 'pip', args: ['install', '--upgrade', `${pkgToUpdate}==${version}`] }
+      : getUpdateCommand(packageManager, [updateSpec]);
     
-    try {
-      await fs.access(path.join(workingDir, 'package.json'));
-      packageManager = 'npm';
-      updateArgs = ['install', version ? `${pkgToUpdate}@${version}` : `${pkgToUpdate}@latest`];
-    } catch {
-      try {
-        await fs.access(path.join(workingDir, 'requirements.txt'));
-        packageManager = 'pip';
-        updateArgs = ['install', '--upgrade', version ? `${pkgToUpdate}==${version}` : pkgToUpdate];
-      } catch {
-        packageManager = 'npm';
-        updateArgs = ['install', version ? `${pkgToUpdate}@${version}` : `${pkgToUpdate}@latest`];
-      }
-    }
-    
-    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, updateArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(cmd, updateArgs, workingDir);
     
     res.json({
       success: true,
@@ -753,25 +706,10 @@ router.delete('/:projectId/:packageName', ensureAuthenticated, ensureProjectAcce
       });
     }
     
-    let packageManager: string;
-    let uninstallArgs: string[];
+    const { manager: packageManager } = await detectProjectManager(workingDir);
+    const { cmd, args: uninstallArgs } = getUninstallCommand(packageManager, packageName);
     
-    try {
-      await fs.access(path.join(workingDir, 'package.json'));
-      packageManager = 'npm';
-      uninstallArgs = ['uninstall', packageName];
-    } catch {
-      try {
-        await fs.access(path.join(workingDir, 'requirements.txt'));
-        packageManager = 'pip';
-        uninstallArgs = ['uninstall', '-y', packageName];
-      } catch {
-        packageManager = 'npm';
-        uninstallArgs = ['uninstall', packageName];
-      }
-    }
-    
-    const { stdout, stderr: _stderr } = await spawnPackageManager(packageManager, uninstallArgs, workingDir);
+    const { stdout, stderr: _stderr } = await spawnPackageManager(cmd, uninstallArgs, workingDir);
     
     res.json({
       success: true,

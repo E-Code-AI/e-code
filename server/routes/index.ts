@@ -98,6 +98,7 @@ import mcpGlobalRouter from '../api/mcp';
 import networkingRouter from './networking.router';
 import videoRouter from './video.router';
 import screenshotsRouter from './screenshots.router';
+import lspRouter from './lsp.router';
 import { setupPreviewRoutes } from '../preview/preview-service';
 
 const lazyAgentRouter = async (req: any, res: any, next: any) => {
@@ -487,6 +488,7 @@ export class MainRouter {
 
     // Workspace routes (LSP, builds, tests, security, resources)
     app.use('/api/workspace', tierRateLimiters.api, createWorkspaceRoutes(this.storage));
+    app.use('/api/lsp', tierRateLimiters.api, lspRouter);
 
     // Workspace Bootstrap routes (Fortune 500-grade orchestration)
     app.use('/api/workspace', tierRateLimiters.api, lazyWorkspaceBootstrapRouter);

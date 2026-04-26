@@ -232,16 +232,6 @@ export async function startProject(
       const error = 'Could not detect language for project';
       logger.error(error);
       
-      // Clean up project directory on language detection failure
-      try {
-        if (fs.existsSync(projectDir)) {
-          fs.rmSync(projectDir, { recursive: true, force: true });
-          logger.info(`Cleaned up project directory after language detection failure: ${projectDir}`);
-        }
-      } catch (_cleanupErr) {
-        logger.warn(`Failed to cleanup project directory: ${projectDir}`);
-      }
-      
       return {
         success: false,
         status: 'error',
@@ -528,16 +518,6 @@ export async function startProject(
             // CRITICAL FIX: Clean up on compilation failure to allow re-runs
             activeRuntimes.delete(projectId);
             
-            // Clean up project directory even on compile failure
-            try {
-              if (fs.existsSync(projectDir)) {
-                fs.rmSync(projectDir, { recursive: true, force: true });
-                logger.info(`Cleaned up project directory after compile error: ${projectDir}`);
-              }
-            } catch (_cleanupErr) {
-              logger.warn(`Failed to cleanup project directory after compile error: ${projectDir}`);
-            }
-            
             return {
               success: false,
               status: 'error',
@@ -615,11 +595,6 @@ export async function startProject(
             if (friendlyError) streamLog(projectId, executionId, 'stderr', friendlyError);
           }
           activeRuntimes.delete(projectId);
-          try {
-            if (projectDir && fs.existsSync(projectDir)) {
-              fs.rmSync(projectDir, { recursive: true, force: true });
-            }
-          } catch (_) {}
         });
         
         proc.on('error', (err) => {
@@ -629,11 +604,6 @@ export async function startProject(
           const friendlyError = getUserFriendlyError(err.message, language);
           streamLog(projectId, executionId, 'stderr', friendlyError);
           activeRuntimes.delete(projectId);
-          try {
-            if (projectDir && fs.existsSync(projectDir)) {
-              fs.rmSync(projectDir, { recursive: true, force: true });
-            }
-          } catch (_) {}
         });
         
         // Wait a short settling window (2.5s) to detect immediate startup failures.
@@ -713,15 +683,6 @@ export async function startProject(
         // Clear runtime even on error to allow retries
         activeRuntimes.delete(projectId);
         
-        // Clean up project directory
-        try {
-          if (fs.existsSync(projectDir)) {
-            fs.rmSync(projectDir, { recursive: true, force: true });
-          }
-        } catch (_cleanupErr) {
-          // Ignore cleanup errors
-        }
-        
         return {
           success: false,
           status: 'error',
@@ -754,16 +715,7 @@ export async function startProject(
         logs.push(`ERROR: ${error}`);
         logger.error(error);
         
-        // CRITICAL: Clean up on Nix config failure
         activeRuntimes.delete(projectId);
-        try {
-          if (fs.existsSync(projectDir)) {
-            fs.rmSync(projectDir, { recursive: true, force: true });
-            logger.info(`Cleaned up project directory after Nix config failure: ${projectDir}`);
-          }
-        } catch (_cleanupErr) {
-          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
-        }
         
         return {
           success: false,
@@ -782,16 +734,7 @@ export async function startProject(
         logs.push(`ERROR: ${error}`);
         logger.error(error);
         
-        // CRITICAL: Clean up on Nix apply failure
         activeRuntimes.delete(projectId);
-        try {
-          if (fs.existsSync(projectDir)) {
-            fs.rmSync(projectDir, { recursive: true, force: true });
-            logger.info(`Cleaned up project directory after Nix apply failure: ${projectDir}`);
-          }
-        } catch (_cleanupErr) {
-          logger.warn(`Failed to cleanup project directory: ${projectDir}`);
-        }
         
         return {
           success: false,
@@ -820,16 +763,7 @@ export async function startProject(
       logs.push(...containerResult.logs);
       logger.error(error);
       
-      // CRITICAL: Clean up on container start failure
       activeRuntimes.delete(projectId);
-      try {
-        if (fs.existsSync(projectDir)) {
-          fs.rmSync(projectDir, { recursive: true, force: true });
-          logger.info(`Cleaned up project directory after container failure: ${projectDir}`);
-        }
-      } catch (_cleanupErr) {
-        logger.warn(`Failed to cleanup project directory: ${projectDir}`);
-      }
       
       return {
         success: false,
@@ -878,18 +812,7 @@ export async function startProject(
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     logger.error(`Error starting project: ${errorMessage}`);
     
-    // CRITICAL: Clean up projectDir and activeRuntimes on any error
     activeRuntimes.delete(projectId);
-    if (projectDir) {
-      try {
-        if (fs.existsSync(projectDir)) {
-          fs.rmSync(projectDir, { recursive: true, force: true });
-          logger.info(`Cleaned up project directory on error: ${projectDir}`);
-        }
-      } catch (_cleanupErr) {
-        logger.warn(`Failed to cleanup project directory on error: ${projectDir}`);
-      }
-    }
     
     return {
       success: false,
@@ -940,16 +863,6 @@ export async function stopProject(projectId: string): Promise<boolean> {
           }, 1000);
         } catch (e) {
           // Process may already be dead
-        }
-      }
-      
-      // Clean up temp directory if it exists
-      if (runtime.projectDir) {
-        try {
-          fs.rmSync(runtime.projectDir, { recursive: true, force: true });
-          logger.info(`Cleaned up temp directory: ${runtime.projectDir}`);
-        } catch (_cleanupError) {
-          logger.warn(`Failed to cleanup temp dir: ${runtime.projectDir}`);
         }
       }
       
