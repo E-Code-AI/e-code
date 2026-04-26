@@ -87,8 +87,7 @@ export default function SlideEditor({ projectId }: SlideEditorProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (data: { slides: SlideData[]; theme: SlideTheme }) => {
-      const res = await apiRequest("PUT", `/api/projects/${projectId}/slides`, data);
-      return res.json();
+      return apiRequest("PUT", `/api/projects/${projectId}/slides`, data);
     },
     onSuccess: () => {
       setIsDirty(false);

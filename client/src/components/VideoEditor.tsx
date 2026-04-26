@@ -76,8 +76,7 @@ export default function VideoEditor({ projectId }: VideoEditorProps) {
 
   const saveMutation = useMutation({
     mutationFn: async (data: { scenes: VideoScene[]; audioTracks: VideoAudioTrack[] }) => {
-      const res = await apiRequest("PUT", `/api/projects/${projectId}/video`, { ...data, resolution });
-      return res.json();
+      return apiRequest("PUT", `/api/projects/${projectId}/video`, { ...data, resolution });
     },
     onSuccess: () => {
       setIsDirty(false);

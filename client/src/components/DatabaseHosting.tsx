@@ -99,8 +99,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   const { data: databases = [] } = useQuery<DatabaseInstance[]>({
     queryKey: ['/api/database-hosting', projectId],
     queryFn: async () => {
-      const res = await apiRequest('GET', `/api/database-hosting/${projectId}`, undefined);
-      return res.json();
+      return apiRequest('GET', `/api/database-hosting/${projectId}`, undefined);
     }
   });
 
@@ -134,8 +133,7 @@ export function DatabaseHosting({ projectId }: DatabaseHostingProps) {
   // Execute query
   const executeQueryMutation = useMutation({
     mutationFn: async ({ databaseId, query }: { databaseId: number; query: string }) => {
-      const res = await apiRequest('POST', `/api/database-hosting/${projectId}/${databaseId}/query`, { query });
-      return res.json();
+      return apiRequest('POST', `/api/database-hosting/${projectId}/${databaseId}/query`, { query });
     },
     onSuccess: (data) => {
       toast({

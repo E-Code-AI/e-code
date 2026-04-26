@@ -114,8 +114,7 @@ export function useSwitchTenant() {
         return { tenantId: null, name: null, role: null };
       }
 
-      const response = await apiRequest('GET', `/api/teams/${tenantId}`);
-      return response.json();
+      return apiRequest('GET', `/api/teams/${tenantId}`);
     },
     onSuccess: (data) => {
       if (data.tenantId === null) {

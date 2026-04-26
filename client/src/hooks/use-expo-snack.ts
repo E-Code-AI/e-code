@@ -45,8 +45,7 @@ export function useExpoSnack(projectId: string | number) {
 
   const createSessionMutation = useMutation({
     mutationFn: async (options: CreateSnackOptions) => {
-      const response = await apiRequest('POST', `/api/expo-snack/session/${projectIdStr}`, options);
-      return response.json();
+      return apiRequest('POST', `/api/expo-snack/session/${projectIdStr}`, options);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expo-snack/session', projectIdStr] });
@@ -55,8 +54,7 @@ export function useExpoSnack(projectId: string | number) {
 
   const updateFilesMutation = useMutation({
     mutationFn: async (files: Record<string, string>) => {
-      const response = await apiRequest('PATCH', `/api/expo-snack/session/${projectIdStr}/files`, { files });
-      return response.json();
+      return apiRequest('PATCH', `/api/expo-snack/session/${projectIdStr}/files`, { files });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expo-snack/session', projectIdStr] });
@@ -65,8 +63,7 @@ export function useExpoSnack(projectId: string | number) {
 
   const closeSessionMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('DELETE', `/api/expo-snack/session/${projectIdStr}`, {});
-      return response.json();
+      return apiRequest('DELETE', `/api/expo-snack/session/${projectIdStr}`, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/expo-snack/session', projectIdStr] });
@@ -114,8 +111,7 @@ export function useExpoSnackEmbed() {
     theme?: 'light' | 'dark';
     height?: number;
   }) => {
-    const response = await apiRequest('POST', '/api/expo-snack/embed', options);
-    const data = await response.json();
+    const data = await apiRequest<any>('POST', '/api/expo-snack/embed', options);
     setEmbedHtml(data.html);
     return data.html;
   }, []);
@@ -128,8 +124,7 @@ export function useExpoSnackEmbed() {
     preview?: boolean;
     theme?: 'light' | 'dark';
   }) => {
-    const response = await apiRequest('POST', '/api/expo-snack/iframe-url', options);
-    const data = await response.json();
+    const data = await apiRequest<any>('POST', '/api/expo-snack/iframe-url', options);
     setIframeUrl(data.url);
     return data.url;
   }, []);

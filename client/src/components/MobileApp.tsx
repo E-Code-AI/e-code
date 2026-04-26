@@ -77,8 +77,7 @@ export function MobileApp() {
   // Run project mutation
   const runProjectMutation = useMutation({
     mutationFn: async ({ projectId, input }: { projectId: number; input?: string }) => {
-      const response = await apiRequest('POST', `/api/mobile/projects/${projectId}/run`, { input });
-      return response.json();
+      return apiRequest('POST', `/api/mobile/projects/${projectId}/run`, { input });
     },
     onSuccess: (data) => {
       setExecutionResult(data);
