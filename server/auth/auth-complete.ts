@@ -9,10 +9,12 @@ import crypto from 'crypto';
 import { eq } from 'drizzle-orm';
 import { NextFunction,Request,Response } from 'express';
 import { db } from '../db';
+import { redisCache } from '../services/redis-cache.service';
 import { createLogger } from '../utils/logger';
 import { emailValidation,passwordSecurity,sessionSecurity,tokenSecurity,twoFactorAuth } from '../utils/security';
 
 const logger = createLogger('auth-complete');
+const AUTH_REDIS_PREFIX = 'auth:complete';
 
 // Configuration
 const AUTH_CONFIG = {
@@ -31,9 +33,44 @@ const AUTH_CONFIG = {
 class AccountLockoutManager {
   private lockouts = new Map<string, { count: number; lockedUntil?: Date }>();
 
+  private getKey(username: string, ip: string): string {
+    return `${username}:${ip}`;
+  }
+
+  private getRedisKey(username: string, ip: string): string {
+    return `${AUTH_REDIS_PREFIX}:lockout:${this.getKey(username, ip)}`;
+  }
+
+  private isProductionRuntime(): boolean {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  private async loadRecord(username: string, ip: string): Promise<{ count: number; lockedUntil?: Date } | null> {
+    const redisRecord = await redisCache.get<{ count: number; lockedUntil?: string }>(this.getRedisKey(username, ip));
+    if (redisRecord) {
+      return {
+        count: redisRecord.count || 0,
+        lockedUntil: redisRecord.lockedUntil ? new Date(redisRecord.lockedUntil) : undefined,
+      };
+    }
+
+    return this.isProductionRuntime() ? null : this.lockouts.get(this.getKey(username, ip)) || null;
+  }
+
+  private async persistRecord(username: string, ip: string, record: { count: number; lockedUntil?: Date }): Promise<void> {
+    const ttlSeconds = Math.ceil(AUTH_CONFIG.lockoutDuration / 1000);
+    const stored = await redisCache.set(this.getRedisKey(username, ip), record, ttlSeconds);
+    if (!stored && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local auth lockout state');
+    }
+
+    if (!this.isProductionRuntime()) {
+      this.lockouts.set(this.getKey(username, ip), record);
+    }
+  }
+
   async recordFailedAttempt(username: string, ip: string): Promise<void> {
-    const key = `${username}:${ip}`;
-    const record = this.lockouts.get(key) || { count: 0 };
+    const record = await this.loadRecord(username, ip) || { count: 0 };
 
     record.count++;
 
@@ -63,11 +100,15 @@ class AccountLockoutManager {
       }
     }
 
-    this.lockouts.set(key, record);
+    await this.persistRecord(username, ip, record);
   }
 
   async clearFailedAttempts(username: string, ip: string): Promise<void> {
-    const key = `${username}:${ip}`;
+    const key = this.getKey(username, ip);
+    const deleted = await redisCache.del(this.getRedisKey(username, ip));
+    if (!deleted && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local auth lockout state');
+    }
     this.lockouts.delete(key);
 
     // Record successful attempt
@@ -84,9 +125,8 @@ class AccountLockoutManager {
     }
   }
 
-  isLockedOut(username: string, ip: string): boolean {
-    const key = `${username}:${ip}`;
-    const record = this.lockouts.get(key);
+  async isLockedOut(username: string, ip: string): Promise<boolean> {
+    const record = await this.loadRecord(username, ip);
 
     if (!record || !record.lockedUntil) {
       return false;
@@ -94,16 +134,15 @@ class AccountLockoutManager {
 
     if (new Date() > record.lockedUntil) {
       // Lockout expired
-      this.lockouts.delete(key);
+      await this.clearFailedAttempts(username, ip);
       return false;
     }
 
     return true;
   }
 
-  getRemainingLockoutTime(username: string, ip: string): number {
-    const key = `${username}:${ip}`;
-    const record = this.lockouts.get(key);
+  async getRemainingLockoutTime(username: string, ip: string): Promise<number> {
+    const record = await this.loadRecord(username, ip);
 
     if (!record || !record.lockedUntil) {
       return 0;
@@ -129,18 +168,62 @@ class SecureSessionManager {
     csrfToken: string;
   }>();
 
-  createSession(userId: string, req: Request): string {
+  private getSessionKey(sessionId: string): string {
+    return `${AUTH_REDIS_PREFIX}:session:${sessionId}`;
+  }
+
+  private getUserSessionsKey(userId: string): string {
+    return `${AUTH_REDIS_PREFIX}:user:${userId}:sessions`;
+  }
+
+  private isProductionRuntime(): boolean {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  private deserializeSession(session: any) {
+    return session ? {
+      ...session,
+      createdAt: new Date(session.createdAt),
+      lastActivity: new Date(session.lastActivity),
+    } : null;
+  }
+
+  private async persistSession(sessionId: string, session: {
+    userId: string;
+    createdAt: Date;
+    lastActivity: Date;
+    ipAddress: string;
+    userAgent: string;
+    csrfToken: string;
+  }): Promise<void> {
+    const ttlSeconds = Math.ceil(AUTH_CONFIG.sessionTimeout / 1000);
+    const stored = await redisCache.set(this.getSessionKey(sessionId), session, ttlSeconds);
+    await redisCache.sadd(this.getUserSessionsKey(session.userId), sessionId);
+    await redisCache.expire(this.getUserSessionsKey(session.userId), ttlSeconds);
+
+    if (!stored && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local auth session state');
+    }
+
+    if (!this.isProductionRuntime()) {
+      this.activeSessions.set(sessionId, session);
+    }
+  }
+
+  async createSession(userId: string, req: Request): Promise<string> {
     const sessionId = sessionSecurity.generateSessionId();
     const csrfToken = tokenSecurity.generateToken(32);
 
-    this.activeSessions.set(sessionId, {
+    const session = {
       userId,
       createdAt: new Date(),
       lastActivity: new Date(),
       ipAddress: req.ip || 'unknown',
       userAgent: req.get('user-agent') || 'unknown',
       csrfToken,
-    });
+    };
+
+    await this.persistSession(sessionId, session);
 
     // Store in database for persistence
     db.insert(userSessions).values({
@@ -158,8 +241,9 @@ class SecureSessionManager {
     return sessionId;
   }
 
-  getSession(sessionId: string) {
-    const session = this.activeSessions.get(sessionId);
+  async getSession(sessionId: string) {
+    const redisSession = await redisCache.get(this.getSessionKey(sessionId));
+    const session = this.deserializeSession(redisSession) || (!this.isProductionRuntime() ? this.activeSessions.get(sessionId) : null);
     
     if (!session) {
       return null;
@@ -175,11 +259,12 @@ class SecureSessionManager {
     return session;
   }
 
-  updateActivity(sessionId: string): void {
-    const session = this.activeSessions.get(sessionId);
+  async updateActivity(sessionId: string): Promise<void> {
+    const session = await this.getSession(sessionId);
     
     if (session) {
       session.lastActivity = new Date();
+      await this.persistSession(sessionId, session);
 
       // Update in database
       db.update(userSessions)
@@ -191,8 +276,16 @@ class SecureSessionManager {
     }
   }
 
-  destroySession(sessionId: string): void {
+  async destroySession(sessionId: string): Promise<void> {
+    const session = await this.getSession(sessionId);
+    const deleted = await redisCache.del(this.getSessionKey(sessionId));
+    if (!deleted && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local auth session state');
+    }
     this.activeSessions.delete(sessionId);
+    if (session?.userId) {
+      await redisCache.srem(this.getUserSessionsKey(session.userId), sessionId);
+    }
 
     // Remove from database
     db.delete(userSessions)
@@ -202,13 +295,17 @@ class SecureSessionManager {
       });
   }
 
-  destroyAllUserSessions(userId: string): void {
-    // Remove from memory
-    for (const [sessionId, session] of this.activeSessions.entries()) {
-      if (session.userId === userId) {
-        this.activeSessions.delete(sessionId);
-      }
+  async destroyAllUserSessions(userId: string): Promise<void> {
+    const sessionIds = await redisCache.smembers(this.getUserSessionsKey(userId));
+    const localSessionIds = Array.from(this.activeSessions.entries())
+      .filter(([, session]) => session.userId === userId)
+      .map(([sessionId]) => sessionId);
+
+    for (const sessionId of new Set([...sessionIds, ...localSessionIds])) {
+      await redisCache.del(this.getSessionKey(sessionId));
+      this.activeSessions.delete(sessionId);
     }
+    await redisCache.del(this.getUserSessionsKey(userId));
 
     // Remove from database
     db.delete(userSessions)
@@ -218,13 +315,13 @@ class SecureSessionManager {
       });
   }
 
-  getCsrfToken(sessionId: string): string | null {
-    const session = this.activeSessions.get(sessionId);
+  async getCsrfToken(sessionId: string): Promise<string | null> {
+    const session = await this.getSession(sessionId);
     return session?.csrfToken || null;
   }
 
-  verifyCsrfToken(sessionId: string, token: string): boolean {
-    const session = this.activeSessions.get(sessionId);
+  async verifyCsrfToken(sessionId: string, token: string): Promise<boolean> {
+    const session = await this.getSession(sessionId);
     return session?.csrfToken === token;
   }
 }
@@ -264,14 +361,14 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
     return res.status(401).json({ error: 'No session found' });
   }
 
-  const session = sessionManager.getSession(sessionId);
+  const session = await sessionManager.getSession(sessionId);
 
   if (!session) {
     return res.status(401).json({ error: 'Session expired or invalid' });
   }
 
   // Update session activity
-  sessionManager.updateActivity(sessionId);
+  await sessionManager.updateActivity(sessionId);
 
   // Attach user info to request
   try {
@@ -282,7 +379,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
       .limit(1);
 
     if (!user) {
-      sessionManager.destroySession(sessionId);
+      await sessionManager.destroySession(sessionId);
       return res.status(401).json({ error: 'User not found' });
     }
 
@@ -298,7 +395,7 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
 /**
  * CSRF Protection Middleware
  */
-export const csrfProtection = (req: Request, res: Response, next: NextFunction) => {
+export const csrfProtection = async (req: Request, res: Response, next: NextFunction) => {
   // Skip for GET requests and public endpoints
   if (req.method === 'GET' || req.path.startsWith('/api/public')) {
     return next();
@@ -310,7 +407,7 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction) 
   }
 
   const csrfToken = req.headers['x-csrf-token'] as string;
-  if (!csrfToken || !sessionManager.verifyCsrfToken(sessionId, csrfToken)) {
+  if (!csrfToken || !(await sessionManager.verifyCsrfToken(sessionId, csrfToken))) {
     logger.warn('CSRF token validation failed', {
       ip: req.ip,
       path: req.path,
@@ -335,8 +432,8 @@ export const handleLogin = async (req: Request, res: Response) => {
   }
 
   // Check lockout
-  if (lockoutManager.isLockedOut(username, ip)) {
-    const remaining = lockoutManager.getRemainingLockoutTime(username, ip);
+  if (await lockoutManager.isLockedOut(username, ip)) {
+    const remaining = await lockoutManager.getRemainingLockoutTime(username, ip);
     return res.status(423).json({ 
       error: 'Account temporarily locked',
       retryAfter: remaining,
@@ -383,8 +480,8 @@ export const handleLogin = async (req: Request, res: Response) => {
     await lockoutManager.clearFailedAttempts(username, ip);
 
     // Create session
-    const sessionId = sessionManager.createSession(user.id, req);
-    const csrfToken = sessionManager.getCsrfToken(sessionId);
+    const sessionId = await sessionManager.createSession(user.id, req);
+    const csrfToken = await sessionManager.getCsrfToken(sessionId);
 
     // Update last login
     await db
@@ -426,7 +523,9 @@ export const handleLogout = (req: Request, res: Response) => {
   const sessionId = req.session?.id;
 
   if (sessionId) {
-    sessionManager.destroySession(sessionId);
+    sessionManager.destroySession(sessionId).catch((error) => {
+      logger.error('Failed to destroy distributed session', error);
+    });
   }
 
   req.session.destroy((err) => {
@@ -491,8 +590,8 @@ export const handleRegister = async (req: Request, res: Response) => {
     });
 
     // Create session
-    const sessionId = sessionManager.createSession(userId, req);
-    const csrfToken = sessionManager.getCsrfToken(sessionId);
+    const sessionId = await sessionManager.createSession(userId, req);
+    const csrfToken = await sessionManager.getCsrfToken(sessionId);
 
     req.session.userId = userId;
     req.session.id = sessionId;
@@ -610,11 +709,11 @@ export const handlePasswordReset = async (req: Request, res: Response) => {
 /**
  * Session Refresh Middleware
  */
-export const sessionRefresh = (req: Request, res: Response, next: NextFunction) => {
+export const sessionRefresh = async (req: Request, res: Response, next: NextFunction) => {
   const sessionId = req.session?.id;
 
   if (sessionId) {
-    const session = sessionManager.getSession(sessionId);
+    const session = await sessionManager.getSession(sessionId);
     
     if (session) {
       const timeSinceActivity = Date.now() - session.lastActivity.getTime();

@@ -47,6 +47,22 @@ const checks = [
       'Redis unavailable in production; refusing process-local pending agent actions',
     ],
   },
+  {
+    file: 'server/auth/auth-complete.ts',
+    mustContain: [
+      'auth:complete',
+      'Redis unavailable in production; refusing process-local auth lockout state',
+      'Redis unavailable in production; refusing process-local auth session state',
+    ],
+  },
+  {
+    file: 'server/auth/session-manager.ts',
+    mustContain: [
+      'auth:session-manager:session:${sessionId}',
+      'auth:session-manager:user:${userId}:sessions',
+      'Redis unavailable in production; refusing process-local session-manager state',
+    ],
+  },
 ];
 
 let failed = false;

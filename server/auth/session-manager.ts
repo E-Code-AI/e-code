@@ -6,22 +6,57 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { createLogger } from '../utils/logger';
+import { redisCache } from '../services/redis-cache.service';
 
 const logger = createLogger('session-manager');
+const SESSION_TTL_SECONDS = 30 * 60;
 
 export class SessionManager {
   private sessionStore = new Map<string, any>();
+
+  private getSessionKey(sessionId: string): string {
+    return `auth:session-manager:session:${sessionId}`;
+  }
+
+  private getUserSessionsKey(userId: number | string): string {
+    return `auth:session-manager:user:${userId}:sessions`;
+  }
+
+  private isProductionRuntime(): boolean {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  private deserializeSession(session: any): any {
+    if (!session) return null;
+    return {
+      ...session,
+      createdAt: session.createdAt ? new Date(session.createdAt) : session.createdAt,
+      lastActivity: session.lastActivity ? new Date(session.lastActivity) : session.lastActivity,
+      rotatedAt: session.rotatedAt ? new Date(session.rotatedAt) : session.rotatedAt,
+    };
+  }
+
+  private async persistSession(sessionId: string, session: any): Promise<void> {
+    const stored = await redisCache.set(this.getSessionKey(sessionId), session, SESSION_TTL_SECONDS);
+    if (session?.userId) {
+      await redisCache.sadd(this.getUserSessionsKey(session.userId), sessionId);
+      await redisCache.expire(this.getUserSessionsKey(session.userId), SESSION_TTL_SECONDS);
+    }
+
+    if (!stored && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local session-manager state');
+    }
+
+    if (!this.isProductionRuntime()) {
+      this.sessionStore.set(sessionId, session);
+    }
+  }
 
   /**
    * Get session by session ID
    * Used for WebSocket authentication validation
    */
   async getSession(sessionId: string): Promise<any | null> {
-    // Check in-memory store first
-    if (this.sessionStore.has(sessionId)) {
-      return this.sessionStore.get(sessionId);
-    }
-    
     // For signed sessions (connect.sid format), extract the actual session ID
     // Format is typically: s:sessionId.signature
     let actualSessionId = sessionId;
@@ -30,8 +65,12 @@ export class SessionManager {
       actualSessionId = dotIndex > 0 ? sessionId.substring(2, dotIndex) : sessionId.substring(2);
     }
     
-    // Try with the extracted session ID
-    if (this.sessionStore.has(actualSessionId)) {
+    const redisSession = await redisCache.get(this.getSessionKey(actualSessionId));
+    if (redisSession) {
+      return this.deserializeSession(redisSession);
+    }
+
+    if (!this.isProductionRuntime() && this.sessionStore.has(actualSessionId)) {
       return this.sessionStore.get(actualSessionId);
     }
     
@@ -42,7 +81,9 @@ export class SessionManager {
    * Store session for WebSocket access
    */
   storeSession(sessionId: string, session: any): void {
-    this.sessionStore.set(sessionId, session);
+    this.persistSession(sessionId, session).catch((error) => {
+      logger.error('Failed to persist session-manager state', { error: error.message });
+    });
   }
 
   /**
@@ -252,18 +293,32 @@ export class SessionManager {
   /**
    * Get all active sessions for a user
    */
-  getUserSessions(userId: number | string): any[] {
+  async getUserSessions(userId: number | string): Promise<any[]> {
     const sessions: any[] = [];
-    
-    // In production, this would query the session store
-    for (const [id, session] of this.sessionStore.entries()) {
-      if (session.userId === userId) {
+
+    const redisSessionIds = await redisCache.smembers(this.getUserSessionsKey(userId));
+    for (const id of redisSessionIds) {
+      const session = await this.getSession(id);
+      if (session?.userId === userId) {
         sessions.push({
           id: id.substring(0, 8),
           createdAt: session.createdAt,
           lastActivity: session.lastActivity,
           ipAddress: session.ipAddress
         });
+      }
+    }
+
+    if (!this.isProductionRuntime()) {
+      for (const [id, session] of this.sessionStore.entries()) {
+        if (session.userId === userId && !sessions.some(existing => existing.id === id.substring(0, 8))) {
+          sessions.push({
+            id: id.substring(0, 8),
+            createdAt: session.createdAt,
+            lastActivity: session.lastActivity,
+            ipAddress: session.ipAddress
+          });
+        }
       }
     }
     
@@ -273,13 +328,25 @@ export class SessionManager {
   /**
    * Revoke all sessions for a user (except current)
    */
-  revokeUserSessions(userId: number | string, exceptSessionId?: string): void {
+  async revokeUserSessions(userId: number | string, exceptSessionId?: string): Promise<void> {
     const revoked: string[] = [];
-    
-    for (const [id, session] of this.sessionStore.entries()) {
-      if (session.userId === userId && id !== exceptSessionId) {
+
+    const redisSessionIds = await redisCache.smembers(this.getUserSessionsKey(userId));
+    for (const id of redisSessionIds) {
+      if (id !== exceptSessionId) {
+        await redisCache.del(this.getSessionKey(id));
+        await redisCache.srem(this.getUserSessionsKey(userId), id);
         this.sessionStore.delete(id);
         revoked.push(id);
+      }
+    }
+
+    if (!this.isProductionRuntime()) {
+      for (const [id, session] of this.sessionStore.entries()) {
+        if (session.userId === userId && id !== exceptSessionId && !revoked.includes(id)) {
+          this.sessionStore.delete(id);
+          revoked.push(id);
+        }
       }
     }
     
