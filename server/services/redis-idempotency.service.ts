@@ -5,7 +5,7 @@
  * - Redis-backed storage (survives restarts)
  * - Distributed locking (SETNX pattern)
  * - Automatic TTL cleanup
- * - Graceful fallback to in-memory when Redis unavailable
+ * - Local fallback only outside production
  * 
  * Date: November 30, 2025
  */
@@ -22,8 +22,9 @@ interface IdempotencyEntry {
   lockId?: string;
 }
 
-// In-memory fallback when Redis unavailable
+// In-memory fallback when Redis unavailable outside production
 const memoryFallback = new Map<string, IdempotencyEntry>();
+const isProduction = process.env.NODE_ENV === 'production';
 
 export class RedisIdempotencyService {
   private client: Redis | null = null;
@@ -42,6 +43,9 @@ export class RedisIdempotencyService {
     const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
     
     if (!redisUrl) {
+      if (isProduction) {
+        throw new Error('REDIS_URL is required in production for distributed idempotency');
+      }
       logger.warn('Redis not configured - idempotency using in-memory fallback (not distributed)');
       return;
     }
@@ -70,6 +74,10 @@ export class RedisIdempotencyService {
       });
 
       this.client.connect().catch((err) => {
+        if (isProduction) {
+          logger.error('Redis idempotency connection failed in production:', { error: err.message });
+          return;
+        }
         logger.warn('Redis idempotency connection failed - using memory fallback:', { error: err.message });
         this.isEnabled = false;
       });
@@ -102,7 +110,11 @@ export class RedisIdempotencyService {
       }
     }
 
-    // Fallback to memory
+    if (isProduction) {
+      return null;
+    }
+
+    // Fallback to memory outside production
     const memEntry = memoryFallback.get(key);
     if (memEntry) {
       if (memEntry.inProgress) {
@@ -148,7 +160,12 @@ export class RedisIdempotencyService {
       }
     }
 
-    // Fallback to memory
+    if (isProduction) {
+      logger.error('[Idempotency] Redis unavailable in production; refusing non-distributed lock', { key });
+      return null;
+    }
+
+    // Fallback to memory outside production
     if (memoryFallback.has(key)) {
       const entry = memoryFallback.get(key)!;
       if (entry.inProgress) {
@@ -203,7 +220,12 @@ export class RedisIdempotencyService {
       }
     }
 
-    // Fallback to memory
+    if (isProduction) {
+      logger.error('[Idempotency] Redis unavailable in production; completed response cannot be cached', { key });
+      return false;
+    }
+
+    // Fallback to memory outside production
     memoryFallback.set(key, {
       response,
       timestamp: Date.now(),
@@ -232,7 +254,11 @@ export class RedisIdempotencyService {
       }
     }
 
-    // Memory fallback
+    if (isProduction) {
+      return;
+    }
+
+    // Memory fallback outside production
     const entry = memoryFallback.get(key);
     if (entry?.lockId === lockId) {
       memoryFallback.delete(key);

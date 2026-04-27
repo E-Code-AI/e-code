@@ -25,6 +25,7 @@ import { createLogger } from '../utils/logger';
 import { CacheTTL,redisCache } from './redis-cache.service';
 
 const logger = createLogger('agent-session-cache');
+const isProduction = process.env.NODE_ENV === 'production';
 
 export interface CachedAgentSession {
   id: string;
@@ -92,22 +93,24 @@ export class AgentSessionCacheService {
         }
       }
 
-      // Step 2: Try in-memory fallback (survives Redis outages)
-      const memorySession = this.getFromMemory(sessionId);
-      if (memorySession) {
-        const valid = this.validateSessionData(memorySession, projectId, deviceId, deviceType);
-        if (valid) {
-          this.stats.memoryHits++;
-          // Async: Warm Redis cache in background (don't await)
-          this.setInRedis(sessionId, memorySession).catch(err => 
-            logger.error('Background Redis warm failed:', err)
-          );
-          return {
-            valid: true,
-            session: memorySession,
-            source: 'memory',
-            latencyMs: Date.now() - startTime,
-          };
+      // Step 2: Try in-memory fallback only outside production.
+      if (!isProduction) {
+        const memorySession = this.getFromMemory(sessionId);
+        if (memorySession) {
+          const valid = this.validateSessionData(memorySession, projectId, deviceId, deviceType);
+          if (valid) {
+            this.stats.memoryHits++;
+            // Async: Warm Redis cache in background (don't await)
+            this.setInRedis(sessionId, memorySession).catch(err =>
+              logger.error('Background Redis warm failed:', err)
+            );
+            return {
+              valid: true,
+              session: memorySession,
+              source: 'memory',
+              latencyMs: Date.now() - startTime,
+            };
+          }
         }
       }
 
@@ -136,7 +139,9 @@ export class AgentSessionCacheService {
       }
 
       // Hydrate caches for future requests (fire-and-forget, truly non-blocking)
-      this.setInMemory(sessionId, dbSession);
+      if (!isProduction) {
+        this.setInMemory(sessionId, dbSession);
+      }
       void this.setInRedis(sessionId, dbSession).catch(err => 
         logger.error('Cache hydration failed:', err)
       );

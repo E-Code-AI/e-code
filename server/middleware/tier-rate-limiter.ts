@@ -29,7 +29,7 @@ const logger = createLogger('tier-rate-limiter');
 let redisClient: Redis | null = null;
 
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED === 'true';
+const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED !== 'false';
 if (redisUrl && redisRateLimitEnabled) {
   try {
     redisClient = new Redis(redisUrl.replace('rediss://', 'redis://'), {
@@ -56,8 +56,14 @@ if (redisUrl && redisRateLimitEnabled) {
     redisClient = null;
   }
 } else if (redisUrl && !redisRateLimitEnabled) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('RATE_LIMIT_REDIS_ENABLED=false is forbidden in production; distributed tier rate limiting requires Redis');
+  }
   logger.info('Redis tier rate limiter disabled; using memory storage');
 } else {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('REDIS_URL is required in production for distributed tier rate limiting');
+  }
   logger.info('No Redis URL configured - tier rate limiter using memory storage');
 }
 
@@ -118,7 +124,7 @@ function createRateLimiter(points: number, duration: number, keyPrefix: string):
   const blockDuration = process.env.NODE_ENV === 'development' ? 1 : duration;
   
   // Use Redis in production when available for distributed rate limiting
-  if (redisClient && redisClient.status === 'ready') {
+  if (redisClient) {
     logger.debug(`Creating Redis rate limiter: ${keyPrefix}`);
     return new RateLimiterRedis({
       storeClient: redisClient,

@@ -2,6 +2,7 @@
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
 import { clusterManager,DistributedTask } from './cluster-manager';
+import { redisCache } from '../services/redis-cache.service';
 
 const logger = createLogger('task-scheduler');
 
@@ -98,6 +99,29 @@ export class DistributedTaskScheduler extends EventEmitter {
     logger.info(`Created queue: ${queue.name} with priority ${queue.priority}`);
   }
 
+  private getRunningKey(queueName: string): string {
+    return `scheduler:queue:${queueName}:running`;
+  }
+
+  private async getRunningCount(queueName: string): Promise<number> {
+    const distributedTasks = await redisCache.smembers(this.getRunningKey(queueName));
+    if (distributedTasks.length > 0 || process.env.NODE_ENV === 'production') {
+      return distributedTasks.length;
+    }
+    return this.runningTasks.get(queueName)?.size || 0;
+  }
+
+  private async addRunningTask(queueName: string, taskId: string): Promise<void> {
+    this.runningTasks.get(queueName)?.add(taskId);
+    await redisCache.sadd(this.getRunningKey(queueName), taskId);
+    await redisCache.expire(this.getRunningKey(queueName), 24 * 60 * 60);
+  }
+
+  private async removeRunningTask(queueName: string, taskId: string): Promise<void> {
+    this.runningTasks.get(queueName)?.delete(taskId);
+    await redisCache.srem(this.getRunningKey(queueName), taskId);
+  }
+
   async scheduleTask(task: ScheduledTask): Promise<string> {
     // Handle scheduled tasks
     if (task.schedule) {
@@ -120,7 +144,7 @@ export class DistributedTaskScheduler extends EventEmitter {
     }
 
     // Check queue concurrency
-    const runningInQueue = this.runningTasks.get(task.queue)?.size || 0;
+    const runningInQueue = await this.getRunningCount(task.queue);
     if (runningInQueue >= queue.maxConcurrency) {
       // Queue is full, delay submission
       await this.waitForQueueSlot(task.queue);
@@ -135,7 +159,7 @@ export class DistributedTaskScheduler extends EventEmitter {
     });
 
     // Track running task
-    this.runningTasks.get(task.queue)?.add(taskId);
+    await this.addRunningTask(task.queue, taskId);
 
     // Set timeout if specified
     if (queue.timeout) {
@@ -198,8 +222,8 @@ export class DistributedTaskScheduler extends EventEmitter {
     if (!queue) return;
 
     return new Promise((resolve) => {
-      const checkInterval = setInterval(() => {
-        const runningInQueue = this.runningTasks.get(queueName)?.size || 0;
+      const checkInterval = setInterval(async () => {
+        const runningInQueue = await this.getRunningCount(queueName);
         if (runningInQueue < queue.maxConcurrency) {
           clearInterval(checkInterval);
           resolve();
@@ -212,6 +236,9 @@ export class DistributedTaskScheduler extends EventEmitter {
     // Remove from running tasks
     for (const [_queueName, runningSet] of this.runningTasks) {
       runningSet.delete(task.id);
+      redisCache.srem(this.getRunningKey(_queueName), task.id).catch((error) => {
+        logger.warn(`Failed to remove completed task ${task.id} from Redis queue ${_queueName}`, { error });
+      });
     }
 
     // Check if any tasks were waiting for this one
@@ -233,7 +260,9 @@ export class DistributedTaskScheduler extends EventEmitter {
     logger.warn(`Task ${taskId} in queue ${queueName} timed out`);
     
     // Remove from running tasks
-    this.runningTasks.get(queueName)?.delete(taskId);
+    this.removeRunningTask(queueName, taskId).catch((error) => {
+      logger.warn(`Failed to remove timed out task ${taskId} from Redis queue ${queueName}`, { error });
+    });
     
     // Emit timeout event
     this.emit('taskTimeout', taskId, queueName);

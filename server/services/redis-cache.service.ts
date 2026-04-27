@@ -26,8 +26,14 @@ export class RedisCacheService {
   }
 
   private initialize() {
-    // Check if Redis is enabled via REDIS_ENABLED env var (defaults to true in production)
-    if (!config.redis.enabled) {
+    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+
+    // Check if Redis is enabled via REDIS_ENABLED env var. A configured Redis
+    // URL enables Redis automatically; REDIS_ENABLED=false is local-only.
+    if (!config.redis.enabled && !redisUrl) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('REDIS_URL is required in production for distributed cache and pub/sub');
+      }
       logger.warn('⚠️ Redis disabled in configuration - using in-memory fallback (not suitable for production at scale)');
       this.isEnabled = false;
       this.client = null;
@@ -35,9 +41,10 @@ export class RedisCacheService {
     }
 
     // Check if Redis URL is available
-    const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-    
     if (!redisUrl) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('REDIS_URL is required in production for distributed cache and pub/sub');
+      }
       logger.warn('⚠️ Redis not configured (REDIS_URL missing) - using in-memory fallback (not suitable for production at scale)');
       this.isEnabled = false;
       this.client = null;

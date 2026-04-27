@@ -30,9 +30,11 @@ export const config = {
     logAggregationEnabled: parseBoolean(process.env.LOG_AGGREGATION_ENABLED, true),
   },
   redis: {
-    // Disabled by default in development to prevent SSL connection errors
-    // Set REDIS_ENABLED=true in development to enable Redis if needed
-    enabled: parseBoolean(process.env.REDIS_ENABLED, process.env.NODE_ENV === 'production'),
+    // Redis is enabled whenever a URL is configured. REDIS_ENABLED=false is
+    // only honored in non-production local development.
+    enabled: process.env.NODE_ENV === 'production'
+      ? true
+      : parseBoolean(process.env.REDIS_ENABLED, Boolean(process.env.REDIS_URL || process.env.REDIS_TLS_URL)),
     defaultTtlSeconds: parseNumber(process.env.REDIS_DEFAULT_TTL, 3600),
   },
   database: {

@@ -62,14 +62,13 @@ export const TIER_LIMITS = {
 export type SubscriptionTier = keyof typeof TIER_LIMITS;
 export type LimitType = keyof typeof TIER_LIMITS['free'];
 
-// Initialize Redis client if explicitly enabled. The platform already uses Redis
-// for sessions, cache, idempotency, and collaboration; on small Redis Cloud
-// plans, adding separate rate-limiter clients can exhaust maxclients at boot.
+// Initialize Redis client whenever Redis is configured. Production must use a
+// distributed limiter; in-memory limits are only acceptable for local/test.
 let redisClient: Redis | null = null;
 
 // Try to initialize Redis for distributed rate limiting
 const redisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
-const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED === 'true';
+const redisRateLimitEnabled = process.env.RATE_LIMIT_REDIS_ENABLED !== 'false';
 if (redisUrl && redisRateLimitEnabled) {
   try {
     redisClient = new Redis(redisUrl.replace('rediss://', 'redis://'), {
@@ -92,7 +91,12 @@ if (redisUrl && redisRateLimitEnabled) {
     redisClient = null;
   }
 } else if (redisUrl && !redisRateLimitEnabled) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('RATE_LIMIT_REDIS_ENABLED=false is forbidden in production; distributed rate limiting requires Redis');
+  }
   logger.info('Redis rate limiter disabled; using in-memory rate limits');
+} else if (process.env.NODE_ENV === 'production') {
+  throw new Error('REDIS_URL is required in production for distributed rate limiting');
 }
 
 // ✅ PRODUCTION FIX (Dec 21, 2025): LRU cache to prevent memory exhaustion

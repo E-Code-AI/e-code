@@ -17,8 +17,10 @@ const REQUIRED_IN_PRODUCTION: Array<{ key: string; description: string; validate
   { key: 'SESSION_SECRET', description: 'Express session encryption key', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
   { key: 'JWT_SECRET', description: 'JWT signing secret', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
   { key: 'ENCRYPTION_KEY', description: 'Data encryption key', validate: (v) => v.length < 32 ? 'Must be at least 32 characters' : null },
-  { key: 'REDIS_URL', description: 'Redis connection URL (required when REDIS_ENABLED=true)', validate: () => {
-    if (process.env.REDIS_ENABLED === 'true' && !process.env.REDIS_URL) return 'REDIS_ENABLED=true but REDIS_URL is missing';
+  { key: 'REDIS_URL', description: 'Redis connection URL for distributed cache, sessions, idempotency, queues, and rate limits' },
+  { key: 'SENTRY_DSN', description: 'Sentry error tracking DSN' },
+  { key: 'STRIPE_SECRET_KEY', description: 'Stripe live secret key for billing', validate: (v) => {
+    if (!v.startsWith('sk_live_')) return 'Must be a live Stripe key (sk_live_...) in production';
     return null;
   }},
   { key: 'APP_URL', description: 'Public application URL', validate: (v) => process.env.NODE_ENV === 'production' && !v.startsWith('https://') ? 'Must use https:// in production' : null },
@@ -26,8 +28,6 @@ const REQUIRED_IN_PRODUCTION: Array<{ key: string; description: string; validate
 
 const RECOMMENDED_IN_PRODUCTION: Array<{ key: string; description: string }> = [
   { key: 'JWT_REFRESH_SECRET', description: 'JWT refresh token secret' },
-  { key: 'SENTRY_DSN', description: 'Sentry error tracking DSN' },
-  { key: 'STRIPE_SECRET_KEY', description: 'Stripe payments API key' },
   { key: 'SENDGRID_API_KEY', description: 'SendGrid email API key' },
   {
     key: 'FROM_EMAIL',
@@ -62,10 +62,8 @@ export function validateProductionEnvironment(): void {
   for (const { key, description, validate } of REQUIRED_IN_PRODUCTION) {
     const value = process.env[key];
     if (!value || value.trim() === '') {
-      // Special case: REDIS_URL is only required when REDIS_ENABLED=true
-      if (key === 'REDIS_URL' && process.env.REDIS_ENABLED !== 'true') continue;
-
-      if (isProduction && !isReplit) {
+      const mustFailOnReplit = ['REDIS_URL', 'SENTRY_DSN', 'STRIPE_SECRET_KEY'].includes(key);
+      if (isProduction && (!isReplit || mustFailOnReplit)) {
         errors.push(`${key} is missing — ${description}`);
       } else if (isProduction && isReplit) {
         warnings.push(`${key} is missing — ${description} (auto-generated fallback on Replit)`);

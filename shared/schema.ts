@@ -1340,6 +1340,7 @@ export const aiConversations = pgTable('ai_conversations', {
   id: serial('id').primaryKey(),
   projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title').default('Untitled conversation'),
   messages: jsonb('messages').notNull().default([]),
   context: jsonb('context').default({}),
   totalTokensUsed: integer('total_tokens_used').default(0),
@@ -1350,6 +1351,26 @@ export const aiConversations = pgTable('ai_conversations', {
 }, (table) => [
   index("idx_ai_conversations_user").on(table.userId), // #103 FIXED: Added user_id index
   index("ai_conversations_model_idx").on(table.model), // Filter conversations by model
+]);
+
+// Compatibility table for historical AI chat persistence and analytics.
+export const aiMessages = pgTable('ai_messages', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  conversationId: integer('conversation_id').notNull().references(() => aiConversations.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+  role: varchar('role').notNull(),
+  content: text('content').notNull(),
+  model: varchar('model'),
+  provider: varchar('provider'),
+  tokenUsage: jsonb('token_usage').default({}),
+  metadata: jsonb('metadata').default({}),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => [
+  index('ai_messages_conversation_id_idx').on(table.conversationId),
+  index('ai_messages_project_id_idx').on(table.projectId),
+  index('ai_messages_user_id_idx').on(table.userId),
+  index('ai_messages_created_at_idx').on(table.createdAt),
 ]);
 
 // Dynamic Intelligence settings
@@ -1779,6 +1800,24 @@ export const projectSettings = pgTable('project_settings', {
 }, (table) => [
   index('project_settings_project_idx').on(table.projectId),
   unique('unique_project_settings').on(table.projectId),
+]);
+
+export const themes = pgTable('themes', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').references(() => projects.id, { onDelete: 'cascade' }),
+  name: varchar('name').notNull(),
+  slug: varchar('slug').notNull(),
+  scope: varchar('scope').notNull().default('user'),
+  tokens: jsonb('tokens').notNull().default({}),
+  isDefault: boolean('is_default').notNull().default(false),
+  isPublic: boolean('is_public').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('themes_user_id_idx').on(table.userId),
+  index('themes_project_id_idx').on(table.projectId),
+  unique('themes_user_slug_unique').on(table.userId, table.slug),
 ]);
 
 // Project Extensions - Per-project extensions management
@@ -2677,6 +2716,29 @@ export const agentPlans = pgTable('agent_plans', {
   index('agent_plans_project_id_idx').on(table.projectId),
   index('agent_plans_plan_id_idx').on(table.planId),
   index('agent_plans_status_idx').on(table.status),
+]);
+
+export const aiPlanTasks = pgTable('ai_plan_tasks', {
+  id: varchar('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  planId: varchar('plan_id').notNull().references(() => agentPlans.id, { onDelete: 'cascade' }),
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  taskKey: varchar('task_key').notNull(),
+  title: text('title').notNull(),
+  type: varchar('type').notNull(),
+  status: varchar('status').notNull().default('pending'),
+  dependencies: jsonb('dependencies').default([]),
+  files: jsonb('files').default([]),
+  commands: jsonb('commands').default([]),
+  metadata: jsonb('metadata').default({}),
+  startedAt: timestamp('started_at'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('ai_plan_tasks_plan_id_idx').on(table.planId),
+  index('ai_plan_tasks_project_id_idx').on(table.projectId),
+  index('ai_plan_tasks_status_idx').on(table.status),
+  unique('ai_plan_tasks_plan_task_key_unique').on(table.planId, table.taskKey),
 ]);
 
 // Agent Step Cache - Cache intermediate agent phases for cost savings

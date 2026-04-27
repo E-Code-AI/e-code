@@ -28,9 +28,7 @@ export class RedisCache {
 
     if (!configuredUrl) {
       if (process.env.NODE_ENV === 'production') {
-        logger.warn('REDIS_URL not configured. Redis cache disabled.');
-        this.disabled = true;
-        return;
+        throw new Error('REDIS_URL is required in production for distributed cache');
       }
 
       logger.info(`REDIS_URL not configured. Falling back to ${DEFAULT_REDIS_URL} for development.`);
@@ -289,10 +287,6 @@ export class RedisCache {
       return null;
     }
 
-    if (!this.initializing) {
-      this.initializing = this.initialize();
-    }
-
     try {
       const rawUrl =
         process.env.REDIS_URL ||
@@ -301,6 +295,9 @@ export class RedisCache {
         '';
 
       if (!rawUrl) {
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('REDIS_URL is required in production for distributed cache');
+        }
         if (!RedisCache.hasLoggedMissingConfig) {
           logger.warn(
             'Redis URL not provided – Redis cache service disabled. Set REDIS_URL to enable Redis integration.'
@@ -312,24 +309,8 @@ export class RedisCache {
         return null;
       }
 
-      const redisUrl = this.normalizeRedisUrl(rawUrl);
-      this.client = new Redis(redisUrl, {
-        retryStrategy: (times) => {
-          if (times > 10) {
-            logger.error('Redis connection failed after 10 retries');
-            return null;
-          }
-          return Math.min(times * 100, 3000);
-        },
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        lazyConnect: false
-      });
-
-      this.client.on('error', (err) => {
-        logger.error('Redis Client Error:', err);
-        this.isConnected = false;
-      });
+      this.redisUrl = this.normalizeRedisUrl(rawUrl);
+      this.initializing = this.initializing || this.initialize();
       
       await this.initializing;
     } finally {
@@ -423,7 +404,6 @@ export class RedisCache {
   }
 
   async get<T>(key: string): Promise<T | null> {
-    if (!this.isConnected || !this.client) return null;
     const client = await this.ensureClient();
     if (!client) return null;
 
@@ -439,7 +419,6 @@ export class RedisCache {
   }
 
   async set(key: string, value: any, ttl?: number): Promise<void> {
-    if (!this.isConnected || !this.client) return;
     const client = await this.ensureClient();
     if (!client) return;
 
@@ -454,7 +433,6 @@ export class RedisCache {
   }
 
   async del(key: string | string[]): Promise<void> {
-    if (!this.isConnected || !this.client) return;
     const client = await this.ensureClient();
     if (!client) return;
 
@@ -469,7 +447,6 @@ export class RedisCache {
   }
 
   async flush(): Promise<void> {
-    if (!this.isConnected || !this.client) return;
     const client = await this.ensureClient();
     if (!client) return;
 
@@ -495,7 +472,6 @@ export class RedisCache {
 
   // Invalidate related cache keys
   async invalidatePattern(pattern: string): Promise<void> {
-    if (!this.isConnected || !this.client) return;
     const client = await this.ensureClient();
     if (!client) return;
 

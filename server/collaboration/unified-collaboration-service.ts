@@ -23,8 +23,10 @@ import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
 import { markSocketAsHandled } from '../websocket/upgrade-guard';
+import { redisCache } from '../services/redis-cache.service';
 
 const logger = createLogger('unified-collaboration-service');
+const instanceId = `${process.pid}-${nanoid(8)}`;
 
 interface CollaboratorInfo {
   id: string;
@@ -92,6 +94,7 @@ export class UnifiedCollaborationService {
   private httpServer: HttpServer;
   // Track WebSocket clients by room for proper broadcast isolation
   private wsClientsByRoom: Map<string, Set<WebSocket>> = new Map();
+  private subscribedRooms: Set<string> = new Set();
   
   constructor(server: HttpServer) {
     this.httpServer = server;
@@ -194,6 +197,104 @@ export class UnifiedCollaborationService {
     return this.userColorMap.get(odUserId)!;
   }
 
+  private getPresenceKey(roomId: string): string {
+    return `collab:presence:${roomId}`;
+  }
+
+  private getPresenceChannel(roomId: string): string {
+    return `collab:presence-events:${roomId}`;
+  }
+
+  private serializeCollaborator(collaborator: CollaboratorInfo): string {
+    return JSON.stringify({
+      ...collaborator,
+      lastSeen: collaborator.lastSeen instanceof Date
+        ? collaborator.lastSeen.toISOString()
+        : new Date(collaborator.lastSeen).toISOString()
+    });
+  }
+
+  private deserializeCollaborator(value: string): CollaboratorInfo | null {
+    try {
+      const parsed = JSON.parse(value);
+      return {
+        ...parsed,
+        lastSeen: new Date(parsed.lastSeen)
+      };
+    } catch (error) {
+      logger.warn('[Collaboration] Failed to parse Redis collaborator payload', { error });
+      return null;
+    }
+  }
+
+  private async persistCollaborator(roomId: string, collaborator: CollaboratorInfo): Promise<void> {
+    const key = this.getPresenceKey(roomId);
+    await redisCache.hset(key, collaborator.id, this.serializeCollaborator(collaborator));
+    await redisCache.expire(key, 60 * 60);
+  }
+
+  private publishPresence(roomId: string, event: string, payload: Record<string, any>): void {
+    redisCache.publish(this.getPresenceChannel(roomId), JSON.stringify({
+      instanceId,
+      event,
+      payload
+    })).catch((error) => {
+      logger.warn('[Collaboration] Redis presence publish failed', { roomId, event, error });
+    });
+  }
+
+  private async subscribeRoomPresence(roomId: string): Promise<void> {
+    if (this.subscribedRooms.has(roomId)) return;
+    this.subscribedRooms.add(roomId);
+
+    await redisCache.subscribe(this.getPresenceChannel(roomId), (message) => {
+      try {
+        const envelope = JSON.parse(message);
+        if (envelope.instanceId === instanceId) return;
+
+        const room = this.rooms.get(roomId);
+        if (!room) return;
+
+        const { event, payload } = envelope;
+        if (event === 'upsert' && payload?.collaborator) {
+          const collaborator = this.deserializeCollaborator(JSON.stringify(payload.collaborator));
+          if (!collaborator) return;
+          room.collaborators.set(collaborator.id, collaborator);
+          this.io.to(roomId).emit('presence:update', {
+            userId: collaborator.odUserId,
+            socketId: collaborator.id,
+            status: collaborator.status,
+            activity: collaborator.activity,
+            timestamp: collaborator.lastSeen.getTime(),
+            collaborators: this.getDedupedCollaborators(room)
+          });
+        }
+
+        if (event === 'remove' && payload?.socketId) {
+          room.collaborators.delete(payload.socketId);
+          this.io.to(roomId).emit('collaborator:left', {
+            socketId: payload.socketId,
+            collaborators: this.getDedupedCollaborators(room)
+          });
+        }
+      } catch (error) {
+        logger.warn('[Collaboration] Redis presence event handling failed', { roomId, error });
+      }
+    });
+  }
+
+  private async hydrateRoomPresence(room: CollaborationRoom): Promise<void> {
+    const values = await redisCache.hgetall(this.getPresenceKey(room.id));
+    if (!values) return;
+    for (const [socketId, serialized] of Object.entries(values)) {
+      if (room.collaborators.has(socketId)) continue;
+      const collaborator = this.deserializeCollaborator(serialized);
+      if (collaborator) {
+        room.collaborators.set(socketId, collaborator);
+      }
+    }
+  }
+
   private getDedupedCollaborators(room: CollaborationRoom): CollaboratorInfo[] {
     const deduped = new Map<string, CollaboratorInfo>();
 
@@ -262,6 +363,8 @@ export class UnifiedCollaborationService {
       }
       
       const room = this.getOrCreateRoom(roomId, projectIdNum);
+      await this.subscribeRoomPresence(roomId);
+      await this.hydrateRoomPresence(room);
       socket.join(roomId);
       this.socketToRoom.set(socket.id, roomId);
       
@@ -276,6 +379,8 @@ export class UnifiedCollaborationService {
       };
       
       room.collaborators.set(socket.id, collaborator);
+      await this.persistCollaborator(roomId, collaborator);
+      this.publishPresence(roomId, 'upsert', { collaborator });
 
       const isFirstConnectionForUser = !this.hasOtherConnectionsForUser(room, socket.id, odUserId);
       
@@ -295,6 +400,8 @@ export class UnifiedCollaborationService {
           collab.cursor = { lineNumber: data.lineNumber, column: data.column };
           collab.currentFile = data.file;
           collab.lastSeen = new Date();
+          void this.persistCollaborator(roomId, collab);
+          this.publishPresence(roomId, 'upsert', { collaborator: collab });
           
           socket.to(roomId).emit('cursor:updated', {
             odUserId: collab.odUserId,
@@ -312,6 +419,8 @@ export class UnifiedCollaborationService {
         if (collab) {
           collab.selection = data;
           collab.lastSeen = new Date();
+          void this.persistCollaborator(roomId, collab);
+          this.publishPresence(roomId, 'upsert', { collaborator: collab });
           
           socket.to(roomId).emit('selection:updated', {
             odUserId: collab.odUserId,
@@ -329,6 +438,8 @@ export class UnifiedCollaborationService {
           collab.activity = data.activity;
           collab.currentFile = data.file;
           collab.lastSeen = new Date();
+          void this.persistCollaborator(roomId, collab);
+          this.publishPresence(roomId, 'upsert', { collaborator: collab });
           
           socket.to(roomId).emit('activity:updated', {
             odUserId: collab.odUserId,
@@ -344,6 +455,8 @@ export class UnifiedCollaborationService {
         if (collab) {
           collab.status = data.status;
           collab.lastSeen = new Date();
+          void this.persistCollaborator(roomId, collab);
+          this.publishPresence(roomId, 'upsert', { collaborator: collab });
           
           this.io.to(roomId).emit('status:updated', {
             odUserId: collab.odUserId,
@@ -419,6 +532,8 @@ export class UnifiedCollaborationService {
               : false;
 
             room.collaborators.delete(socket.id);
+            void redisCache.hdel(this.getPresenceKey(roomId), socket.id);
+            this.publishPresence(roomId, 'remove', { socketId: socket.id });
 
             if (collab && wasLastConnectionForUser) {
               this.addSystemMessage(room, `${collab.username} left the session`);
@@ -661,6 +776,8 @@ export class UnifiedCollaborationService {
     if (activity) {
       collab.activity = activity;
     }
+    void this.persistCollaborator(roomId, collab);
+    this.publishPresence(roomId, 'upsert', { collaborator: collab });
     
     // Only broadcast if status actually changed
     if (previousStatus !== status) {

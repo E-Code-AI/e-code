@@ -102,7 +102,7 @@ E-Code uses a two-service architecture:
 ### Prerequisites
 - Node.js 20.x LTS or higher
 - PostgreSQL 16.x
-- Redis (optional, used for caching)
+- Redis (required in production for cache, sessions, idempotency, queues, collaboration, and rate limiting; optional only for local development)
 - Replit Deploy for the supported production target
 
 ### Development Setup
