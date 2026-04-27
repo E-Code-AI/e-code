@@ -29,6 +29,7 @@ RotateCcw,
 Search,
 Sparkles,
 Terminal,
+UserRound,
 Wrench
 } from 'lucide-react';
 import { forwardRef,memo,useCallback,useMemo,useState } from 'react';
@@ -365,6 +366,13 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
       filesTouched: summary.uniqueFiles.size,
     };
   }, [message.toolExecutions]);
+
+  const messageStatus = message.status as string | undefined;
+  const userStatusLabel = useMemo(() => {
+    if (messageStatus === 'error') return 'Failed';
+    if (messageStatus === 'sending' || messageStatus === 'pending') return 'Sending';
+    return 'Sent';
+  }, [messageStatus]);
   
   return (
     <LazyMotionDiv
@@ -429,8 +437,8 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
             "min-h-[36px] sm:min-h-[44px] min-w-[36px] sm:min-w-[44px]",
             isUser
               ? cn(
-                  "bg-primary text-primary-foreground",
-                  "shadow-lg shadow-primary/20",
+                  "w-fit max-w-[94%] sm:max-w-[84%] bg-card text-card-foreground border",
+                  isError ? "border-destructive/30 shadow-lg shadow-destructive/10" : "border-border/70 shadow-sm",
                   "rounded-br-md"
                 )
               : isError
@@ -450,7 +458,45 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           whileHover={{ scale: 1.005 }}
           transition={{ duration: 0.2 }}
         >
-          {!isUser && message.content && !(isAutonomousMessage && rendersDedicatedAutonomousBody) ? (
+          {isUser ? (
+            <div className="space-y-2" data-testid={`enhanced-user-message-${message.id}`}>
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <UserRound className="h-3 w-3" />
+                  </span>
+                  You
+                </span>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                    isError
+                      ? "bg-destructive/10 text-destructive"
+                      : messageStatus === 'sending' || messageStatus === 'pending'
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  )}
+                >
+                  {messageStatus === 'sending' || messageStatus === 'pending' ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : isError ? (
+                    <AlertCircle className="h-3 w-3" />
+                  ) : (
+                    <Check className="h-3 w-3" />
+                  )}
+                  {userStatusLabel}
+                </span>
+              </div>
+              <div className="rounded-xl bg-muted/30 px-3 py-2">
+                <RichMessageContent content={message.content} />
+              </div>
+              {relativeTimestamp && (
+                <div className="flex justify-end text-[10px] text-muted-foreground">
+                  {relativeTimestamp}
+                </div>
+              )}
+            </div>
+          ) : message.content && !(isAutonomousMessage && rendersDedicatedAutonomousBody) ? (
             shouldCollapseMessageBody && !isMessageExpanded ? (
               <div className="space-y-3">
                 <p className="text-[13px] leading-relaxed text-foreground/90" data-testid={`enhanced-message-preview-${message.id}`}>

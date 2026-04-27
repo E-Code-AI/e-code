@@ -4,8 +4,10 @@ import { LazyAnimatePresence } from '@/lib/motion';
 import { cn } from '@/lib/utils';
 import type { AutonomousBuildMode,Message } from '@/stores/agentConversationStore';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { Bot,Loader2,Radio } from 'lucide-react';
 import { forwardRef,memo,useCallback,useEffect,useMemo,useRef } from 'react';
 import { EnhancedChatMessage,StreamingSkeleton } from './EnhancedChatMessage';
+import { RichMessageContent } from '@/components/agent/messages';
 
 interface VirtualizedMessageListProps {
   messages: Message[];
@@ -194,28 +196,69 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
         </div>
         
         {streamingContent && (
-          <div 
-            className="px-4 py-3 border-t border-border/50 bg-muted/30"
-            data-testid="streaming-content-overlay"
-          >
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-[11px] font-medium text-primary">AI</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <StreamingText 
-                  content={streamingContent} 
-                  className="text-[13px] text-foreground"
-                />
-                <span className="inline-block w-2 h-4 ml-0.5 bg-primary animate-pulse" />
-              </div>
-            </div>
+          <div className="px-4 py-3 border-t border-border/50 bg-background/95" data-testid="streaming-content-overlay">
+            <StreamingAgentWallMessage content={streamingContent} />
           </div>
         )}
       </div>
     );
   }
 ));
+
+export interface StreamingAgentWallMessageProps {
+  content: string;
+  className?: string;
+}
+
+export const StreamingAgentWallMessage = memo(function StreamingAgentWallMessage({
+  content,
+  className,
+}: StreamingAgentWallMessageProps) {
+  return (
+    <div
+      className={cn("flex gap-3", className)}
+      data-testid="agent-wall-streaming-message"
+    >
+      <div className="relative mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-sm">
+        <Bot className="h-4 w-4" />
+        <span className="absolute -right-1 -top-1 flex h-3 w-3">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+          <span className="relative inline-flex h-3 w-3 rounded-full border border-background bg-emerald-500" />
+        </span>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+            <Radio className="h-3 w-3 text-emerald-500" />
+            Agent stream
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            Live SSE
+          </span>
+        </div>
+
+        <div className="max-w-[95%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3 shadow-sm">
+          {content.trim() ? (
+            <div className="relative text-[13px] leading-relaxed">
+              <RichMessageContent content={content} />
+              <span
+                className="ml-1 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-primary"
+                aria-hidden="true"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Waiting for the first token...
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
 
 export interface StreamingTextProps {
   content: string;

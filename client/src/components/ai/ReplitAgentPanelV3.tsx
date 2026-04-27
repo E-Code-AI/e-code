@@ -71,7 +71,7 @@ import { MessageQueue,type QueuedMessage } from '@/components/agent/MessageQueue
 import { MiniProgressIndicator,OrchestratorProgress,type SessionProgressData } from '@/components/agent/OrchestratorProgress';
 import { ProviderHealthBadge } from '@/components/agent/ProviderHealthIndicator';
 import { TaskDecompositionDisplay,type DecomposedTask } from '@/components/agent/TaskDecompositionDisplay';
-import { LazyAnimatePresence,LazyMotionDiv,LazyMotionSpan } from '@/lib/motion';
+import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { CheckCircle2,Hammer,History,Package,Smartphone,Volume2,VolumeX,X,XCircle } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
 import {
@@ -82,7 +82,7 @@ StreamingSkeleton
 } from './EnhancedChatMessage';
 import { CheckpointDivider } from './InlineCheckpointMarker';
 import { DEFAULT_MCP_SERVERS,SlashCommandMenu,useSlashCommand,type MCPServer } from './SlashCommandMenu';
-import { StreamingText,VirtualizedMessageList,useOptimisticMessages } from './VirtualizedMessageList';
+import { StreamingAgentWallMessage,VirtualizedMessageList,useOptimisticMessages } from './VirtualizedMessageList';
 
 interface ToolExecution {
   id: string;
@@ -2864,36 +2864,10 @@ export function ReplitAgentPanelV3({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex gap-3"
+              className="w-full"
               data-testid="streaming-message-container"
             >
-              <Avatar className="h-9 w-9 ring-2 ring-offset-2 ring-offset-background ring-primary/30 shadow-lg" data-testid="streaming-avatar">
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-[11px]">
-                  <Sparkles className="h-4 w-4 animate-pulse" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <LazyMotionDiv
-                  className="bg-muted/80 text-foreground rounded-2xl rounded-bl-md px-4 py-3 max-w-[95%] sm:max-w-[85%] shadow-md border border-border/50"
-                  data-testid="streaming-content"
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: 1 }}
-                >
-                  <div className="text-[13px] whitespace-pre-wrap break-words leading-relaxed" data-testid="streaming-text">
-                    <StreamingText
-                      content={streamingContent}
-                      isComplete={false}
-                      className="text-foreground"
-                    />
-                    <LazyMotionSpan
-                      className="inline-block w-0.5 h-4 bg-primary ml-1 align-middle"
-                      animate={{ opacity: [1, 0] }}
-                      transition={{ duration: 0.8, repeat: Infinity }}
-                      data-testid="streaming-cursor"
-                    />
-                  </div>
-                </LazyMotionDiv>
-              </div>
+              <StreamingAgentWallMessage content={streamingContent} />
             </LazyMotionDiv>
           )}
 
