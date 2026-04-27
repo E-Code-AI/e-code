@@ -1367,6 +1367,20 @@ router.get('/schema/stream/:projectId', async (req, res) => {
     // Send initial status
     const initialStatus = schemaWarming.getStatus(projectId);
     res.write(`data: ${JSON.stringify({ type: 'status', ...initialStatus })}\n\n`);
+
+    // If the project has no warming session at all (cache miss → status 'idle'
+    // with the default "not yet warmed" message), the IDE is gated on a signal
+    // that no one will ever emit. Treat absence-of-warming as "ready" so the
+    // Preview tab clears its bootstrap placeholder. A real warming session
+    // already in flight (status 'analyzing'/'warming') keeps the stream open.
+    if (
+      !schemaWarming.isReady(projectId) &&
+      initialStatus.status === 'idle'
+    ) {
+      res.write(`data: ${JSON.stringify({ type: 'ready', schemaPreview: 'No schema warming required' })}\n\n`);
+      res.end();
+      return;
+    }
     
     // Listen for progress updates
     const onProgress = (data: { projectId: string; progress: any }) => {

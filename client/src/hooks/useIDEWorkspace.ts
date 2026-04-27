@@ -443,8 +443,10 @@ export function useIDEWorkspace(projectId: string) {
       }
       return prev;
     });
-    setActiveTab(tabId);
-  }, [files, isLoadingFiles, tabs, selectedFileId]);
+    if (!activeTab || activeTab === 'console' || activeTab === 'shell') {
+      setActiveTab(tabId);
+    }
+  }, [activeTab, files, isLoadingFiles, tabs, selectedFileId]);
 
   // Auto-start preview
   useEffect(() => {

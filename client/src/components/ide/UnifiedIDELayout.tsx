@@ -199,6 +199,19 @@ function UnifiedIDELayout({
   
   // Schema warming store - shows "App not ready" placeholder until schema is ready
   const { isReady: isSchemaReady } = useSchemaWarmingStore();
+
+  // When the IDE mounts on a workspace that carries a bootstrapToken (i.e. came
+  // from the AI-agent create flow), subscribe to the schema-warming SSE stream
+  // so isSchemaReady eventually flips to true. Without this, a page reload or
+  // a deep-link visit on a bootstrap URL leaves the Preview tab stuck on the
+  // AppNotReadyPlaceholder forever — the placeholder waits for a "ready" event
+  // that no one is listening for.
+  useEffect(() => {
+    if (!bootstrapToken || !projectId || isSchemaReady) return;
+    const store = useSchemaWarmingStore.getState();
+    if (store.eventSource && store.projectId === projectId) return;
+    store.subscribeToStream(projectId);
+  }, [bootstrapToken, projectId, isSchemaReady]);
   
   const workspace = useIDEWorkspace(projectId);
 
