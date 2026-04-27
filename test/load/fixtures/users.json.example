@@ -1,0 +1,12 @@
+[
+  { "email": "loadtest+01@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+02@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+03@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+04@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+05@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+06@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+07@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+08@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+09@e-code.local", "password": "REPLACE_ME" },
+  { "email": "loadtest+10@e-code.local", "password": "REPLACE_ME" }
+]
