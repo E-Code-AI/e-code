@@ -1572,6 +1572,40 @@ export const projectDatabases = pgTable('project_databases', {
   index('project_databases_provider_idx').on(table.provider),
 ]);
 
+// Database branches table — Neon-style git branching for project DBs
+// Lets users create staging/preview branches forked from a base branch
+export const projectDatabaseBranches = pgTable('project_database_branches', {
+  id: serial('id').primaryKey(),
+  projectDatabaseId: integer('project_database_id').notNull().references(() => projectDatabases.id, { onDelete: 'cascade' }),
+
+  // Display name (e.g. "main", "staging", "preview-pr-42")
+  name: varchar('name').notNull(),
+
+  // Provider IDs (Neon)
+  providerBranchId: varchar('provider_branch_id').notNull(), // e.g. br-frosty-...
+  providerEndpointId: varchar('provider_endpoint_id'),       // e.g. ep-summer-...
+  parentProviderBranchId: varchar('parent_provider_branch_id'), // null for main
+
+  // Connection details
+  host: varchar('host'),
+  database: varchar('database'),
+  username: varchar('username'),
+  encryptedPassword: text('encrypted_password'),
+  connectionUrl: text('connection_url'), // encrypted
+
+  // Flags
+  isMain: boolean('is_main').default(false).notNull(),
+  isProtected: boolean('is_protected').default(false).notNull(),
+
+  // Audit
+  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => [
+  index('project_database_branches_db_id_idx').on(table.projectDatabaseId),
+  index('project_database_branches_provider_branch_idx').on(table.providerBranchId),
+]);
+
 // Database backups table for automated backup infrastructure
 export const projectDatabaseBackups = pgTable('project_database_backups', {
   id: serial('id').primaryKey(),
@@ -1889,6 +1923,7 @@ export const insertSecretSchema = createInsertSchema(secrets).omit({ id: true, c
 export const insertEnvironmentVariableSchema = createInsertSchema(environmentVariables).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertProjectDatabaseSchema = createInsertSchema(projectDatabases).omit({ id: true, createdAt: true, updatedAt: true, provisionedAt: true, lastBackupAt: true, suspendedAt: true });
 export const insertProjectDatabaseBackupSchema = createInsertSchema(projectDatabaseBackups).omit({ id: true, createdAt: true, completedAt: true });
+export const insertProjectDatabaseBranchSchema = createInsertSchema(projectDatabaseBranches).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitRepositorySchema = createInsertSchema(gitRepositories).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertGitCommitSchema = createInsertSchema(gitCommits).omit({ id: true, syncedAt: true });
 export const insertCustomDomainSchema = createInsertSchema(customDomains).omit({ id: true, createdAt: true, updatedAt: true });

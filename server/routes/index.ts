@@ -39,6 +39,7 @@ import { GitRouter } from "./git.router";
 import gitProjectRouter from "./git-project.router";
 import debugRouter from "./debug.router";
 import databaseRouter from "./database.router";
+import databaseBranchesRouter from "./database-branches.router";
 import featureFlagsRouter from "./feature-flags.router";
 import adminMonitoringRouter from "./admin-monitoring.router";
 import adminSystemMetricsRouter from "./admin-system-metrics.router";
@@ -535,6 +536,9 @@ export class MainRouter {
 
     // Database routes (Per-project database provisioning - Replit-style)
     app.use('/api/database', tierRateLimiters.api, databaseRouter);
+
+    // Database branches (Neon-style "git branches" for project DBs)
+    app.use('/api/projects/:projectId/database/branches', tierRateLimiters.api, databaseBranchesRouter);
 
     // ReplitDB-compatible Key-Value Database API (for container code)
     app.use('/api/db', replitdbRouter);

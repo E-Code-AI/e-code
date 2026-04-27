@@ -133,7 +133,7 @@ interface ProvisionRequest {
 }
 
 type DatabaseView = 'all' | 'development' | 'production';
-type DetailTab = 'overview' | 'mydata' | 'settings';
+type DetailTab = 'overview' | 'mydata' | 'branches' | 'settings';
 
 const HISTORY_RETENTION_OPTIONS = [
   { value: '7', label: '7 Days' },
@@ -1269,6 +1269,19 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
             My Data
           </button>
           <button
+            onClick={() => setActiveDetailTab('branches')}
+            className={cn(
+              "flex items-center gap-1 px-2.5 h-full text-xs border-b-2 -mb-px transition-colors whitespace-nowrap",
+              activeDetailTab === 'branches'
+                ? "border-[hsl(142,72%,42%)] text-[var(--ecode-text)]"
+                : "border-transparent text-[var(--ecode-text-muted)] hover:text-[var(--ecode-text)]"
+            )}
+            data-testid="tab-branches"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Branches
+          </button>
+          <button
             onClick={() => setActiveDetailTab('settings')}
             className={cn(
               "flex items-center gap-1 px-2.5 h-full text-xs border-b-2 -mb-px transition-colors whitespace-nowrap",
@@ -1287,6 +1300,7 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
       <div className="flex-1 overflow-hidden relative">
         {activeDetailTab === 'overview' && <OverviewTab />}
         {activeDetailTab === 'mydata' && <MyDataTab />}
+        {activeDetailTab === 'branches' && <BranchesTab projectId={projectId} />}
         {activeDetailTab === 'settings' && <SettingsTab />}
       </div>
     </div>
@@ -1304,5 +1318,241 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
     <div className="h-full flex flex-col bg-[var(--ecode-surface)]">
       {currentView === 'all' ? <AllDatabasesView /> : <DatabaseDetailView />}
     </div>
+  );
+}
+
+// ─── Branches Tab Component ───────────────────────────────────────
+
+interface BranchInfo {
+  id: number;
+  name: string;
+  providerBranchId: string;
+  parentProviderBranchId: string | null;
+  isMain: boolean;
+  isProtected: boolean;
+  host: string | null;
+  database: string | null;
+  username: string | null;
+  createdAt: string;
+}
+
+interface BranchesResponse {
+  database: { id: number; provider: string; status: string; mainBranchId?: string } | null;
+  branches: BranchInfo[];
+}
+
+function BranchesTab({ projectId }: { projectId: string }) {
+  const { toast } = useToast();
+  const [newBranchName, setNewBranchName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  const branchesKey = ['/api/projects', projectId, 'database/branches'];
+
+  const { data, isLoading } = useQuery<BranchesResponse>({
+    queryKey: branchesKey,
+    queryFn: async () => {
+      return apiRequest<BranchesResponse>('GET', `/api/projects/${projectId}/database/branches`);
+    },
+    enabled: !!projectId,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest<BranchInfo>('POST', `/api/projects/${projectId}/database/branches`, { name });
+    },
+    onSuccess: () => {
+      toast({ title: 'Branch created', description: `Branch "${newBranchName}" is ready.` });
+      setNewBranchName('');
+      queryClient.invalidateQueries({ queryKey: branchesKey });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to create branch', description: err.message || 'Unknown error', variant: 'destructive' });
+    },
+    onSettled: () => setCreating(false),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (branchId: number) => {
+      await apiRequest('DELETE', `/api/projects/${projectId}/database/branches/${branchId}`);
+    },
+    onSuccess: () => {
+      toast({ title: 'Branch deleted' });
+      queryClient.invalidateQueries({ queryKey: branchesKey });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Failed to delete branch', description: err.message || 'Unknown error', variant: 'destructive' });
+    },
+  });
+
+  const copyConnectionUrl = async (branchId: number, branchName: string) => {
+    try {
+      const { connectionUrl } = await apiRequest<{ connectionUrl: string }>(
+        'GET',
+        `/api/projects/${projectId}/database/branches/${branchId}/connection-url`
+      );
+      await navigator.clipboard.writeText(connectionUrl);
+      toast({ title: 'Copied', description: `Connection URL for "${branchName}" copied to clipboard.` });
+    } catch (err: any) {
+      toast({ title: 'Copy failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!data?.database) {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-[var(--ecode-text-muted)] p-4">
+        No database provisioned for this project yet.
+      </div>
+    );
+  }
+
+  if (data.database.provider !== 'neon') {
+    return (
+      <div className="h-full flex items-center justify-center text-sm text-[var(--ecode-text-muted)] p-4 text-center">
+        Database branches are available only for Neon-hosted databases.
+        <br />
+        Current provider: <span className="font-mono">{data.database.provider}</span>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea className="h-full">
+      <div className="p-4 space-y-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium text-[var(--ecode-text)]">Database Branches</h3>
+          <p className="text-xs text-[var(--ecode-text-muted)]">
+            Create instant copies of your database for staging, previews, or experiments. Branches share storage with the parent and are billed only for divergent data.
+          </p>
+        </div>
+
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="branch-name (e.g. staging, preview-pr-42)"
+            value={newBranchName}
+            onChange={e => setNewBranchName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
+            disabled={createMutation.isPending}
+            className="flex-1 h-8 text-xs"
+            data-testid="input-branch-name"
+            maxLength={40}
+          />
+          <Button
+            size="sm"
+            onClick={() => {
+              if (!newBranchName) return;
+              setCreating(true);
+              createMutation.mutate(newBranchName);
+            }}
+            disabled={!newBranchName || createMutation.isPending}
+            data-testid="button-create-branch"
+            className="h-8 px-3 text-xs"
+          >
+            {createMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
+            Create
+          </Button>
+        </div>
+
+        <div className="border border-[var(--ecode-border)] rounded">
+          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-bg)] text-xs font-medium text-[var(--ecode-text-muted)]">
+            Main branch
+          </div>
+          <div className="p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-[hsl(142,72%,42%)]" />
+              <div>
+                <div className="text-sm font-medium text-[var(--ecode-text)]">main</div>
+                <div className="text-xs text-[var(--ecode-text-muted)] font-mono">
+                  {data.database.mainBranchId || '—'}
+                </div>
+              </div>
+            </div>
+            <span className="text-xs px-2 py-0.5 rounded bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)]">
+              protected
+            </span>
+          </div>
+        </div>
+
+        <div className="border border-[var(--ecode-border)] rounded">
+          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-bg)] text-xs font-medium text-[var(--ecode-text-muted)] flex items-center justify-between">
+            <span>Other branches</span>
+            <span>{data.branches.length}</span>
+          </div>
+          {data.branches.length === 0 ? (
+            <div className="p-6 text-center text-xs text-[var(--ecode-text-muted)]">
+              No branches yet. Create one above.
+            </div>
+          ) : (
+            <div className="divide-y divide-[var(--ecode-border)]">
+              {data.branches.map(b => (
+                <div key={b.id} className="p-3 flex items-center justify-between gap-2" data-testid={`row-branch-${b.id}`}>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <Layers className="h-4 w-4 text-[var(--ecode-text-muted)] shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[var(--ecode-text)] truncate" data-testid={`text-branch-name-${b.id}`}>
+                        {b.name}
+                      </div>
+                      <div className="text-xs text-[var(--ecode-text-muted)] font-mono truncate">
+                        {b.providerBranchId}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyConnectionUrl(b.id, b.name)}
+                      className="h-7 px-2"
+                      data-testid={`button-copy-${b.id}`}
+                      title="Copy connection URL"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-destructive hover:text-destructive"
+                          data-testid={`button-delete-${b.id}`}
+                          title="Delete branch"
+                          disabled={b.isProtected || b.isMain}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete branch "{b.name}"?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently remove the branch and its data. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteMutation.mutate(b.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            data-testid={`button-confirm-delete-${b.id}`}
+                          >
+                            Delete branch
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </ScrollArea>
   );
 }

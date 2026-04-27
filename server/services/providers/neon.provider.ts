@@ -201,6 +201,115 @@ export class NeonProvider implements IDatabaseProvider {
   async deprovision(databaseId: number): Promise<void> {
     logger.warn(`Deprovision not fully implemented for database ${databaseId} - requires project lookup`);
   }
+
+  // ─── BRANCHING (Neon "git-like" branches) ──────────────────────────
+
+  async listBranches(neonProjectId: string): Promise<Array<{
+    id: string;
+    name: string;
+    parentId?: string;
+    isPrimary: boolean;
+    createdAt: string;
+  }>> {
+    const resp = await this.request<{ branches: Array<NeonBranch & { primary?: boolean; parent_id?: string }> }>(
+      'GET',
+      `/projects/${neonProjectId}/branches`
+    );
+    return resp.branches.map(b => ({
+      id: b.id,
+      name: b.name,
+      parentId: b.parent_id,
+      isPrimary: !!b.primary,
+      createdAt: b.created_at,
+    }));
+  }
+
+  async createBranch(
+    neonProjectId: string,
+    branchName: string,
+    parentBranchId?: string
+  ): Promise<{
+    branchId: string;
+    endpointId: string;
+    host: string;
+    database: string;
+    username: string;
+    password: string;
+    connectionUrl: string;
+  }> {
+    logger.info(`Creating Neon branch "${branchName}" on project ${neonProjectId}`, { parentBranchId });
+
+    const body: any = {
+      branch: { name: branchName, ...(parentBranchId ? { parent_id: parentBranchId } : {}) },
+      endpoints: [{ type: 'read_write' }],
+    };
+
+    const resp = await this.request<{
+      branch: NeonBranch;
+      endpoints: NeonEndpoint[];
+      connection_uris?: Array<{ connection_uri: string }>;
+    }>('POST', `/projects/${neonProjectId}/branches`, body);
+
+    const branch = resp.branch;
+    const endpoint = resp.endpoints[0];
+
+    const rolesResp = await this.request<{ roles: NeonRole[] }>(
+      'GET',
+      `/projects/${neonProjectId}/branches/${branch.id}/roles`
+    );
+    const role = rolesResp.roles.find(r => !r.protected) || rolesResp.roles[0];
+    const roleName = role?.name || 'neondb_owner';
+
+    const pwResp = await this.request<{ password: string }>(
+      'GET',
+      `/projects/${neonProjectId}/branches/${branch.id}/roles/${roleName}/reveal_password`
+    );
+
+    const dbResp = await this.request<{ databases: NeonDatabase[] }>(
+      'GET',
+      `/projects/${neonProjectId}/branches/${branch.id}/databases`
+    );
+    const dbName = dbResp.databases[0]?.name || 'neondb';
+    const host = endpoint.host;
+    const password = pwResp.password;
+
+    const connectionUrl = resp.connection_uris?.[0]?.connection_uri ||
+      `postgresql://${roleName}:${password}@${host}:5432/${dbName}?sslmode=require`;
+
+    return {
+      branchId: branch.id,
+      endpointId: endpoint.id,
+      host,
+      database: dbName,
+      username: roleName,
+      password,
+      connectionUrl,
+    };
+  }
+
+  async deleteBranch(neonProjectId: string, branchId: string): Promise<void> {
+    logger.info(`Deleting Neon branch ${branchId} from project ${neonProjectId}`);
+    await this.request('DELETE', `/projects/${neonProjectId}/branches/${branchId}`);
+  }
+
+  async getBranchConnectionUrl(
+    neonProjectId: string,
+    branchId: string,
+    roleName: string,
+    databaseName: string
+  ): Promise<string> {
+    const resp = await this.request<{ password: string }>(
+      'GET',
+      `/projects/${neonProjectId}/branches/${branchId}/roles/${roleName}/reveal_password`
+    );
+    const endpointsResp = await this.request<{ endpoints: NeonEndpoint[] }>(
+      'GET',
+      `/projects/${neonProjectId}/endpoints`
+    );
+    const ep = endpointsResp.endpoints.find(e => e.branch_id === branchId);
+    if (!ep) throw new Error(`No endpoint found for branch ${branchId}`);
+    return `postgresql://${roleName}:${resp.password}@${ep.host}:5432/${databaseName}?sslmode=require`;
+  }
   
   async suspend(databaseId: number): Promise<void> {
     logger.info(`Suspend endpoint for database ${databaseId}`);

@@ -740,4 +740,182 @@ class ProjectDatabaseProvisioningService {
   }
 }
 
+// ─── BRANCHING (Neon-style branches per project DB) ─────────────────
+
+type BranchInfo = {
+  id: number;
+  name: string;
+  providerBranchId: string;
+  parentProviderBranchId: string | null;
+  isMain: boolean;
+  isProtected: boolean;
+  host: string | null;
+  database: string | null;
+  username: string | null;
+  createdAt: Date;
+};
+
+class ProjectDatabaseBranchService {
+  async listBranches(projectId: number): Promise<BranchInfo[]> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+
+    const rows = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(eq(projectDatabaseBranches.projectDatabaseId, database.id))
+      .orderBy(desc(projectDatabaseBranches.createdAt));
+
+    return rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      providerBranchId: r.providerBranchId,
+      parentProviderBranchId: r.parentProviderBranchId,
+      isMain: r.isMain,
+      isProtected: r.isProtected,
+      host: r.host,
+      database: r.database,
+      username: r.username,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async createBranch(
+    projectId: number,
+    branchName: string,
+    parentBranchId: string | undefined,
+    userId: number | null
+  ): Promise<BranchInfo> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+    if (database.provider !== 'neon') {
+      throw new Error('Branching is only supported on Neon databases');
+    }
+    if (!database.providerProjectId) {
+      throw new Error('Database has no Neon project ID');
+    }
+
+    if (!/^[a-zA-Z0-9_-]{1,40}$/.test(branchName)) {
+      throw new Error('Branch name must be 1-40 chars, alphanumeric + _ -');
+    }
+
+    const { neonProvider } = await import('./providers/neon.provider');
+    const created = await neonProvider.createBranch(
+      database.providerProjectId,
+      branchName,
+      parentBranchId
+    );
+
+    const encryptedPassword = encrypt(created.password);
+    const encryptedConnectionUrl = encrypt(created.connectionUrl);
+
+    const [row] = await db
+      .insert(projectDatabaseBranches)
+      .values({
+        projectDatabaseId: database.id,
+        name: branchName,
+        providerBranchId: created.branchId,
+        providerEndpointId: created.endpointId,
+        parentProviderBranchId: parentBranchId || database.providerBranchId || null,
+        host: created.host,
+        database: created.database,
+        username: created.username,
+        encryptedPassword,
+        connectionUrl: encryptedConnectionUrl,
+        isMain: false,
+        isProtected: false,
+        createdBy: userId,
+      })
+      .returning();
+
+    return {
+      id: row.id,
+      name: row.name,
+      providerBranchId: row.providerBranchId,
+      parentProviderBranchId: row.parentProviderBranchId,
+      isMain: row.isMain,
+      isProtected: row.isProtected,
+      host: row.host,
+      database: row.database,
+      username: row.username,
+      createdAt: row.createdAt,
+    };
+  }
+
+  async deleteBranch(projectId: number, branchId: number): Promise<void> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+
+    const [branch] = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(and(
+        eq(projectDatabaseBranches.id, branchId),
+        eq(projectDatabaseBranches.projectDatabaseId, database.id)
+      ))
+      .limit(1);
+    if (!branch) throw new Error('Branch not found');
+    if (branch.isProtected || branch.isMain) {
+      throw new Error('Cannot delete main or protected branch');
+    }
+
+    if (database.provider === 'neon' && database.providerProjectId) {
+      const { neonProvider } = await import('./providers/neon.provider');
+      try {
+        await neonProvider.deleteBranch(database.providerProjectId, branch.providerBranchId);
+      } catch (err: any) {
+        // Neon returns 404 if branch is already gone — treat as success and clean up local row
+        const status = err?.status || err?.response?.status;
+        const msg = String(err?.message || '');
+        const alreadyGone = status === 404 || /not.?found/i.test(msg);
+        if (!alreadyGone) {
+          logger.error(`Neon branch deletion failed for ${branch.providerBranchId}; keeping local record for retry`, err);
+          throw new Error(`Failed to delete branch on Neon: ${msg || 'unknown error'}. Please retry.`);
+        }
+        logger.warn(`Neon branch ${branch.providerBranchId} already gone (status ${status}); cleaning up local record`);
+      }
+    }
+
+    await db.delete(projectDatabaseBranches).where(eq(projectDatabaseBranches.id, branchId));
+  }
+
+  async getBranchConnectionUrl(projectId: number, branchId: number): Promise<string> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+
+    const [branch] = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(and(
+        eq(projectDatabaseBranches.id, branchId),
+        eq(projectDatabaseBranches.projectDatabaseId, database.id)
+      ))
+      .limit(1);
+    if (!branch || !branch.connectionUrl) throw new Error('Branch not found');
+
+    return decrypt(branch.connectionUrl);
+  }
+}
+
+export const projectDatabaseBranchService = new ProjectDatabaseBranchService();
 export const projectDatabaseService = new ProjectDatabaseProvisioningService();
