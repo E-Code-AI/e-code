@@ -1,4 +1,4 @@
-import { useCallback,useEffect,useRef,useState } from 'react';
+import { useCallback,useEffect,useMemo,useRef,useState } from 'react';
 import { flushSync } from 'react-dom';
 
 import { ECodeLogo } from '@/components/ECodeLogo';
@@ -2033,6 +2033,7 @@ export function ReplitAgentPanelV3({
       const warningMessages: Message[] = []; // Accumulate warnings during streaming
       let sseParseErrorShown = false;
       let messageMetadata: { cost?: string; tokens?: number; model?: string; provider?: string } = {};
+      let sseBuffer = '';
 
       // Add assistant message to state BEFORE streaming to support live tool/thinking updates
       setMessages(prev => [...prev, assistantMessage]);
@@ -2042,19 +2043,25 @@ export function ReplitAgentPanelV3({
 
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        const chunk = decoder.decode(value, { stream: true });
+        sseBuffer += chunk.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 
-        for (const line of lines) {
-          // Handle SSE events
-          if (line.startsWith('event: ')) {
-            const _eventType = line.slice(7).trim();
-            continue;
-          }
+        let boundaryIndex;
+        while ((boundaryIndex = sseBuffer.indexOf('\n\n')) !== -1) {
+          const eventText = sseBuffer.slice(0, boundaryIndex);
+          sseBuffer = sseBuffer.slice(boundaryIndex + 2);
+          const lines = eventText.split('\n');
 
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
+          for (const line of lines) {
+            // Handle SSE events
+            if (line.startsWith('event: ')) {
+              const _eventType = line.slice(7).trim();
+              continue;
+            }
+
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
 
               // Handle context truncation warnings (check for presence of warning-specific fields)
               if (data.message && typeof data.message === 'string' && !data.content && !data.step && !data.toolCallId) {
@@ -2167,32 +2174,33 @@ export function ReplitAgentPanelV3({
                   return newMessages;
                 });
               }
-            } catch (e) {
-              console.error('[AgentMessageFlow] SSE JSON parse error', {
-                error: e,
-                line,
-                projectId,
-                conversationId: chatConversationId,
-              });
-              if (!sseParseErrorShown) {
-                sseParseErrorShown = true;
-                const parseDetails = getMessageFlowErrorDetails(e, {
-                  flow: 'manual-send-sse-parse',
+              } catch (e) {
+                console.error('[AgentMessageFlow] SSE JSON parse error', {
+                  error: e,
+                  line,
                   projectId,
                   conversationId: chatConversationId,
-                  line: line.slice(0, 500),
                 });
-                warningMessages.push({
-                  id: `system-${Date.now()}`,
-                  role: 'system',
-                  content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
-                  timestamp: new Date(),
-                  status: 'error',
-                  metadata: {
-                    error: true,
-                    errorDetails: parseDetails,
-                  },
-                });
+                if (!sseParseErrorShown) {
+                  sseParseErrorShown = true;
+                  const parseDetails = getMessageFlowErrorDetails(e, {
+                    flow: 'manual-send-sse-parse',
+                    projectId,
+                    conversationId: chatConversationId,
+                    line: line.slice(0, 500),
+                  });
+                  warningMessages.push({
+                    id: `system-${Date.now()}`,
+                    role: 'system',
+                    content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
+                    timestamp: new Date(),
+                    status: 'error',
+                    metadata: {
+                      error: true,
+                      errorDetails: parseDetails,
+                    },
+                  });
+                }
               }
             }
           }
@@ -2497,6 +2505,18 @@ export function ReplitAgentPanelV3({
     && messages.length <= 1
     && !isPendingResponse
     && !isWorking;
+  const displayedMessages = useMemo(() => {
+    if (!streamingContent) return messages;
+    return messages.filter(message => {
+      const isEmptyStreamingAssistant =
+        message.role === 'assistant'
+        && message.isStreaming
+        && !message.content?.trim()
+        && (!message.toolExecutions || message.toolExecutions.length === 0);
+
+      return !isEmptyStreamingAssistant;
+    });
+  }, [messages, streamingContent]);
 
   // ✅ FIX (Jan 2026): NEVER block the UI - Replit-style always-ready pattern
   // Users can ALWAYS send messages immediately using temp conversationId (-projectId)
@@ -2784,7 +2804,7 @@ export function ReplitAgentPanelV3({
           {/* Conditionally use virtualized list for long conversations (>20 messages) */}
           {!showEmptyState && (useVirtualization ? (
             <VirtualizedMessageList
-              messages={messages}
+              messages={displayedMessages}
               isCompactMode={isCompactMode}
               isPendingResponse={isPendingResponse}
               streamingContent={streamingContent}
@@ -2800,7 +2820,7 @@ export function ReplitAgentPanelV3({
             />
           ) : (
             <LazyAnimatePresence mode="popLayout">
-              {messages.map((message, _index) => (
+              {displayedMessages.map((message, _index) => (
                 <div key={message.id}>
                   <EnhancedChatMessage
                     message={message}
