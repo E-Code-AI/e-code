@@ -1697,6 +1697,41 @@ export function ReplitAgentPanelV3({
               }
             }
 
+            const trailingDecoded = decoder.decode();
+            if (trailingDecoded) {
+              sseBuffer += trailingDecoded.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            }
+
+            if (sseBuffer.trim()) {
+              console.debug('[AutoStart] Flushing trailing SSE buffer', {
+                projectId,
+                conversationId: chatConversationId,
+                bytes: sseBuffer.length,
+              });
+
+              for (const line of sseBuffer.trim().split('\n')) {
+                if (!line.startsWith('data: ')) continue;
+                const payload = line.slice(6).trim();
+                if (!payload || payload === '[DONE]') continue;
+
+                try {
+                  const data = JSON.parse(payload);
+                  if (data.content) {
+                    fullContent += data.content;
+                    setStreamingContent(fullContent);
+                    setIsPendingResponse(false);
+                  }
+                } catch (e) {
+                  console.error('[AutoStart] Trailing SSE JSON parse error', {
+                    error: e,
+                    line,
+                    projectId,
+                    conversationId: chatConversationId,
+                  });
+                }
+              }
+            }
+
             // Update existing assistant message with final content
             const finalContent = fullContent || "I'll help you build that! Let me start working on it...";
             setMessages(prev => prev.map(msg =>
@@ -2203,6 +2238,49 @@ export function ReplitAgentPanelV3({
                 }
               }
             }
+          }
+        }
+      }
+
+      const trailingDecoded = decoder.decode();
+      if (trailingDecoded) {
+        sseBuffer += trailingDecoded.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      }
+
+      if (sseBuffer.trim()) {
+        console.debug('[AgentMessageFlow] Flushing trailing SSE buffer', {
+          projectId,
+          conversationId: chatConversationId,
+          bytes: sseBuffer.length,
+        });
+
+        for (const line of sseBuffer.trim().split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (!payload || payload === '[DONE]') continue;
+
+          try {
+            const data = JSON.parse(payload);
+            if (data.content) {
+              fullContent += data.content;
+              setStreamingContent(fullContent);
+              setIsPendingResponse(false);
+            }
+            if (data.totalTokens !== undefined || data.cost !== undefined) {
+              messageMetadata = {
+                cost: data.cost,
+                tokens: data.totalTokens,
+                model: data.model,
+                provider: data.provider
+              };
+            }
+          } catch (e) {
+            console.error('[AgentMessageFlow] Trailing SSE JSON parse error', {
+              error: e,
+              line,
+              projectId,
+              conversationId: chatConversationId,
+            });
           }
         }
       }
