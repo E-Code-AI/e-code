@@ -180,8 +180,20 @@ adb install android/app/build/outputs/apk/debug/app-debug.apk
 ### Using Command Line
 
 ```bash
-cd ios/App
-xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 15' build
+cd /Users/hb/dev/e-code
+npm run mobile:build
+xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 15' build
+```
+
+If `xcodebuild` reports that the active developer directory is
+`/Library/Developer/CommandLineTools`, full Xcode is not installed/selected yet.
+Install Xcode from the Mac App Store, open it once to finish component
+installation, then run:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license accept
+xcodebuild -version
 ```
 
 ---
@@ -191,36 +203,37 @@ xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -destinat
 ### 1. Create a Keystore
 
 ```bash
-keytool -genkey -v -keystore ecode-release.keystore -alias ecode -keyalg RSA -keysize 2048 -validity 10000
+cd /Users/hb/dev/e-code
+keytool -genkeypair -v \
+  -keystore android/app/ecode-upload-keystore.jks \
+  -storetype JKS \
+  -keyalg RSA \
+  -keysize 4096 \
+  -validity 10000 \
+  -alias ecode_upload
 ```
 
-### 2. Configure Signing in Gradle
+### 2. Configure Signing
 
-Add to `android/app/build.gradle`:
+`android/app/build.gradle` already reads signing config from
+`android/keystore.properties` or from environment variables.
 
-```groovy
-android {
-    signingConfigs {
-        release {
-            storeFile file('ecode-release.keystore')
-            storePassword System.getenv('KEYSTORE_PASSWORD') ?: ''
-            keyAlias 'ecode'
-            keyPassword System.getenv('KEY_PASSWORD') ?: ''
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-}
+Create `android/keystore.properties` locally:
+
+```properties
+storeFile=app/ecode-upload-keystore.jks
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=ecode_upload
+keyPassword=YOUR_KEY_PASSWORD
 ```
+
+Both `*.jks` and `keystore.properties` are gitignored.
 
 ### 3. Build the Release APK/AAB
 
 ```bash
+cd /Users/hb/dev/e-code
+npm run mobile:build
 cd android
 
 # APK (for direct distribution)
@@ -233,6 +246,13 @@ cd android
 Output locations:
 - APK: `android/app/build/outputs/apk/release/app-release.apk`
 - AAB: `android/app/build/outputs/bundle/release/app-release.aab`
+
+Verify the APK signature:
+
+```bash
+export JAVA_HOME=/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+/opt/homebrew/share/android-commandlinetools/build-tools/36.0.0/apksigner verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+```
 
 ### 4. Submit to Google Play Store
 
@@ -247,6 +267,9 @@ Output locations:
 
 ## iOS Archive for App Store (macOS Only)
 
+The project is a Capacitor iOS app, not an Expo app. `app.json` contains only an
+empty Expo stub and there is no `eas.json`; use Xcode/Capacitor for iOS archive.
+
 ### 1. Configure Signing
 
 In Xcode:
@@ -257,6 +280,20 @@ In Xcode:
 
 ### 2. Create an Archive
 
+Command line:
+
+```bash
+cd /Users/hb/dev/e-code
+npm run mobile:build
+xcodebuild -project ios/App/App.xcodeproj \
+  -scheme App \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath build/ios/E-Code.xcarchive \
+  archive
+```
+
+Xcode UI:
 1. Select **Any iOS Device** as the build destination
 2. Go to **Product** > **Archive**
 3. Wait for the archive to complete
