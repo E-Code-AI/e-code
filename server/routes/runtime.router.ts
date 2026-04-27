@@ -20,6 +20,7 @@ import * as runtimeHealth from '../runtimes/runtime-health';
 import * as runtimeManager from '../runtimes/runtime-manager';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('runtime-router');
 const codeExecutor = new CodeExecutor();
@@ -42,7 +43,7 @@ router.get('/runtime/public/dependencies', async (_req, res) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    logger.error('Failed to load public runtime dependencies:', error);
+    logger.error('Failed to load public runtime dependencies:', redactErrorForLog(error));
     return res.status(500).json({
       error: 'Failed to load public runtime dependencies',
       details: error?.message,
@@ -94,7 +95,7 @@ router.get('/runtime/dashboard', ensureAuthenticated, async (req, res) => {
       activeProjects,
     });
   } catch (error: any) {
-    logger.error('Failed to load runtime dashboard:', error);
+    logger.error('Failed to load runtime dashboard:', redactErrorForLog(error));
     return res.status(500).json({
       error: 'Failed to load runtime dashboard',
       details: error?.message,
@@ -181,7 +182,7 @@ router.post('/projects/:id/runtime/execute', ensureAuthenticated, ensureProjectA
 
     await executeProjectCommand(req, res);
   } catch (err: any) {
-    logger.error('Execute command failed:', err);
+    logger.error('Execute command failed:', redactErrorForLog(err));
     if (!res.headersSent) {
       res.status(500).json({ 
         success: false,

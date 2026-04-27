@@ -6,6 +6,7 @@ import { RealSecretManagementService } from '../services/real-secret-management'
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { withScopedTransaction } from '../services/persistence-engine';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('secrets');
@@ -75,7 +76,7 @@ router.get('/', async (req, res) => {
 
     res.json({ secrets: maskedSecrets });
   } catch (error: any) {
-    logger.error('Failed to get secrets:', error);
+    logger.error('Failed to get secrets:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -134,7 +135,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(response);
   } catch (error: any) {
-    logger.error('Failed to create secret:', error);
+    logger.error('Failed to create secret:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }
@@ -213,7 +214,7 @@ router.patch('/:id', async (req, res) => {
 
     res.json(response);
   } catch (error: any) {
-    logger.error('Failed to update secret:', error);
+    logger.error('Failed to update secret:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }
@@ -257,7 +258,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ message: 'Secret deleted' });
   } catch (error: any) {
-    logger.error('Failed to delete secret:', error);
+    logger.error('Failed to delete secret:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -320,7 +321,7 @@ router.post('/:id/reveal', async (req, res) => {
       expiresIn: 60
     });
   } catch (error: any) {
-    logger.error('Failed to reveal secret:', error);
+    logger.error('Failed to reveal secret:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

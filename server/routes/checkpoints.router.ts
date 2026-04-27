@@ -8,6 +8,7 @@ import { csrfProtection } from '../middleware/csrf';
 import { checkpointService } from '../services/checkpoint-service';
 import { rollbackService } from '../services/rollback-service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('checkpoints-router');
@@ -49,7 +50,7 @@ async function verifyCheckpointOwnership(userId: number, checkpointId: number): 
       projectId: checkpoint.projectId
     };
   } catch (error) {
-    logger.error('Checkpoint ownership verification failed:', error);
+    logger.error('Checkpoint ownership verification failed:', redactErrorForLog(error));
     return { authorized: false };
   }
 }
@@ -71,7 +72,7 @@ async function verifyProjectOwnership(userId: number, projectId: number): Promis
     
     return project.ownerId === userId;
   } catch (error) {
-    logger.error('Project ownership verification failed:', error);
+    logger.error('Project ownership verification failed:', redactErrorForLog(error));
     return false;
   }
 }
@@ -97,7 +98,7 @@ async function ensureProjectAccess(req: Request, res: Response, next: NextFuncti
     
     next();
   } catch (error) {
-    logger.error('Project access verification failed:', error);
+    logger.error('Project access verification failed:', redactErrorForLog(error));
     res.status(500).json({ success: false, error: 'Access verification failed' });
   }
 }
@@ -173,7 +174,7 @@ router.post('/checkpoints', ensureAuthenticated, csrfProtection, async (req: Req
       message: `Checkpoint "${checkpoint.name}" created successfully`,
     });
   } catch (error) {
-    logger.error('Failed to create checkpoint:', error);
+    logger.error('Failed to create checkpoint:', redactErrorForLog(error));
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -230,7 +231,7 @@ router.get('/checkpoints/:id', ensureAuthenticated, async (req: Request, res: Re
       checkpoint,
     });
   } catch (error) {
-    logger.error('Failed to get checkpoint:', error);
+    logger.error('Failed to get checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get checkpoint',
@@ -263,7 +264,7 @@ router.get('/projects/:projectId/checkpoints', ensureAuthenticated, ensureProjec
       count: checkpointsList.length,
     });
   } catch (error) {
-    logger.error('Failed to list checkpoints:', error);
+    logger.error('Failed to list checkpoints:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to list checkpoints',
@@ -318,7 +319,7 @@ router.post('/checkpoints/:id/restore', ensureAuthenticated, csrfProtection, asy
       message: success ? 'Checkpoint restored successfully' : 'Failed to restore checkpoint',
     });
   } catch (error) {
-    logger.error('Failed to restore checkpoint:', error);
+    logger.error('Failed to restore checkpoint:', redactErrorForLog(error));
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -374,7 +375,7 @@ router.post('/checkpoints/rollback', ensureAuthenticated, csrfProtection, async 
         : `Rollback failed: ${result.error}`,
     });
   } catch (error) {
-    logger.error('Rollback failed:', error);
+    logger.error('Rollback failed:', redactErrorForLog(error));
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -430,7 +431,7 @@ router.post('/checkpoints/rollforward', ensureAuthenticated, csrfProtection, asy
         : `Rollforward failed: ${result.error}`,
     });
   } catch (error) {
-    logger.error('Rollforward failed:', error);
+    logger.error('Rollforward failed:', redactErrorForLog(error));
     
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -471,7 +472,7 @@ router.get('/projects/:projectId/checkpoints/tree', ensureAuthenticated, ensureP
       count: tree.length,
     });
   } catch (error) {
-    logger.error('Failed to get checkpoint tree:', error);
+    logger.error('Failed to get checkpoint tree:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get checkpoint tree',
@@ -502,7 +503,7 @@ router.get('/projects/:projectId/checkpoints/navigation', ensureAuthenticated, e
       navigation,
     });
   } catch (error) {
-    logger.error('Failed to get navigation options:', error);
+    logger.error('Failed to get navigation options:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get navigation options',
@@ -553,7 +554,7 @@ router.delete('/checkpoints/:id', csrfProtection, async (req: Request, res: Resp
       message: 'Checkpoint deleted successfully',
     });
   } catch (error) {
-    logger.error('Failed to delete checkpoint:', error);
+    logger.error('Failed to delete checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete checkpoint',
@@ -590,7 +591,7 @@ router.get('/projects/:projectId/auto-checkpoints', ensureAuthenticated, ensureP
       count: checkpointsList.length,
     });
   } catch (error) {
-    logger.error('Failed to list auto-checkpoints:', error);
+    logger.error('Failed to list auto-checkpoints:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to list auto-checkpoints',
@@ -625,7 +626,7 @@ router.get('/auto-checkpoints/:id', ensureAuthenticated, async (req: Request, re
 
     res.json({ success: true, checkpoint });
   } catch (error) {
-    logger.error('Failed to get auto-checkpoint:', error);
+    logger.error('Failed to get auto-checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get auto-checkpoint',
@@ -662,7 +663,7 @@ router.post('/projects/:projectId/auto-checkpoints', ensureAuthenticated, csrfPr
       message: 'Checkpoint created successfully',
     });
   } catch (error) {
-    logger.error('Failed to create auto-checkpoint:', error);
+    logger.error('Failed to create auto-checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create auto-checkpoint',
@@ -709,7 +710,7 @@ router.post('/auto-checkpoints/:id/restore', ensureAuthenticated, csrfProtection
       message: result.success ? 'Restored successfully' : `Restore failed: ${result.errors.join(', ')}`,
     });
   } catch (error) {
-    logger.error('Failed to restore auto-checkpoint:', error);
+    logger.error('Failed to restore auto-checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to restore auto-checkpoint',
@@ -736,7 +737,7 @@ router.get('/projects/:projectId/auto-checkpoints/latest', ensureAuthenticated, 
       checkpoint,
     });
   } catch (error) {
-    logger.error('Failed to get latest auto-checkpoint:', error);
+    logger.error('Failed to get latest auto-checkpoint:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get latest auto-checkpoint',
@@ -765,7 +766,7 @@ router.get('/projects/:projectId/auto-checkpoints/restore-history', ensureAuthen
       count: history.length,
     });
   } catch (error) {
-    logger.error('Failed to get restore history:', error);
+    logger.error('Failed to get restore history:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get restore history',

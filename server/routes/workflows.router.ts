@@ -14,6 +14,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('workflows-router');
 
@@ -79,7 +80,7 @@ async function ensureWorkflowAccess(req: Request, res: Response, next: () => voi
     if (error?.message === 'PROJECT_FORBIDDEN') {
       return res.status(403).json({ error: "You don't have access to this project" });
     }
-    logger.error('Failed to verify workflow access:', error);
+    logger.error('Failed to verify workflow access:', redactErrorForLog(error));
     return res.status(500).json({ error: 'Failed to verify workflow access' });
   }
 }
@@ -105,7 +106,7 @@ async function ensureProjectAccessFromRequest(req: Request, res: Response, next:
     if (error?.message === 'PROJECT_FORBIDDEN') {
       return res.status(403).json({ error: "You don't have access to this project" });
     }
-    logger.error('Failed to verify project access for workflow route:', error);
+    logger.error('Failed to verify project access for workflow route:', redactErrorForLog(error));
     return res.status(500).json({ error: 'Failed to verify project access' });
   }
 }
@@ -186,7 +187,7 @@ workflowsRouter.get('/', ensureAuthenticated, ensureProjectAccessFromRequest, as
     
     res.json(workflowsWithTasks);
   } catch (error) {
-    logger.error('Failed to get workflows:', error);
+    logger.error('Failed to get workflows:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get workflows' });
   }
 });
@@ -209,7 +210,7 @@ workflowsRouter.post('/run-command', ensureAuthenticated, ensureProjectAccessFro
       logs,
     });
   } catch (error: any) {
-    logger.error('Failed to run command:', error);
+    logger.error('Failed to run command:', redactErrorForLog(error));
     res.status(500).json({
       error: error?.message || 'Failed to run command',
       success: false,
@@ -229,7 +230,7 @@ workflowsRouter.get('/:id', ensureAuthenticated, ensureWorkflowAccess, async (re
     
     res.json(workflow);
   } catch (error) {
-    logger.error('Failed to get workflow:', error);
+    logger.error('Failed to get workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get workflow' });
   }
 });
@@ -294,7 +295,7 @@ workflowsRouter.post('/', ensureAuthenticated, ensureProjectAccessFromRequest, a
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid workflow data', details: error.errors });
     }
-    logger.error('Failed to create workflow:', error);
+    logger.error('Failed to create workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to create workflow' });
   }
 });
@@ -373,7 +374,7 @@ workflowsRouter.patch('/:id', ensureAuthenticated, ensureWorkflowAccess, async (
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid workflow data', details: error.errors });
     }
-    logger.error('Failed to update workflow:', error);
+    logger.error('Failed to update workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update workflow' });
   }
 });
@@ -402,7 +403,7 @@ workflowsRouter.delete('/:id', ensureAuthenticated, ensureWorkflowAccess, async 
     
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to delete workflow:', error);
+    logger.error('Failed to delete workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to delete workflow' });
   }
 });
@@ -438,7 +439,7 @@ workflowsRouter.post('/:id/run', ensureAuthenticated, ensureWorkflowAccess, asyn
       message: `Workflow "${workflow.name}" started`,
     });
   } catch (error) {
-    logger.error('Failed to run workflow:', error);
+    logger.error('Failed to run workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to run workflow' });
   }
 });
@@ -468,7 +469,7 @@ workflowsRouter.post('/:id/stop', ensureAuthenticated, ensureWorkflowAccess, asy
     
     res.json({ success: true, message: 'No running processes found' });
   } catch (error) {
-    logger.error('Failed to stop workflow:', error);
+    logger.error('Failed to stop workflow:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to stop workflow' });
   }
 });
@@ -486,7 +487,7 @@ workflowsRouter.get('/:id/runs', ensureAuthenticated, ensureWorkflowAccess, asyn
     
     res.json(runs);
   } catch (error) {
-    logger.error('Failed to get workflow runs:', error);
+    logger.error('Failed to get workflow runs:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get workflow runs' });
   }
 });
@@ -515,7 +516,7 @@ workflowsRouter.post('/:id/set-run-button', ensureAuthenticated, ensureWorkflowA
     
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to set run button:', error);
+    logger.error('Failed to set run button:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to set run button' });
   }
 });
@@ -545,7 +546,7 @@ workflowsRouter.post('/:id/reorder-tasks', ensureAuthenticated, ensureWorkflowAc
     const result = await getWorkflowWithTasks(id);
     res.json(result);
   } catch (error) {
-    logger.error('Failed to reorder tasks:', error);
+    logger.error('Failed to reorder tasks:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to reorder tasks' });
   }
 });

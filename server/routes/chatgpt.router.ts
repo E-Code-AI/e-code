@@ -13,6 +13,7 @@ import { ChatGPTService } from '../services/chatgpt-service';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 // Platform root (E-Code codebase base directory)
 const PLATFORM_ROOT = process.cwd();
@@ -141,7 +142,7 @@ export class ChatGPTRouter {
           if (!streamEnded) { streamEnded = true; res.end(); }
         }
       } catch (error: any) {
-        logger.error('[ChatGPT] Failed to setup direct stream:', error);
+        logger.error('[ChatGPT] Failed to setup direct stream:', redactErrorForLog(error));
         if (!streamEnded) { streamEnded = true; res.status(500).json({ message: error.message || 'Failed to setup streaming' }); }
       }
     });
@@ -353,7 +354,7 @@ export class ChatGPTRouter {
           }
         }
       } catch (error: any) {
-        logger.error('[ChatGPT] Failed to setup streaming:', error);
+        logger.error('[ChatGPT] Failed to setup streaming:', redactErrorForLog(error));
         if (!streamEnded) {
           streamEnded = true;
           res.status(500).json({ message: error.message || 'Failed to setup streaming' });
@@ -369,7 +370,7 @@ export class ChatGPTRouter {
         const projects = await this.storage.getAllProjects();
         res.json(projects);
       } catch (error) {
-        logger.error('Failed to get all projects:', error);
+        logger.error('Failed to get all projects:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to retrieve projects' });
       }
     });
@@ -388,7 +389,7 @@ export class ChatGPTRouter {
           ownerUsername: owner?.username 
         });
       } catch (error) {
-        logger.error('Failed to get project:', error);
+        logger.error('Failed to get project:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to retrieve project' });
       }
     });
@@ -399,7 +400,7 @@ export class ChatGPTRouter {
         const files = await this.storage.getFilesByProjectId(req.params.projectId);
         res.json(files);
       } catch (error) {
-        logger.error('Failed to get project files:', error);
+        logger.error('Failed to get project files:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to retrieve files' });
       }
     });
@@ -413,7 +414,7 @@ export class ChatGPTRouter {
         }
         res.json(file);
       } catch (error) {
-        logger.error('Failed to get file:', error);
+        logger.error('Failed to get file:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to retrieve file' });
       }
     });
@@ -436,7 +437,7 @@ export class ChatGPTRouter {
         logger.info(`[Admin] File ${file.path} updated by admin ${req.user!.id} in project ${req.params.projectId}`);
         res.json(updatedFile);
       } catch (error) {
-        logger.error('Failed to update file:', error);
+        logger.error('Failed to update file:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to update file' });
       }
     });
@@ -447,7 +448,7 @@ export class ChatGPTRouter {
         const sessions = await this.storage.getActiveAgentSessions?.() || [];
         res.json(sessions);
       } catch (error) {
-        logger.error('Failed to get agent sessions:', error);
+        logger.error('Failed to get agent sessions:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to retrieve agent sessions' });
       }
     });
@@ -465,7 +466,7 @@ export class ChatGPTRouter {
         
         res.json({ message: 'Session terminated' });
       } catch (error) {
-        logger.error('Failed to terminate session:', error);
+        logger.error('Failed to terminate session:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to terminate session' });
       }
     });
@@ -501,7 +502,7 @@ export class ChatGPTRouter {
         const tree = await buildFileTree(basePath, dir, 6, 0);
         res.json(tree);
       } catch (error: any) {
-        logger.error('Failed to get platform file tree:', error);
+        logger.error('Failed to get platform file tree:', redactErrorForLog(error));
         if (error.code === 'ENOENT') return res.status(404).json({ message: 'Directory not found' });
         res.status(500).json({ message: 'Failed to read directory' });
       }
@@ -535,7 +536,7 @@ export class ChatGPTRouter {
           modifiedAt: stat.mtime,
         });
       } catch (error: any) {
-        logger.error('Failed to read platform file:', error);
+        logger.error('Failed to read platform file:', redactErrorForLog(error));
         if (error.code === 'ENOENT') return res.status(404).json({ message: 'File not found' });
         if (error.code === 'EISDIR') return res.status(400).json({ message: 'Path is a directory' });
         res.status(500).json({ message: 'Failed to read file' });
@@ -560,7 +561,7 @@ export class ChatGPTRouter {
         logger.info(`[Admin] Platform file written: ${filePath} by admin ${req.user!.id}`);
         res.json({ success: true, path: filePath, size: Buffer.byteLength(content, 'utf-8') });
       } catch (error: any) {
-        logger.error('Failed to write platform file:', error);
+        logger.error('Failed to write platform file:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to write file' });
       }
     });
@@ -606,7 +607,7 @@ export class ChatGPTRouter {
           memoryUsage: process.memoryUsage(),
         });
       } catch (error) {
-        logger.error('Failed to get platform stats:', error);
+        logger.error('Failed to get platform stats:', redactErrorForLog(error));
         res.status(500).json({ message: 'Failed to get platform stats' });
       }
     });

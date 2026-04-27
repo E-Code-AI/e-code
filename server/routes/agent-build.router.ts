@@ -7,6 +7,7 @@ import { type IStorage } from '../storage';
 import { getBuildExecutor } from '../services/build-executor.service';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('AgentBuildRouter');
 
@@ -196,7 +197,7 @@ export class AgentBuildRouter {
               res.write(`event: ${event.type}\n`);
               res.write(`data: ${JSON.stringify(event.data)}\n\n`);
             } catch (error) {
-              logger.error('Error writing SSE event:', error);
+              logger.error('Error writing SSE event:', redactErrorForLog(error));
             }
           });
 

@@ -141,7 +141,7 @@ export class ProjectsRouter {
         
       } catch (error) {
         // Invalid or expired token
-        projectLogger.error('[ensureProjectAccess] Bootstrap token validation failed:', error);
+        projectLogger.error('[ensureProjectAccess] Bootstrap token validation failed:', redactErrorForLog(error));
         return res.status(401).json({
           message: "Invalid or expired bootstrap token",
           code: "BOOTSTRAP_TOKEN_INVALID",
@@ -288,7 +288,7 @@ export class ProjectsRouter {
           }
         });
       } catch (error) {
-        projectLogger.error('Error fetching projects:', error);
+        projectLogger.error('Error fetching projects:', redactErrorForLog(error));
         res.status(500).json({ 
           message: "Failed to fetch projects",
           code: "FETCH_ERROR"
@@ -378,7 +378,7 @@ export class ProjectsRouter {
         
         res.json(enrichedProjects);
       } catch (error) {
-        projectLogger.error('Error fetching explore projects:', error);
+        projectLogger.error('Error fetching explore projects:', redactErrorForLog(error));
         res.status(500).json({ 
           message: "Failed to fetch public projects",
           code: "FETCH_ERROR"
@@ -545,7 +545,7 @@ export class ProjectsRouter {
           database: databaseInfo
         });
       } catch (error: any) {
-        projectLogger.error('Error creating project:', error);
+        projectLogger.error('Error creating project:', redactErrorForLog(error));
         if (error.name === 'ZodError') {
           return res.status(400).json({ 
             message: "Invalid project data",
@@ -634,7 +634,7 @@ export class ProjectsRouter {
           scaffold,
         });
       } catch (error: any) {
-        projectLogger.error('Error creating project from template:', error);
+        projectLogger.error('Error creating project from template:', redactErrorForLog(error));
         res.status(500).json({
           message: 'Failed to create project from template',
           code: 'CREATE_FROM_TEMPLATE_ERROR',
@@ -663,7 +663,7 @@ export class ProjectsRouter {
         
         res.json({ ...project, owner: sanitizeOwner(owner) });
       } catch (error) {
-        projectLogger.error('Error fetching project:', error);
+        projectLogger.error('Error fetching project:', redactErrorForLog(error));
         res.status(500).json({ 
           message: "Failed to fetch project",
           code: "FETCH_ERROR"
@@ -692,7 +692,7 @@ export class ProjectsRouter {
         
         res.json(project);
       } catch (error) {
-        projectLogger.error('Error updating project:', error);
+        projectLogger.error('Error updating project:', redactErrorForLog(error));
         res.status(500).json({ 
           message: "Failed to update project",
           code: "UPDATE_ERROR"
@@ -724,7 +724,7 @@ export class ProjectsRouter {
         await this.storage.deleteProject(projectId);
         res.json({ message: "Project deleted successfully" });
       } catch (error) {
-        projectLogger.error('Error deleting project:', error);
+        projectLogger.error('Error deleting project:', redactErrorForLog(error));
         res.status(500).json({ 
           message: "Failed to delete project",
           code: "DELETE_ERROR"
@@ -795,7 +795,7 @@ export class ProjectsRouter {
           owner: sanitizeOwner(owner)
         });
       } catch (error) {
-        projectLogger.error('[Projects] Error accessing project:', error);
+        projectLogger.error('[Projects] Error accessing project:', redactErrorForLog(error));
         res.status(500).json({ 
           error: 'Failed to access project',
           code: 'SERVER_ERROR' 
@@ -1091,7 +1091,7 @@ export class ProjectsRouter {
           history,
         });
       } catch (error: any) {
-        projectLogger.error('[VisualEdit] Error fetching edit history:', error);
+        projectLogger.error('[VisualEdit] Error fetching edit history:', redactErrorForLog(error));
         return res.status(500).json({
           error: error.message || 'Failed to fetch visual edit history',
           code: 'VISUAL_EDIT_HISTORY_ERROR'
@@ -1154,7 +1154,7 @@ export class ProjectsRouter {
         });
 
       } catch (error: any) {
-        projectLogger.error('[VisualEdit] Error applying visual edit:', error);
+        projectLogger.error('[VisualEdit] Error applying visual edit:', redactErrorForLog(error));
         return res.status(500).json({ 
           error: error.message || 'Failed to apply visual edit',
           code: 'VISUAL_EDIT_ERROR' 
@@ -1193,7 +1193,7 @@ export class ProjectsRouter {
           message: 'Visual edit undone',
         });
       } catch (error: any) {
-        projectLogger.error('[VisualEdit] Error undoing visual edit:', error);
+        projectLogger.error('[VisualEdit] Error undoing visual edit:', redactErrorForLog(error));
         return res.status(500).json({
           error: error.message || 'Failed to undo visual edit',
           code: 'VISUAL_EDIT_UNDO_ERROR'
@@ -1232,7 +1232,7 @@ export class ProjectsRouter {
           message: 'Visual edit reapplied',
         });
       } catch (error: any) {
-        projectLogger.error('[VisualEdit] Error redoing visual edit:', error);
+        projectLogger.error('[VisualEdit] Error redoing visual edit:', redactErrorForLog(error));
         return res.status(500).json({
           error: error.message || 'Failed to redo visual edit',
           code: 'VISUAL_EDIT_REDO_ERROR'
@@ -1396,7 +1396,7 @@ export class ProjectsRouter {
         return res.json(stats);
 
       } catch (error: any) {
-        projectLogger.error('[ProjectStats] Error getting project stats:', error);
+        projectLogger.error('[ProjectStats] Error getting project stats:', redactErrorForLog(error));
         return res.status(500).json({ 
           error: error.message || 'Failed to get project stats',
           code: 'STATS_ERROR' 

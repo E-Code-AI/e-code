@@ -17,6 +17,7 @@ import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
 import { autonomousEngine } from '../services/agent-autonomous-engine.service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('AutonomousRouter');
@@ -56,7 +57,7 @@ async function ensureSessionOwnership(req: Request, res: Response, next: NextFun
     (req as any).agentSession = session;
     next();
   } catch (error: any) {
-    logger.error('Error in session ownership check:', error);
+    logger.error('Error in session ownership check:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to verify session ownership' });
   }
 }
@@ -93,7 +94,7 @@ router.post('/enable', ensureSessionOwnership, async (req, res) => {
       message: `Autonomous mode enabled with ${riskThreshold} risk threshold`
     });
   } catch (error: any) {
-    logger.error('Error enabling autonomous mode:', error);
+    logger.error('Error enabling autonomous mode:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to enable autonomous mode' });
   }
 });
@@ -121,7 +122,7 @@ router.post('/disable', ensureSessionOwnership, async (req, res) => {
       message: 'Autonomous mode disabled - all actions will require approval'
     });
   } catch (error: any) {
-    logger.error('Error disabling autonomous mode:', error);
+    logger.error('Error disabling autonomous mode:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to disable autonomous mode' });
   }
 });
@@ -161,7 +162,7 @@ router.post('/assess-risk', async (req, res) => {
       reasoning: riskAssessment.reasoning
     });
   } catch (error: any) {
-    logger.error('Error assessing risk:', error);
+    logger.error('Error assessing risk:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to assess risk' });
   }
 });
@@ -192,7 +193,7 @@ router.post('/execute', ensureAdmin, async (req, res) => {
       action
     });
   } catch (error: any) {
-    logger.error('Error executing action:', error);
+    logger.error('Error executing action:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to execute action' });
   }
 });
@@ -214,7 +215,7 @@ router.get('/actions/:sessionId', ensureSessionOwnership, async (req, res) => {
       actions
     });
   } catch (error: any) {
-    logger.error('Error getting autonomous actions:', error);
+    logger.error('Error getting autonomous actions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get actions' });
   }
 });
@@ -351,7 +352,7 @@ router.post('/build', async (req, res) => {
         
         logger.info(`✅ Created file: ${action.path} (risk: ${risk.score}, auto-approved: ${risk.autoApprove})`);
       } catch (error: any) {
-        logger.error(`Failed to create file ${action.path}:`, error);
+        logger.error(`Failed to create file ${action.path}:`, redactErrorForLog(error));
         
         // Log failed action for audit trail
         await aiSecurityService.logAction(
@@ -410,7 +411,7 @@ router.post('/build', async (req, res) => {
     });
     
   } catch (error: any) {
-    logger.error('Error in autonomous build:', error);
+    logger.error('Error in autonomous build:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to build project' });
   }
 });

@@ -12,6 +12,7 @@ import { dbPool } from '../db/index';
 import { getPrometheusExporter } from '../observability/opentelemetry';
 import { RedisCache } from '../services/redis-cache';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('health-checks');
 const _fsPromises = {
@@ -57,7 +58,7 @@ async function checkDatabase(): Promise<HealthCheck> {
       responseTime: Date.now() - startTime,
     };
   } catch (error) {
-    logger.error('Database health check failed:', error);
+    logger.error('Database health check failed:', redactErrorForLog(error));
     return {
       status: 'unhealthy',
       message: 'Database health check failed',
@@ -267,7 +268,7 @@ async function checkReadiness(): Promise<boolean> {
     
     return true;
   } catch (error) {
-    logger.error('Readiness check error:', error);
+    logger.error('Readiness check error:', redactErrorForLog(error));
     return false;
   }
 }
@@ -331,7 +332,7 @@ export function setupHealthRoutes(app: Express) {
         responseTime: Date.now() - startTime,
       });
     } catch (error) {
-      logger.error('Detailed health check failed:', error);
+      logger.error('Detailed health check failed:', redactErrorForLog(error));
       res.status(500).json({
         status: 'error',
         message: 'Health check failed',
@@ -503,7 +504,7 @@ nodejs_process_uptime_seconds ${uptime}
         res.send(fallbackMetrics);
       }
     } catch (error: any) {
-      logger.error('Error exporting Prometheus metrics:', error);
+      logger.error('Error exporting Prometheus metrics:', redactErrorForLog(error));
 
       // Fallback to basic metrics on error
       const memUsage = process.memoryUsage();

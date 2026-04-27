@@ -41,6 +41,7 @@ import { ViewportValidationService } from '../services/viewport-validation.servi
 import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const execAsync = promisify(exec);
 
@@ -706,7 +707,7 @@ router.post('/bootstrap', ensureAuthenticated, csrfProtection, async (req: Reque
           }).then(() => {
             logger.info(`[Bootstrap] ✅ Autonomous workspace creation COMPLETED for session ${session.id}`);
           }).catch((error: Error) => {
-            logger.error(`[Bootstrap] ❌ Autonomous workspace creation FAILED for session ${session.id}:`, error);
+            logger.error(`[Bootstrap] ❌ Autonomous workspace creation FAILED for session ${session.id}:`, redactErrorForLog(error));
           });
         } catch (syncError) {
           logger.error(`[Bootstrap] ❌ Synchronous error starting autonomous workspace for session ${session.id}:`, syncError);
@@ -867,7 +868,7 @@ router.get('/bootstrap/:token/status', ensureAuthenticated, async (req: Request,
     });
     
   } catch (error: any) {
-    logger.error('[Bootstrap Status] Error:', error);
+    logger.error('[Bootstrap Status] Error:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error.message
@@ -943,7 +944,7 @@ function verifyBootstrapToken(token: string): BootstrapTokenPayload | null {
     
     return decoded;
   } catch (error) {
-    logger.error('[Bootstrap Token] Verification failed:', error);
+    logger.error('[Bootstrap Token] Verification failed:', redactErrorForLog(error));
     return null;
   }
 }
@@ -973,7 +974,7 @@ router.get('/bootstrap/metrics', ensureAuthenticated, async (req: Request, res: 
       }
     });
   } catch (error: any) {
-    logger.error('[Bootstrap Metrics] Error:', error);
+    logger.error('[Bootstrap Metrics] Error:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve metrics'

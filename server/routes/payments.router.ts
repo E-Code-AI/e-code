@@ -4,6 +4,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { stripeService as paymentService } from '../payments/stripe-service';
 import { createLogger } from '../utils/logger';
 import { getQueueHealthMetrics,retryFailedQueueItems } from '../workflows/payg-queue-processor';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const startupLogger = createLogger('payments-router-startup');
@@ -33,7 +34,7 @@ router.get('/plans', (_req: Request, res: Response) => {
     const plans = paymentService.getPlans();
     res.json(plans);
   } catch (error: any) {
-    logger.error('Failed to fetch plans:', error);
+    logger.error('Failed to fetch plans:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch subscription plans' });
   }
 });
@@ -95,7 +96,7 @@ router.post('/create-subscription', ensureAuthenticated, async (req: Request, re
       status: subscription.status
     });
   } catch (error: any) {
-    logger.error('Failed to create subscription:', error);
+    logger.error('Failed to create subscription:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create subscription' });
   }
 });
@@ -107,7 +108,7 @@ router.post('/cancel-subscription', ensureAuthenticated, async (req: Request, re
     await paymentService.cancelSubscription(userId);
     res.json({ success: true, message: 'Subscription cancelled successfully' });
   } catch (error: any) {
-    logger.error('Failed to cancel subscription:', error);
+    logger.error('Failed to cancel subscription:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to cancel subscription' });
   }
 });
@@ -141,7 +142,7 @@ router.post('/update-subscription', ensureAuthenticated, async (req: Request, re
       status: subscription.status
     });
   } catch (error: any) {
-    logger.error('Failed to update subscription:', error);
+    logger.error('Failed to update subscription:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to update subscription' });
   }
 });
@@ -175,7 +176,7 @@ router.post('/create-checkout-session', ensureAuthenticated, async (req: Request
 
     res.json({ url, sessionId });
   } catch (error: any) {
-    logger.error('Failed to create checkout session:', error);
+    logger.error('Failed to create checkout session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create checkout session' });
   }
 });
@@ -202,7 +203,7 @@ router.post('/create-payment-intent', ensureAuthenticated, async (req: Request, 
       paymentIntentId: paymentIntent.id
     });
   } catch (error: any) {
-    logger.error('Failed to create payment intent:', error);
+    logger.error('Failed to create payment intent:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create payment intent' });
   }
 });
@@ -225,7 +226,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: R
     await paymentService.handleWebhook(req.body, sig as string);
     res.json({ received: true });
   } catch (error: any) {
-    logger.error('Webhook error:', error);
+    logger.error('Webhook error:', redactErrorForLog(error));
     if (error.message?.includes('signature verification failed')) {
       console.error('Webhook signature verification failed');
       return res.status(400).send('Webhook Error: Invalid signature');
@@ -255,7 +256,7 @@ router.get('/subscription-status', ensureAuthenticated, async (req: Request, res
       currentPeriodEnd: user.subscriptionCurrentPeriodEnd
     });
   } catch (error: any) {
-    logger.error('Failed to fetch subscription status:', error);
+    logger.error('Failed to fetch subscription status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch subscription status' });
   }
 });
@@ -269,7 +270,7 @@ router.get('/credits-status', ensureAuthenticated, async (req: Request, res: Res
     const status = await creditsService.getCreditsStatus(String(userId));
     res.json(status);
   } catch (error: any) {
-    logger.error('Failed to fetch credits status:', error);
+    logger.error('Failed to fetch credits status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch credits status' });
   }
 });
@@ -289,7 +290,7 @@ router.get('/billing-history', ensureAuthenticated, async (req: Request, res: Re
     const invoices = await paymentService.getBillingHistory(user.stripeCustomerId);
     res.json({ invoices });
   } catch (error: any) {
-    logger.error('Failed to fetch billing history:', error);
+    logger.error('Failed to fetch billing history:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch billing history' });
   }
 });
@@ -313,7 +314,7 @@ router.post('/record-usage', ensureAuthenticated, async (req: Request, res: Resp
         : 'Usage recorded locally (Stripe reporting unavailable - configure metered items)'
     });
   } catch (error: any) {
-    logger.error('Failed to record usage:', error);
+    logger.error('Failed to record usage:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to record usage' });
   }
 });
@@ -343,7 +344,7 @@ async function ensureAdmin(req: Request, res: Response, next: Function) {
     
     next();
   } catch (error: any) {
-    logger.error('Admin check failed:', error);
+    logger.error('Admin check failed:', redactErrorForLog(error));
     res.status(500).json({ error: 'Authorization check failed' });
   }
 }
@@ -363,7 +364,7 @@ router.get('/queue-health', ensureAuthenticated, ensureAdmin, adminPaymentRateLi
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    logger.error('Failed to fetch queue health:', error);
+    logger.error('Failed to fetch queue health:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch queue health metrics' });
   }
 });
@@ -388,7 +389,7 @@ router.post('/queue-retry', ensureAuthenticated, ensureAdmin, adminPaymentRateLi
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {
-    logger.error('Failed to retry queue items:', error);
+    logger.error('Failed to retry queue items:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to retry failed queue items' });
   }
 });
@@ -408,7 +409,7 @@ router.post('/subscribe', ensureAuthenticated, async (req: Request, res: Respons
       checkoutUrl: null
     });
   } catch (error: any) {
-    logger.error('Failed to create subscription (alias):', error);
+    logger.error('Failed to create subscription (alias):', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create subscription' });
   }
 });
@@ -419,7 +420,7 @@ router.post('/cancel', ensureAuthenticated, async (req: Request, res: Response) 
     await paymentService.cancelSubscription(userId);
     res.json({ success: true, message: 'Subscription cancelled successfully' });
   } catch (error: any) {
-    logger.error('Failed to cancel subscription (alias):', error);
+    logger.error('Failed to cancel subscription (alias):', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to cancel subscription' });
   }
 });
@@ -443,7 +444,7 @@ router.get('/subscription', ensureAuthenticated, async (req: Request, res: Respo
       stripeSubscriptionId: user.stripeSubscriptionId || null
     });
   } catch (error: any) {
-    logger.error('Failed to get subscription (alias):', error);
+    logger.error('Failed to get subscription (alias):', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get subscription' });
   }
 });

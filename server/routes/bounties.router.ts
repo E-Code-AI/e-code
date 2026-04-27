@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { bountyPaymentService } from '../services/bounty-payment-service';
 import { storage,type IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('bounties-router');
 
@@ -127,7 +128,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation error', details: error.errors });
       }
-      logger.error('Failed to create bounty:', error);
+      logger.error('Failed to create bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to create bounty' });
     }
   });
@@ -177,7 +178,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation error', details: error.errors });
       }
-      logger.error('Failed to list bounties:', error);
+      logger.error('Failed to list bounties:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to list bounties' });
     }
   });
@@ -188,7 +189,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       const bounties = await storage.getFeaturedBounties(limit);
       res.json({ bounties });
     } catch (error) {
-      logger.error('Failed to get featured bounties:', error);
+      logger.error('Failed to get featured bounties:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to get featured bounties' });
     }
   });
@@ -213,7 +214,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounties });
     } catch (error) {
-      logger.error('Failed to get user bounties:', error);
+      logger.error('Failed to get user bounties:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to get bounties' });
     }
   });
@@ -252,7 +253,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
         },
       });
     } catch (error) {
-      logger.error('Failed to get bounty:', error);
+      logger.error('Failed to get bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to get bounty' });
     }
   });
@@ -309,7 +310,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation error', details: error.errors });
       }
-      logger.error('Failed to apply to bounty:', error);
+      logger.error('Failed to apply to bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to apply to bounty' });
     }
   });
@@ -367,7 +368,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounty: updatedBounty });
     } catch (error) {
-      logger.error('Failed to assign bounty:', error);
+      logger.error('Failed to assign bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to assign bounty' });
     }
   });
@@ -400,7 +401,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounty: updatedBounty });
     } catch (error) {
-      logger.error('Failed to submit bounty work:', error);
+      logger.error('Failed to submit bounty work:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to submit work' });
     }
   });
@@ -457,7 +458,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounty: updatedBounty });
     } catch (error) {
-      logger.error('Failed to complete bounty:', error);
+      logger.error('Failed to complete bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to complete bounty' });
     }
   });
@@ -512,7 +513,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounty: updatedBounty });
     } catch (error) {
-      logger.error('Failed to cancel bounty:', error);
+      logger.error('Failed to cancel bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to cancel bounty' });
     }
   });
@@ -578,7 +579,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation error', details: error.errors });
       }
-      logger.error('Failed to create review:', error);
+      logger.error('Failed to create review:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to create review' });
     }
   });
@@ -674,7 +675,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation error', details: error.errors });
       }
-      logger.error('Failed to rate bounty:', error);
+      logger.error('Failed to rate bounty:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to rate bounty' });
     }
   });
@@ -709,7 +710,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ onboardingUrl });
     } catch (error) {
-      logger.error('Failed to create onboarding link:', error);
+      logger.error('Failed to create onboarding link:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to create onboarding link' });
     }
   });
@@ -749,7 +750,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
         ...status,
       });
     } catch (error) {
-      logger.error('Failed to get connect status:', error);
+      logger.error('Failed to get connect status:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to get connect status' });
     }
   });
@@ -774,7 +775,7 @@ export function createBountiesRouter(_storageInstance: IStorage = storage): Rout
 
       res.json({ bounty });
     } catch (error) {
-      logger.error('Failed to confirm payment:', error);
+      logger.error('Failed to confirm payment:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to confirm payment' });
     }
   });

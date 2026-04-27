@@ -10,6 +10,7 @@ import { memoryBankService } from '../services/memory-bank.service';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('memory-bank-router');
 const router = Router();
@@ -106,7 +107,7 @@ router.get('/:projectId', ensureAuthenticated, async (req: Request, res: Respons
 
     res.json(memoryBank);
   } catch (error) {
-    logger.error('[MemoryBank API] Error getting memory bank:', error);
+    logger.error('[MemoryBank API] Error getting memory bank:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get memory bank' });
   }
 });
@@ -153,7 +154,7 @@ router.get('/:projectId/status', ensureAuthenticated, async (req: Request, res: 
     
     res.json({ initialized });
   } catch (error) {
-    logger.error('[MemoryBank API] Error checking status:', error);
+    logger.error('[MemoryBank API] Error checking status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to check memory bank status' });
   }
 });
@@ -188,7 +189,7 @@ router.get('/:projectId/context', ensureAuthenticated, async (req: Request, res:
       tokenEstimate: Math.ceil(context.length / 4)
     });
   } catch (error) {
-    logger.error('[MemoryBank API] Error getting context:', error);
+    logger.error('[MemoryBank API] Error getting context:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get memory bank context' });
   }
 });
@@ -225,7 +226,7 @@ router.get('/:projectId/files/:filename', ensureAuthenticated, async (req: Reque
 
     res.json(file);
   } catch (error) {
-    logger.error('[MemoryBank API] Error getting file:', error);
+    logger.error('[MemoryBank API] Error getting file:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get file' });
   }
 });
@@ -278,7 +279,7 @@ router.put('/:projectId/files/:filename', ensureAuthenticated, async (req: Reque
       file
     });
   } catch (error) {
-    logger.error('[MemoryBank API] Error updating file:', error);
+    logger.error('[MemoryBank API] Error updating file:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update file' });
   }
 });
@@ -315,7 +316,7 @@ router.delete('/:projectId/files/:filename', ensureAuthenticated, async (req: Re
 
     res.json({ message: 'File deleted successfully' });
   } catch (error) {
-    logger.error('[MemoryBank API] Error deleting file:', error);
+    logger.error('[MemoryBank API] Error deleting file:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to delete file' });
   }
 });
@@ -357,7 +358,7 @@ router.post('/:projectId/log-change', ensureAuthenticated, async (req: Request, 
 
     res.json({ message: 'Change logged successfully' });
   } catch (error) {
-    logger.error('[MemoryBank API] Error logging change:', error);
+    logger.error('[MemoryBank API] Error logging change:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to log change' });
   }
 });
@@ -371,7 +372,7 @@ router.get('/templates', async (_req: Request, res: Response) => {
     const templates = memoryBankService.getDefaultTemplates();
     res.json({ templates });
   } catch (error) {
-    logger.error('[MemoryBank API] Error getting templates:', error);
+    logger.error('[MemoryBank API] Error getting templates:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get templates' });
   }
 });

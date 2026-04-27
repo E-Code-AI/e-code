@@ -4,6 +4,7 @@ import { AgentPreferencesService } from '../services/agent-preferences.service';
 import { AI_MODELS, type AiModel } from '@shared/schema';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('agent-preferences');
 
@@ -33,7 +34,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
         extendedThinkingModels
       });
     } catch (error: any) {
-      logger.error('Error fetching models:', error);
+      logger.error('Error fetching models:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch models' });
     }
   });
@@ -61,7 +62,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
 
       res.json(preferences);
     } catch (error: any) {
-      logger.error('Error fetching preferences:', error);
+      logger.error('Error fetching preferences:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch preferences' });
     }
   });
@@ -83,7 +84,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
       logger.info(`Preferences updated for user ${userId}`);
       res.json(updated);
     } catch (error: any) {
-      logger.error('Error updating preferences:', error);
+      logger.error('Error updating preferences:', redactErrorForLog(error));
       res.status(500).json({ error: error.message || 'Failed to update preferences' });
     }
   });
@@ -109,7 +110,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
         reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}, highPower=${highPowerMode || false}`,
       });
     } catch (error: any) {
-      logger.error('Error recommending model:', error);
+      logger.error('Error recommending model:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to recommend model' });
     }
   });
@@ -142,7 +143,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
         }
       });
     } catch (error: any) {
-      logger.error('Error getting effective model:', error);
+      logger.error('Error getting effective model:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to get effective model' });
     }
   });
@@ -187,7 +188,7 @@ export default function createAgentPreferencesRouter(storage: IStorage): Router 
 
       res.json(newConversation[0]);
     } catch (error: any) {
-      logger.error('Error managing conversation:', error);
+      logger.error('Error managing conversation:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to manage conversation' });
     }
   });

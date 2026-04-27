@@ -4,6 +4,7 @@ import { Request,Response,Router } from 'express';
 import { db } from '../db';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('phantom-panels-router');
 const router = Router();
@@ -18,7 +19,7 @@ router.get('/skills/:projectId', ensureAuthenticated, async (req: Request, res: 
     const skills = await db.select().from(agentSkills).where(eq(agentSkills.projectId, projectId));
     res.json(skills);
   } catch (error: any) {
-    logger.error('Failed to get skills', error);
+    logger.error('Failed to get skills', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -38,7 +39,7 @@ router.post('/skills/:projectId', ensureAuthenticated, async (req: Request, res:
     
     res.json(newSkill);
   } catch (error: any) {
-    logger.error('Failed to create skill', error);
+    logger.error('Failed to create skill', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -61,7 +62,7 @@ router.put('/skills/:id', ensureAuthenticated, async (req: Request, res: Respons
       
     res.json(updated);
   } catch (error: any) {
-    logger.error('Failed to update skill', error);
+    logger.error('Failed to update skill', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -72,7 +73,7 @@ router.delete('/skills/:id', ensureAuthenticated, async (req: Request, res: Resp
     await db.delete(agentSkills).where(eq(agentSkills.id, id));
     res.json({ success: true });
   } catch (error: any) {
-    logger.error('Failed to delete skill', error);
+    logger.error('Failed to delete skill', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -93,7 +94,7 @@ router.post('/skills/:projectId/upload', ensureAuthenticated, async (req: Reques
     
     res.json(newSkill);
   } catch (error: any) {
-    logger.error('Failed to upload skill', error);
+    logger.error('Failed to upload skill', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -117,7 +118,7 @@ router.get('/projects/:projectId/feedback', ensureAuthenticated, async (req: Req
       
     res.json(filtered);
   } catch (error: any) {
-    logger.error('Failed to get feedback', error);
+    logger.error('Failed to get feedback', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -137,7 +138,7 @@ router.patch('/projects/:projectId/feedback/:id', ensureAuthenticated, async (re
       
     res.json(updated);
   } catch (error: any) {
-    logger.error('Failed to patch feedback', error);
+    logger.error('Failed to patch feedback', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -148,7 +149,7 @@ router.delete('/projects/:projectId/feedback/:id', ensureAuthenticated, async (r
     await db.delete(visitorFeedback).where(eq(visitorFeedback.id, id));
     res.json({ success: true });
   } catch (error: any) {
-    logger.error('Failed to delete feedback', error);
+    logger.error('Failed to delete feedback', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -168,7 +169,7 @@ router.get('/projects/:projectId/slides', ensureAuthenticated, async (req: Reque
     
     res.json({ slides: slides.slides, theme: slides.theme });
   } catch (error: any) {
-    logger.error('Failed to get slides', error);
+    logger.error('Failed to get slides', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -194,7 +195,7 @@ router.put('/projects/:projectId/slides', ensureAuthenticated, async (req: Reque
     
     res.json({ success: true });
   } catch (error: any) {
-    logger.error('Failed to save slides', error);
+    logger.error('Failed to save slides', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

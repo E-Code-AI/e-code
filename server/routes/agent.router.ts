@@ -21,6 +21,7 @@ import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('agent-router');
 const router = Router();
@@ -73,7 +74,7 @@ router.get('/models', async (req, res) => {
     const models = preferencesService.getAvailableModels();
     res.json({ models });
   } catch (error: any) {
-    logger.error('[AgentRouter] Error fetching models:', error);
+    logger.error('[AgentRouter] Error fetching models:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch models' });
   }
 });
@@ -104,7 +105,7 @@ router.get('/preferences', async (req, res) => {
 
     res.json(preferences);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error fetching preferences:', error);
+    logger.error('[AgentRouter] Error fetching preferences:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch preferences' });
   }
 });
@@ -128,7 +129,7 @@ router.put('/preferences', async (req, res) => {
     const updated = await preferencesService.updateUserPreferences(userId, updates);
     res.json(updated);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error updating preferences:', error);
+    logger.error('[AgentRouter] Error updating preferences:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to update preferences' });
   }
 });
@@ -155,7 +156,7 @@ router.post('/recommend-model', async (req, res) => {
       reasoning: `Selected ${recommended} based on: complexity=${complexity || 'medium'}, speedPriority=${speedPriority || 'balanced'}, extendedThinking=${requiresExtendedThinking || false}`,
     });
   } catch (error: any) {
-    logger.error('[AgentRouter] Error recommending model:', error);
+    logger.error('[AgentRouter] Error recommending model:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to recommend model' });
   }
 });
@@ -236,7 +237,7 @@ router.get('/actions/:projectId', async (req, res) => {
     const { projectId } = req.params;
     res.json(await getPendingActions(projectId));
   } catch (error: any) {
-    logger.error('[AgentRouter] Failed to list pending actions:', error);
+    logger.error('[AgentRouter] Failed to list pending actions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to list pending actions' });
   }
 });
@@ -247,7 +248,7 @@ router.post('/actions/:actionId/approve', async (req, res) => {
     const removed = await removePendingAction(req.params.actionId);
     res.json({ success: true, removed });
   } catch (error: any) {
-    logger.error('[AgentRouter] Failed to approve pending action:', error);
+    logger.error('[AgentRouter] Failed to approve pending action:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to approve pending action' });
   }
 });
@@ -258,7 +259,7 @@ router.post('/actions/:actionId/reject', async (req, res) => {
     const removed = await removePendingAction(req.params.actionId);
     res.json({ success: true, removed });
   } catch (error: any) {
-    logger.error('[AgentRouter] Failed to reject pending action:', error);
+    logger.error('[AgentRouter] Failed to reject pending action:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to reject pending action' });
   }
 });
@@ -282,7 +283,7 @@ router.post('/chat', async (req, res) => {
     const content = await provider.generateCompletion(message, systemPrompt, 2048, 0.7);
     res.json({ response: content, metadata: {} });
   } catch (error: any) {
-    logger.error('[AgentRouter] /chat error:', error);
+    logger.error('[AgentRouter] /chat error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to generate response' });
   }
 });
@@ -329,7 +330,7 @@ router.post('/chat/stream', async (req, res) => {
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
-    logger.error('[AgentRouter] /chat/stream error:', error);
+    logger.error('[AgentRouter] /chat/stream error:', redactErrorForLog(error));
     if (!res.headersSent) {
       res.status(500).json({ error: error.message || 'Streaming failed' });
     } else {
@@ -396,7 +397,7 @@ router.get('/conversation', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error fetching conversation:', error);
+    logger.error('[AgentRouter] Error fetching conversation:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
@@ -464,7 +465,7 @@ router.get('/projects/:projectId/conversations', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error listing project conversations:', error);
+    logger.error('[AgentRouter] Error listing project conversations:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to list project conversations' });
   }
 });
@@ -584,7 +585,7 @@ router.post('/conversation', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error creating conversation:', error);
+    logger.error('[AgentRouter] Error creating conversation:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to create conversation' });
   }
 });
@@ -623,7 +624,7 @@ router.get('/conversation/:id', async (req, res) => {
       updatedAt: conversation.updatedAt,
     });
   } catch (error: any) {
-    logger.error('[AgentRouter] Error fetching conversation by id:', error);
+    logger.error('[AgentRouter] Error fetching conversation by id:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch conversation' });
   }
 });
@@ -716,7 +717,7 @@ router.post('/conversation/:id/mode', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error updating conversation mode:', error);
+    logger.error('[AgentRouter] Error updating conversation mode:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update conversation mode' });
   }
 });
@@ -866,7 +867,7 @@ router.get('/conversation/:id/messages', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error fetching conversation messages:', error);
+    logger.error('[AgentRouter] Error fetching conversation messages:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch conversation messages' });
   }
 });
@@ -997,7 +998,7 @@ router.post('/conversation/:id/messages', async (req, res) => {
 
     res.json(result.data);
   } catch (error: any) {
-    logger.error('[AgentRouter] Error persisting message:', error);
+    logger.error('[AgentRouter] Error persisting message:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to persist message' });
   }
 });
@@ -1013,7 +1014,7 @@ router.post('/sessions', ensureAdmin, async (req, res) => {
     const session = await agentOrchestrator.createSession(userId, projectId, model);
     res.json({ success: true, session });
   } catch (error: any) {
-    logger.error('Error creating agent session:', error);
+    logger.error('Error creating agent session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1039,7 +1040,7 @@ router.post('/sessions/:sessionId/execute', ensureAdmin, async (req, res) => {
     const result = await agentOrchestrator.executeAgent(sessionId, messages, userId);
     res.json(result);
   } catch (error: any) {
-    logger.error('Error executing agent:', error);
+    logger.error('Error executing agent:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1064,7 +1065,7 @@ router.post('/sessions/:sessionId/stream', ensureAdmin, async (req, res) => {
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
-    logger.error('Error streaming agent execution:', error);
+    logger.error('Error streaming agent execution:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1408,7 +1409,7 @@ router.post('/schema/warm', async (req, res) => {
       message: 'Schema warming started in background',
     });
   } catch (error: any) {
-    logger.error('[AgentRouter] Error starting schema warming:', error);
+    logger.error('[AgentRouter] Error starting schema warming:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to start schema warming' });
   }
 });
@@ -1426,7 +1427,7 @@ router.get('/schema/status/:projectId', async (req, res) => {
       isReady,
     });
   } catch (error: any) {
-    logger.error('[AgentRouter] Error getting schema status:', error);
+    logger.error('[AgentRouter] Error getting schema status:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get schema status' });
   }
 });
@@ -1504,7 +1505,7 @@ router.get('/schema/stream/:projectId', async (req, res) => {
       res.end();
     }
   } catch (error: any) {
-    logger.error('[AgentRouter] Error in schema stream:', error);
+    logger.error('[AgentRouter] Error in schema stream:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create schema stream' });
   }
 });
@@ -1612,7 +1613,7 @@ router.post('/attachments', agentUpload.array('files', 5), async (req, res) => {
     res.json({ attachments });
     
   } catch (error: any) {
-    logger.error('[AgentRouter] Error processing attachments:', error);
+    logger.error('[AgentRouter] Error processing attachments:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to process file attachments' });
   }
 });

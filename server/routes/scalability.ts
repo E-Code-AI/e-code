@@ -9,6 +9,7 @@ import { redisCache } from '../services/redis-cache';
 import { dbPool } from '../services/database-pool';
 import { cdnOptimization } from '../services/cdn-optimization';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('scalability-routes');
 const router = Router();
@@ -39,7 +40,7 @@ router.get('/cluster/status', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Failed to get cluster status:', error);
+    logger.error('Failed to get cluster status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get cluster status' });
   }
 });
@@ -68,7 +69,7 @@ router.post('/cluster/containers', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Failed to create container:', error);
+    logger.error('Failed to create container:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to create container' });
   }
 });
@@ -87,7 +88,7 @@ router.delete('/cluster/containers/:containerId', async (req: Request, res: Resp
       message: `Container ${containerId} stopped successfully`
     });
   } catch (error) {
-    logger.error('Failed to stop container:', error);
+    logger.error('Failed to stop container:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to stop container' });
   }
 });
@@ -118,7 +119,7 @@ router.post('/cluster/route', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Failed to route request:', error);
+    logger.error('Failed to route request:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to route request' });
   }
 });
@@ -137,7 +138,7 @@ router.get('/cache/:key', async (req: Request, res: Response) => {
     
     res.json({ key, value });
   } catch (error) {
-    logger.error('Failed to get cache:', error);
+    logger.error('Failed to get cache:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get cache' });
   }
 });
@@ -154,7 +155,7 @@ router.post('/cache', async (req: Request, res: Response) => {
     
     res.json({ success: true, message: 'Value cached successfully' });
   } catch (error) {
-    logger.error('Failed to set cache:', error);
+    logger.error('Failed to set cache:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to set cache' });
   }
 });
@@ -166,7 +167,7 @@ router.delete('/cache/:key', async (req: Request, res: Response) => {
     
     res.json({ success: true, message: 'Cache key deleted' });
   } catch (error) {
-    logger.error('Failed to delete cache:', error);
+    logger.error('Failed to delete cache:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to delete cache' });
   }
 });
@@ -187,7 +188,7 @@ router.get('/database/pool/stats', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Failed to get database pool stats:', error);
+    logger.error('Failed to get database pool stats:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get database pool stats' });
   }
 });
@@ -210,7 +211,7 @@ router.get('/cdn/status', async (req: Request, res: Response) => {
       purgeStats
     });
   } catch (error) {
-    logger.error('Failed to get CDN status:', error);
+    logger.error('Failed to get CDN status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get CDN status' });
   }
 });
@@ -237,7 +238,7 @@ router.post('/cdn/purge', async (req: Request, res: Response) => {
     
     res.json({ success: true, message: 'Cache purged successfully' });
   } catch (error) {
-    logger.error('Failed to purge CDN:', error);
+    logger.error('Failed to purge CDN:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to purge CDN' });
   }
 });

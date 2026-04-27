@@ -4,6 +4,7 @@ import { bootstrapAuth,getBootstrapContext } from '../middleware/bootstrap-auth'
 import { storage } from '../storage';
 import { socketIOTerminalService } from '../terminal/socket-io-terminal';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('shell-router-per-project');
@@ -18,7 +19,7 @@ async function verifyProjectAccess(userId: number, projectId: string | number): 
     const collaborators = await storage.getProjectCollaborators(projectId);
     return collaborators.some((c: any) => c.userId === userId);
   } catch (error) {
-    logger.error('Failed to verify project access:', error);
+    logger.error('Failed to verify project access:', redactErrorForLog(error));
     return false;
   }
 }
@@ -63,7 +64,7 @@ router.post('/:projectId/shell/create', bootstrapAuth, async (req, res) => {
       createdAt: new Date(),
     });
   } catch (error: any) {
-    logger.error('Failed to create shell session:', error);
+    logger.error('Failed to create shell session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to create shell session' });
   }
 });
@@ -99,7 +100,7 @@ router.get('/:projectId/shell/sessions', bootstrapAuth, async (req, res) => {
 
     res.json({ sessions });
   } catch (error: any) {
-    logger.error('Failed to get shell sessions:', error);
+    logger.error('Failed to get shell sessions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get sessions' });
   }
 });
@@ -132,7 +133,7 @@ router.delete('/:projectId/shell/:sessionId', bootstrapAuth, async (req, res) =>
 
     res.json({ success: true, message: 'Session closed' });
   } catch (error: any) {
-    logger.error('Failed to close shell session:', error);
+    logger.error('Failed to close shell session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to close session' });
   }
 });
@@ -171,7 +172,7 @@ router.get('/:projectId/shell/:sessionId/status', bootstrapAuth, async (req, res
       rows: session.rows,
     });
   } catch (error: any) {
-    logger.error('Failed to get session status:', error);
+    logger.error('Failed to get session status:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get session status' });
   }
 });

@@ -15,6 +15,7 @@ import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
 import { cacheFlushRateLimiter } from '../middleware/custom-rate-limiter';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('monitoring-routes');
@@ -156,7 +157,7 @@ router.get('/monitoring/alerts', ensureAuthenticated, ensureAdmin, async (req: R
     }
     res.json(alerts);
   } catch (error) {
-    logger.error('Error fetching monitoring alerts:', error);
+    logger.error('Error fetching monitoring alerts:', redactErrorForLog(error));
     res.status(500).json({ message: 'Failed to fetch alerts' });
   }
 });
@@ -168,7 +169,7 @@ router.get('/monitoring/slow-endpoints', ensureAuthenticated, ensureAdmin, async
     const endpoints = (metrics as any).slowEndpoints ?? (metrics as any).slow_endpoints ?? [];
     res.json(Array.isArray(endpoints) ? endpoints : []);
   } catch (error) {
-    logger.error('Error fetching slow endpoints:', error);
+    logger.error('Error fetching slow endpoints:', redactErrorForLog(error));
     res.status(500).json({ message: 'Failed to fetch slow endpoints' });
   }
 });

@@ -8,6 +8,7 @@ import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('git-project-router');
 const router = Router();
@@ -126,7 +127,7 @@ async function syncDiskToDb(projectId: string, projectDir: string): Promise<void
 
     logger.info(`[git-project] synced ${allFiles.length} files from disk to DB for project ${projectId}`);
   } catch (err) {
-    logger.error('[git-project] syncDiskToDb error:', err);
+    logger.error('[git-project] syncDiskToDb error:', redactErrorForLog(err));
   }
 }
 
@@ -147,7 +148,7 @@ async function syncProjectFiles(projectId: string, projectDir: string): Promise<
       await fs.writeFile(filePath, file.content || '', 'utf8');
     }
   } catch (err) {
-    logger.error('Failed to sync project files:', err);
+    logger.error('Failed to sync project files:', redactErrorForLog(err));
   }
 }
 
@@ -206,7 +207,7 @@ router.get('/:projectId/status', async (req: Request, res: Response) => {
 
     res.json({ branch, ahead, behind, staged, unstaged, untracked, changes });
   } catch (error: any) {
-    logger.error(`[git-project] status error for ${projectId}:`, error);
+    logger.error(`[git-project] status error for ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -736,7 +737,7 @@ router.post('/:projectId/resolve-conflict', async (req: Request, res: Response) 
     
     res.json({ success: true, message: 'Conflict resolved successfully' });
   } catch (error: any) {
-    logger.error('Failed to resolve conflict:', error);
+    logger.error('Failed to resolve conflict:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -750,7 +751,7 @@ router.post('/:projectId/complete-merge', async (req: Request, res: Response) =>
     await execa('git', ['commit', '--no-edit'], { cwd: projectDir });
     res.json({ success: true, message: 'Merge completed' });
   } catch (error: any) {
-    logger.error('Failed to complete merge:', error);
+    logger.error('Failed to complete merge:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -763,7 +764,7 @@ router.post('/:projectId/abort-merge', async (req: Request, res: Response) => {
     await execa('git', ['merge', '--abort'], { cwd: projectDir });
     res.json({ success: true, message: 'Merge aborted' });
   } catch (error: any) {
-    logger.error('Failed to abort merge:', error);
+    logger.error('Failed to abort merge:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

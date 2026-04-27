@@ -4,6 +4,7 @@ import { networkingPorts, networkingDomains } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('networking-router');
 const router = Router();
@@ -45,7 +46,7 @@ router.get('/:projectId/networking/ports', ensureAuthenticated, async (req: Requ
       logger.warn('Networking ports table missing; returning empty list');
       return res.json([]);
     }
-    logger.error('Failed to get ports', error);
+    logger.error('Failed to get ports', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -71,7 +72,7 @@ router.post('/:projectId/networking/ports', ensureAuthenticated, async (req: Req
       logger.warn('Networking ports table missing; create unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to create port', error);
+    logger.error('Failed to create port', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -97,7 +98,7 @@ router.patch('/:projectId/networking/ports/:id', ensureAuthenticated, async (req
       logger.warn('Networking ports table missing; update unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to patch port', error);
+    logger.error('Failed to patch port', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -114,7 +115,7 @@ router.delete('/:projectId/networking/ports/:id', ensureAuthenticated, async (re
       logger.warn('Networking ports table missing; delete unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to delete port', error);
+    logger.error('Failed to delete port', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -125,7 +126,7 @@ router.post('/:projectId/networking/ports/scan', ensureAuthenticated, async (req
     // In a real environment, this would run netstat/lsof inside the container
     res.json({ success: true, message: 'Scan complete' });
   } catch (error: any) {
-    logger.error('Failed to scan ports', error);
+    logger.error('Failed to scan ports', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -144,7 +145,7 @@ router.get('/:projectId/networking/domains', ensureAuthenticated, async (req: Re
       logger.warn('Networking domains table missing; returning empty list');
       return res.json([]);
     }
-    logger.error('Failed to get domains', error);
+    logger.error('Failed to get domains', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -169,7 +170,7 @@ router.post('/:projectId/networking/domains', ensureAuthenticated, async (req: R
       logger.warn('Networking domains table missing; create unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to add domain', error);
+    logger.error('Failed to add domain', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -195,7 +196,7 @@ router.post('/:projectId/networking/domains/:id/verify', ensureAuthenticated, as
       logger.warn('Networking domains table missing; verify unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to verify domain', error);
+    logger.error('Failed to verify domain', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -212,7 +213,7 @@ router.delete('/:projectId/networking/domains/:id', ensureAuthenticated, async (
       logger.warn('Networking domains table missing; delete unavailable');
       return sendUnavailable(res);
     }
-    logger.error('Failed to delete domain', error);
+    logger.error('Failed to delete domain', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

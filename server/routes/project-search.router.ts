@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('project-search');
@@ -138,7 +139,7 @@ router.get('/:projectId/search', async (req, res) => {
       query
     });
   } catch (error: any) {
-    logger.error('Project search error:', error);
+    logger.error('Project search error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -192,7 +193,7 @@ router.get('/:projectId/files', async (req, res) => {
       query
     });
   } catch (error: any) {
-    logger.error('Project file search error:', error);
+    logger.error('Project file search error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

@@ -13,6 +13,7 @@ import { Router, Request, Response } from 'express';
 import { generationMetrics } from '../services/generation-metrics.service';
 import { providerRacing } from '../ai/provider-racing';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('generation-metrics-router');
 const router = Router();
@@ -36,7 +37,7 @@ router.get('/', async (req: Request, res: Response) => {
       data: metrics
     });
   } catch (error: any) {
-    logger.error('[Metrics] Failed to get aggregate metrics:', error);
+    logger.error('[Metrics] Failed to get aggregate metrics:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error.message
@@ -65,7 +66,7 @@ router.get('/racing', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('[Metrics] Failed to get racing metrics:', error);
+    logger.error('[Metrics] Failed to get racing metrics:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error.message
@@ -91,7 +92,7 @@ router.get('/recent', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('[Metrics] Failed to get recent sessions:', error);
+    logger.error('[Metrics] Failed to get recent sessions:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error.message
@@ -133,7 +134,7 @@ router.get('/:sessionId', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('[Metrics] Failed to get session:', error);
+    logger.error('[Metrics] Failed to get session:', redactErrorForLog(error));
     res.status(500).json({
       success: false,
       error: error.message

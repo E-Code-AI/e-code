@@ -15,6 +15,7 @@ import { NextFunction,Request,Response,Router } from 'express';
 import { z } from 'zod';
 import { agentStepCacheService,StepType } from '../services/agent-step-cache.service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('AgentStepCacheRouter');
 const router = Router();
@@ -72,7 +73,7 @@ router.get('/:projectId', async (req: Request, res: Response) => {
       count: steps.length
     });
   } catch (error: any) {
-    logger.error('Failed to get project steps:', error);
+    logger.error('Failed to get project steps:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get cached steps' });
   }
 });
@@ -112,7 +113,7 @@ router.get('/:projectId/latest', async (req: Request, res: Response) => {
       availableStepTypes: Array.from(latestSteps.keys())
     });
   } catch (error: any) {
-    logger.error('Failed to get latest steps:', error);
+    logger.error('Failed to get latest steps:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get latest steps' });
   }
 });
@@ -163,7 +164,7 @@ router.get('/:projectId/:stepType', async (req: Request, res: Response) => {
       metadata: step.metadata
     });
   } catch (error: any) {
-    logger.error('Failed to get step:', error);
+    logger.error('Failed to get step:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get step' });
   }
 });
@@ -210,7 +211,7 @@ router.post('/:projectId/invalidate', async (req: Request, res: Response) => {
       reason
     });
   } catch (error: any) {
-    logger.error('Failed to invalidate steps:', error);
+    logger.error('Failed to invalidate steps:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to invalidate steps' });
   }
 });
@@ -230,7 +231,7 @@ router.get('/metrics', async (_req: Request, res: Response) => {
       tokensSavedFormatted: metrics.tokensSaved.toLocaleString()
     });
   } catch (error: any) {
-    logger.error('Failed to get metrics:', error);
+    logger.error('Failed to get metrics:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get metrics' });
   }
 });
@@ -244,7 +245,7 @@ router.post('/metrics/reset', async (_req: Request, res: Response) => {
     agentStepCacheService.resetMetrics();
     res.json({ success: true, message: 'Metrics reset' });
   } catch (error: any) {
-    logger.error('Failed to reset metrics:', error);
+    logger.error('Failed to reset metrics:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to reset metrics' });
   }
 });

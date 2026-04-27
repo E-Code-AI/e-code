@@ -10,6 +10,7 @@
 import { NextFunction,Request,Response,Router } from 'express';
 import { agentGridDataService } from '../services/agent-grid-data.service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('agent-grid-router');
 const router = Router();
@@ -197,7 +198,7 @@ router.get('/export/sessions', requireAuth, asyncHandler(async (req: Request, re
  * Error handler for this router
  */
 router.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
-  logger.error('Agent Grid API error:', err);
+  logger.error('Agent Grid API error:', redactErrorForLog(err));
   res.status(500).json({ 
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined 

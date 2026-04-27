@@ -22,6 +22,7 @@ import { csrfProtection } from '../middleware/csrf';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('unified-checkpoints-router');
 const router = Router();
@@ -40,7 +41,7 @@ async function verifyProjectOwnership(projectId: number, userId: number): Promis
     }
     return { valid: true };
   } catch (error) {
-    logger.error('Project ownership verification failed:', error);
+    logger.error('Project ownership verification failed:', redactErrorForLog(error));
     return { valid: false, error: 'Access verification failed' };
   }
 }
@@ -63,7 +64,7 @@ async function _verifyCheckpointOwnership(checkpointId: number, userId: number):
     const ownership = await verifyProjectOwnership(checkpoint.projectId, userId);
     return { ...ownership, projectId: checkpoint.projectId };
   } catch (error) {
-    logger.error('Checkpoint ownership verification failed:', error);
+    logger.error('Checkpoint ownership verification failed:', redactErrorForLog(error));
     return { valid: false, error: 'Access verification failed' };
   }
 }
@@ -88,7 +89,7 @@ async function ensureProjectAccess(req: Request, res: Response, next: NextFuncti
 
     next();
   } catch (error) {
-    logger.error('Project access verification failed:', error);
+    logger.error('Project access verification failed:', redactErrorForLog(error));
     res.status(500).json({ success: false, error: 'Access verification failed' });
   }
 }
@@ -233,7 +234,7 @@ router.get(
         },
       });
     } catch (error) {
-      logger.error('Failed to list checkpoints:', error);
+      logger.error('Failed to list checkpoints:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to list checkpoints',
@@ -305,7 +306,7 @@ router.post(
         message: `Checkpoint "${checkpoint.name}" created successfully`,
       });
     } catch (error) {
-      logger.error('Failed to create checkpoint:', error);
+      logger.error('Failed to create checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to create checkpoint',
@@ -365,7 +366,7 @@ router.get(
         restoreHistory: restores,
       });
     } catch (error) {
-      logger.error('Failed to get checkpoint:', error);
+      logger.error('Failed to get checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get checkpoint',
@@ -474,7 +475,7 @@ router.post(
         errors: restoreResult.errors.length > 0 ? restoreResult.errors : undefined,
       });
     } catch (error) {
-      logger.error('Failed to restore checkpoint:', error);
+      logger.error('Failed to restore checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to restore checkpoint',
@@ -553,7 +554,7 @@ router.get(
         },
       });
     } catch (error) {
-      logger.error('Failed to get checkpoint files:', error);
+      logger.error('Failed to get checkpoint files:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get checkpoint files',
@@ -628,7 +629,7 @@ router.delete(
         });
       }
     } catch (error) {
-      logger.error('Failed to delete checkpoint:', error);
+      logger.error('Failed to delete checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to delete checkpoint',
@@ -698,7 +699,7 @@ router.patch(
         checkpoint: updated,
       });
     } catch (error) {
-      logger.error('Failed to update checkpoint:', error);
+      logger.error('Failed to update checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update checkpoint',
@@ -766,7 +767,7 @@ router.post(
         files: insertedFiles,
       });
     } catch (error) {
-      logger.error('Failed to add files to checkpoint:', error);
+      logger.error('Failed to add files to checkpoint:', redactErrorForLog(error));
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to add files to checkpoint',

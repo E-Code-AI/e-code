@@ -14,6 +14,7 @@ import { BackgroundTestingService } from '../services/background-testing-service
 import { WebSearchService } from '../services/web-search-service';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('agent-tools');
 
@@ -77,7 +78,7 @@ export default function createAgentToolsRouter(): Router {
         count: searches.length,
       });
     } catch (error: any) {
-      logger.error('Error fetching search history:', error);
+      logger.error('Error fetching search history:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch search history' });
     }
   });
@@ -119,7 +120,7 @@ export default function createAgentToolsRouter(): Router {
 
       res.json(searchResult);
     } catch (error: any) {
-      logger.error('Web search error:', error);
+      logger.error('Web search error:', redactErrorForLog(error));
       res.status(500).json({ error: 'Search failed', message: error.message });
     }
   });
@@ -146,7 +147,7 @@ export default function createAgentToolsRouter(): Router {
 
       res.json(searchResult);
     } catch (error: any) {
-      logger.error('Web search error:', error);
+      logger.error('Web search error:', redactErrorForLog(error));
       res.status(500).json({ error: 'Search failed', message: error.message });
     }
   });
@@ -166,7 +167,7 @@ export default function createAgentToolsRouter(): Router {
       const results = await webSearchService.searchForDocs(query);
       res.json({ results, count: results.length });
     } catch (error: any) {
-      logger.error('Doc search error:', error);
+      logger.error('Doc search error:', redactErrorForLog(error));
       res.status(500).json({ error: 'Doc search failed' });
     }
   });
@@ -186,7 +187,7 @@ export default function createAgentToolsRouter(): Router {
       const formattedResults = await webSearchService.searchForAI(query);
       res.json({ result: formattedResults });
     } catch (error: any) {
-      logger.error('AI search error:', error);
+      logger.error('AI search error:', redactErrorForLog(error));
       res.status(500).json({ error: 'AI search failed' });
     }
   });
@@ -255,7 +256,7 @@ export default function createAgentToolsRouter(): Router {
         message: 'Test session started'
       });
     } catch (error: any) {
-      logger.error('Error starting test:', error);
+      logger.error('Error starting test:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to start test' });
     }
   });
@@ -311,7 +312,7 @@ export default function createAgentToolsRouter(): Router {
         count: sessions.length 
       });
     } catch (error: any) {
-      logger.error('Error fetching test sessions:', error);
+      logger.error('Error fetching test sessions:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch test sessions' });
     }
   });
@@ -334,7 +335,7 @@ export default function createAgentToolsRouter(): Router {
 
       res.json({ session });
     } catch (error: any) {
-      logger.error('Error fetching test session:', error);
+      logger.error('Error fetching test session:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch test session' });
     }
   });
@@ -382,7 +383,7 @@ export default function createAgentToolsRouter(): Router {
         count: replays.length 
       });
     } catch (error: any) {
-      logger.error('Error fetching video replays:', error);
+      logger.error('Error fetching video replays:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch video replays' });
     }
   });
@@ -420,7 +421,7 @@ export default function createAgentToolsRouter(): Router {
         }
       });
     } catch (error: any) {
-      logger.error('Error fetching video replay:', error);
+      logger.error('Error fetching video replay:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch video replay' });
     }
   });
@@ -493,7 +494,7 @@ export default function createAgentToolsRouter(): Router {
         isThinking
       });
     } catch (error: any) {
-      logger.error('Error fetching thinking steps:', error);
+      logger.error('Error fetching thinking steps:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch thinking steps' });
     }
   });
@@ -523,7 +524,7 @@ export default function createAgentToolsRouter(): Router {
         }
       });
     } catch (error: any) {
-      logger.error('Error starting thinking analysis:', error);
+      logger.error('Error starting thinking analysis:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to start thinking analysis' });
     }
   });
@@ -574,7 +575,7 @@ export default function createAgentToolsRouter(): Router {
         count: replays.length 
       });
     } catch (error: any) {
-      logger.error('Error fetching video replays:', error);
+      logger.error('Error fetching video replays:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch video replays' });
     }
   });
@@ -636,7 +637,7 @@ export default function createAgentToolsRouter(): Router {
         message: 'Test session started'
       });
     } catch (error: any) {
-      logger.error('Error starting test:', error);
+      logger.error('Error starting test:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to start test' });
     }
   });
@@ -701,7 +702,7 @@ export default function createAgentToolsRouter(): Router {
         isThinking: false
       });
     } catch (error: any) {
-      logger.error('Error fetching thinking steps:', error);
+      logger.error('Error fetching thinking steps:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch thinking steps' });
     }
   });
@@ -754,7 +755,7 @@ export default function createAgentToolsRouter(): Router {
         total: workflows.length
       });
     } catch (error: any) {
-      logger.error('Error fetching workflows:', error);
+      logger.error('Error fetching workflows:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch workflows' });
     }
   });
@@ -820,7 +821,7 @@ export default function createAgentToolsRouter(): Router {
         }
       });
     } catch (error: any) {
-      logger.error('Error fetching workflow details:', error);
+      logger.error('Error fetching workflow details:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch workflow details' });
     }
   });
@@ -899,7 +900,7 @@ export default function createAgentToolsRouter(): Router {
         total: tools.length
       });
     } catch (error: any) {
-      logger.error('Error fetching agent tools:', error);
+      logger.error('Error fetching agent tools:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch agent tools' });
     }
   });
@@ -951,7 +952,7 @@ export default function createAgentToolsRouter(): Router {
         }
       });
     } catch (error: any) {
-      logger.error('Error fetching tools status:', error);
+      logger.error('Error fetching tools status:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch tools status' });
     }
   });
@@ -1026,7 +1027,7 @@ export default function createAgentToolsRouter(): Router {
         stats
       });
     } catch (error: any) {
-      logger.error('Error fetching project database:', error);
+      logger.error('Error fetching project database:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch project database' });
     }
   });
@@ -1071,7 +1072,7 @@ export default function createAgentToolsRouter(): Router {
         }
       });
     } catch (error: any) {
-      logger.error('Error provisioning database:', error);
+      logger.error('Error provisioning database:', redactErrorForLog(error));
       res.status(500).json({ error: error.message || 'Failed to provision database' });
     }
   });
@@ -1117,7 +1118,7 @@ export default function createAgentToolsRouter(): Router {
         usage: 'Set DATABASE_URL environment variable or use the connection URL directly'
       });
     } catch (error: any) {
-      logger.error('Error fetching database credentials:', error);
+      logger.error('Error fetching database credentials:', redactErrorForLog(error));
       res.status(500).json({ error: 'Failed to fetch database credentials' });
     }
   });

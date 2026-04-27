@@ -9,6 +9,7 @@ import { csrfProtection } from '../middleware/csrf';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
 import fs from 'fs/promises';
 import path from 'path';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('extensions');
@@ -106,7 +107,7 @@ router.get('/marketplace', async (_req, res) => {
       categories: EXTENSION_CATEGORIES,
     });
   } catch (error: any) {
-    logger.error('Failed to get marketplace extensions:', error);
+    logger.error('Failed to get marketplace extensions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -133,7 +134,7 @@ router.get('/:projectId/installed', ensureAuthenticated, async (req, res) => {
 
     res.json(installed.sort((a, b) => a.name.localeCompare(b.name)));
   } catch (error: any) {
-    logger.error('Failed to get installed extensions:', error);
+    logger.error('Failed to get installed extensions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -183,7 +184,7 @@ router.post('/:projectId/install', ensureAuthenticated, csrfProtection, async (r
     logger.info('Extension installed', { projectId: projectIdNum, extensionId: data.extensionId });
     res.status(201).json(created);
   } catch (error: any) {
-    logger.error('Failed to install extension:', error);
+    logger.error('Failed to install extension:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }
@@ -230,7 +231,7 @@ router.delete('/:projectId/:extensionId', ensureAuthenticated, csrfProtection, a
     logger.info('Extension uninstalled', { projectId: projectIdNum, extensionId });
     res.json({ success: true });
   } catch (error: any) {
-    logger.error('Failed to uninstall extension:', error);
+    logger.error('Failed to uninstall extension:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -278,7 +279,7 @@ router.patch('/:projectId/:extensionId', ensureAuthenticated, csrfProtection, as
     logger.info('Extension toggled', { projectId: projectIdNum, extensionId, enabled: data.enabled });
     res.json(updated);
   } catch (error: any) {
-    logger.error('Failed to toggle extension:', error);
+    logger.error('Failed to toggle extension:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }

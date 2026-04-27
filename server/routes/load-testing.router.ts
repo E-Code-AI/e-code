@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { type IStorage } from "../storage";
 import { LoadTestingService, type LoadTestConfig, type LoadTestResult } from "../services/load-testing.service";
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('load-testing-router');
 
@@ -144,7 +145,7 @@ export class LoadTestingRouter {
         res.json(results);
         
       } catch (error: any) {
-        logger.error('Load test error:', error);
+        logger.error('Load test error:', redactErrorForLog(error));
         res.status(500).json({
           error: 'Load test failed',
           message: error.message,

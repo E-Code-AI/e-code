@@ -9,6 +9,7 @@ import {
   projectDatabaseService,
 } from '../services/project-database-provisioning.service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('DatabaseBranchesRouter');
 const router = Router({ mergeParams: true });
@@ -64,7 +65,7 @@ router.get('/', ensureAuthenticated, async (req: Request, res: Response) => {
       branches,
     });
   } catch (err: any) {
-    logger.error('Failed to list branches', err);
+    logger.error('Failed to list branches', redactErrorForLog(err));
     return res.status(500).json({ message: err.message || 'Internal error' });
   }
 });
@@ -93,7 +94,7 @@ router.post('/', ensureAuthenticated, async (req: Request, res: Response) => {
     );
     return res.status(201).json(branch);
   } catch (err: any) {
-    logger.error('Failed to create branch', err);
+    logger.error('Failed to create branch', redactErrorForLog(err));
     return res.status(400).json({ message: err.message || 'Failed to create branch' });
   }
 });
@@ -112,7 +113,7 @@ router.delete('/:branchId', ensureAuthenticated, async (req: Request, res: Respo
     await projectDatabaseBranchService.deleteBranch(ctx.projectId, branchId);
     return res.status(204).send();
   } catch (err: any) {
-    logger.error('Failed to delete branch', err);
+    logger.error('Failed to delete branch', redactErrorForLog(err));
     return res.status(400).json({ message: err.message || 'Failed to delete branch' });
   }
 });
@@ -131,7 +132,7 @@ router.get('/:branchId/connection-url', ensureAuthenticated, async (req: Request
     const url = await projectDatabaseBranchService.getBranchConnectionUrl(ctx.projectId, branchId);
     return res.json({ connectionUrl: url });
   } catch (err: any) {
-    logger.error('Failed to get connection URL', err);
+    logger.error('Failed to get connection URL', redactErrorForLog(err));
     return res.status(400).json({ message: err.message || 'Failed to get connection URL' });
   }
 });

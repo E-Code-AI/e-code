@@ -17,6 +17,7 @@ import { ensureAuthenticated as requireAuth } from '../middleware/auth';
 import { checkpointRestoreService } from '../services/checkpoint-restore.service';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('auto-checkpoints-router');
 const router = Router();
@@ -142,7 +143,7 @@ router.get('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Req
       },
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error listing checkpoints:', error);
+    logger.error('[AutoCheckpoints API] Error listing checkpoints:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to list checkpoints' });
   }
 });
@@ -199,7 +200,7 @@ router.post('/projects/:projectId/auto-checkpoints', requireAuth, async (req: Re
       checkpoint,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error creating checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error creating checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to create checkpoint' });
   }
 });
@@ -247,7 +248,7 @@ router.get('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Respo
       restoreHistory: restores,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error getting checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error getting checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get checkpoint' });
   }
 });
@@ -311,7 +312,7 @@ router.get('/auto-checkpoints/:id/files', requireAuth, async (req: Request, res:
       },
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error getting checkpoint files:', error);
+    logger.error('[AutoCheckpoints API] Error getting checkpoint files:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get checkpoint files' });
   }
 });
@@ -362,7 +363,7 @@ router.post('/auto-checkpoints/:id/files', requireAuth, async (req: Request, res
       files: insertedFiles,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error adding files to checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error adding files to checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to add files to checkpoint' });
   }
 });
@@ -440,7 +441,7 @@ router.post('/auto-checkpoints/:id/restore', requireAuth, async (req: Request, r
       errors: restoreResult.errors.length > 0 ? restoreResult.errors : undefined,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error restoring checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error restoring checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to restore checkpoint' });
   }
 });
@@ -496,7 +497,7 @@ router.patch('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Res
       checkpoint: updated,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error updating checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error updating checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update checkpoint' });
   }
 });
@@ -534,7 +535,7 @@ router.delete('/auto-checkpoints/:id', requireAuth, async (req: Request, res: Re
       deletedCheckpoint: deleted,
     });
   } catch (error) {
-    logger.error('[AutoCheckpoints API] Error deleting checkpoint:', error);
+    logger.error('[AutoCheckpoints API] Error deleting checkpoint:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to delete checkpoint' });
   }
 });

@@ -9,6 +9,7 @@ import { notifyCollaborationInvite } from '../services/notification-events';
 import { realEmailService } from '../services/real-email-service';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('collaboration-router');
 
@@ -63,7 +64,7 @@ router.post('/generate-link', requireAuth, async (req: Request, res: Response) =
     
     res.json({ link });
   } catch (error) {
-    logger.error('Error generating collaboration link:', error);
+    logger.error('Error generating collaboration link:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to generate collaboration link' });
   }
 });
@@ -100,7 +101,7 @@ router.get('/sessions/:projectId', requireAuth, async (req: Request, res: Respon
     
     res.json(sessions);
   } catch (error) {
-    logger.error('Error fetching sessions:', error);
+    logger.error('Error fetching sessions:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch sessions' });
   }
 });
@@ -122,7 +123,7 @@ router.get('/sessions/:sessionId/participants', requireAuth, async (req: Request
     
     res.json(participants);
   } catch (error) {
-    logger.error('Error fetching participants:', error);
+    logger.error('Error fetching participants:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch participants' });
   }
 });
@@ -187,7 +188,7 @@ router.post('/join', requireAuth, async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
-    logger.error('Error joining session:', error);
+    logger.error('Error joining session:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to join session' });
   }
 });
@@ -241,7 +242,7 @@ router.get('/stats/:projectId', requireAuth, async (req: Request, res: Response)
       totalParticipants: totalParticipants.length,
     });
   } catch (error) {
-    logger.error('Error fetching stats:', error);
+    logger.error('Error fetching stats:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch statistics' });
   }
 });
@@ -336,7 +337,7 @@ router.post('/invite', requireAuth, async (req: Request, res: Response) => {
       const project = await storage.getProject(parseInt(projectId, 10));
       const projectName = project?.name || `Project #${projectId}`;
       notifyCollaborationInvite(invitedUser.id, inviterName, projectName).catch(err =>
-        logger.warn('[Collaboration] Failed to send push notification for invite:', err)
+        logger.warn('[Collaboration] Failed to send push notification for invite:', redactErrorForLog(err))
       );
     }
 
@@ -358,7 +359,7 @@ router.post('/invite', requireAuth, async (req: Request, res: Response) => {
       });
     }
   } catch (error: any) {
-    logger.error('Error sending invitation:', error);
+    logger.error('Error sending invitation:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to send invitation' });
   }
 });
@@ -375,7 +376,7 @@ router.get('/active', requireAuth, async (req: Request, res: Response) => {
     // Return empty array for now - real data comes from WebSocket
     res.json([]);
   } catch (error) {
-    logger.error('Error fetching active collaborators:', error);
+    logger.error('Error fetching active collaborators:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch collaborators' });
   }
 });
@@ -485,7 +486,7 @@ router.get('/:projectId/users', requireAuth, async (req: Request, res: Response)
     
     res.json({ collaborators });
   } catch (error) {
-    logger.error('Error fetching project collaborators:', error);
+    logger.error('Error fetching project collaborators:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch collaborators' });
   }
 });
@@ -528,7 +529,7 @@ router.post('/:projectId/invite', requireAuth, async (req: Request, res: Respons
       inviteLink
     });
   } catch (error) {
-    logger.error('Error sending invitation:', error);
+    logger.error('Error sending invitation:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to send invitation' });
   }
 });
@@ -567,7 +568,7 @@ router.patch('/:projectId/users/:collaboratorId', requireAuth, async (req: Reque
       message: `Role updated to ${role}`
     });
   } catch (error) {
-    logger.error('Error updating collaborator role:', error);
+    logger.error('Error updating collaborator role:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update role' });
   }
 });
@@ -606,7 +607,7 @@ router.delete('/:projectId/users/:collaboratorId', requireAuth, async (req: Requ
       message: 'Collaborator removed'
     });
   } catch (error) {
-    logger.error('Error removing collaborator:', error);
+    logger.error('Error removing collaborator:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to remove collaborator' });
   }
 });
@@ -633,7 +634,7 @@ router.get('/sessions/:sessionId/messages', requireAuth, async (req: Request, re
     // Reverse to get chronological order
     res.json(messages.reverse());
   } catch (error) {
-    logger.error('Error fetching chat messages:', error);
+    logger.error('Error fetching chat messages:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
@@ -698,7 +699,7 @@ router.post('/sessions/:sessionId/messages', requireAuth, async (req: Request, r
     
     res.json(newMessage);
   } catch (error) {
-    logger.error('Error saving chat message:', error);
+    logger.error('Error saving chat message:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to save message' });
   }
 });
@@ -751,7 +752,7 @@ router.get('/:projectId/messages', requireAuth, async (req: Request, res: Respon
     
     res.json(messages.reverse());
   } catch (error) {
-    logger.error('Error fetching project messages:', error);
+    logger.error('Error fetching project messages:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
@@ -842,7 +843,7 @@ router.post('/:projectId/messages', requireAuth, async (req: Request, res: Respo
     
     res.json(newMessage);
   } catch (error) {
-    logger.error('Error saving project message:', error);
+    logger.error('Error saving project message:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to save message' });
   }
 });

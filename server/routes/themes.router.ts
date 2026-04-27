@@ -7,6 +7,7 @@ import { projectSettings, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('themes');
@@ -81,7 +82,7 @@ router.get('/', async (req, res) => {
 
     res.json(settings);
   } catch (error: any) {
-    logger.error('Failed to get theme settings:', error);
+    logger.error('Failed to get theme settings:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -129,7 +130,7 @@ router.put('/', async (req, res) => {
 
     res.status(201).json(created);
   } catch (error: any) {
-    logger.error('Failed to update theme settings:', error);
+    logger.error('Failed to update theme settings:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }

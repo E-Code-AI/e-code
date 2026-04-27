@@ -8,6 +8,7 @@ import { eq, and } from 'drizzle-orm';
 import { RealSecretManagementService } from '../services/real-secret-management';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('env-vars');
@@ -153,7 +154,7 @@ router.get('/:projectId', async (req, res) => {
 
     res.json({ variables: maskedVars });
   } catch (error: any) {
-    logger.error('Failed to get env vars:', error);
+    logger.error('Failed to get env vars:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -215,7 +216,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(response);
   } catch (error: any) {
-    logger.error('Failed to create env var:', error);
+    logger.error('Failed to create env var:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }
@@ -260,7 +261,7 @@ router.patch('/:id', async (req, res) => {
         valueToStore = (secretService as any).decrypt(encryptedData);
         logger.info(`Downgraded secret to plaintext: ${envVar.key}`);
       } catch (error) {
-        logger.error(`Failed to decrypt for downgrade ${envVar.key}:`, error);
+        logger.error(`Failed to decrypt for downgrade ${envVar.key}:`, redactErrorForLog(error));
         return res.status(500).json({ error: 'Failed to downgrade secret (decryption failed)' });
       }
     }
@@ -300,7 +301,7 @@ router.patch('/:id', async (req, res) => {
 
     res.json(response);
   } catch (error: any) {
-    logger.error('Failed to update env var:', error);
+    logger.error('Failed to update env var:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }
@@ -335,7 +336,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ message: 'Environment variable deleted' });
   } catch (error: any) {
-    logger.error('Failed to delete env var:', error);
+    logger.error('Failed to delete env var:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -371,7 +372,7 @@ router.post('/:id/reveal', async (req, res) => {
         value = (secretService as any).decrypt(encryptedData);
         logger.info(`Decrypted secret for reveal: ${envVar.key}`);
       } catch (error) {
-        logger.error(`Failed to decrypt secret ${envVar.key}:`, error);
+        logger.error(`Failed to decrypt secret ${envVar.key}:`, redactErrorForLog(error));
         return res.status(500).json({ error: 'Failed to decrypt secret value' });
       }
     }
@@ -392,7 +393,7 @@ router.post('/:id/reveal', async (req, res) => {
       warning: 'This encrypted value will only be shown once. Copy it now.'
     });
   } catch (error: any) {
-    logger.error('Failed to reveal secret:', error);
+    logger.error('Failed to reveal secret:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -437,7 +438,7 @@ router.get('/:projectId/export', async (req, res) => {
           const encryptedData = JSON.parse(envVar.value);
           value = (secretService as any).decrypt(encryptedData);
         } catch (error) {
-          logger.error(`Failed to decrypt secret ${envVar.key} for export:`, error);
+          logger.error(`Failed to decrypt secret ${envVar.key} for export:`, redactErrorForLog(error));
           // Skip this secret if decryption fails
           continue;
         }
@@ -457,7 +458,7 @@ router.get('/:projectId/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=".env"`);
     res.send(envContent);
   } catch (error: any) {
-    logger.error('Failed to export env vars:', error);
+    logger.error('Failed to export env vars:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -554,7 +555,7 @@ router.post('/:projectId/import', async (req, res) => {
           imported++;
         }
       } catch (err: any) {
-        logger.error(`Failed to import env var ${key}:`, err);
+        logger.error(`Failed to import env var ${key}:`, redactErrorForLog(err));
         errors.push(`Failed to import: ${key}`);
         skipped++;
       }
@@ -569,7 +570,7 @@ router.post('/:projectId/import', async (req, res) => {
       message: `Successfully imported ${imported} variables`
     });
   } catch (error: any) {
-    logger.error('Failed to import env vars:', error);
+    logger.error('Failed to import env vars:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }

@@ -20,6 +20,7 @@ import { eq } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
 import * as runner from '../runnerClient';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('runner-workspaces');
 const router = Router();
@@ -169,7 +170,7 @@ router.use('/preview/:workspaceId', createProxyMiddleware({
         return row.runnerUrl;
       }
     } catch (err) {
-      logger.error('Error in proxy router function', err);
+      logger.error('Error in proxy router function', redactErrorForLog(err));
     }
     return process.env.RUNNER_BASE_URL || 'http://localhost:8081';
   },

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '../db';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('logs-viewer');
@@ -215,7 +216,7 @@ router.get('/', async (req, res) => {
       }
     });
   } catch (error: any) {
-    logger.error('Failed to fetch logs:', error);
+    logger.error('Failed to fetch logs:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -322,7 +323,7 @@ router.post('/export', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(output);
   } catch (error: any) {
-    logger.error('Failed to export logs:', error);
+    logger.error('Failed to export logs:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -388,7 +389,7 @@ router.get('/stats', async (req, res) => {
 
     res.json(stats);
   } catch (error: any) {
-    logger.error('Failed to get log stats:', error);
+    logger.error('Failed to get log stats:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

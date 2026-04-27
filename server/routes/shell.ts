@@ -14,6 +14,7 @@ import { createLogger } from '../utils/logger';
 import { bulkSyncProjectFiles,ensureProjectDirectory,getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { safePath } from '../utils/safe-path';
 import { centralUpgradeDispatcher } from '../websocket/central-upgrade-dispatcher';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('shell-router');
 const router = Router();
@@ -191,7 +192,7 @@ async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<
       });
     });
   } catch (error) {
-    logger.error('Failed to authenticate shell upgrade request:', error);
+    logger.error('Failed to authenticate shell upgrade request:', redactErrorForLog(error));
     return null;
   }
 }
@@ -266,7 +267,7 @@ function initializeShellWebSocket() {
           return;
         }
       } catch (error) {
-        logger.error('Failed to validate project access:', error);
+        logger.error('Failed to validate project access:', redactErrorForLog(error));
         ws.close(1008, 'Project validation failed');
         return;
       }
@@ -311,7 +312,7 @@ echo ""
       await fs.writeFile(path.join(userHome, '.bashrc'), bashrcContent);
       
     } catch (error) {
-      logger.error('Failed to create user shell directory:', error);
+      logger.error('Failed to create user shell directory:', redactErrorForLog(error));
     }
 
     // Determine the working directory: use the canonical project workspace
@@ -390,7 +391,7 @@ echo ""
 
     // Handle errors
     ws.on('error', (error) => {
-      logger.error('Shell WebSocket error:', error);
+      logger.error('Shell WebSocket error:', redactErrorForLog(error));
       shell.kill();
       shellSessions.delete(sessionId);
     });
@@ -480,7 +481,7 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
     
     res.json({ command, prompt });
   } catch (error) {
-    logger.error('Shell command generation error:', error);
+    logger.error('Shell command generation error:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to generate command' });
   }
 });

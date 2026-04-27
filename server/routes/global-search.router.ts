@@ -4,6 +4,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('global-search');
@@ -420,7 +421,7 @@ router.get('/', async (req, res) => {
       query: q,
     });
   } catch (error: any) {
-    logger.error('Advanced search error:', error);
+    logger.error('Advanced search error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -527,7 +528,7 @@ router.post('/global', async (req, res) => {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid search request', details: error.errors });
     }
-    logger.error('Global search error:', error);
+    logger.error('Global search error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -611,7 +612,7 @@ router.post('/replace', async (req, res) => {
           });
         }
       } catch (error: any) {
-        logger.error(`Replace failed for ${file.path}:`, error);
+        logger.error(`Replace failed for ${file.path}:`, redactErrorForLog(error));
         results.push({
           filePath: file.path,
           replacements: 0,
@@ -627,7 +628,7 @@ router.post('/replace', async (req, res) => {
       totalReplacements: results.reduce((sum, r) => sum + r.replacements, 0)
     });
   } catch (error: any) {
-    logger.error('Global replace error:', error);
+    logger.error('Global replace error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

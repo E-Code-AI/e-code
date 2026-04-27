@@ -6,6 +6,7 @@ import { db } from "../db";
 import { ensureAuthenticated } from "../middleware/auth";
 import { storage } from '../storage';
 import { createLogger } from "../utils/logger";
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('mcp-servers-router');
 const router = Router();
@@ -112,7 +113,7 @@ router.get("/:projectId/mcp/servers", async (req: Request, res: Response) => {
     
     res.json(servers.map(serializeServer));
   } catch (error) {
-    logger.error('Failed to fetch MCP servers', error);
+    logger.error('Failed to fetch MCP servers', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to fetch servers" });
   }
 });
@@ -148,7 +149,7 @@ router.post("/:projectId/mcp/servers", async (req: Request, res: Response) => {
 
     res.status(201).json(serializeServer(newServer));
   } catch (error) {
-    logger.error('Failed to create MCP server', error);
+    logger.error('Failed to create MCP server', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to create server" });
   }
 });
@@ -186,7 +187,7 @@ router.put("/:projectId/mcp/servers/:serverId", async (req: Request, res: Respon
 
     res.json(serializeServer(updated));
   } catch (error) {
-    logger.error('Failed to update MCP server', error);
+    logger.error('Failed to update MCP server', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update server' });
   }
 });
@@ -207,7 +208,7 @@ router.delete("/:projectId/mcp/servers/:serverId", async (req: Request, res: Res
 
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to delete MCP server', error);
+    logger.error('Failed to delete MCP server', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to delete server" });
   }
 });
@@ -241,7 +242,7 @@ router.post("/:projectId/mcp/servers/test-remote", async (req: Request, res: Res
 
     res.json({ status: 'stopped' });
   } catch (error: any) {
-    logger.error('Failed to test remote MCP server', error);
+    logger.error('Failed to test remote MCP server', redactErrorForLog(error));
     res.status(500).json({ status: 'error', errorMessage: error.message });
   }
 });
@@ -288,7 +289,7 @@ router.post("/:projectId/mcp/servers/:serverId/test", async (req: Request, res: 
 
     res.json(serializeServer(updated));
   } catch (error) {
-    logger.error('Failed to test MCP server', error);
+    logger.error('Failed to test MCP server', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to test server" });
   }
 });
@@ -312,7 +313,7 @@ router.post("/:projectId/mcp/servers/:serverId/connect", async (req: Request, re
 
     res.json(serializeServer(server));
   } catch (error) {
-    logger.error('Failed to connect MCP server', error);
+    logger.error('Failed to connect MCP server', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to connect" });
   }
 });
@@ -361,7 +362,7 @@ router.post("/:projectId/mcp/init-builtin", async (req: Request, res: Response) 
     
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to init builtin MCP servers', error);
+    logger.error('Failed to init builtin MCP servers', redactErrorForLog(error));
     res.status(500).json({ error: "Failed to init servers" });
   }
 });

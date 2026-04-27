@@ -8,6 +8,7 @@ import { csrfProtection } from '../middleware/csrf';
 import { githubOAuth } from '../services/github-oauth';
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('git-router');
 
@@ -170,7 +171,7 @@ router.get('/status', ensureAuthenticated, async (req: Request, res: Response) =
 
     res.json(gitStatus);
   } catch (error: any) {
-    logger.error('[Git] Status error:', error);
+    logger.error('[Git] Status error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -269,7 +270,7 @@ router.get('/diff/:filePath(*)', ensureAuthenticated, async (req: Request, res: 
       res.json(diff);
     }
   } catch (error: any) {
-    logger.error('[Git] Diff error:', error);
+    logger.error('[Git] Diff error:', redactErrorForLog(error));
     if (res.headersSent) {
       if (!res.writableEnded) {
         res.write(JSON.stringify({ type: 'error', content: error.message }) + '\n');
@@ -305,7 +306,7 @@ router.post('/stage', ensureAuthenticated, csrfProtection, async (req: Request, 
 
     res.json({ success: true, staged: files });
   } catch (error: any) {
-    logger.error('[Git] Stage error:', error);
+    logger.error('[Git] Stage error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -334,7 +335,7 @@ router.post('/unstage', ensureAuthenticated, csrfProtection, async (req: Request
 
     res.json({ success: true, unstaged: files });
   } catch (error: any) {
-    logger.error('[Git] Unstage error:', error);
+    logger.error('[Git] Unstage error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -361,7 +362,7 @@ router.post('/commit', ensureAuthenticated, csrfProtection, async (req: Request,
 
     res.json({ success: true, output: stdout });
   } catch (error: any) {
-    logger.error('[Git] Commit error:', error);
+    logger.error('[Git] Commit error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -424,7 +425,7 @@ router.post('/push', ensureAuthenticated, csrfProtection, async (req: Request, r
       res.json({ success: true, output: stdout || stderr });
     }
   } catch (error: any) {
-    logger.error('[Git] Push error:', error);
+    logger.error('[Git] Push error:', redactErrorForLog(error));
     if (error.timedOut) {
       return res.status(500).json({ error: 'Git push timed out - check your network connection' });
     }
@@ -496,7 +497,7 @@ router.post('/pull', ensureAuthenticated, csrfProtection, async (req: Request, r
       res.json({ success: true, output: stdout || stderr });
     }
   } catch (error: any) {
-    logger.error('[Git] Pull error:', error);
+    logger.error('[Git] Pull error:', redactErrorForLog(error));
     if (error.timedOut) {
       return res.status(500).json({ error: 'Git pull timed out - check your network connection' });
     }
@@ -568,7 +569,7 @@ router.post('/fetch', ensureAuthenticated, csrfProtection, async (req: Request, 
       res.json({ success: true, output: stdout || stderr || 'Fetched successfully' });
     }
   } catch (error: any) {
-    logger.error('[Git] Fetch error:', error);
+    logger.error('[Git] Fetch error:', redactErrorForLog(error));
     if (error.timedOut) {
       return res.status(500).json({ error: 'Git fetch timed out - check your network connection' });
     }
@@ -586,7 +587,7 @@ router.get('/github/status', async (req: Request, res: Response) => {
     const status = await githubOAuth.getConnectionStatus(userId);
     res.json(status);
   } catch (error: any) {
-    logger.error('[Git] GitHub status error:', error);
+    logger.error('[Git] GitHub status error:', redactErrorForLog(error));
     res.json({ connected: false });
   }
 });
@@ -600,7 +601,7 @@ router.get('/github/connect', ensureAuthenticated, async (req: Request, res: Res
     const authUrl = githubOAuth.getAuthorizationUrl('git_connect');
     res.json({ authUrl });
   } catch (error: any) {
-    logger.error('[Git] GitHub connect error:', error);
+    logger.error('[Git] GitHub connect error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to generate GitHub connect URL' });
   }
 });
@@ -636,7 +637,7 @@ router.get('/github/repos', ensureAuthenticated, async (req: Request, res: Respo
       })),
     });
   } catch (error: any) {
-    logger.error('[Git] GitHub repos error:', error);
+    logger.error('[Git] GitHub repos error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to load GitHub repositories' });
   }
 });
@@ -651,7 +652,7 @@ router.post('/github/disconnect', ensureAuthenticated, csrfProtection, async (re
     await githubOAuth.disconnectUser(userId);
     res.json({ success: true, message: 'GitHub disconnected successfully' });
   } catch (error: any) {
-    logger.error('[Git] GitHub disconnect error:', error);
+    logger.error('[Git] GitHub disconnect error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to disconnect GitHub' });
   }
 });
@@ -780,7 +781,7 @@ router.post('/branches', ensureAuthenticated, csrfProtection, async (req: Reques
     
     res.json({ success: true, branch: name });
   } catch (error: any) {
-    logger.error('[Git] Create branch error:', error);
+    logger.error('[Git] Create branch error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -809,7 +810,7 @@ router.delete('/branches/:name(*)', ensureAuthenticated, csrfProtection, async (
     
     res.json({ success: true, deleted: name });
   } catch (error: any) {
-    logger.error('[Git] Delete branch error:', error);
+    logger.error('[Git] Delete branch error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -831,7 +832,7 @@ router.post('/checkout', ensureAuthenticated, csrfProtection, async (req: Reques
     
     res.json({ success: true, branch });
   } catch (error: any) {
-    logger.error('[Git] Checkout error:', error);
+    logger.error('[Git] Checkout error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -858,7 +859,7 @@ router.post('/merge', ensureAuthenticated, csrfProtection, async (req: Request, 
     
     res.json({ success: true, output: stdout });
   } catch (error: any) {
-    logger.error('[Git] Merge error:', error);
+    logger.error('[Git] Merge error:', redactErrorForLog(error));
     if (error.message?.includes('CONFLICT')) {
       return res.status(409).json({ 
         error: 'Merge conflict', 
@@ -953,7 +954,7 @@ router.get('/log', ensureAuthenticated, async (req: Request, res: Response) => {
       res.json({ commits });
     }
   } catch (error: any) {
-    logger.error('[Git] Log error:', error);
+    logger.error('[Git] Log error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1010,7 +1011,7 @@ router.get('/log/stream', ensureAuthenticated, async (req: Request, res: Respons
       });
     });
   } catch (error: any) {
-    logger.error('[Git] Log stream error:', error);
+    logger.error('[Git] Log stream error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1072,7 +1073,7 @@ router.get('/diff/stream/:filePath(*)', ensureAuthenticated, async (req: Request
       });
     });
   } catch (error: any) {
-    logger.error('[Git] Diff stream error:', error);
+    logger.error('[Git] Diff stream error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1100,7 +1101,7 @@ router.get('/remotes', ensureAuthenticated, async (req: Request, res: Response) 
     
     res.json({ remotes });
   } catch (error: any) {
-    logger.error('[Git] Remotes error:', error);
+    logger.error('[Git] Remotes error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1122,7 +1123,7 @@ router.post('/remotes', ensureAuthenticated, csrfProtection, async (req: Request
     
     res.json({ success: true, remote: { name, url } });
   } catch (error: any) {
-    logger.error('[Git] Add remote error:', error);
+    logger.error('[Git] Add remote error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -1209,7 +1210,7 @@ router.get('/blame/:filePath(*)', ensureAuthenticated, async (req: Request, res:
     
     res.json({ blame: blameData });
   } catch (error: any) {
-    logger.error('[Git] Blame error:', error);
+    logger.error('[Git] Blame error:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

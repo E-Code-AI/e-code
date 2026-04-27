@@ -4,6 +4,7 @@ import { orchestrator } from '../kubernetes/orchestrator';
 import { createLogger } from '../utils/logger';
 import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('container-routes');
@@ -54,7 +55,7 @@ router.post('/projects/:projectId/container', ensureAuthenticated, async (req, r
       }
     });
   } catch (error: any) {
-    logger.error(`Failed to create container for project ${projectId}:`, error);
+    logger.error(`Failed to create container for project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to create container environment',
       details: error.message 
@@ -91,7 +92,7 @@ router.get('/projects/:projectId/container/status', ensureAuthenticated, async (
       }
     });
   } catch (error: any) {
-    logger.error(`Failed to get container status for project ${projectId}:`, error);
+    logger.error(`Failed to get container status for project ${projectId}:`, redactErrorForLog(error));
     
     if (error.response?.statusCode === 404) {
       res.status(404).json({ 
@@ -134,7 +135,7 @@ router.delete('/projects/:projectId/container', ensureAuthenticated, async (req,
       message: 'Container environment deleted successfully'
     });
   } catch (error: any) {
-    logger.error(`Failed to delete container for project ${projectId}:`, error);
+    logger.error(`Failed to delete container for project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to delete container environment',
       details: error.message 
@@ -172,7 +173,7 @@ router.post('/projects/:projectId/container/exec', ensureAuthenticated, async (r
       output
     });
   } catch (error: any) {
-    logger.error(`Failed to execute command in project ${projectId}:`, error);
+    logger.error(`Failed to execute command in project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to execute command',
       details: error.message 
@@ -208,7 +209,7 @@ router.post('/projects/:projectId/container/stop', ensureAuthenticated, async (r
       message: 'Container stopped successfully'
     });
   } catch (error: any) {
-    logger.error(`Failed to stop container for project ${projectId}:`, error);
+    logger.error(`Failed to stop container for project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to stop container',
       details: error.message 
@@ -241,7 +242,7 @@ router.get('/projects/:projectId/container/logs', ensureAuthenticated, async (re
       logs: logs.split('\n').filter(line => line.trim())
     });
   } catch (error: any) {
-    logger.error(`Failed to get container logs for project ${projectId}:`, error);
+    logger.error(`Failed to get container logs for project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to get container logs',
       details: error.message 
@@ -283,7 +284,7 @@ router.post('/projects/:projectId/container/restart', ensureAuthenticated, async
       }
     });
   } catch (error: any) {
-    logger.error(`Failed to restart container for project ${projectId}:`, error);
+    logger.error(`Failed to restart container for project ${projectId}:`, redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to restart container',
       details: error.message 

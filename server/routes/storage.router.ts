@@ -8,6 +8,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { storageService } from '../services/storage.service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('storage-router');
@@ -218,7 +219,7 @@ router.get('/', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('Failed to list storage files:', error);
+    logger.error('Failed to list storage files:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -266,7 +267,7 @@ router.post('/upload', upload.single('file'), async (req: Request, res: Response
       url: `/api/projects/${projectId}/storage/${encodeURIComponent(fullPath.replace(`${prefix}/`, ''))}/download`,
     });
   } catch (error: any) {
-    logger.error('Failed to upload file:', error);
+    logger.error('Failed to upload file:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -307,7 +308,7 @@ router.post('/folder', async (req: Request, res: Response) => {
       name: sanitizedName,
     });
   } catch (error: any) {
-    logger.error('Failed to create folder:', error);
+    logger.error('Failed to create folder:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -341,7 +342,7 @@ router.get('/:path(*)/download', async (req: Request, res: Response) => {
 
     res.send(buffer);
   } catch (error: any) {
-    logger.error('Failed to download file:', error);
+    logger.error('Failed to download file:', redactErrorForLog(error));
     if (error.message?.includes('not found')) {
       return res.status(404).json({ error: 'File not found' });
     }
@@ -370,7 +371,7 @@ router.get('/:path(*)/url', async (req: Request, res: Response) => {
 
     res.json({ url, expiresIn: 3600 });
   } catch (error: any) {
-    logger.error('Failed to get signed URL:', error);
+    logger.error('Failed to get signed URL:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -398,7 +399,7 @@ router.delete('/:path(*)', async (req: Request, res: Response) => {
 
     res.json({ message: 'File deleted successfully' });
   } catch (error: any) {
-    logger.error('Failed to delete file:', error);
+    logger.error('Failed to delete file:', redactErrorForLog(error));
     if (error.message?.includes('not found')) {
       return res.status(404).json({ error: 'File not found' });
     }

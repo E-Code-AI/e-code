@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { expoSnackService } from '../services/expo-snack.service';
 import { createLogger } from '../utils/logger';
 import { z } from 'zod';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('expo-snack-router');
 
@@ -38,7 +39,7 @@ router.post('/session/:projectId', async (req: Request, res: Response) => {
     const session = await expoSnackService.createSession(projectId, validatedBody);
     res.json({ success: true, session });
   } catch (error) {
-    logger.error('Failed to create Expo Snack session:', error);
+    logger.error('Failed to create Expo Snack session:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to create session' 
@@ -58,7 +59,7 @@ router.get('/session/:projectId', async (req: Request, res: Response) => {
 
     res.json({ success: true, session });
   } catch (error) {
-    logger.error('Failed to get Expo Snack session:', error);
+    logger.error('Failed to get Expo Snack session:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to get session' 
@@ -74,7 +75,7 @@ router.patch('/session/:projectId/files', async (req: Request, res: Response) =>
     await expoSnackService.updateFiles(projectId, validatedBody.files);
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to update Expo Snack files:', error);
+    logger.error('Failed to update Expo Snack files:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to update files' 
@@ -88,7 +89,7 @@ router.delete('/session/:projectId', async (req: Request, res: Response) => {
     await expoSnackService.closeSession(projectId);
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to close Expo Snack session:', error);
+    logger.error('Failed to close Expo Snack session:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to close session' 
@@ -101,7 +102,7 @@ router.get('/sessions', async (_req: Request, res: Response) => {
     const sessions = expoSnackService.getActiveSessions();
     res.json({ success: true, sessions });
   } catch (error) {
-    logger.error('Failed to list Expo Snack sessions:', error);
+    logger.error('Failed to list Expo Snack sessions:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to list sessions' 
@@ -115,7 +116,7 @@ router.post('/embed', async (req: Request, res: Response) => {
     const embedHtml = expoSnackService.generateEmbedHtml(validatedBody);
     res.json({ success: true, html: embedHtml });
   } catch (error) {
-    logger.error('Failed to generate Expo Snack embed:', error);
+    logger.error('Failed to generate Expo Snack embed:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to generate embed' 
@@ -129,7 +130,7 @@ router.post('/iframe-url', async (req: Request, res: Response) => {
     const url = expoSnackService.generateIframeUrl(options);
     res.json({ success: true, url });
   } catch (error) {
-    logger.error('Failed to generate Expo Snack iframe URL:', error);
+    logger.error('Failed to generate Expo Snack iframe URL:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to generate iframe URL' 
@@ -149,7 +150,7 @@ router.get('/status', async (_req: Request, res: Response) => {
       sdkVersion: '51.0.0',
     });
   } catch (error) {
-    logger.error('Failed to get Expo Snack status:', error);
+    logger.error('Failed to get Expo Snack status:', redactErrorForLog(error));
     res.status(500).json({ 
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to get status' 

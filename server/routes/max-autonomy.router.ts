@@ -18,6 +18,7 @@ import { db } from '../db';
 import { maxAutonomySessions, autonomyMessageQueue } from '@shared/schema';
 import { eq, and, desc, asc } from 'drizzle-orm';
 import type { RiskThreshold } from '@shared/schema';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('MaxAutonomyRouter');
@@ -48,7 +49,7 @@ router.get('/orchestrator/health', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('Error fetching orchestrator health:', error);
+    logger.error('Error fetching orchestrator health:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch orchestrator health' });
   }
 });
@@ -82,7 +83,7 @@ async function ensureSessionOwnership(req: Request, res: Response, next: NextFun
     (req as any).autonomySession = session;
     next();
   } catch (error: any) {
-    logger.error('Error in session ownership check:', error);
+    logger.error('Error in session ownership check:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to verify session ownership' });
   }
 }
@@ -142,7 +143,7 @@ router.post('/sessions', async (req: Request, res: Response) => {
       }
     });
   } catch (error: any) {
-    logger.error('Error starting Max Autonomy session:', error);
+    logger.error('Error starting Max Autonomy session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to start autonomous session' });
   }
 });
@@ -178,7 +179,7 @@ router.get('/sessions/:id', ensureSessionOwnership, async (req: Request, res: Re
       }
     });
   } catch (error: any) {
-    logger.error('Error getting session:', error);
+    logger.error('Error getting session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get session' });
   }
 });
@@ -207,7 +208,7 @@ router.post('/sessions/:id/pause', ensureSessionOwnership, async (req: Request, 
       message: 'Session paused successfully'
     });
   } catch (error: any) {
-    logger.error('Error pausing session:', error);
+    logger.error('Error pausing session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to pause session' });
   }
 });
@@ -236,7 +237,7 @@ router.post('/sessions/:id/resume', ensureSessionOwnership, async (req: Request,
       message: 'Session resumed successfully'
     });
   } catch (error: any) {
-    logger.error('Error resuming session:', error);
+    logger.error('Error resuming session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to resume session' });
   }
 });
@@ -265,7 +266,7 @@ router.post('/sessions/:id/stop', ensureSessionOwnership, async (req: Request, r
       message: 'Session stopped successfully'
     });
   } catch (error: any) {
-    logger.error('Error stopping session:', error);
+    logger.error('Error stopping session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to stop session' });
   }
 });
@@ -287,7 +288,7 @@ router.get('/sessions/:id/tasks', ensureSessionOwnership, async (req: Request, r
       tasks
     });
   } catch (error: any) {
-    logger.error('Error getting tasks:', error);
+    logger.error('Error getting tasks:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get tasks' });
   }
 });
@@ -311,7 +312,7 @@ router.get('/sessions/:id/progress', ensureSessionOwnership, async (req: Request
       progress
     });
   } catch (error: any) {
-    logger.error('Error getting progress:', error);
+    logger.error('Error getting progress:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get progress' });
   }
 });
@@ -342,7 +343,7 @@ router.get('/sessions', async (req: Request, res: Response) => {
       }))
     });
   } catch (error: any) {
-    logger.error('Error getting user sessions:', error);
+    logger.error('Error getting user sessions:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get sessions' });
   }
 });
@@ -388,7 +389,7 @@ router.get('/projects/:projectId/session', async (req: Request, res: Response) =
       }
     });
   } catch (error: any) {
-    logger.error('Error getting project autonomy session:', error);
+    logger.error('Error getting project autonomy session:', redactErrorForLog(error));
     res.status(500).json({ error: error.message || 'Failed to get project autonomy session' });
   }
 });
@@ -423,7 +424,7 @@ router.get('/sessions/:id/messages', ensureSessionOwnership, async (req: Request
     
     res.json({ success: true, messages });
   } catch (error: any) {
-    logger.error('Error getting queued messages:', error);
+    logger.error('Error getting queued messages:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get queued messages' });
   }
 });
@@ -450,7 +451,7 @@ router.post('/sessions/:id/messages', ensureSessionOwnership, async (req: Reques
     logger.info(`Message queued for session ${sessionId}: ${message.id}`);
     res.status(201).json({ success: true, message });
   } catch (error: any) {
-    logger.error('Error queuing message:', error);
+    logger.error('Error queuing message:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to queue message' });
   }
 });
@@ -466,7 +467,7 @@ router.delete('/sessions/:id/messages/:messageId', ensureSessionOwnership, async
     
     res.json({ success: true, message: 'Message cancelled' });
   } catch (error: any) {
-    logger.error('Error cancelling message:', error);
+    logger.error('Error cancelling message:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to cancel message' });
   }
 });
@@ -488,7 +489,7 @@ router.patch('/sessions/:id/messages/:messageId/priority', ensureSessionOwnershi
     
     res.json({ success: true, message: updated });
   } catch (error: any) {
-    logger.error('Error updating message priority:', error);
+    logger.error('Error updating message priority:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update priority' });
   }
 });

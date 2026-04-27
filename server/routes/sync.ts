@@ -11,6 +11,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('sync');
 const router = Router();
@@ -145,7 +146,7 @@ router.get('/workspace', async (req: Request, res: Response) => {
 
     res.json(workspaceState);
   } catch (error) {
-    logger.error('Failed to get workspace state:', error);
+    logger.error('Failed to get workspace state:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get workspace state' });
   }
 });
@@ -183,7 +184,7 @@ router.put('/workspace', async (req: Request, res: Response) => {
     logger.info(`Workspace state updated for user ${userId}`);
     res.json({ success: true, workspaceState: updatedState });
   } catch (error) {
-    logger.error('Failed to update workspace state:', error);
+    logger.error('Failed to update workspace state:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update workspace state' });
   }
 });
@@ -215,7 +216,7 @@ router.get('/preferences', async (req: Request, res: Response) => {
 
     res.json(preferences);
   } catch (error) {
-    logger.error('Failed to get preferences:', error);
+    logger.error('Failed to get preferences:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get preferences' });
   }
 });
@@ -253,7 +254,7 @@ router.put('/preferences', async (req: Request, res: Response) => {
     logger.info(`Preferences updated for user ${userId}`);
     res.json({ success: true, preferences: updatedPreferences });
   } catch (error) {
-    logger.error('Failed to update preferences:', error);
+    logger.error('Failed to update preferences:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update preferences' });
   }
 });
@@ -278,7 +279,7 @@ router.get('/devices', async (req: Request, res: Response) => {
 
     res.json(devices);
   } catch (error) {
-    logger.error('Failed to get devices:', error);
+    logger.error('Failed to get devices:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get devices' });
   }
 });
@@ -318,7 +319,7 @@ router.post('/devices', async (req: Request, res: Response) => {
     logger.info(`Device registered for user ${userId}: ${deviceName}`);
     res.json({ success: true, device: newDevice });
   } catch (error) {
-    logger.error('Failed to register device:', error);
+    logger.error('Failed to register device:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to register device' });
   }
 });
@@ -349,7 +350,7 @@ router.put('/devices/:deviceId', async (req: Request, res: Response) => {
 
     res.json({ success: true, device });
   } catch (error) {
-    logger.error('Failed to update device:', error);
+    logger.error('Failed to update device:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update device' });
   }
 });
@@ -377,7 +378,7 @@ router.delete('/devices/:deviceId', async (req: Request, res: Response) => {
     logger.info(`Device removed for user ${userId}: ${deviceId}`);
     res.json({ success: true });
   } catch (error) {
-    logger.error('Failed to remove device:', error);
+    logger.error('Failed to remove device:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to remove device' });
   }
 });
@@ -415,7 +416,7 @@ router.get('/status', async (req: Request, res: Response) => {
 
     res.json(status);
   } catch (error) {
-    logger.error('Failed to get sync status:', error);
+    logger.error('Failed to get sync status:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get sync status' });
   }
 });

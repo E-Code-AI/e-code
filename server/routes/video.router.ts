@@ -4,6 +4,7 @@ import { videoProjects } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('video-router');
 const router = Router();
@@ -19,7 +20,7 @@ router.get('/:projectId/video', ensureAuthenticated, async (req: Request, res: R
     
     res.json(project);
   } catch (error: any) {
-    logger.error('Failed to get video project', error);
+    logger.error('Failed to get video project', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -53,7 +54,7 @@ router.put('/:projectId/video', ensureAuthenticated, async (req: Request, res: R
     
     res.json({ success: true });
   } catch (error: any) {
-    logger.error('Failed to save video project', error);
+    logger.error('Failed to save video project', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });

@@ -5,6 +5,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { METERED_PRICES,PLANS } from '../payments/pricing-constants';
 import { StripePaymentService } from '../payments/stripe-service';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('admin-billing-router');
@@ -29,7 +30,7 @@ async function ensureAdmin(req: Request, res: Response, next: Function) {
     
     next();
   } catch (error: any) {
-    logger.error('Admin check failed:', error);
+    logger.error('Admin check failed:', redactErrorForLog(error));
     res.status(500).json({ error: 'Authorization check failed' });
   }
 }
@@ -54,7 +55,7 @@ router.get('/plans', ensureAuthenticated, ensureAdmin, async (_req: Request, res
     }));
     res.json(plans);
   } catch (error: any) {
-    logger.error('Failed to fetch plans:', error);
+    logger.error('Failed to fetch plans:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch plans' });
   }
 });
@@ -70,7 +71,7 @@ router.get('/settings', ensureAuthenticated, ensureAdmin, async (_req: Request, 
     };
     res.json(settings);
   } catch (error: any) {
-    logger.error('Failed to fetch billing settings:', error);
+    logger.error('Failed to fetch billing settings:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch billing settings' });
   }
 });
@@ -81,7 +82,7 @@ router.put('/settings', ensureAuthenticated, ensureAdmin, async (req: Request, r
     logger.info('Billing settings updated:', settings);
     res.json({ success: true, settings });
   } catch (error: any) {
-    logger.error('Failed to update billing settings:', error);
+    logger.error('Failed to update billing settings:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update billing settings' });
   }
 });
@@ -93,7 +94,7 @@ router.put('/plans/:planId', ensureAuthenticated, ensureAdmin, async (req: Reque
     logger.info(`Plan ${planId} updated:`, planData);
     res.json({ success: true, plan: planData });
   } catch (error: any) {
-    logger.error('Failed to update plan:', error);
+    logger.error('Failed to update plan:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update plan' });
   }
 });
@@ -105,7 +106,7 @@ router.put('/plans/:planId/limits/:limitId', ensureAuthenticated, ensureAdmin, a
     logger.info(`Limit ${limitId} for plan ${planId} updated:`, limitData);
     res.json({ success: true, limit: limitData });
   } catch (error: any) {
-    logger.error('Failed to update limit:', error);
+    logger.error('Failed to update limit:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to update limit' });
   }
 });
@@ -134,7 +135,7 @@ router.get('/subscriptions', ensureAuthenticated, ensureAdmin, async (req: Reque
 
     res.json(subscribers);
   } catch (error: any) {
-    logger.error('Failed to fetch subscriptions:', error);
+    logger.error('Failed to fetch subscriptions:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch subscriptions' });
   }
 });
@@ -165,7 +166,7 @@ router.get('/usage-summary', ensureAuthenticated, ensureAdmin, async (_req: Requ
       totalUsers: parseInt(String((Array.isArray(totalUsers) ? totalUsers[0] : (totalUsers as any).rows?.[0])?.count || '0')),
     });
   } catch (error: any) {
-    logger.error('Failed to fetch usage summary:', error);
+    logger.error('Failed to fetch usage summary:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch usage summary' });
   }
 });
@@ -195,7 +196,7 @@ router.get('/invoices', ensureAuthenticated, ensureAdmin, async (req: Request, r
 
     res.json({ invoices: formattedInvoices });
   } catch (error: any) {
-    logger.error('Failed to fetch invoices:', error);
+    logger.error('Failed to fetch invoices:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch invoices' });
   }
 });
@@ -233,7 +234,7 @@ router.get('/revenue', ensureAuthenticated, ensureAdmin, async (req: Request, re
 
     res.json({ revenue });
   } catch (error: any) {
-    logger.error('Failed to fetch revenue:', error);
+    logger.error('Failed to fetch revenue:', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to fetch revenue' });
   }
 });

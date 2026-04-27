@@ -7,6 +7,7 @@ import { projectSettings, projects } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router({ mergeParams: true });
 const logger = createLogger('settings');
@@ -135,7 +136,7 @@ router.get('/', async (req, res) => {
       borderRadius: settings.borderRadius ?? defaultSettings.borderRadius,
     });
   } catch (error: any) {
-    logger.error('Failed to get project settings:', error);
+    logger.error('Failed to get project settings:', redactErrorForLog(error));
     res.status(500).json({ error: error.message });
   }
 });
@@ -248,7 +249,7 @@ router.put('/', async (req, res) => {
       borderRadius: created.borderRadius ?? defaultSettings.borderRadius,
     });
   } catch (error: any) {
-    logger.error('Failed to update project settings:', error);
+    logger.error('Failed to update project settings:', redactErrorForLog(error));
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors });
     }

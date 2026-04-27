@@ -10,6 +10,7 @@ import { db } from '../db';
 import { agentSessions } from '@shared/schema';
 import { eq, sql } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const router = Router();
 const logger = createLogger('rag-router');
@@ -122,7 +123,7 @@ router.get('/stats', async (req, res) => {
 
     res.json(stats);
   } catch (error: any) {
-    logger.error('Failed to get RAG stats:', error);
+    logger.error('Failed to get RAG stats:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to get RAG statistics',
       message: error.message 
@@ -193,7 +194,7 @@ router.get('/context/:sessionId', ensureAuthenticated, async (req, res) => {
       retrievedAt: new Date().toISOString()
     });
   } catch (error: any) {
-    logger.error('Failed to get RAG context:', error);
+    logger.error('Failed to get RAG context:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to retrieve context',
       message: error.message 
@@ -233,7 +234,7 @@ router.post('/session-config', ensureAuthenticated, async (req, res) => {
       config: ragConfig 
     });
   } catch (error: any) {
-    logger.error('Failed to set RAG session config:', error);
+    logger.error('Failed to set RAG session config:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to update session config',
       message: error.message 
@@ -269,7 +270,7 @@ router.get('/session-config/:sessionId', ensureAuthenticated, async (req, res) =
       config: ragConfig 
     });
   } catch (error: any) {
-    logger.error('Failed to get RAG session config:', error);
+    logger.error('Failed to get RAG session config:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to get session config',
       message: error.message 
@@ -309,7 +310,7 @@ router.post('/index', ensureAuthenticated, async (req, res) => {
       }
     });
   } catch (error: any) {
-    logger.error('Failed to index content:', error);
+    logger.error('Failed to index content:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to index content',
       message: error.message 
@@ -349,7 +350,7 @@ router.post('/search', ensureAuthenticated, async (req, res) => {
       count: results.length
     });
   } catch (error: any) {
-    logger.error('Failed to search knowledge graph:', error);
+    logger.error('Failed to search knowledge graph:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Search failed',
       message: error.message 
@@ -460,7 +461,7 @@ router.get('/models', ensureAuthenticated, async (req, res) => {
 
     res.json({ models: availableModels });
   } catch (error: any) {
-    logger.error('Failed to get RAG models:', error);
+    logger.error('Failed to get RAG models:', redactErrorForLog(error));
     res.status(500).json({ 
       error: 'Failed to get models',
       message: error.message 

@@ -4,6 +4,7 @@ import { ensureAuthenticated } from '../middleware/auth';
 import { storage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { ensureProjectDirectory } from '../utils/project-fs-sync';
+import { redactErrorForLog } from '../utils/error-redaction';
 
 const logger = createLogger('lsp-router');
 const router = Router();
@@ -121,7 +122,7 @@ async function getSession(projectId: string, language: SupportedLsp): Promise<Ls
   });
 
   child.on('error', (error) => {
-    logger.error(`[LSP] Failed to start ${language} server:`, error);
+    logger.error(`[LSP] Failed to start ${language} server:`, redactErrorForLog(error));
   });
 
   sessions.set(key, session);
