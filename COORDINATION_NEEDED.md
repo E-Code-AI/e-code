@@ -78,3 +78,13 @@ The shipping kit is implemented only in assigned paths: `apps/mobile/ios/**`, `a
 - Android manifest permissions, deep links, FCM service declaration, splash resources, and ProGuard rules into the active Android target.
 - Push token registration, notification preferences, widgets, share extension, biometrics, and offline queue from the RN/native logic layer.
 - Final device screenshots and preview videos generated from signed builds into `store-assets/**`; I did not fabricate store screenshots because Apple/Google require captures matching the actual native UI.
+
+## Marketing, docs and community gallery integration
+
+Branch: `parallel/07-marketing-docs`
+
+Static marketing and docs sites plus CDN/Terraform modules are implemented in owned paths. The public community gallery requested at `/community` or `/explore` requires active web routes and backend project visibility queries outside my ownership:
+
+- Frontend owner: wire `/community`, `/explore`, public profiles and project public pages in the active router under `client/src/**` or approved `apps/web` shell path.
+- Backend owner: expose public project listing, report moderation, follower stats and fork API backed by Cloud SQL.
+- Infra owner: instantiate `infra/terraform/modules/marketing` and `infra/terraform/modules/cdn`, then upload `apps/marketing/dist/**` to `ecode-marketing` and `apps/docs/dist/**` to the docs bucket through Cloud Build.
