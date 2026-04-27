@@ -6,6 +6,7 @@ import { tierRateLimiters } from '../middleware/tier-rate-limiter';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
 import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
+import { classifyGenerationError, redactErrorForLog } from './code-generation-errors';
 
 const logger = createLogger('code-generation-router');
 const router = Router();
@@ -149,15 +150,30 @@ Generate the project now.`;
     });
     
     res.end();
-  } catch (error: any) {
-    logger.error('[Code Generation] Error:', error);
-    
-    // Send error event
+  } catch (error: unknown) {
+    const classified = classifyGenerationError(error);
+    logger.error('[Code Generation] Error', {
+      ...redactErrorForLog(error),
+      code: classified.code,
+    });
+
+    // If we never committed SSE headers (e.g. zod validation threw before
+    // validateAndSetSSEHeaders ran), respond with a structured JSON error.
+    if (!res.headersSent) {
+      res.status(classified.status).json({
+        error: classified.code,
+        message: classified.userMessage,
+        retryable: classified.retryable,
+      });
+      return;
+    }
+
     res.write(`data: ${JSON.stringify({
       type: 'error',
-      message: error.message || 'Code generation failed'
+      code: classified.code,
+      message: classified.userMessage,
+      retryable: classified.retryable,
     })}\n\n`);
-    
     res.end();
   }
 });
@@ -186,8 +202,8 @@ router.get('/models', tierRateLimiters.api, async (req, res) => {
       models: codeGenModels,
       defaultModel: 'claude-opus-4-7'
     });
-  } catch (error: any) {
-    logger.error('[Code Generation] Error getting models:', error);
+  } catch (error: unknown) {
+    logger.error('[Code Generation] Error getting models', redactErrorForLog(error));
     res.status(500).json({ error: 'Failed to get available models' });
   }
 });
