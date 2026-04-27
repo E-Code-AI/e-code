@@ -77,6 +77,34 @@ export class FilesRouter {
     };
   }
 
+  private dedupeFilesByPath<T extends { id?: number; path?: string; name?: string; updatedAt?: Date | string | null }>(fileList: T[]): T[] {
+    const byPath = new Map<string, T>();
+
+    for (const file of fileList || []) {
+      const key = String(file.path || file.name || '').replace(/^\/+/, '').replace(/\/+/g, '/');
+      if (!key) continue;
+
+      const existing = byPath.get(key);
+      if (!existing) {
+        byPath.set(key, file);
+        continue;
+      }
+
+      const existingTime = existing.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+      const nextTime = file.updatedAt ? new Date(file.updatedAt).getTime() : 0;
+      const existingId = Number(existing.id || 0);
+      const nextId = Number(file.id || 0);
+
+      if (nextTime > existingTime || (nextTime === existingTime && nextId > existingId)) {
+        byPath.set(key, file);
+      }
+    }
+
+    return Array.from(byPath.values()).sort((a, b) =>
+      String(a.path || a.name || '').localeCompare(String(b.path || b.name || ''))
+    );
+  }
+
   private ensureReadAccess = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const projectIdResult = projectIdSchema.safeParse(req.params.projectId);
@@ -186,7 +214,7 @@ export class FilesRouter {
           });
         }
 
-        const transformedFiles = (result.data || []).map(file => ({
+        const transformedFiles = this.dedupeFilesByPath(result.data || []).map(file => ({
           ...file,
           type: file.isDirectory ? "folder" : "file"
         }));

@@ -187,16 +187,30 @@ export function ReplitFileExplorer({
 
   // Build file tree structure
   const buildFileTree = (files: FileNode[]): FileNode[] => {
+    const dedupedFiles = Array.from(
+      files.reduce((byPath, file) => {
+        const key = (file.path || file.name).replace(/^\/+/, '').replace(/\/+/g, '/');
+        const existing = byPath.get(key);
+        const existingTime = existing?.lastModified ? new Date(existing.lastModified).getTime() : 0;
+        const nextTime = file.lastModified ? new Date(file.lastModified).getTime() : 0;
+
+        if (!existing || nextTime > existingTime || (nextTime === existingTime && file.id > existing.id)) {
+          byPath.set(key, file);
+        }
+
+        return byPath;
+      }, new Map<string, FileNode>()).values()
+    );
     const fileMap = new Map<number, FileNode>();
     const rootFiles: FileNode[] = [];
 
     // First pass: create map
-    files.forEach(file => {
+    dedupedFiles.forEach(file => {
       fileMap.set(file.id, { ...file, children: [] });
     });
 
     // Second pass: build tree
-    files.forEach(file => {
+    dedupedFiles.forEach(file => {
       const fileNode = fileMap.get(file.id)!;
       if (file.parentId === null) {
         rootFiles.push(fileNode);
