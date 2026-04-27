@@ -346,6 +346,85 @@ function categorizeError(error: unknown): { title: string; message: string } {
   };
 }
 
+type MessageFlowErrorDetails = {
+  message: string;
+  name?: string;
+  stack?: string;
+  status?: number;
+  statusText?: string;
+  body?: string;
+  context?: Record<string, unknown>;
+};
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function getMessageFlowErrorDetails(error: unknown, context?: Record<string, unknown>): MessageFlowErrorDetails {
+  const maybeRecord = error && typeof error === 'object' ? error as Record<string, unknown> : null;
+  const message = error instanceof Error
+    ? error.message
+    : typeof error === 'string'
+      ? error
+      : maybeRecord
+        ? String(maybeRecord.message || maybeRecord.error || maybeRecord.detail || safeStringify(error))
+        : 'Unknown message flow error';
+
+  return {
+    message,
+    name: error instanceof Error ? error.name : typeof maybeRecord?.name === 'string' ? maybeRecord.name : undefined,
+    stack: error instanceof Error ? error.stack : undefined,
+    status: typeof maybeRecord?.status === 'number' ? maybeRecord.status : undefined,
+    statusText: typeof maybeRecord?.statusText === 'string' ? maybeRecord.statusText : undefined,
+    body: typeof maybeRecord?.body === 'string' ? maybeRecord.body : undefined,
+    context,
+  };
+}
+
+function createVisibleErrorContent(userFriendlyError: string, details: MessageFlowErrorDetails): string {
+  const debugLines = [
+    `Message: ${details.message}`,
+    details.status ? `HTTP: ${details.status}${details.statusText ? ` ${details.statusText}` : ''}` : null,
+    details.body ? `Server body: ${details.body.slice(0, 1200)}` : null,
+    details.context ? `Context: ${safeStringify(details.context)}` : null,
+  ].filter(Boolean).join('\n');
+
+  return `⚠️ ${userFriendlyError}\n\nDétails debug visibles:\n\`\`\`\n${debugLines}\n\`\`\`\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+}
+
+function createHttpStreamError(response: Response, fallbackMessage: string, body: string): Error {
+  let message = fallbackMessage;
+  try {
+    if (body.trim().startsWith('{')) {
+      const errorJson = JSON.parse(body);
+      message = errorJson.message || errorJson.error || errorJson.detail || fallbackMessage;
+    } else if (body.trim()) {
+      message = body.trim().slice(0, 500);
+    } else if (response.status === 429) {
+      message = 'Rate limit exceeded. Please wait a moment and try again.';
+    } else if (response.status >= 500) {
+      message = 'Server error. Please try again later.';
+    }
+  } catch (parseError) {
+    console.error('[AgentMessageFlow] Failed to parse HTTP error body', {
+      status: response.status,
+      statusText: response.statusText,
+      body,
+      parseError,
+    });
+  }
+
+  return Object.assign(new Error(message), {
+    status: response.status,
+    statusText: response.statusText,
+    body,
+  });
+}
+
 export function ReplitAgentPanelV3({
   projectId,
   className,
@@ -1441,23 +1520,18 @@ export function ReplitAgentPanelV3({
 
             // ✅ FORTUNE 500 FIX: Enhanced error handling for non-2xx responses
             if (!response.ok) {
-              let errorMessage = 'Failed to get AI response';
-              try {
-                const errorText = await response.text();
-                // Check if it's JSON error or HTML error page
-                if (errorText.startsWith('{')) {
-                  const errorJson = JSON.parse(errorText);
-                  errorMessage = errorJson.message || errorJson.error || errorMessage;
-                } else if (response.status === 429) {
-                  errorMessage = 'Rate limit exceeded. Please wait a moment and try again.';
-                } else if (response.status >= 500) {
-                  errorMessage = 'Server error. Please try again later.';
-                }
-              } catch (e) {
-                // Use default error message
-              }
-              devLog('[AutoStart] ❌ Streaming error:', { status: response.status, errorMessage });
-              throw new Error(errorMessage);
+              const errorText = await response.text().catch(readError => {
+                console.error('[AutoStart] Failed to read streaming error body', readError);
+                return '';
+              });
+              const streamError = createHttpStreamError(response, 'Failed to get AI response', errorText);
+              console.error('[AutoStart] Streaming HTTP error', getMessageFlowErrorDetails(streamError, {
+                projectId,
+                conversationId: chatConversationId,
+                provider: selectedProvider,
+                modelId,
+              }));
+              throw streamError;
             }
 
             devLog('[AutoStart] ✅ Stream connected, first chunk timestamp:', Date.now());
@@ -1484,6 +1558,7 @@ export function ReplitAgentPanelV3({
             let fullContent = '';
             const thinkingSteps: ThinkingStep[] = [];
             const toolExecutions: ToolExecution[] = [];
+            let sseParseErrorShown = false;
 
             // ✅ FORTUNE 500 FIX: Buffer for partial SSE frames
             // SSE events can be split across network chunks - we need to buffer until we get complete frames
@@ -1590,8 +1665,32 @@ export function ReplitAgentPanelV3({
                         });
                       }
                     } catch (e) {
-                      // Skip invalid JSON - but log in dev mode for debugging
-                      devLog('[SSE Parse] Invalid JSON in data line:', { line: line.slice(0, 100) });
+                      console.error('[AutoStart] SSE JSON parse error', {
+                        error: e,
+                        line,
+                        projectId,
+                        conversationId: chatConversationId,
+                      });
+                      if (!sseParseErrorShown) {
+                        sseParseErrorShown = true;
+                        const parseDetails = getMessageFlowErrorDetails(e, {
+                          flow: 'auto-start-sse-parse',
+                          projectId,
+                          conversationId: chatConversationId,
+                          line: line.slice(0, 500),
+                        });
+                        setMessages(prev => [...prev, {
+                          id: `system-${Date.now()}`,
+                          role: 'system' as const,
+                          content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
+                          timestamp: new Date(),
+                          status: 'error' as const,
+                          metadata: {
+                            error: true,
+                            errorDetails: parseDetails,
+                          },
+                        }]);
+                      }
                     }
                   }
                 }
@@ -1625,14 +1724,18 @@ export function ReplitAgentPanelV3({
 
           } catch (error) {
             // Better error logging with full details
-            const errorDetails = error instanceof Error
-              ? { message: error.message, stack: error.stack, name: error.name }
-              : { raw: error };
+            const errorDetails = getMessageFlowErrorDetails(error, {
+              flow: 'auto-start',
+              projectId,
+              conversationId,
+              provider,
+              modelId,
+            });
 
-            console.error('AI chat error - Full details:', errorDetails);
+            console.error('[AgentMessageFlow] Auto-start failed', errorDetails);
 
             const { title, message: userFriendlyError } = categorizeError(error);
-            const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+            const errorContent = createVisibleErrorContent(userFriendlyError, errorDetails);
 
             toast({
               title,
@@ -1652,7 +1755,7 @@ export function ReplitAgentPanelV3({
                           content: errorContent,
                           isStreaming: false,
                           status: 'error' as const,
-                          metadata: { ...msg.metadata, error: true }
+                          metadata: { ...msg.metadata, error: true, errorDetails }
                         }
                       : msg
                   );
@@ -1669,9 +1772,20 @@ export function ReplitAgentPanelV3({
                 thinking: extendedThinkingEnabled ? activeThinking : undefined,
                 metadata: {
                   extendedThinking: extendedThinkingEnabled,
-                  error: true
+                  error: true,
+                  errorDetails
                 }
               }];
+            });
+            persistMessageToBackend({
+              role: 'assistant',
+              content: errorContent,
+              timestamp: new Date(),
+              metadata: {
+                error: true,
+                errorDetails,
+                flow: 'auto-start',
+              },
             });
             setActiveThinking([]);
           } finally {
@@ -1839,6 +1953,16 @@ export function ReplitAgentPanelV3({
           name: att.name
         }));
 
+      console.debug('[AgentMessageFlow] Sending chat stream request', {
+        projectId,
+        conversationId: chatConversationId,
+        provider: selectedProvider,
+        modelId,
+        messageLength: messageWithAttachments.length,
+        attachmentCount: currentAttachments.length,
+        imageAttachmentCount: imageAttachments.length,
+      });
+
       // Use raw fetch for SSE streaming - apiRequest consumes the body
       // CSRF token must be included manually since we can't use apiRequest for streaming
       const csrfHeader = await getCSRFToken();
@@ -1871,8 +1995,20 @@ export function ReplitAgentPanelV3({
         })
       });
 
+      console.debug('[AgentMessageFlow] Chat stream response received', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        projectId,
+        conversationId: chatConversationId,
+      });
+
       if (!response.ok) {
-        throw new Error('Failed to get AI response');
+        const errorText = await response.text().catch(readError => {
+          console.error('[AgentMessageFlow] Failed to read chat stream error body', readError);
+          return '';
+        });
+        throw createHttpStreamError(response, 'Failed to get AI response', errorText);
       }
 
       const reader = response.body?.getReader();
@@ -1895,6 +2031,7 @@ export function ReplitAgentPanelV3({
       const thinkingSteps: ThinkingStep[] = [];
       const toolExecutions: ToolExecution[] = [];
       const warningMessages: Message[] = []; // Accumulate warnings during streaming
+      let sseParseErrorShown = false;
       let messageMetadata: { cost?: string; tokens?: number; model?: string; provider?: string } = {};
 
       // Add assistant message to state BEFORE streaming to support live tool/thinking updates
@@ -2031,7 +2168,32 @@ export function ReplitAgentPanelV3({
                 });
               }
             } catch (e) {
-              // Skip invalid JSON
+              console.error('[AgentMessageFlow] SSE JSON parse error', {
+                error: e,
+                line,
+                projectId,
+                conversationId: chatConversationId,
+              });
+              if (!sseParseErrorShown) {
+                sseParseErrorShown = true;
+                const parseDetails = getMessageFlowErrorDetails(e, {
+                  flow: 'manual-send-sse-parse',
+                  projectId,
+                  conversationId: chatConversationId,
+                  line: line.slice(0, 500),
+                });
+                warningMessages.push({
+                  id: `system-${Date.now()}`,
+                  role: 'system',
+                  content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
+                  timestamp: new Date(),
+                  status: 'error',
+                  metadata: {
+                    error: true,
+                    errorDetails: parseDetails,
+                  },
+                });
+              }
             }
           }
         }
@@ -2080,10 +2242,18 @@ export function ReplitAgentPanelV3({
       }
 
     } catch (error) {
-      console.error('AI chat error:', error);
+      const errorDetails = getMessageFlowErrorDetails(error, {
+        flow: 'manual-send',
+        projectId,
+        conversationId,
+        provider: provider || 'openai',
+        modelId,
+      });
+
+      console.error('[AgentMessageFlow] Manual send failed', errorDetails);
 
       const { title, message: userFriendlyError } = categorizeError(error);
-      const errorContent = `⚠️ ${userFriendlyError}\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+      const errorContent = createVisibleErrorContent(userFriendlyError, errorDetails);
 
       // Rollback optimistic user message on error
       optimisticResult.rollback(userFriendlyError);
@@ -2106,7 +2276,7 @@ export function ReplitAgentPanelV3({
                     content: errorContent,
                     isStreaming: false,
                     status: 'error' as const,
-                    metadata: { ...msg.metadata, error: true }
+                    metadata: { ...msg.metadata, error: true, errorDetails }
                   }
                 : msg
             );
@@ -2123,9 +2293,20 @@ export function ReplitAgentPanelV3({
           thinking: extendedThinkingEnabled ? activeThinking : undefined,
           metadata: {
             extendedThinking: extendedThinkingEnabled,
-            error: true
+            error: true,
+            errorDetails
           }
         }];
+      });
+      persistMessageToBackend({
+        role: 'assistant',
+        content: errorContent,
+        timestamp: new Date(),
+        metadata: {
+          error: true,
+          errorDetails,
+          flow: 'manual-send',
+        },
       });
       setActiveThinking([]);
     } finally {

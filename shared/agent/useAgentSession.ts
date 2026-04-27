@@ -91,8 +91,42 @@ export function useAgentSession(options: UseAgentSessionOptions): AgentSessionHo
    * Send a message to the AI Agent
    */
   const sendMessage = useCallback(async (content: string, attachments?: any[]) => {
+    const createVisibleErrorMessage = (error: unknown) => {
+      const safeStringify = (value: unknown) => {
+        try {
+          return JSON.stringify(value);
+        } catch {
+          return String(value);
+        }
+      };
+      const maybeRecord = error && typeof error === 'object' ? error as Record<string, unknown> : null;
+      const message = error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : maybeRecord
+            ? String(maybeRecord.message || maybeRecord.error || maybeRecord.detail || safeStringify(error))
+            : 'Failed to send message. Please try again.';
+      const status = typeof maybeRecord?.status === 'number' ? `\nHTTP: ${maybeRecord.status}` : '';
+      return `Error: ${message}${status}`;
+    };
+
     if (!globalApiClient) {
-      console.error('[useAgentSession] API client not configured. Call configureAgentApi first.');
+      const error = new Error('API client not configured. Call configureAgentApi first.');
+      console.error('[useAgentSession] API client not configured. Message cannot be sent.', {
+        projectId,
+        contentLength: content.length,
+        attachmentCount: attachments?.length || 0,
+        error,
+      });
+      setMessages(prev => [...prev, {
+        id: `error-${Date.now()}`,
+        role: 'system',
+        content: createVisibleErrorMessage(error),
+        timestamp: new Date(),
+        type: 'error'
+      }]);
+      onErrorRef.current?.(error);
       return;
     }
 
@@ -113,6 +147,12 @@ export function useAgentSession(options: UseAgentSessionOptions): AgentSessionHo
     setIsLoading(true);
 
     try {
+      console.debug('[useAgentSession] Sending message', {
+        projectId,
+        contentLength: messageContent.length,
+        attachmentCount: attachments?.length || 0,
+      });
+
       const response = await globalApiClient.post(`/api/projects/${projectId}/ai/chat`, {
         message: messageContent,
         mode: 'agent',
@@ -123,6 +163,11 @@ export function useAgentSession(options: UseAgentSessionOptions): AgentSessionHo
 
       // Parse the response
       const responseData = typeof response === 'string' ? JSON.parse(response) : response;
+      console.debug('[useAgentSession] Message response received', {
+        projectId,
+        hasPlan: Boolean(responseData.plan),
+        actionCount: Array.isArray(responseData.actions) ? responseData.actions.length : 0,
+      });
 
       // Check if response includes a project plan
       let newPlan: ProjectPlan | undefined;
@@ -166,12 +211,17 @@ export function useAgentSession(options: UseAgentSessionOptions): AgentSessionHo
         await executeActions(responseData.actions);
       }
     } catch (error: any) {
-      console.error('[useAgentSession] Error sending message:', error);
+      console.error('[useAgentSession] Error sending message:', {
+        projectId,
+        contentLength: messageContent.length,
+        attachmentCount: attachments?.length || 0,
+        error,
+      });
       
       const errorMessage: Message = {
         id: `error-${Date.now()}`,
         role: 'system',
-        content: `Error: ${error.message || 'Failed to send message. Please try again.'}`,
+        content: createVisibleErrorMessage(error),
         timestamp: new Date(),
         type: 'error'
       };

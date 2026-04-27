@@ -459,7 +459,12 @@ export function useAutonomousChatIntegration({
       try {
         const data = JSON.parse(event.data);
         handleProgressEventRef.current?.(data);
-      } catch (_err) {
+      } catch (err) {
+        console.error('[AutonomousChatIntegration] Failed to parse WebSocket message', {
+          error: err,
+          raw: typeof event.data === 'string' ? event.data.slice(0, 1000) : event.data,
+          projectId,
+        });
       }
     };
     
@@ -1702,7 +1707,12 @@ export function useAutonomousChatIntegration({
             const data = JSON.parse(event.data);
             // Use ref to call handler to avoid stale closure issues
             handleProgressEventRef.current?.(data as AutonomousProgressEvent);
-          } catch (_err) {
+          } catch (err) {
+            console.error('[AutonomousChatIntegration] Failed to parse WebSocket message', {
+              error: err,
+              raw: typeof event.data === 'string' ? event.data.slice(0, 1000) : event.data,
+              projectId,
+            });
           }
         };
 
