@@ -15,6 +15,7 @@ import type { AutonomousBuildMode,Message } from '@/stores/agentConversationStor
 import { formatDistanceToNow } from 'date-fns';
 import {
 AlertCircle,
+Bot,
 Check,
 ChevronDown,
 ChevronUp,
@@ -24,6 +25,7 @@ FileCode,
 Loader2,
 MessageSquareText,
 PanelsTopLeft,
+Radio,
 Receipt,
 RotateCcw,
 Search,
@@ -412,25 +414,6 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           </div>
         )}
 
-        {!isUser && (
-          <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <Wrench className="h-3 w-3" />
-              {messageStructureSummary.actions} action{messageStructureSummary.actions !== 1 ? 's' : ''}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MessageSquareText className="h-3 w-3" />
-              {messageStructureSummary.messages} message{messageStructureSummary.messages !== 1 ? 's' : ''}
-            </span>
-            {relativeTimestamp && (
-              <span className="inline-flex items-center gap-1 ml-auto">
-                <Clock3 className="h-3 w-3" />
-                {relativeTimestamp}
-              </span>
-            )}
-          </div>
-        )}
-
         <LazyMotionDiv 
           className={cn(
             "relative rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-3 transition-all duration-200",
@@ -458,6 +441,60 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
           whileHover={{ scale: 1.005 }}
           transition={{ duration: 0.2 }}
         >
+          {!isUser && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2.5">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border",
+                  isError
+                    ? "border-destructive/20 bg-destructive/10 text-destructive"
+                    : message.isStreaming
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "border-primary/20 bg-primary/10 text-primary"
+                )}>
+                  <Bot className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
+                    Agent
+                    {message.isStreaming && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <Radio className="h-2.5 w-2.5" />
+                        Live
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
+                    {message.metadata?.model && (
+                      <span className="truncate max-w-[180px]">{message.metadata.model}</span>
+                    )}
+                    {relativeTimestamp && (
+                      <span className="inline-flex items-center gap-1">
+                        <Clock3 className="h-2.5 w-2.5" />
+                        {relativeTimestamp}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                {messageStructureSummary.actions > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                    <Wrench className="h-2.5 w-2.5" />
+                    {messageStructureSummary.actions}
+                  </span>
+                )}
+                {messageStructureSummary.messages > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                    <MessageSquareText className="h-2.5 w-2.5" />
+                    {messageStructureSummary.messages}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {isUser ? (
             <div className="space-y-2" data-testid={`enhanced-user-message-${message.id}`}>
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 pb-2">
@@ -488,7 +525,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 </span>
               </div>
               <div className="rounded-xl bg-muted/30 px-3 py-2">
-                <RichMessageContent content={message.content} />
+                <RichMessageContent content={message.content} className="[&_p:first-child]:mt-0 [&_p:last-child]:mb-0" />
               </div>
               {relativeTimestamp && (
                 <div className="flex justify-end text-[10px] text-muted-foreground">
@@ -514,7 +551,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 </Button>
               </div>
             ) : (
-              <RichMessageContent content={message.content} />
+              <RichMessageContent content={message.content} className="[&_p:first-child]:mt-0 [&_p:last-child]:mb-0" />
             )
           ) : (
             <p 

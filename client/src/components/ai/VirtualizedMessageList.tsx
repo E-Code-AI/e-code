@@ -239,10 +239,14 @@ export const StreamingAgentWallMessage = memo(function StreamingAgentWallMessage
           </span>
         </div>
 
-        <div className="max-w-[95%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3 shadow-sm">
+        <div
+          className="max-w-[95%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-3 shadow-sm"
+          aria-live="polite"
+          aria-busy="true"
+        >
           {content.trim() ? (
             <div className="relative text-[13px] leading-relaxed">
-              <RichMessageContent content={content} />
+              <RichMessageContent content={content} className="[&_p:first-child]:mt-0 [&_p:last-child]:mb-0" />
               <span
                 className="ml-1 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-primary"
                 aria-hidden="true"
