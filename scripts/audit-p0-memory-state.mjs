@@ -39,6 +39,14 @@ const checks = [
       'await redisCache.sadd(this.getProjectTasksKey(projectId), taskId)',
     ],
   },
+  {
+    file: 'server/routes/agent.router.ts',
+    mustContain: [
+      'agent:pending-actions:projects',
+      'agent:pending-actions:${projectId}',
+      'Redis unavailable in production; refusing process-local pending agent actions',
+    ],
+  },
 ];
 
 let failed = false;

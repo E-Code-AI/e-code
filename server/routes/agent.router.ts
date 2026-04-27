@@ -15,6 +15,7 @@ import { agentToolFramework } from '../services/agent-tool-framework.service';
 import { agentWorkflowEngine } from '../services/agent-workflow-engine.service';
 import { withScopedTransaction } from '../services/persistence-engine';
 import { schemaWarming } from '../services/schema-warming.service';
+import { redisCache } from '../services/redis-cache.service';
 import type { IStorage } from '../storage';
 import { createLogger } from '../utils/logger';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
@@ -159,31 +160,107 @@ router.post('/recommend-model', async (req, res) => {
   }
 });
 
-// In-memory pending actions store per project (used by AgentActionsPanel)
+const PENDING_ACTIONS_TTL_SECONDS = 24 * 60 * 60;
+const PENDING_ACTIONS_PROJECTS_KEY = 'agent:pending-actions:projects';
+
+function pendingActionsKey(projectId: string | number): string {
+  return `agent:pending-actions:${projectId}`;
+}
+
+function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+async function getPendingActions(projectId: string): Promise<any[]> {
+  const key = pendingActionsKey(projectId);
+  const cached = await redisCache.get<any[]>(key);
+  if (Array.isArray(cached)) {
+    return cached;
+  }
+
+  const localActions = pendingActionsStore.get(projectId) || [];
+  if (localActions.length > 0) {
+    await persistPendingActions(projectId, localActions);
+  }
+
+  return isProductionRuntime() ? [] : localActions;
+}
+
+async function persistPendingActions(projectId: string, actions: any[]): Promise<void> {
+  if (actions.length === 0) {
+    const deleted = await redisCache.del(pendingActionsKey(projectId));
+    pendingActionsStore.delete(projectId);
+    if (!deleted && isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local pending agent actions');
+    }
+    return;
+  }
+
+  pendingActionsStore.set(projectId, actions);
+  const stored = await redisCache.set(pendingActionsKey(projectId), actions, PENDING_ACTIONS_TTL_SECONDS);
+  await redisCache.sadd(PENDING_ACTIONS_PROJECTS_KEY, projectId);
+  await redisCache.expire(PENDING_ACTIONS_PROJECTS_KEY, PENDING_ACTIONS_TTL_SECONDS);
+
+  if (!stored && isProductionRuntime()) {
+    throw new Error('Redis unavailable in production; refusing process-local pending agent actions');
+  }
+}
+
+async function removePendingAction(actionId: string): Promise<boolean> {
+  const redisProjectIds = await redisCache.smembers(PENDING_ACTIONS_PROJECTS_KEY);
+  const projectIds = new Set<string>([
+    ...redisProjectIds,
+    ...Array.from(pendingActionsStore.keys()),
+  ]);
+
+  for (const projectId of projectIds) {
+    const actions = await getPendingActions(projectId);
+    const nextActions = actions.filter((action: any) => action.id !== actionId);
+    if (nextActions.length !== actions.length) {
+      await persistPendingActions(projectId, nextActions);
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Distributed pending actions store per project (used by AgentActionsPanel).
+// The Map is retained as a local dev read-through cache only; production writes
+// must persist in Redis so approvals work across multiple API instances.
 const pendingActionsStore = new Map<string, any[]>();
 
 // GET /api/agent/actions/:projectId — list pending AI actions for AgentActionsPanel
 router.get('/actions/:projectId', async (req, res) => {
-  const { projectId } = req.params;
-  res.json(pendingActionsStore.get(projectId) || []);
+  try {
+    const { projectId } = req.params;
+    res.json(await getPendingActions(projectId));
+  } catch (error: any) {
+    logger.error('[AgentRouter] Failed to list pending actions:', error);
+    res.status(500).json({ error: error.message || 'Failed to list pending actions' });
+  }
 });
 
 // POST /api/agent/actions/:actionId/approve
 router.post('/actions/:actionId/approve', async (req, res) => {
-  for (const [, actions] of pendingActionsStore) {
-    const idx = actions.findIndex((a: any) => a.id === req.params.actionId);
-    if (idx !== -1) { actions.splice(idx, 1); break; }
+  try {
+    const removed = await removePendingAction(req.params.actionId);
+    res.json({ success: true, removed });
+  } catch (error: any) {
+    logger.error('[AgentRouter] Failed to approve pending action:', error);
+    res.status(500).json({ error: error.message || 'Failed to approve pending action' });
   }
-  res.json({ success: true });
 });
 
 // POST /api/agent/actions/:actionId/reject
 router.post('/actions/:actionId/reject', async (req, res) => {
-  for (const [, actions] of pendingActionsStore) {
-    const idx = actions.findIndex((a: any) => a.id === req.params.actionId);
-    if (idx !== -1) { actions.splice(idx, 1); break; }
+  try {
+    const removed = await removePendingAction(req.params.actionId);
+    res.json({ success: true, removed });
+  } catch (error: any) {
+    logger.error('[AgentRouter] Failed to reject pending action:', error);
+    res.status(500).json({ error: error.message || 'Failed to reject pending action' });
   }
-  res.json({ success: true });
 });
 
 // POST /api/agent/chat — simple chat endpoint used by AIAgentPanel
