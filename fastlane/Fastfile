@@ -1,0 +1,30 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build and upload E-code to TestFlight"
+  lane :beta do
+    match(type: "appstore", storage_mode: "google_cloud", google_cloud_bucket_name: "ecode-fastlane-match", readonly: true)
+    build_app(scheme: "ECode", export_method: "app-store")
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+
+  desc "Release E-code to App Store"
+  lane :release do
+    beta
+    deliver(force: true, submit_for_review: false)
+  end
+end
+
+platform :android do
+  desc "Build and upload E-code to Play Internal Testing"
+  lane :beta do
+    gradle(task: "bundle", build_type: "Release", project_dir: "apps/mobile/android")
+    upload_to_play_store(track: "internal", aab: "apps/mobile/android/app/build/outputs/bundle/release/app-release.aab")
+  end
+
+  desc "Release E-code to Play production"
+  lane :release do
+    gradle(task: "bundle", build_type: "Release", project_dir: "apps/mobile/android")
+    upload_to_play_store(track: "production", aab: "apps/mobile/android/app/build/outputs/bundle/release/app-release.aab")
+  end
+end

@@ -67,3 +67,14 @@ The GCP deployer service, deploy UI module, and Terraform module are implemented
 - `POST /api/deploy/projects/:projectId/domains/verify`
 
 The frontend shell owner must wire the persistent Deploy button/header entry to `apps/web/src/deploy/DeployPanel` because the active header/workbench routes live outside assigned ownership.
+
+## Mobile native shipping integration
+
+Branch: `parallel/06-mobile-shipping`
+
+The shipping kit is implemented only in assigned paths: `apps/mobile/ios/**`, `apps/mobile/android/**`, `fastlane/**`, and `store-assets/**`. The active mobile projects in this repository appear to live in root `ios/**` and `android/**`, while React Native logic is owned by the other agent under `apps/mobile/src/**`. The mobile owner must merge:
+
+- iOS `Info.plist`, entitlements, associated domains, launch storyboard, push/keychain/app-group capabilities into the active iOS target.
+- Android manifest permissions, deep links, FCM service declaration, splash resources, and ProGuard rules into the active Android target.
+- Push token registration, notification preferences, widgets, share extension, biometrics, and offline queue from the RN/native logic layer.
+- Final device screenshots and preview videos generated from signed builds into `store-assets/**`; I did not fabricate store screenshots because Apple/Google require captures matching the actual native UI.

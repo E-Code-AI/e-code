@@ -1,0 +1,1 @@
+E-code est un espace de developpement mobile natif pour projets, edition de code, terminaux, chat IA, agents, previews et deploiements. Ouvrez vos projets cloud recents, poursuivez le travail des agents, recevez les notifications de build et deploiement, puis revenez dans l'editeur avec deverrouillage biometrique.
