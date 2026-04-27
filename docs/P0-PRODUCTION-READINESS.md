@@ -16,7 +16,7 @@ Les correctifs applicatifs P0 ont été appliqués dans le code. Deux éléments
 | # | Catégorie | État | Correctif appliqué |
 |---|---|---|---|
 | 1 | Redis désactivé / fallback mémoire | Corrigé côté code, Redis local vérifié `PONG` | `REDIS_URL` active Redis automatiquement, Redis devient obligatoire en production, `RATE_LIMIT_REDIS_ENABLED=false` interdit en production |
-| 2 | États mémoire critiques | Corrigé sur les surfaces P0 citées | Idempotence et agent session cache n'utilisent plus le fallback mémoire en production; scheduler stocke les tâches en cours dans Redis; collaboration persiste/publie la présence via Redis; agent progress persiste les tâches actives et leur index projet dans Redis; actions agent en attente persistées dans Redis; lockout auth, sessions auth et CSRF relus depuis Redis; queue de recovery agent persistée dans Redis; historique chat projet persisté dans Redis |
+| 2 | États mémoire critiques | Corrigé sur les surfaces P0 citées | Idempotence et agent session cache n'utilisent plus le fallback mémoire en production; scheduler stocke les tâches en cours dans Redis; collaboration persiste/publie la présence via Redis; agent progress persiste les tâches actives et leur index projet dans Redis; actions agent en attente persistées dans Redis; lockout auth, sessions auth et CSRF relus depuis Redis; queue de recovery agent persistée dans Redis; historique chat projet persisté dans Redis; cache de plans agent persisté dans Redis |
 | 3 | Stripe live expiré | Bloqué externe | La validation confirme l'expiration; régénérer la clé dans Stripe et remplacer le secret |
 | 4 | Sentry désactivé | Corrigé côté dépendances/config | `@sentry/node` et `@sentry/react` sont présents; `SENTRY_DSN` est maintenant requis en production |
 | 5 | Divergence schema DB | Corrigé côté schema/migration, application DB bloquée par auth | Migration idempotente ajoutée pour `ai_conversations.title`, `ai_messages`, `ai_plan_tasks`, `themes`; script `npm run db:audit` ajouté |
@@ -58,6 +58,7 @@ sentry=ok
 - lockout login, sessions auth et jetons CSRF persistés dans Redis; fallback process-local interdit en production
 - queue de recovery de l'orchestrateur agent persistée dans Redis pour survivre aux redémarrages et au scale-out
 - historique chat projet persisté dans Redis, avec cache local limité au développement
+- cache de plans de l'agent generator persisté dans Redis, avec fallback local interdit en production
 
 ## Actions Externes Requises
 

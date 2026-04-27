@@ -14,8 +14,10 @@
 import { EventEmitter } from 'events';
 import { OpenAI } from 'openai';
 import { createLogger } from '../utils/logger';
+import { redisCache } from './redis-cache.service';
 
 const logger = createLogger('PlanGenerator');
+const PLAN_CACHE_TTL_SECONDS = 24 * 60 * 60;
 
 export interface Task {
   id: string;
@@ -109,8 +111,7 @@ export class PlanGeneratorService extends EventEmitter {
         ownerUserId: context.userId // Store ownership
       };
       
-      // Cache the plan
-      this.planCache.set(plan.id, plan);
+      await this.cachePlan(plan);
       
       this.emit('plan_generated', plan);
       logger.info(`Plan generated with ${tasks.length} tasks, estimated ${plan.totalEstimatedMinutes} minutes`);
@@ -382,16 +383,16 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   /**
    * Get a plan by ID
    */
-  getPlan(planId: string): ExecutionPlan | undefined {
-    return this.planCache.get(planId);
+  async getPlan(planId: string): Promise<ExecutionPlan | undefined> {
+    return this.loadPlan(planId);
   }
 
   /**
    * Get a plan with ownership verification
    * Returns the plan only if it belongs to the specified user
    */
-  getPlanForUser(planId: string, userId: string): ExecutionPlan | undefined {
-    const plan = this.planCache.get(planId);
+  async getPlanForUser(planId: string, userId: string): Promise<ExecutionPlan | undefined> {
+    const plan = await this.loadPlan(planId);
     
     if (!plan) {
       return undefined;
@@ -409,11 +410,50 @@ Break this down into a step-by-step execution plan. Be specific and actionable.`
   /**
    * Update task status in a plan
    */
-  updateTaskStatus(planId: string, taskId: string, status: 'completed' | 'failed' | 'in_progress'): void {
-    const plan = this.planCache.get(planId);
+  async updateTaskStatus(planId: string, taskId: string, status: 'completed' | 'failed' | 'in_progress'): Promise<void> {
+    const plan = await this.loadPlan(planId);
     if (plan) {
       this.emit('task_status_updated', { planId, taskId, status });
     }
+  }
+
+  private getPlanCacheKey(planId: string): string {
+    return `agent:plan-generator:plan:${planId}`;
+  }
+
+  private isProductionRuntime(): boolean {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  private deserializePlan(plan: any): ExecutionPlan {
+    return {
+      ...plan,
+      createdAt: new Date(plan.createdAt),
+    };
+  }
+
+  private async cachePlan(plan: ExecutionPlan): Promise<void> {
+    const stored = await redisCache.set(this.getPlanCacheKey(plan.id), plan, PLAN_CACHE_TTL_SECONDS);
+    if (!stored && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local agent plan cache');
+    }
+
+    if (!this.isProductionRuntime()) {
+      this.planCache.set(plan.id, plan);
+    }
+  }
+
+  private async loadPlan(planId: string): Promise<ExecutionPlan | undefined> {
+    const redisPlan = await redisCache.get<ExecutionPlan>(this.getPlanCacheKey(planId));
+    if (redisPlan) {
+      const plan = this.deserializePlan(redisPlan);
+      if (!this.isProductionRuntime()) {
+        this.planCache.set(planId, plan);
+      }
+      return plan;
+    }
+
+    return this.isProductionRuntime() ? undefined : this.planCache.get(planId);
   }
 
   // Helper methods

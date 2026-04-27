@@ -79,6 +79,14 @@ const checks = [
       'Local dev read-through cache only. Production history is Redis-backed.',
     ],
   },
+  {
+    file: 'server/services/agent-plan-generator.service.ts',
+    mustContain: [
+      'agent:plan-generator:plan:${planId}',
+      'Redis unavailable in production; refusing process-local agent plan cache',
+      'await this.cachePlan(plan)',
+    ],
+  },
 ];
 
 let failed = false;
