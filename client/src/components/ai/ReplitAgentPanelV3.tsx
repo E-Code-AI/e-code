@@ -1592,7 +1592,12 @@ export function ReplitAgentPanelV3({
 
                   if (line.startsWith('data: ')) {
                     try {
-                      const data = JSON.parse(line.slice(6));
+                      const payload = line.slice(6).trim();
+                      if (!payload || payload === '[DONE]') {
+                        continue;
+                      }
+
+                      const data = JSON.parse(payload);
 
                       if (data.content) {
                         fullContent += data.content;
@@ -2096,7 +2101,12 @@ export function ReplitAgentPanelV3({
 
             if (line.startsWith('data: ')) {
               try {
-                const data = JSON.parse(line.slice(6));
+                const payload = line.slice(6).trim();
+                if (!payload || payload === '[DONE]') {
+                  continue;
+                }
+
+                const data = JSON.parse(payload);
 
               // Handle context truncation warnings (check for presence of warning-specific fields)
               if (data.message && typeof data.message === 'string' && !data.content && !data.step && !data.toolCallId) {
