@@ -79,3 +79,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Lint release artifacts (Grafana JSON, k6, Detox configs)
+        run: node scripts/lint-release-artifacts.mjs
