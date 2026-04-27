@@ -1,7 +1,9 @@
 import {
   drainSSEEvents,
   extractSSEDataLines,
+  getSSEParseErrorLine,
   normalizeSSEChunk,
+  parseSSEEventDataLines,
   parseSSEDataLine,
 } from '../../client/src/lib/sse-client-parser';
 
@@ -9,6 +11,12 @@ describe('SSE client parser', () => {
   it('parses JSON data lines', () => {
     expect(parseSSEDataLine<{ content: string }>('data: {"content":"hello"}')).toEqual({
       content: 'hello',
+    });
+  });
+
+  it('parses SSE data lines with no space after the colon', () => {
+    expect(parseSSEDataLine<{ content: string }>('data:{"content":"compact"}')).toEqual({
+      content: 'compact',
     });
   });
 
@@ -40,9 +48,32 @@ describe('SSE client parser', () => {
 
   it('extracts only SSE data lines from an event frame', () => {
     const lines = extractSSEDataLines(
-      ': keepalive\nid: 42\nevent: message\ndata: {"content":"a"}\ndata: [DONE]\nretry: 1000',
+      ': keepalive\nid: 42\nevent: message\ndata: {"content":"a"}\ndata:{"content":"b"}\ndata: [DONE]\nretry: 1000',
     );
 
-    expect(lines).toEqual(['data: {"content":"a"}', 'data: [DONE]']);
+    expect(lines).toEqual(['data: {"content":"a"}', 'data:{"content":"b"}', 'data: [DONE]']);
+  });
+
+  it('parses valid event data lines and skips done sentinels', () => {
+    expect(
+      parseSSEEventDataLines<{ content: string }>('event: message\ndata: {"content":"a"}\ndata: [DONE]'),
+    ).toEqual([
+      {
+        line: 'data: {"content":"a"}',
+        data: { content: 'a' },
+      },
+    ]);
+  });
+
+  it('attaches the source data line to malformed JSON errors', () => {
+    let thrown: unknown;
+
+    try {
+      parseSSEEventDataLines('data: {"content":');
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(getSSEParseErrorLine(thrown, 'fallback')).toBe('data: {"content":');
   });
 });
