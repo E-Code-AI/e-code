@@ -1,0 +1,59 @@
+#!/usr/bin/env node
+import { readFileSync } from 'node:fs';
+
+const checks = [
+  {
+    file: 'server/services/redis-idempotency.service.ts',
+    mustContain: [
+      'REDIS_URL is required in production for distributed idempotency',
+      'Redis unavailable in production; refusing non-distributed lock',
+    ],
+  },
+  {
+    file: 'server/services/agent-session-cache.service.ts',
+    mustContain: [
+      'if (!isProduction) {',
+      'this.setInMemory(sessionId, dbSession)',
+    ],
+  },
+  {
+    file: 'server/distributed/task-scheduler.ts',
+    mustContain: [
+      'scheduler:queue:${queueName}:running',
+      'redisCache.sadd(this.getRunningKey(queueName), taskId)',
+    ],
+  },
+  {
+    file: 'server/collaboration/unified-collaboration-service.ts',
+    mustContain: [
+      'collab:presence:${roomId}',
+      'redisCache.publish(this.getPresenceChannel(roomId)',
+      'await this.hydrateRoomPresence(room)',
+    ],
+  },
+  {
+    file: 'server/services/agent-progress-service.ts',
+    mustContain: [
+      'agent:progress:task:${taskId}',
+      'agent:progress:project:${projectId}:active',
+      'await redisCache.sadd(this.getProjectTasksKey(projectId), taskId)',
+    ],
+  },
+];
+
+let failed = false;
+for (const check of checks) {
+  const source = readFileSync(check.file, 'utf8');
+  for (const expected of check.mustContain) {
+    if (!source.includes(expected)) {
+      failed = true;
+      console.error(`P0_MEMORY_AUDIT_FAIL ${check.file}: missing "${expected}"`);
+    }
+  }
+}
+
+if (failed) {
+  process.exit(1);
+}
+
+console.log('P0_MEMORY_AUDIT_OK');

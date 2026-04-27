@@ -1,11 +1,13 @@
 import { EventEmitter } from 'events';
 import { createLogger } from '../utils/logger';
 import { checkpointService } from './checkpoint-service';
+import { redisCache } from './redis-cache.service';
 // import { db } from '../db';
 // import { agentTasks } from '@shared/schema';
 // import { eq, desc } from 'drizzle-orm';
 
 const logger = createLogger('AgentProgressService');
+const TASK_TTL_SECONDS = 24 * 60 * 60;
 
 export interface ProgressEvent {
   taskId: string;
@@ -88,6 +90,71 @@ export class AgentProgressService extends EventEmitter {
     this.setMaxListeners(100); // Support many concurrent connections
   }
 
+  private getTaskKey(taskId: string): string {
+    return `agent:progress:task:${taskId}`;
+  }
+
+  private getProjectTasksKey(projectId: number): string {
+    return `agent:progress:project:${projectId}:active`;
+  }
+
+  private deserializeTask(task: any): AgentTask {
+    return {
+      ...task,
+      startTime: new Date(task.startTime),
+      endTime: task.endTime ? new Date(task.endTime) : undefined,
+      pausedAt: task.pausedAt ? new Date(task.pausedAt) : undefined,
+      steps: (task.steps || []).map((step: any) => ({
+        ...step,
+        startTime: step.startTime ? new Date(step.startTime) : undefined,
+        endTime: step.endTime ? new Date(step.endTime) : undefined,
+      })),
+      logs: (task.logs || []).map((log: any) => ({
+        ...log,
+        timestamp: new Date(log.timestamp),
+      })),
+    };
+  }
+
+  private async persistTask(task: AgentTask): Promise<void> {
+    this.tasks.set(task.id, task);
+    await redisCache.set(this.getTaskKey(task.id), task, TASK_TTL_SECONDS);
+  }
+
+  private async addActiveProjectTask(projectId: number, taskId: string): Promise<void> {
+    if (!this.activeTasksByProject.has(projectId)) {
+      this.activeTasksByProject.set(projectId, new Set());
+    }
+    this.activeTasksByProject.get(projectId)!.add(taskId);
+    await redisCache.sadd(this.getProjectTasksKey(projectId), taskId);
+    await redisCache.expire(this.getProjectTasksKey(projectId), TASK_TTL_SECONDS);
+  }
+
+  private async removeActiveProjectTask(projectId: number, taskId: string): Promise<void> {
+    this.activeTasksByProject.get(projectId)?.delete(taskId);
+    await redisCache.srem(this.getProjectTasksKey(projectId), taskId);
+  }
+
+  private async loadTask(taskId: string): Promise<AgentTask | undefined> {
+    const memoryTask = this.tasks.get(taskId);
+    if (memoryTask) return memoryTask;
+
+    const redisTask = await redisCache.get<AgentTask>(this.getTaskKey(taskId));
+    if (!redisTask) return undefined;
+
+    const task = this.deserializeTask(redisTask);
+    this.tasks.set(taskId, task);
+    return task;
+  }
+
+  private async requireTask(taskId: string): Promise<AgentTask> {
+    const task = await this.loadTask(taskId);
+    if (!task) {
+      throw new Error(`Task ${taskId} not found`);
+    }
+    return task;
+  }
+
   async createTask(params: {
     projectId: number;
     userId: number;
@@ -118,16 +185,8 @@ export class AgentProgressService extends EventEmitter {
       startTime: new Date()
     };
 
-    this.tasks.set(taskId, task);
-    
-    // Track active tasks by project
-    if (!this.activeTasksByProject.has(params.projectId)) {
-      this.activeTasksByProject.set(params.projectId, new Set());
-    }
-    this.activeTasksByProject.get(params.projectId)!.add(taskId);
-
-    // In-memory storage only for now
-    // Database integration will be added when tables are created
+    await this.persistTask(task);
+    await this.addActiveProjectTask(params.projectId, taskId);
 
     logger.info(`Created new agent task: ${taskId}`);
     this.emitProgress(taskId, 'status', { status: 'pending' });
@@ -136,10 +195,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async startTask(taskId: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     task.status = 'running';
     task.startTime = new Date();
@@ -155,10 +211,7 @@ export class AgentProgressService extends EventEmitter {
     description: string;
     total?: number;
   }): Promise<string> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     const stepId = `step_${task.steps.length + 1}`;
     const newStep = {
@@ -189,10 +242,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async updateStepProgress(taskId: string, stepId: string, progress: number, output?: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     const step = task.steps.find(s => s.id === stepId);
     if (!step) {
@@ -228,10 +278,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async completeStep(taskId: string, stepId: string, output?: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     const step = task.steps.find(s => s.id === stepId);
     if (!step) {
@@ -261,10 +308,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async failStep(taskId: string, stepId: string, error: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     const step = task.steps.find(s => s.id === stepId);
     if (!step) {
@@ -288,10 +332,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async addLog(taskId: string, level: 'info' | 'warn' | 'error' | 'debug', message: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     const log = {
       level,
@@ -312,10 +353,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async updateMetrics(taskId: string, metrics: Partial<AgentTask['metrics']>): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     Object.assign(task.metrics, metrics);
 
@@ -330,10 +368,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async pauseTask(taskId: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     if (task.status !== 'running') {
       throw new Error(`Cannot pause task in ${task.status} state`);
@@ -349,10 +384,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async resumeTask(taskId: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     if (task.status !== 'paused') {
       throw new Error(`Cannot resume task in ${task.status} state`);
@@ -368,10 +400,7 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async completeTask(taskId: string, finalMetrics?: Partial<AgentTask['metrics']>): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     task.status = 'success';
     task.endTime = new Date();
@@ -383,10 +412,7 @@ export class AgentProgressService extends EventEmitter {
     // Calculate total execution time
     task.metrics.executionTime = task.endTime.getTime() - task.startTime.getTime();
 
-    // Remove from active tasks
-    if (this.activeTasksByProject.has(task.projectId)) {
-      this.activeTasksByProject.get(task.projectId)!.delete(taskId);
-    }
+    await this.removeActiveProjectTask(task.projectId, taskId);
 
     await this.updateTaskInDatabase(taskId);
     this.emitProgress(taskId, 'complete', { metrics: task.metrics });
@@ -403,19 +429,13 @@ export class AgentProgressService extends EventEmitter {
   }
 
   async failTask(taskId: string, error: string): Promise<void> {
-    const task = this.tasks.get(taskId);
-    if (!task) {
-      throw new Error(`Task ${taskId} not found`);
-    }
+    const task = await this.requireTask(taskId);
 
     task.status = 'error';
     task.error = error;
     task.endTime = new Date();
 
-    // Remove from active tasks
-    if (this.activeTasksByProject.has(task.projectId)) {
-      this.activeTasksByProject.get(task.projectId)!.delete(taskId);
-    }
+    await this.removeActiveProjectTask(task.projectId, taskId);
 
     await this.updateTaskInDatabase(taskId);
     this.emitProgress(taskId, 'error', {
@@ -432,14 +452,28 @@ export class AgentProgressService extends EventEmitter {
     return this.tasks.get(taskId);
   }
 
-  getProjectTasks(projectId: number): AgentTask[] {
-    const taskIds = this.activeTasksByProject.get(projectId) || new Set();
+  private getProjectTasksFromMemory(projectId: number): AgentTask[] {
+    const taskIds = this.activeTasksByProject.get(projectId) || new Set<string>();
     return Array.from(taskIds).map(id => this.tasks.get(id)!).filter(Boolean);
   }
 
+  async getProjectTasks(projectId: number): Promise<AgentTask[]> {
+    const redisTaskIds = await redisCache.smembers(this.getProjectTasksKey(projectId));
+    const taskIds = redisTaskIds.length > 0
+      ? redisTaskIds
+      : Array.from(this.activeTasksByProject.get(projectId) || new Set<string>());
+
+    const tasks: AgentTask[] = [];
+    for (const taskId of taskIds) {
+      const task = await this.loadTask(taskId);
+      if (task) tasks.push(task);
+    }
+
+    return tasks;
+  }
+
   async loadRecentTasks(projectId: number, limit: number = 10): Promise<AgentTask[]> {
-    // Return tasks from memory for now
-    const tasks = this.getProjectTasks(projectId);
+    const tasks = await this.getProjectTasks(projectId);
     return tasks.slice(0, limit);
   }
 
@@ -456,18 +490,29 @@ export class AgentProgressService extends EventEmitter {
   }
 
   private async updateTaskInDatabase(_taskId: string): Promise<void> {
-    // In-memory only for now
-    // Database updates will be added when tables are created
+    const task = this.tasks.get(_taskId);
+    if (task) {
+      await this.persistTask(task);
+    }
   }
 
   // WebSocket connection handler
   handleWebSocketConnection(ws: any, projectId: number): void {
     // Send current tasks on connection
-    const tasks = this.getProjectTasks(projectId);
-    ws.send(JSON.stringify({
-      type: 'initial',
-      tasks
-    }));
+    this.getProjectTasks(projectId)
+      .then((tasks) => {
+        ws.send(JSON.stringify({
+          type: 'initial',
+          tasks
+        }));
+      })
+      .catch((error) => {
+        logger.error('Failed to load initial project tasks', { projectId, error });
+        ws.send(JSON.stringify({
+          type: 'initial',
+          tasks: this.getProjectTasksFromMemory(projectId)
+        }));
+      });
 
     // Listen for progress events
     const progressHandler = (event: ProgressEvent) => {
