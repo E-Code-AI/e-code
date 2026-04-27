@@ -10,6 +10,8 @@ import { createRateLimitMiddleware } from '../middleware/rate-limiter';
 import { aiApprovalQueue } from '../services/ai-approval-queue.service';
 import { aiSecurityService } from '../services/ai-security.service';
 import { applyVisualEdit,getEditHistory,redoLastEdit,undoLastEdit } from '../services/visual-edits-service';
+import { appGenerationPersistence } from '../services/app-generation-persistence.service';
+import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { type IStorage } from "../storage";
 import { createLogger } from '../utils/logger';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
@@ -230,6 +232,11 @@ export class ProjectsRouter {
     return parts.join('\n\n');
   }
 
+  private getCreationPrompt(body: any): string | null {
+    const value = body?.prompt || body?.initialPrompt || body?.descriptionPrompt || body?.aiPrompt;
+    return typeof value === 'string' && value.trim() ? value.trim() : null;
+  }
+
   private initializeRoutes() {
     // Get user's projects with pagination
     this.router.get("/", this.ensureAuthenticated, async (req: Request, res: Response) => {
@@ -382,6 +389,7 @@ export class ProjectsRouter {
     this.router.post("/", this.ensureAuthenticated, csrfProtection, async (req: Request, res: Response) => {
       try {
         const userId = (req.user as User).id;
+        const creationPrompt = this.getCreationPrompt(req.body);
         
         // Add ownerId before validation (required by schema)
         const requestWithOwner = {
@@ -515,6 +523,20 @@ export class ProjectsRouter {
         });
         
         const owner = await this.storage.getUser(String(userId));
+
+        if (creationPrompt) {
+          await appGenerationPersistence.persistPrompt({
+            userId,
+            projectId: project.id,
+            prompt: creationPrompt,
+            source: 'project:create',
+            variables: {
+              projectName: project.name,
+              language: project.language,
+              visibility: project.visibility,
+            },
+          });
+        }
         
         res.json({ 
           ...project, 
@@ -533,6 +555,89 @@ export class ProjectsRouter {
         res.status(500).json({ 
           message: "Failed to create project",
           code: "CREATE_ERROR"
+        });
+      }
+    });
+
+    this.router.post("/from-template", this.ensureAuthenticated, async (req: Request, res: Response) => {
+      try {
+        const userId = (req.user as User).id;
+        const name = String(req.body.name || 'Untitled App').trim();
+        const visibility = req.body.visibility || 'private';
+        const templateId = req.body.templateId || req.body.ecodeManifest?.templateId || 'react-vite-fullstack';
+        const creationPrompt = this.getCreationPrompt(req.body) || `Create ${name} from template ${templateId}`;
+
+        const project = await this.storage.createProject({
+          name,
+          description: req.body.description || `Created from template ${templateId}`,
+          visibility,
+          language: req.body.language || 'typescript',
+          ownerId: userId,
+          tenantId: req.body.teamId ? Number(req.body.teamId) : userId,
+          slug: this.generateSlug(name),
+        });
+
+        const sessionId = await appGenerationPersistence.ensureSession({
+          userId,
+          projectId: project.id,
+          prompt: creationPrompt,
+          source: 'project:from-template',
+          metadata: {
+            method: req.body.method || 'template',
+            templateId,
+            region: req.body.region,
+            secrets: Array.isArray(req.body.secrets) ? req.body.secrets.map((secret: any) => secret.name).filter(Boolean) : [],
+          },
+        });
+
+        await appGenerationPersistence.persistPrompt({
+          userId,
+          sessionId,
+          projectId: project.id,
+          prompt: creationPrompt,
+          source: 'project:from-template',
+          variables: {
+            method: req.body.method || 'template',
+            templateId,
+            region: req.body.region,
+            visibility,
+          },
+        });
+
+        const scaffold = await speculativeScaffold.createScaffold({
+          projectId: String(project.id),
+          language: 'typescript',
+          framework: String(templateId),
+          prompt: creationPrompt,
+          projectName: name,
+        });
+
+        await appGenerationPersistence.appendMemory({
+          userId,
+          sessionId,
+          projectId: project.id,
+          role: 'assistant',
+          content: `Project ${project.id} created from template ${templateId}. Scaffold result: ${scaffold.success ? 'success' : 'failed'}.`,
+          metadata: {
+            filesCreated: scaffold.filesCreated,
+            framework: scaffold.framework,
+            error: scaffold.error,
+          },
+        });
+
+        res.status(201).json({
+          projectId: String(project.id),
+          workspaceUrl: `/ide/${project.id}?bootstrap=${encodeURIComponent(sessionId)}`,
+          bootSessionId: sessionId,
+          previewUrl: `/api/preview/${project.id}`,
+          scaffold,
+        });
+      } catch (error: any) {
+        projectLogger.error('Error creating project from template:', error);
+        res.status(500).json({
+          message: 'Failed to create project from template',
+          code: 'CREATE_FROM_TEMPLATE_ERROR',
+          error: error?.message || 'Unknown error',
         });
       }
     });

@@ -134,6 +134,7 @@ const lazyRagRouter = lazyRouter(() => import('./rag.router'));
 const lazyAiHealthRouter = lazyRouter(() => import('./ai-health'));
 const lazyGenerationMetricsRouter = lazyRouter(() => import('./generation-metrics.router'));
 const lazyModelProxyRouter = lazyRouter(() => import('./model-proxy.router'));
+const lazyAiGeneratorRouter = lazyRouter(() => import('./ai-generator.router'));
 
 export class MainRouter {
   private authRouter: AuthRouter;
@@ -319,6 +320,9 @@ export class MainRouter {
     // Agent build routes (build execution with SSE progress streaming) - authenticated users
     // ✅ FORTUNE 500 FIX: Use streaming rate limiter for SSE endpoints
     app.use('/api/agent/build', tierRateLimiters.streaming, lazyAgentBuildRouter);
+
+    // AI app generator routes - persists prompts, app creation state, and agent memory
+    app.use('/api/ai-generator', tierRateLimiters.streaming, lazyAiGeneratorRouter);
 
     // Autonomous agent routes (authenticated users) - mounted after base agent routes
     // so project-scoped panel APIs such as /api/agent/actions/:projectId are not
