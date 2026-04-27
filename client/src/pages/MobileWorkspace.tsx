@@ -70,6 +70,10 @@ export default function MobileWorkspace() {
   const params = useParams();
   const projectId = (params.projectId || params.id) as string;
   const [, navigate] = useLocation();
+  const bootstrapToken = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('bootstrap');
+  }, [projectId]);
 
   if (!projectId) {
     return (
@@ -93,6 +97,13 @@ export default function MobileWorkspace() {
   // Split-view: agent chat visible with floating preview overlay
   const [previewOverlay, setPreviewOverlay] = useState(false);
   const isSchemaReady = useSchemaWarmingStore((s) => s.isReady);
+
+  useEffect(() => {
+    if (!bootstrapToken || !projectId || isSchemaReady) return;
+    const store = useSchemaWarmingStore.getState();
+    if (store.eventSource && store.projectId === projectId) return;
+    store.subscribeToStream(projectId);
+  }, [bootstrapToken, projectId, isSchemaReady]);
 
   useEffect(() => {
     initializeNativeMobileRuntime().catch(() => {});
@@ -249,7 +260,7 @@ export default function MobileWorkspace() {
   const isPreviewTab = activeTab === 'preview';
 
   const getBootstrapPlaceholderName = (tabId?: string | null): string | null => {
-    if (!tabId || isSchemaReady) return null;
+    if (!tabId || !bootstrapToken || isSchemaReady) return null;
 
     const normalizedTabId = tabId.toLowerCase();
     if (normalizedTabId === 'preview') return 'Preview';

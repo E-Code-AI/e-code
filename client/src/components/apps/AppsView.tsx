@@ -50,8 +50,16 @@ Users
 import { useState } from "react";
 
 interface AppsViewProps {
-  onOpenApp: (appId: number) => void;
+  onOpenApp: (appId: number | string) => void;
   onBack: () => void;
+}
+
+function normalizeProjects(payload: unknown): Project[] {
+  if (Array.isArray(payload)) return payload as Project[];
+  if (payload && typeof payload === 'object' && Array.isArray((payload as { projects?: unknown[] }).projects)) {
+    return (payload as { projects: Project[] }).projects;
+  }
+  return [];
 }
 
 export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
@@ -80,6 +88,7 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
   // Load projects
   const { data: projects = [], isLoading } = useQuery<Project[]>({
     queryKey: ["/api/projects"],
+    queryFn: async () => normalizeProjects(await apiRequest("GET", "/api/projects")),
     enabled: !!user,
   });
 
@@ -87,11 +96,15 @@ export function AppsView({ onOpenApp, onBack }: AppsViewProps) {
     mutationFn: async (data: typeof projectForm) => {
       return await apiRequest<Project>("POST", "/api/projects", data);
     },
-    onSuccess: () => {
+    onSuccess: (project) => {
       toast({ title: "Project created successfully" });
       setShowCreateDialog(false);
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      const projectId = project?.id || (project as any)?.project?.id;
+      if (projectId) {
+        onOpenApp(projectId);
+      }
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: `Error creating project: ${error.message}`, variant: "destructive" });

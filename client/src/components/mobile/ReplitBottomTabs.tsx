@@ -10,11 +10,11 @@
  */
 
 import { memo, useCallback, type ElementType } from 'react';
-import { FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff, Code2, Settings, Sparkles, Terminal } from 'lucide-react';
+import { FolderOpen, GitBranch, AlertCircle, Wifi, WifiOff, Code2, Settings, Sparkles, Terminal, Monitor } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-type MobileTab = 'projects' | 'code' | 'agent' | 'terminal' | 'settings';
+type MobileTab = 'projects' | 'code' | 'preview' | 'agent' | 'terminal' | 'settings';
 
 interface Tab {
   id: MobileTab;
@@ -37,6 +37,7 @@ interface ReplitBottomTabsProps {
 const tabs: Tab[] = [
   { id: 'projects', icon: FolderOpen, label: 'Projects' },
   { id: 'code', icon: Code2, label: 'Editor' },
+  { id: 'preview', icon: Monitor, label: 'Preview' },
   { id: 'agent', icon: Sparkles, label: 'AI' },
   { id: 'terminal', icon: Terminal, label: 'Terminal' },
   { id: 'settings', icon: Settings, label: 'Settings' },
@@ -49,10 +50,6 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
   isConnected = true,
 }: ReplitBottomTabsProps) {
   const isMobile = useIsMobile();
-  
-  if (!isMobile) {
-    return null;
-  }
 
   const handleTabClick = useCallback((tabId: string) => {
     onTabChange(tabId);
@@ -60,6 +57,10 @@ export const ReplitBottomTabs = memo(function ReplitBottomTabs({
       navigator.vibrate([8, 50, 4]);
     }
   }, [onTabChange]);
+
+  if (!isMobile) {
+    return null;
+  }
 
   const getBadgeForTab = (tabId: MobileTab): number | undefined => {
     if (tabId === 'settings') {

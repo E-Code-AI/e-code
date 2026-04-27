@@ -142,8 +142,8 @@ export function NotificationCenter() {
     },
   });
 
-  // Ensure notifications is always an array (API may return null on 401)
-  const safeNotifications = notifications ?? [];
+  // Ensure notifications is always an array (API may return null/object on degraded auth/API responses)
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
   const unreadNotifications = safeNotifications.filter((n: Notification) => !n.read);
   const unreadCount = unreadNotifications.length;
 

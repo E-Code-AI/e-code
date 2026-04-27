@@ -86,7 +86,23 @@ export function UsageTrackingIcon({
     tier: 'free',
   };
 
-  const currentUsage = usage || defaultUsage;
+  const currentUsage: UsageData = {
+    ...defaultUsage,
+    ...(usage || {}),
+    credits: {
+      ...defaultUsage.credits,
+      ...(usage?.credits || {}),
+    },
+    currentPeriod: {
+      ...defaultUsage.currentPeriod,
+      ...(usage?.currentPeriod || {}),
+    },
+    breakdown: {
+      ...defaultUsage.breakdown,
+      ...(usage?.breakdown || {}),
+    },
+    tier: usage?.tier || defaultUsage.tier,
+  };
   const isLowCredits = currentUsage.credits.percentUsed > 80;
   const isCriticalCredits = currentUsage.credits.percentUsed > 95;
 

@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 export default function Apps() {
   const [, setLocation] = useLocation();
 
-  const handleOpenApp = (appId: number) => {
+  const handleOpenApp = (appId: number | string) => {
     // Redirect to IDE with the app/project ID
     setLocation(`/ide/${appId}`);
   };
