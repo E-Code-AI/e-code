@@ -7,6 +7,7 @@ import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
 import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
 import { classifyGenerationError, redactErrorForLog } from './code-generation-errors';
+import { OutputGuard } from './code-generation-output-guards';
 
 const logger = createLogger('code-generation-router');
 const router = Router();
@@ -119,14 +120,34 @@ Generate the project now.`;
     }
     
     const stream = aiProviderManager.streamChat(model, messages, streamOptions);
-    
+
     let generatedCode = '';
     let chunkCount = 0;
-    
+    const guard = new OutputGuard();
+
     for await (const content of stream) {
+      const verdict = guard.feed(content);
+      if (!verdict.ok) {
+        logger.warn('[Code Generation] Output guard rejected stream', {
+          code: verdict.code,
+          detail: verdict.detail,
+          bytesSoFar: guard.bytesSeen(),
+          chunksSoFar: chunkCount,
+          model,
+        });
+        res.write(`data: ${JSON.stringify({
+          type: 'error',
+          code: verdict.code,
+          message: verdict.userMessage,
+          retryable: false,
+        })}\n\n`);
+        res.end();
+        return;
+      }
+
       generatedCode += content;
       chunkCount++;
-      
+
       // Send SSE event
       res.write(`data: ${JSON.stringify({
         type: 'chunk',
@@ -135,20 +156,22 @@ Generate the project now.`;
         chunkNumber: chunkCount
       })}\n\n`);
     }
-    
+
     // Send completion event
     res.write(`data: ${JSON.stringify({
       type: 'complete',
       totalLength: generatedCode.length,
-      totalChunks: chunkCount
+      totalChunks: chunkCount,
+      filePaths: guard.paths(),
     })}\n\n`);
-    
+
     logger.info('[Code Generation] Stream completed', {
       totalLength: generatedCode.length,
       totalChunks: chunkCount,
+      fileCount: guard.paths().length,
       model
     });
-    
+
     res.end();
   } catch (error: unknown) {
     const classified = classifyGenerationError(error);
