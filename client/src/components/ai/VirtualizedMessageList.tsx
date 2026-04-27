@@ -59,7 +59,7 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
 
     const allItems = useMemo(() => {
       const items = [...messages];
-      if (isPendingResponse) {
+      if (isPendingResponse && !streamingContent) {
         items.push({
           id: 'pending-skeleton',
           role: 'assistant' as const,
@@ -69,7 +69,7 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
         });
       }
       return items;
-    }, [messages, isPendingResponse]);
+    }, [messages, isPendingResponse, streamingContent]);
 
     const virtualizer = useVirtualizer({
       count: allItems.length,
@@ -122,6 +122,21 @@ export const VirtualizedMessageList = memo(forwardRef<HTMLDivElement, Virtualize
         });
       }
     }, [isPendingResponse, allItems.length, autoScrollToBottom, virtualizer]);
+
+    useEffect(() => {
+      if (!streamingContent || !autoScrollToBottom || isUserScrollingRef.current) return;
+      const parent = parentRef.current;
+      if (!parent) return;
+
+      const frame = requestAnimationFrame(() => {
+        parent.scrollTo({
+          top: parent.scrollHeight,
+          behavior: 'smooth',
+        });
+      });
+
+      return () => cancelAnimationFrame(frame);
+    }, [streamingContent, autoScrollToBottom]);
 
     useEffect(() => {
       return () => {
