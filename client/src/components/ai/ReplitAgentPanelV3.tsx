@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { devLog } from '@/lib/dev-logger';
 import { apiRequest,getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
-import { drainSSEEvents,normalizeSSEChunk,parseSSEDataLine } from '@/lib/sse-client-parser';
+import { drainSSEEvents,extractSSEDataLines,normalizeSSEChunk,parseSSEDataLine } from '@/lib/sse-client-parser';
 import { handleSSEWarning,type SSEWarningData } from '@/lib/sse-warning-handler';
 import { cn } from '@/lib/utils';
 import { useAgentConversationStore,type Message } from '@/stores/agentConversationStore';
@@ -1580,15 +1580,7 @@ export function ReplitAgentPanelV3({
               sseBuffer = drained.remaining;
 
               for (const eventText of drained.events) {
-                // Parse the complete event
-                const lines = eventText.split('\n');
-
-                for (const line of lines) {
-                  if (line.startsWith('event: ')) {
-                    continue;
-                  }
-
-                  if (line.startsWith('data: ')) {
+                for (const line of extractSSEDataLines(eventText)) {
                     try {
                       const data = parseSSEDataLine(line);
                       if (!data) continue;
@@ -1691,7 +1683,6 @@ export function ReplitAgentPanelV3({
                         }]);
                       }
                     }
-                  }
                 }
               }
             }
@@ -1712,7 +1703,7 @@ export function ReplitAgentPanelV3({
               });
 
               for (const eventText of trailingEvents.events) {
-                for (const line of eventText.split('\n')) {
+                for (const line of extractSSEDataLines(eventText)) {
                   try {
                     const data = parseSSEDataLine(line);
                     if (!data) continue;
@@ -2086,16 +2077,7 @@ export function ReplitAgentPanelV3({
         sseBuffer = drained.remaining;
 
         for (const eventText of drained.events) {
-          const lines = eventText.split('\n');
-
-          for (const line of lines) {
-            // Handle SSE events
-            if (line.startsWith('event: ')) {
-              const _eventType = line.slice(7).trim();
-              continue;
-            }
-
-            if (line.startsWith('data: ')) {
+          for (const line of extractSSEDataLines(eventText)) {
               try {
                 const data = parseSSEDataLine(line);
                 if (!data) continue;
@@ -2239,7 +2221,6 @@ export function ReplitAgentPanelV3({
                   });
                 }
               }
-            }
           }
         }
       }
@@ -2260,7 +2241,7 @@ export function ReplitAgentPanelV3({
         });
 
         for (const eventText of trailingEvents.events) {
-          for (const line of eventText.split('\n')) {
+          for (const line of extractSSEDataLines(eventText)) {
             try {
               const data = parseSSEDataLine(line);
               if (!data) continue;

@@ -11,6 +11,13 @@ export function parseSSEDataLine<T = unknown>(line: string): T | null {
   return JSON.parse(payload) as T;
 }
 
+export function extractSSEDataLines(eventText: string): string[] {
+  return eventText
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .filter((line) => line.startsWith('data: '));
+}
+
 export function drainSSEEvents(
   buffer: string,
   flushTrailingEvent = false,

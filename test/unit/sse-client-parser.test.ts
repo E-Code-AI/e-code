@@ -1,5 +1,6 @@
 import {
   drainSSEEvents,
+  extractSSEDataLines,
   normalizeSSEChunk,
   parseSSEDataLine,
 } from '../../client/src/lib/sse-client-parser';
@@ -35,5 +36,13 @@ describe('SSE client parser', () => {
 
     expect(result.events).toEqual(['data: {"final":true}']);
     expect(result.remaining).toBe('');
+  });
+
+  it('extracts only SSE data lines from an event frame', () => {
+    const lines = extractSSEDataLines(
+      ': keepalive\nid: 42\nevent: message\ndata: {"content":"a"}\ndata: [DONE]\nretry: 1000',
+    );
+
+    expect(lines).toEqual(['data: {"content":"a"}', 'data: [DONE]']);
   });
 });
