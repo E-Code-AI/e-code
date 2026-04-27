@@ -136,4 +136,66 @@ router.get('/:branchId/connection-url', ensureAuthenticated, async (req: Request
   }
 });
 
+// ─── Replit-style Production / Development environments ──────────────
+
+// GET /api/projects/:projectId/database/environments
+// Returns { production, development } where development may be null if not yet created
+router.get('/environments', ensureAuthenticated, async (req: Request, res: Response) => {
+  const ctx = await ensureProjectOwner(req, res);
+  if (!ctx) return;
+
+  try {
+    const envs = await projectDatabaseBranchService.getEnvironments(ctx.projectId);
+    if (!envs) return res.json({ production: null, development: null });
+    return res.json(envs);
+  } catch (err: any) {
+    logger.error('Failed to get environments', err);
+    return res.status(500).json({ message: err.message || 'Internal error' });
+  }
+});
+
+// POST /api/projects/:projectId/database/environments/development
+// Creates the development branch if it does not exist (idempotent)
+router.post('/environments/development', ensureAuthenticated, async (req: Request, res: Response) => {
+  const ctx = await ensureProjectOwner(req, res);
+  if (!ctx) return;
+
+  try {
+    const dev = await projectDatabaseBranchService.ensureDevelopmentBranch(ctx.projectId, ctx.userId);
+    return res.status(201).json(dev);
+  } catch (err: any) {
+    logger.error('Failed to ensure development branch', err);
+    return res.status(400).json({ message: err.message || 'Failed to create development branch' });
+  }
+});
+
+// POST /api/projects/:projectId/database/environments/development/reset
+// Deletes (if present) and recreates the development branch from production
+router.post('/environments/development/reset', ensureAuthenticated, async (req: Request, res: Response) => {
+  const ctx = await ensureProjectOwner(req, res);
+  if (!ctx) return;
+
+  try {
+    const dev = await projectDatabaseBranchService.resetDevelopmentBranch(ctx.projectId, ctx.userId);
+    return res.status(200).json(dev);
+  } catch (err: any) {
+    logger.error('Failed to reset development branch', err);
+    return res.status(400).json({ message: err.message || 'Failed to reset development branch' });
+  }
+});
+
+// GET /api/projects/:projectId/database/environments/production/connection-url
+router.get('/environments/production/connection-url', ensureAuthenticated, async (req: Request, res: Response) => {
+  const ctx = await ensureProjectOwner(req, res);
+  if (!ctx) return;
+
+  try {
+    const url = await projectDatabaseBranchService.getProductionConnectionUrl(ctx.projectId);
+    return res.json({ connectionUrl: url });
+  } catch (err: any) {
+    logger.error('Failed to get production connection URL', err);
+    return res.status(400).json({ message: err.message || 'Failed to get production connection URL' });
+  }
+});
+
 export default router;

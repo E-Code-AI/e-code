@@ -34,6 +34,7 @@ import { apiRequest,queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import { useMutation,useQuery } from '@tanstack/react-query';
 import {
+AlertTriangle,
 ChevronDown,
 ChevronLeft,
 ChevronRight,
@@ -52,8 +53,10 @@ Loader2,
 MoreVertical,
 Plus,
 RefreshCw,
+Rocket,
 Search,
 Settings,
+Sparkles,
 Table,
 Terminal,
 Trash2
@@ -1321,77 +1324,80 @@ export function DatabasePanel({ projectId }: DatabasePanelProps) {
   );
 }
 
-// ─── Branches Tab Component ───────────────────────────────────────
+// ─── Branches Tab — Replit-style Production / Development ──────────
 
-interface BranchInfo {
-  id: number;
-  name: string;
-  providerBranchId: string;
-  parentProviderBranchId: string | null;
-  isMain: boolean;
-  isProtected: boolean;
-  host: string | null;
-  database: string | null;
-  username: string | null;
-  createdAt: string;
-}
-
-interface BranchesResponse {
-  database: { id: number; provider: string; status: string; mainBranchId?: string } | null;
-  branches: BranchInfo[];
+interface EnvironmentsResponse {
+  production: {
+    databaseId: number;
+    provider: string;
+    status: string;
+    providerBranchId: string | null;
+    host: string | null;
+    database: string | null;
+  } | null;
+  development: {
+    branchId: number;
+    providerBranchId: string;
+    host: string | null;
+    database: string | null;
+    createdAt: string;
+  } | null;
 }
 
 function BranchesTab({ projectId }: { projectId: string }) {
   const { toast } = useToast();
-  const [newBranchName, setNewBranchName] = useState('');
-  const [creating, setCreating] = useState(false);
+  const envsKey = ['/api/projects', projectId, 'database/branches/environments'];
 
-  const branchesKey = ['/api/projects', projectId, 'database/branches'];
-
-  const { data, isLoading } = useQuery<BranchesResponse>({
-    queryKey: branchesKey,
-    queryFn: async () => {
-      return apiRequest<BranchesResponse>('GET', `/api/projects/${projectId}/database/branches`);
-    },
+  const { data, isLoading } = useQuery<EnvironmentsResponse>({
+    queryKey: envsKey,
+    queryFn: () => apiRequest<EnvironmentsResponse>('GET', `/api/projects/${projectId}/database/branches/environments`),
     enabled: !!projectId,
   });
 
-  const createMutation = useMutation({
-    mutationFn: async (name: string) => {
-      return apiRequest<BranchInfo>('POST', `/api/projects/${projectId}/database/branches`, { name });
-    },
+  const createDevMutation = useMutation({
+    mutationFn: () => apiRequest('POST', `/api/projects/${projectId}/database/branches/environments/development`),
     onSuccess: () => {
-      toast({ title: 'Branch created', description: `Branch "${newBranchName}" is ready.` });
-      setNewBranchName('');
-      queryClient.invalidateQueries({ queryKey: branchesKey });
+      toast({ title: 'Development database created', description: 'A development copy is ready.' });
+      queryClient.invalidateQueries({ queryKey: envsKey });
     },
     onError: (err: any) => {
-      toast({ title: 'Failed to create branch', description: err.message || 'Unknown error', variant: 'destructive' });
-    },
-    onSettled: () => setCreating(false),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (branchId: number) => {
-      await apiRequest('DELETE', `/api/projects/${projectId}/database/branches/${branchId}`);
-    },
-    onSuccess: () => {
-      toast({ title: 'Branch deleted' });
-      queryClient.invalidateQueries({ queryKey: branchesKey });
-    },
-    onError: (err: any) => {
-      toast({ title: 'Failed to delete branch', description: err.message || 'Unknown error', variant: 'destructive' });
+      toast({ title: 'Failed to create development DB', description: err.message || 'Unknown error', variant: 'destructive' });
     },
   });
 
-  const copyConnectionUrl = async (branchId: number, branchName: string) => {
+  const resetDevMutation = useMutation({
+    mutationFn: () => apiRequest('POST', `/api/projects/${projectId}/database/branches/environments/development/reset`),
+    onSuccess: () => {
+      toast({ title: 'Development database reset', description: 'Recreated fresh from production.' });
+      queryClient.invalidateQueries({ queryKey: envsKey });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Reset failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    },
+  });
+
+  const copyProdUrl = async () => {
     try {
       const { connectionUrl } = await apiRequest<{ connectionUrl: string }>(
         'GET',
-        `/api/projects/${projectId}/database/branches/${branchId}/connection-url`
+        `/api/projects/${projectId}/database/branches/environments/production/connection-url`
       );
       await navigator.clipboard.writeText(connectionUrl);
-      toast({ title: 'Copied', description: `Connection URL for "${branchName}" copied to clipboard.` });
+      toast({ title: 'Copied', description: 'Production connection URL copied.' });
+    } catch (err: any) {
+      toast({ title: 'Copy failed', description: err.message || 'Unknown error', variant: 'destructive' });
+    }
+  };
+
+  const copyDevUrl = async () => {
+    if (!data?.development) return;
+    try {
+      const { connectionUrl } = await apiRequest<{ connectionUrl: string }>(
+        'GET',
+        `/api/projects/${projectId}/database/branches/${data.development.branchId}/connection-url`
+      );
+      await navigator.clipboard.writeText(connectionUrl);
+      toast({ title: 'Copied', description: 'Development connection URL copied.' });
     } catch (err: any) {
       toast({ title: 'Copy failed', description: err.message || 'Unknown error', variant: 'destructive' });
     }
@@ -1405,7 +1411,7 @@ function BranchesTab({ projectId }: { projectId: string }) {
     );
   }
 
-  if (!data?.database) {
+  if (!data?.production) {
     return (
       <div className="h-full flex items-center justify-center text-sm text-[var(--ecode-text-muted)] p-4">
         No database provisioned for this project yet.
@@ -1413,142 +1419,160 @@ function BranchesTab({ projectId }: { projectId: string }) {
     );
   }
 
-  if (data.database.provider !== 'neon') {
-    return (
-      <div className="h-full flex items-center justify-center text-sm text-[var(--ecode-text-muted)] p-4 text-center">
-        Database branches are available only for Neon-hosted databases.
-        <br />
-        Current provider: <span className="font-mono">{data.database.provider}</span>
-      </div>
-    );
-  }
+  const isNeon = data.production.provider === 'neon';
 
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-4">
         <div className="space-y-1">
-          <h3 className="text-sm font-medium text-[var(--ecode-text)]">Database Branches</h3>
+          <h3 className="text-sm font-medium text-[var(--ecode-text)]">Database environments</h3>
           <p className="text-xs text-[var(--ecode-text-muted)]">
-            Create instant copies of your database for staging, previews, or experiments. Branches share storage with the parent and are billed only for divergent data.
+            Each project has a <strong>Production</strong> database (your live data) and an isolated <strong>Development</strong> copy you can experiment with. You can reset Development from Production at any time.
           </p>
         </div>
 
-        <div className="flex gap-2 items-center">
-          <Input
-            placeholder="branch-name (e.g. staging, preview-pr-42)"
-            value={newBranchName}
-            onChange={e => setNewBranchName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ''))}
-            disabled={createMutation.isPending}
-            className="flex-1 h-8 text-xs"
-            data-testid="input-branch-name"
-            maxLength={40}
-          />
-          <Button
-            size="sm"
-            onClick={() => {
-              if (!newBranchName) return;
-              setCreating(true);
-              createMutation.mutate(newBranchName);
-            }}
-            disabled={!newBranchName || createMutation.isPending}
-            data-testid="button-create-branch"
-            className="h-8 px-3 text-xs"
-          >
-            {createMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Plus className="h-3 w-3 mr-1" />}
-            Create
-          </Button>
-        </div>
-
-        <div className="border border-[var(--ecode-border)] rounded">
-          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-bg)] text-xs font-medium text-[var(--ecode-text-muted)]">
-            Main branch
-          </div>
-          <div className="p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-[hsl(142,72%,42%)]" />
-              <div>
-                <div className="text-sm font-medium text-[var(--ecode-text)]">main</div>
-                <div className="text-xs text-[var(--ecode-text-muted)] font-mono">
-                  {data.database.mainBranchId || '—'}
-                </div>
-              </div>
-            </div>
-            <span className="text-xs px-2 py-0.5 rounded bg-[hsl(142,72%,42%)]/15 text-[hsl(142,72%,42%)]">
-              protected
+        {/* Production card */}
+        <div className="border border-[var(--ecode-border)] rounded overflow-hidden">
+          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[hsl(142,72%,42%)]/8 text-xs font-medium text-[hsl(142,72%,42%)] flex items-center gap-2">
+            <Rocket className="h-3.5 w-3.5" />
+            Production
+            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-[hsl(142,72%,42%)]/15">
+              live data
             </span>
           </div>
+          <div className="p-3 space-y-2" data-testid="env-production">
+            <div className="flex items-center gap-2">
+              <Database className="h-4 w-4 text-[hsl(142,72%,42%)] shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-[var(--ecode-text)]">
+                  {data.production.database || 'main'}
+                </div>
+                <div className="text-xs text-[var(--ecode-text-muted)] font-mono truncate">
+                  {data.production.host || '—'}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={copyProdUrl}
+                className="h-7 px-2 text-xs shrink-0"
+                data-testid="button-copy-production-url"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy URL
+              </Button>
+            </div>
+            <p className="text-[11px] text-[var(--ecode-text-muted)]">
+              Connected to your published app. Be careful with destructive changes.
+            </p>
+          </div>
         </div>
 
-        <div className="border border-[var(--ecode-border)] rounded">
-          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-bg)] text-xs font-medium text-[var(--ecode-text-muted)] flex items-center justify-between">
-            <span>Other branches</span>
-            <span>{data.branches.length}</span>
+        {/* Development card */}
+        <div className="border border-[var(--ecode-border)] rounded overflow-hidden">
+          <div className="px-3 py-2 border-b border-[var(--ecode-border)] bg-[var(--ecode-bg)] text-xs font-medium text-[var(--ecode-text-muted)] flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5" />
+            Development
+            <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-muted">
+              isolated copy
+            </span>
           </div>
-          {data.branches.length === 0 ? (
-            <div className="p-6 text-center text-xs text-[var(--ecode-text-muted)]">
-              No branches yet. Create one above.
+
+          {!isNeon ? (
+            <div className="p-4 text-center text-xs text-[var(--ecode-text-muted)]">
+              Development databases are available only on Neon-hosted databases.
+              <br />
+              Current provider: <span className="font-mono">{data.production.provider}</span>
+            </div>
+          ) : !data.development ? (
+            <div className="p-4 space-y-3" data-testid="env-development-empty">
+              <p className="text-xs text-[var(--ecode-text-muted)]">
+                No development database yet. Create one to experiment without touching production data.
+              </p>
+              <Button
+                size="sm"
+                onClick={() => createDevMutation.mutate()}
+                disabled={createDevMutation.isPending}
+                className="h-8 text-xs"
+                data-testid="button-create-development"
+              >
+                {createDevMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Plus className="h-3 w-3 mr-1" />
+                )}
+                Create development database
+              </Button>
             </div>
           ) : (
-            <div className="divide-y divide-[var(--ecode-border)]">
-              {data.branches.map(b => (
-                <div key={b.id} className="p-3 flex items-center justify-between gap-2" data-testid={`row-branch-${b.id}`}>
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Layers className="h-4 w-4 text-[var(--ecode-text-muted)] shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-[var(--ecode-text)] truncate" data-testid={`text-branch-name-${b.id}`}>
-                        {b.name}
-                      </div>
-                      <div className="text-xs text-[var(--ecode-text-muted)] font-mono truncate">
-                        {b.providerBranchId}
-                      </div>
-                    </div>
+            <div className="p-3 space-y-3" data-testid="env-development">
+              <div className="flex items-center gap-2">
+                <Database className="h-4 w-4 text-[var(--ecode-text-muted)] shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-[var(--ecode-text)]">
+                    {data.development.database || 'development'}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => copyConnectionUrl(b.id, b.name)}
-                      className="h-7 px-2"
-                      data-testid={`button-copy-${b.id}`}
-                      title="Copy connection URL"
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 px-2 text-destructive hover:text-destructive"
-                          data-testid={`button-delete-${b.id}`}
-                          title="Delete branch"
-                          disabled={b.isProtected || b.isMain}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete branch "{b.name}"?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently remove the branch and its data. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(b.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            data-testid={`button-confirm-delete-${b.id}`}
-                          >
-                            Delete branch
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                  <div className="text-xs text-[var(--ecode-text-muted)] font-mono truncate">
+                    {data.development.host || data.development.providerBranchId}
                   </div>
                 </div>
-              ))}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={copyDevUrl}
+                  className="h-7 px-2 text-xs shrink-0"
+                  data-testid="button-copy-development-url"
+                >
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy URL
+                </Button>
+              </div>
+
+              <div className="border-t border-[var(--ecode-border)] pt-3 flex items-center justify-between gap-2">
+                <p className="text-[11px] text-[var(--ecode-text-muted)]">
+                  Created {new Date(data.development.createdAt).toLocaleDateString()}
+                </p>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2 text-xs shrink-0"
+                      data-testid="button-reset-development"
+                      disabled={resetDevMutation.isPending}
+                    >
+                      {resetDevMutation.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                      )}
+                      Reset from production
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                        Reset development database?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will <strong>permanently delete</strong> all data currently in your development database
+                        and recreate it as a fresh copy of production. This cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => resetDevMutation.mutate()}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        data-testid="button-confirm-reset-development"
+                      >
+                        Reset development
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           )}
         </div>

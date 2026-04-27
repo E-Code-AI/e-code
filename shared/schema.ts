@@ -1604,6 +1604,7 @@ export const projectDatabaseBranches = pgTable('project_database_branches', {
 }, (table) => [
   index('project_database_branches_db_id_idx').on(table.projectDatabaseId),
   index('project_database_branches_provider_branch_idx').on(table.providerBranchId),
+  uniqueIndex('project_database_branches_dbid_name_uniq').on(table.projectDatabaseId, table.name),
 ]);
 
 // Database backups table for automated backup infrastructure

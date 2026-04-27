@@ -21,8 +21,6 @@ Check,
 ChevronDown,
 ChevronLeft,
 ChevronUp,
-Copy,
-Database,
 ExternalLink,
 Eye,
 FileCode,
@@ -261,110 +259,6 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
     enabled: !!status,
   });
   const branches = branchesData?.branches || [];
-
-  // ─── Database branches integration (Neon) ──────────────────────────
-  interface DbBranchInfo {
-    id: number;
-    name: string;
-    providerBranchId: string;
-    isMain: boolean;
-    isProtected: boolean;
-  }
-  interface DbBranchesResponse {
-    database: { id: number; provider: string; status: string; mainBranchId?: string } | null;
-    branches: DbBranchInfo[];
-  }
-
-  const dbBranchesKey = ['/api/projects', resolvedProjectId, 'database/branches'];
-  const { data: dbBranchesData } = useQuery<DbBranchesResponse>({
-    queryKey: dbBranchesKey,
-    queryFn: () => apiRequest<DbBranchesResponse>('GET', `/api/projects/${resolvedProjectId}/database/branches`),
-    enabled: !!resolvedProjectId,
-    staleTime: 15000,
-  });
-
-  const dbBranchesAvailable = !!dbBranchesData?.database && dbBranchesData.database.provider === 'neon';
-  const dbBranchByName = new Map<string, DbBranchInfo>();
-  (dbBranchesData?.branches || []).forEach(b => dbBranchByName.set(b.name, b));
-
-  const createDbBranchMutation = useMutation({
-    mutationFn: async (name: string) =>
-      apiRequest('POST', `/api/projects/${resolvedProjectId}/database/branches`, { name }),
-    onSuccess: (_d, name) => {
-      queryClient.invalidateQueries({ queryKey: dbBranchesKey });
-      toast({ description: `DB branch "${name}" created` });
-    },
-    onError: (err: any) => {
-      toast({ description: err?.message || 'Failed to create DB branch', variant: 'destructive' });
-    },
-  });
-
-  const copyDbConnectionUrl = async (branchId: number, branchName: string) => {
-    try {
-      const { connectionUrl } = await apiRequest<{ connectionUrl: string }>(
-        'GET',
-        `/api/projects/${resolvedProjectId}/database/branches/${branchId}/connection-url`
-      );
-      await navigator.clipboard.writeText(connectionUrl);
-      toast({ description: `DB connection URL for "${branchName}" copied` });
-    } catch (err: any) {
-      toast({ description: err?.message || 'Copy failed', variant: 'destructive' });
-    }
-  };
-
-  // Inline component: DB branch badge displayed next to each Git branch row
-  const DbBranchBadge = ({ branchName, isMainGit = false }: { branchName: string; isMainGit?: boolean }) => {
-    if (!dbBranchesAvailable) return null;
-
-    if (isMainGit) {
-      return (
-        <span
-          className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-green-500/15 text-green-600 dark:text-green-400 shrink-0"
-          title="Main DB branch"
-          data-testid={`db-badge-main-${branchName}`}
-        >
-          <Database className="w-3 h-3" />
-          DB
-        </span>
-      );
-    }
-
-    const dbBranch = dbBranchByName.get(branchName);
-
-    if (dbBranch) {
-      return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            copyDbConnectionUrl(dbBranch.id, dbBranch.name);
-          }}
-          className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-green-500/15 text-green-600 dark:text-green-400 hover:bg-green-500/25 shrink-0"
-          title="Copy DB connection URL"
-          data-testid={`db-badge-linked-${branchName}`}
-        >
-          <Database className="w-3 h-3" />
-          <Copy className="w-3 h-3" />
-        </button>
-      );
-    }
-
-    const pending = createDbBranchMutation.isPending && createDbBranchMutation.variables === branchName;
-    return (
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          createDbBranchMutation.mutate(branchName);
-        }}
-        disabled={pending}
-        className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded border border-dashed border-muted-foreground/30 text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 disabled:opacity-50"
-        title="Create matching DB branch"
-        data-testid={`db-badge-create-${branchName}`}
-      >
-        {pending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-        DB
-      </button>
-    );
-  };
 
   const { data: githubStatus, isLoading: isLoadingGitHub, refetch: refetchGitHubStatus } = useQuery<GitHubStatus>({
     queryKey: [`/api/git/github/status`],
@@ -954,21 +848,16 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   <div className="mb-1">
                     <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Important</div>
                     {importantBranches.map(branch => (
-                      <div
+                      <button
                         key={branch.name}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg"
+                        onClick={() => checkoutMutation.mutate(branch.name)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
+                        data-testid={`branch-${branch.name}`}
                       >
-                        <button
-                          onClick={() => checkoutMutation.mutate(branch.name)}
-                          className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                          data-testid={`branch-${branch.name}`}
-                        >
-                          <span className={cn("w-2 h-2 rounded-full shrink-0", branch.current ? "bg-primary" : "bg-green-500")} />
-                          <span className="text-[15px] text-foreground flex-1 truncate">{branch.name}</span>
-                          {branch.current && <Check className="w-[18px] h-[18px] text-primary shrink-0" />}
-                        </button>
-                        <DbBranchBadge branchName={branch.name} isMainGit />
-                      </div>
+                        <span className={cn("w-2 h-2 rounded-full shrink-0", branch.current ? "bg-primary" : "bg-green-500")} />
+                        <span className="text-[15px] text-foreground flex-1 truncate">{branch.name}</span>
+                        {branch.current && <Check className="w-[18px] h-[18px] text-primary shrink-0" />}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -977,20 +866,15 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   <div className="mb-1">
                     <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Active</div>
                     {activeBranches.map(branch => (
-                      <div
+                      <button
                         key={branch.name}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg"
+                        onClick={() => checkoutMutation.mutate(branch.name)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
+                        data-testid={`branch-${branch.name}`}
                       >
-                        <button
-                          onClick={() => checkoutMutation.mutate(branch.name)}
-                          className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                          data-testid={`branch-${branch.name}`}
-                        >
-                          <span className="w-2 h-2 bg-green-500 rounded-full shrink-0" />
-                          <span className="text-[15px] text-foreground truncate">{branch.name}</span>
-                        </button>
-                        <DbBranchBadge branchName={branch.name} />
-                      </div>
+                        <span className="w-2 h-2 bg-green-500 rounded-full shrink-0" />
+                        <span className="text-[15px] text-foreground truncate">{branch.name}</span>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -999,20 +883,15 @@ export function ReplitGitPanel({ projectId, className, mode = 'desktop' }: Repli
                   <div>
                     <div className="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wider">Stale</div>
                     {staleBranches.slice(0, 5).map(branch => (
-                      <div
+                      <button
                         key={branch.name}
-                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg"
+                        onClick={() => checkoutMutation.mutate(branch.name)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-muted rounded-lg text-left"
+                        data-testid={`branch-${branch.name}`}
                       >
-                        <button
-                          onClick={() => checkoutMutation.mutate(branch.name)}
-                          className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                          data-testid={`branch-${branch.name}`}
-                        >
-                          <User className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
-                          <span className="text-[15px] text-foreground truncate">{branch.name}</span>
-                        </button>
-                        <DbBranchBadge branchName={branch.name} />
-                      </div>
+                        <User className="w-[18px] h-[18px] text-muted-foreground shrink-0" />
+                        <span className="text-[15px] text-foreground truncate">{branch.name}</span>
+                      </button>
                     ))}
                   </div>
                 )}

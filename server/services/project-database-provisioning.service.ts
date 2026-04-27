@@ -915,6 +915,171 @@ class ProjectDatabaseBranchService {
 
     return decrypt(branch.connectionUrl);
   }
+
+  // ─── Replit-style Production / Development environments ────────────
+  // - "Production" = the main DB (the existing projectDatabases row / Neon main branch)
+  // - "Development" = a single Neon branch named "development", auto-managed.
+
+  private static DEV_BRANCH_NAME = 'development';
+
+  async getEnvironments(projectId: number): Promise<{
+    production: {
+      databaseId: number;
+      provider: string;
+      status: string;
+      providerBranchId: string | null;
+      host: string | null;
+      database: string | null;
+    };
+    development: {
+      branchId: number;
+      providerBranchId: string;
+      host: string | null;
+      database: string | null;
+      createdAt: Date;
+    } | null;
+  } | null> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) return null;
+
+    const [dev] = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(and(
+        eq(projectDatabaseBranches.projectDatabaseId, database.id),
+        eq(projectDatabaseBranches.name, ProjectDatabaseBranchService.DEV_BRANCH_NAME)
+      ))
+      .limit(1);
+
+    return {
+      production: {
+        databaseId: database.id,
+        provider: database.provider,
+        status: database.status,
+        providerBranchId: database.providerBranchId,
+        host: database.host,
+        database: database.database,
+      },
+      development: dev
+        ? {
+            branchId: dev.id,
+            providerBranchId: dev.providerBranchId,
+            host: dev.host,
+            database: dev.database,
+            createdAt: dev.createdAt,
+          }
+        : null,
+    };
+  }
+
+  async ensureDevelopmentBranch(projectId: number, userId: number | null): Promise<BranchInfo> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+
+    const [existing] = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(and(
+        eq(projectDatabaseBranches.projectDatabaseId, database.id),
+        eq(projectDatabaseBranches.name, ProjectDatabaseBranchService.DEV_BRANCH_NAME)
+      ))
+      .limit(1);
+
+    const toInfo = (row: NonNullable<typeof existing>): BranchInfo => ({
+      id: row.id,
+      name: row.name,
+      providerBranchId: row.providerBranchId,
+      parentProviderBranchId: row.parentProviderBranchId,
+      isMain: row.isMain,
+      isProtected: row.isProtected,
+      host: row.host,
+      database: row.database,
+      username: row.username,
+      createdAt: row.createdAt,
+    });
+
+    if (existing) {
+      return toInfo(existing);
+    }
+
+    try {
+      return await this.createBranch(projectId, ProjectDatabaseBranchService.DEV_BRANCH_NAME, undefined, userId);
+    } catch (err: any) {
+      const isUniqueViolation =
+        err?.code === '23505' ||
+        (typeof err?.message === 'string' && /already exists|duplicate key/i.test(err.message));
+      if (!isUniqueViolation) throw err;
+
+      logger.warn(`ensureDevelopmentBranch: race detected for project ${projectId}, returning existing branch`);
+      const [raced] = await db
+        .select()
+        .from(projectDatabaseBranches)
+        .where(and(
+          eq(projectDatabaseBranches.projectDatabaseId, database.id),
+          eq(projectDatabaseBranches.name, ProjectDatabaseBranchService.DEV_BRANCH_NAME)
+        ))
+        .limit(1);
+      if (!raced) throw err;
+      return toInfo(raced);
+    }
+  }
+
+  async resetDevelopmentBranch(projectId: number, userId: number | null): Promise<BranchInfo> {
+    const { projectDatabases, projectDatabaseBranches } = await import('@shared/schema');
+    const [database] = await db
+      .select()
+      .from(projectDatabases)
+      .where(eq(projectDatabases.projectId, projectId))
+      .limit(1);
+    if (!database) throw new Error('No database for project');
+    if (database.provider !== 'neon') {
+      throw new Error('Reset development is only supported on Neon databases');
+    }
+
+    const [existing] = await db
+      .select()
+      .from(projectDatabaseBranches)
+      .where(and(
+        eq(projectDatabaseBranches.projectDatabaseId, database.id),
+        eq(projectDatabaseBranches.name, ProjectDatabaseBranchService.DEV_BRANCH_NAME)
+      ))
+      .limit(1);
+
+    if (existing) {
+      logger.info(`Resetting development branch for project ${projectId} (deleting branch ${existing.id})`);
+      await this.deleteBranch(projectId, existing.id);
+    }
+
+    logger.info(`Recreating development branch for project ${projectId} from main`);
+    try {
+      return await this.createBranch(projectId, ProjectDatabaseBranchService.DEV_BRANCH_NAME, undefined, userId);
+    } catch (err: any) {
+      logger.error(
+        `resetDevelopmentBranch: recreation failed for project ${projectId} after delete; user must retry. Cause: ${err?.message || err}`
+      );
+      const friendly = new Error(
+        `The old development database was removed but recreating it failed: ${err?.message || 'unknown error'}. Please click "Create development database" to try again.`
+      );
+      (friendly as any).cause = err;
+      throw friendly;
+    }
+  }
+
+  async getProductionConnectionUrl(projectId: number): Promise<string> {
+    const credentials = await projectDatabaseService.getCredentials(projectId);
+    if (!credentials) throw new Error('No production database for project');
+    return credentials.connectionUrl;
+  }
 }
 
 export const projectDatabaseBranchService = new ProjectDatabaseBranchService();
