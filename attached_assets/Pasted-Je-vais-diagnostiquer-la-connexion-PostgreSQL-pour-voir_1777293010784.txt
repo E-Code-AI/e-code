@@ -1,0 +1,56 @@
+Je vais diagnostiquer la connexion PostgreSQL pour voir ce qui ne colle pas.
+
+
+4 actions
+La connexion marche parfaitement côté shell avec ces credentials ! Donc le code de l'app utilise probablement une autre source. Je cherche.
+
+
+7 actions
+Le .env a un override: false donc il ne peut pas écraser la variable Replit. Je regarde l'erreur exacte dans les logs serveur récents.
+
+
+8 actions
+J'ai trouvé le vrai problème — ce n'est pas la base de données !
+
+Diagnostic complet :
+
+PostgreSQL fonctionne parfaitement — j'ai testé directement avec psql : connexion OK, user=postgres, db=heliumdb. Les logs serveur disent même "Development database connection initialized" ✅
+
+Le .env ne pose pas de problème — il a bien une vieille ligne DATABASE_URL=postgresql://ecode:password@localhost:5432/ecode_dev mais server/env.ts charge dotenv avec override: false, donc la variable Replit (helium/heliumdb) gagne.
+
+La VRAIE erreur dans les logs :
+
+FATAL: Failed to bind to port 5000: listen EADDRINUSE: address already in use 0.0.0.0:5000
+
+Un process zombie tsx (PID 1655, démarré il y a 7h32) tient encore le port 5000. Le nouveau workflow ne peut donc pas se lancer. Si l'utilisateur a vu "password authentication failed for user postgres", c'est probablement venu de l'ancien process zombie qui tournait avec une autre config (peut-être quand l'app a été lancée avant que DATABASE_URL Replit soit provisionnée).
+
+Je nettoie et redémarre :
+
+
+6 actions
+Il reste un dernier zombie tsx (PID 61228, preview-1224) qui tient encore le port. Je le supprime et relance proprement.
+
+
+Ran kill
+Le serveur Workflow Start application vient de démarrer (PID 65059). Je vérifie qu'il monte bien sur le port 5000 sans erreur d'auth DB.
+
+
+2 actions
+Tout fonctionne parfaitement maintenant ! ✅
+
+Récapitulatif :
+
+Composant	État
+Start application	🟢 En marche (HTTP 200 sur /api/health)
+Start Runner	🟢 En marche (port 8081)
+Base de données	🟢 Connexion testée OK
+Port 5000	🟢 Libéré et utilisé proprement
+Sur le faux problème de "password authentication failed for user postgres" :
+
+Ce n'était pas un problème de base de données. Les credentials Replit (postgres@helium/heliumdb) sont valides — j'ai testé directement avec psql et ça marche, et les logs serveur le confirment : "Database connection test successful".
+
+Le vrai problème était un process tsx zombie (vieux de plus de 7 heures) qui tenait encore le port 5000. Quand le workflow tentait de redémarrer, il échouait avec EADDRINUSE: address already in use 0.0.0.0:5000. Le message d'auth Postgres que tu avais vu provenait probablement de cet ancien process qui tournait encore avec une vieille config DB.
+
+Concernant le fichier .env :
+
+Il contient bien une vieille ligne DATABASE_URL=postgresql://ecode:password@localhost:5432/ecode_dev (un user ecode qui n'existe pas), mais ce n'est pas dangereux : server/env.ts charge dotenv avec override: false, donc la variable Replit gagne toujours. Si tu veux quand même nettoyer cette ligne pour éviter toute confusion future, dis-le moi.
