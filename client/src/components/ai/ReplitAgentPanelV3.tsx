@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { devLog } from '@/lib/dev-logger';
 import { apiRequest,getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
+import { normalizeSSEChunk,parseSSEDataLine } from '@/lib/sse-client-parser';
 import { handleSSEWarning,type SSEWarningData } from '@/lib/sse-warning-handler';
 import { cn } from '@/lib/utils';
 import { useAgentConversationStore,type Message } from '@/stores/agentConversationStore';
@@ -423,15 +424,6 @@ function createHttpStreamError(response: Response, fallbackMessage: string, body
     statusText: response.statusText,
     body,
   });
-}
-
-function parseSSEDataLine(line: string): any | null {
-  if (!line.startsWith('data: ')) return null;
-
-  const payload = line.slice(6).trim();
-  if (!payload || payload === '[DONE]') return null;
-
-  return JSON.parse(payload);
 }
 
 export function ReplitAgentPanelV3({
@@ -1580,7 +1572,7 @@ export function ReplitAgentPanelV3({
 
               const chunk = decoder.decode(value, { stream: true }); // stream: true for proper multi-byte handling
               // ✅ FORTUNE 500 FIX: Normalize line endings (handle \r\n and \r from different servers)
-              sseBuffer += chunk.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+              sseBuffer += normalizeSSEChunk(chunk);
 
               // ✅ FORTUNE 500 FIX: Parse complete SSE events (delimited by \n\n)
               // This ensures we only process complete events, not partial frames
@@ -1709,7 +1701,7 @@ export function ReplitAgentPanelV3({
 
             const trailingDecoded = decoder.decode();
             if (trailingDecoded) {
-              sseBuffer += trailingDecoded.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+              sseBuffer += normalizeSSEChunk(trailingDecoded);
             }
 
             if (sseBuffer.trim()) {
@@ -2086,7 +2078,7 @@ export function ReplitAgentPanelV3({
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        sseBuffer += chunk.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        sseBuffer += normalizeSSEChunk(chunk);
 
         let boundaryIndex;
         while ((boundaryIndex = sseBuffer.indexOf('\n\n')) !== -1) {
@@ -2252,7 +2244,7 @@ export function ReplitAgentPanelV3({
 
       const trailingDecoded = decoder.decode();
       if (trailingDecoded) {
-        sseBuffer += trailingDecoded.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        sseBuffer += normalizeSSEChunk(trailingDecoded);
       }
 
       if (sseBuffer.trim()) {
