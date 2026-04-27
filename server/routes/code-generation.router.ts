@@ -8,6 +8,7 @@ import { DESIGN_SYSTEM_PROMPT } from '../ai/prompts/design-system';
 import { MODERN_DESIGN_SYSTEM_PROMPT } from '../ai/prompts/modern-design-system';
 import { classifyGenerationError, redactErrorForLog } from './code-generation-errors';
 import { OutputGuard } from './code-generation-output-guards';
+import { streamWithRetry } from './code-generation-retry';
 
 const logger = createLogger('code-generation-router');
 const router = Router();
@@ -119,7 +120,26 @@ Generate the project now.`;
       streamOptions.temperature = 0.3; // Lower temperature for more consistent code
     }
     
-    const stream = aiProviderManager.streamChat(model, messages, streamOptions);
+    // Wrap the provider call in retry-with-backoff. Retries only fire on
+    // PROVIDER_RATE_LIMIT / PROVIDER_TIMEOUT / PROVIDER_UNAVAILABLE *before*
+    // the first chunk has been forwarded; once we've sent any content the
+    // wrapper switches to pass-through.
+    const stream = streamWithRetry(
+      () => aiProviderManager.streamChat(model, messages, streamOptions),
+      { classify: classifyGenerationError },
+      undefined,
+      (event) => {
+        logger.warn('[Code Generation] Retrying provider call', { ...event, model });
+        // Surface the retry to the client so the UI can show a "retrying..."
+        // state instead of going silent during the backoff window.
+        res.write(`data: ${JSON.stringify({
+          type: 'retry',
+          attempt: event.attempt,
+          delayMs: event.delayMs,
+          code: event.code,
+        })}\n\n`);
+      },
+    );
 
     let generatedCode = '';
     let chunkCount = 0;
