@@ -216,6 +216,90 @@ Known limitations for this gate:
 - Physical device validation on iPhone, iPad, Android phone, and Android tablet was not executed locally.
 - App Store / Play Store signing, provisioning profiles, TestFlight/Internal App Sharing, and push provider credentials remain environment-dependent.
 
+## Hardening Gate — 2026-04-27 (afternoon)
+
+Status: PARTIAL PRODUCTION GATE PASS for the code-generation surface, the
+load-test contract, observability dashboard-as-code, and a mobile E2E
+skeleton. This does not change the global platform verdict, which remains
+blocked until staging+prod rollback drill, signing certs, prod readiness
+green, a pure RN client (or accepted Capacitor coverage), and a third-party
+pentest are completed.
+
+Implemented (9 commits on `main`, `381f5058..86cdc425` after rebase onto
+`d23e43e9`):
+
+| commit       | scope                                             |
+|--------------|---------------------------------------------------|
+| `38385abf`   | dist/ rebuild — clean working tree                |
+| `089c6c3a`   | k6 100-session release load test                  |
+| `c105b49e`   | structured error codes + log redaction (gen)      |
+| `47a22da1`   | Grafana production overview dashboard             |
+| `1c20d113`   | Detox skeleton over Capacitor                     |
+| `381f5058`   | streaming output guards (size + path safety)      |
+| `ebdf1b87`   | retry-with-backoff for transient provider failures |
+| `a13e17ca`   | route-level integration tests                     |
+| `86cdc425`   | hoist redactErrorForLog to utils, sweep ProjectAI + auth |
+
+Code-generation router (`/api/code-generation/*`) is now hardened on four
+independent axes:
+
+- **Structured errors.** All catch paths classify the error
+  (`VALIDATION_FAILED | PROVIDER_TIMEOUT | PROVIDER_RATE_LIMIT |
+  PROVIDER_UNAVAILABLE | PROVIDER_AUTH | GENERATION_FAILED`), set the right
+  HTTP status, surface a user-safe message, and emit a `retryable` hint.
+- **Output guards.** Streaming validators reject runaway output (>5 MB) and
+  unsafe file paths (absolute, parent-traversal, control chars) mid-stream
+  before the whole token budget is burned.
+- **Retry-with-backoff.** Transient `429/503/timeout` responses retry up to
+  3× with exponential backoff (1s base, factor 2, ±25% jitter). The
+  invariant tested in unit *and* integration: retries only fire **before**
+  the first chunk has been forwarded — once the client has consumed any
+  output, retries are off and mid-stream errors propagate.
+- **Log redaction.** `redactErrorForLog` hoisted to `server/utils/`, hard
+  caps message at 200 chars, drops stack/cause/payload. Applied to the
+  six `[ProjectAI]` catch handlers and the auth router's `sanitizeError`.
+
+Test coverage added in this gate:
+
+- `test/unit/code-generation-error-classifier.test.ts` — 11/11 PASS.
+- `test/unit/code-generation-output-guards.test.ts` — 18/18 PASS.
+- `test/unit/code-generation-retry.test.ts` — 9/9 PASS.
+- `test/integration/code-generation.router.test.ts` — 8/8 PASS (mounts the
+  real router with mocked AI provider + rate limiter, validates the full
+  contract end-to-end through supertest).
+
+Release artifacts added (not yet executed against prod):
+
+- `test/load/sessions-100.k6.js` — 100-session load test, `npm run
+  test:load:sessions`. Auth-optional via `USERS_FILE`. Thresholds enforce:
+  `errors<1%`, `login p95<1.5s`, `projects p95<800ms`, `readiness
+  p95<200ms`, `session p95<6s`. Documented in `test/load/README.md`.
+- `observability/grafana/e-code-overview.json` — dashboard-as-code targeting
+  the exact metric names emitted by `server/monitoring/prometheus.ts`. Five
+  sections: traffic & errors, latency, process & runtime, AI/generation.
+- `e2e-mobile/.detoxrc.js` + skeleton — Capacitor-aware Detox config.
+  README explicitly documents that the pure-RN gate stays open by design.
+
+Verified commands:
+
+- `npm run test:file -- test/unit/code-generation-error-classifier.test.ts` — PASS (11/11).
+- `npm run test:file -- test/unit/code-generation-output-guards.test.ts` — PASS (18/18).
+- `npm run test:file -- test/unit/code-generation-retry.test.ts` — PASS (9/9).
+- `npm run test:file -- test/integration/code-generation.router.test.ts` — PASS (8/8).
+- `npx eslint` over all touched files — PASS, zero warnings.
+- `node --check` over all new JS configs — PASS.
+
+Known limitations for this gate:
+
+- ~350 raw-error log sites elsewhere in `server/routes/` still pass full
+  error objects to the logger. Tracked as a follow-up sweep.
+- The k6 script is wired and runnable but has not yet been executed
+  against a production-equivalent target.
+- The Grafana dashboard JSON is shipped; no live Grafana instance has
+  loaded it yet against the prod Prometheus datasource.
+- The Detox skeleton runs `launch + WebView host probe` only. Real flow
+  coverage requires `data-testid` hooks to land in the React shell first.
+
 ## Final Release Consolidation — 2026-04-27
 
 Status: BLOCKED - NOT RELEASE-READY. Full release evidence is captured in `RELEASE_READY.md`.
