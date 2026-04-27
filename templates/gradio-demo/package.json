@@ -1,0 +1,17 @@
+{
+  "name": "ecode-template-gradio-demo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "install": "npm install",
+    "dev": "node server.mjs --port 7860",
+    "build": "node scripts/build.mjs",
+    "start": "node server.mjs --port 7860",
+    "test": "node tests/hello.test.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.18.0"
+  },
+  "devDependencies": {}
+}

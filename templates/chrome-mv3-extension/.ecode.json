@@ -1,0 +1,43 @@
+{
+  "id": "chrome-mv3-extension",
+  "name": "Chrome Manifest V3 Extension",
+  "author": "Official",
+  "category": "extension",
+  "language": "typescript",
+  "runtime": "node",
+  "ports": [
+    8080
+  ],
+  "install": "npm install",
+  "dev": "npm run dev -- --port 8080",
+  "build": "npm run build",
+  "start": "npm run start -- --port 8080",
+  "hidden": [
+    "node_modules",
+    "dist",
+    ".next",
+    ".git"
+  ],
+  "recommendedExtensions": [
+    "ecode.cloud-run",
+    "ecode.gcs",
+    "ecode.secret-manager"
+  ],
+  "suggestedCloudRun": {
+    "region": "us-central1",
+    "cpu": "1",
+    "memory": "512Mi",
+    "minInstances": 0,
+    "maxInstances": 5,
+    "timeoutSeconds": 300
+  },
+  "tags": [
+    "extension",
+    "chrome",
+    "cloud-run",
+    "official"
+  ],
+  "difficulty": "advanced",
+  "previewBucket": "ecode-templates-previews",
+  "previewObject": "chrome-mv3-extension/preview.png"
+}

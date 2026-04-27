@@ -1,0 +1,9 @@
+steps:
+  - name: 'node:22-bookworm'
+    entrypoint: 'bash'
+    args:
+      - '-lc'
+      - |
+        set -euo pipefail
+        node templates/validate-templates.mjs
+timeout: '1800s'

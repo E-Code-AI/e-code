@@ -1,0 +1,1421 @@
+[
+  {
+    "id": "next15-tailwind-shadcn",
+    "name": "Next.js 15 App Router + Tailwind + shadcn",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "next.js",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "next15-tailwind-shadcn/preview.png"
+  },
+  {
+    "id": "vite-react-ts",
+    "name": "Vite React TypeScript",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      5173
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 5173",
+    "build": "npm run build",
+    "start": "npm run start -- --port 5173",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "vite",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "vite-react-ts/preview.png"
+  },
+  {
+    "id": "astro-content",
+    "name": "Astro Content Site",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      4321
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 4321",
+    "build": "npm run build",
+    "start": "npm run start -- --port 4321",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "astro",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "astro-content/preview.png"
+  },
+  {
+    "id": "sveltekit-app",
+    "name": "SvelteKit Application",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      5173
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 5173",
+    "build": "npm run build",
+    "start": "npm run start -- --port 5173",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "sveltekit",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "sveltekit-app/preview.png"
+  },
+  {
+    "id": "remix-app",
+    "name": "Remix Application",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "remix",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "remix-app/preview.png"
+  },
+  {
+    "id": "nuxt3-app",
+    "name": "Nuxt 3 Application",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "nuxt",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "nuxt3-app/preview.png"
+  },
+  {
+    "id": "solidstart-app",
+    "name": "SolidStart Application",
+    "author": "Official",
+    "category": "web",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "web",
+      "solidstart",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "solidstart-app/preview.png"
+  },
+  {
+    "id": "next-cloudsql-drizzle-auth",
+    "name": "Next.js + Cloud SQL + Drizzle + Auth",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "next.js",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "beginner",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "next-cloudsql-drizzle-auth/preview.png"
+  },
+  {
+    "id": "fastify-postgres-prisma",
+    "name": "Fastify + Postgres + Prisma",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "fastify",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "fastify-postgres-prisma/preview.png"
+  },
+  {
+    "id": "hono-bun-sqlite",
+    "name": "Hono on Bun + SQLite",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "hono",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "hono-bun-sqlite/preview.png"
+  },
+  {
+    "id": "fastapi-sqlmodel",
+    "name": "FastAPI + SQLModel",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "fastapi",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "fastapi-sqlmodel/preview.png"
+  },
+  {
+    "id": "django5-drf",
+    "name": "Django 5 + DRF",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "django",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "django5-drf/preview.png"
+  },
+  {
+    "id": "express-mongo",
+    "name": "Express + Mongo",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "express",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "express-mongo/preview.png"
+  },
+  {
+    "id": "rust-axum-sqlx",
+    "name": "Rust Axum + sqlx",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "rust",
+    "runtime": "rust",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "rust",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "rust-axum-sqlx/preview.png"
+  },
+  {
+    "id": "go-fiber-postgres",
+    "name": "Go Fiber + Postgres",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "go",
+    "runtime": "go",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "go",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "go-fiber-postgres/preview.png"
+  },
+  {
+    "id": "phoenix-liveview",
+    "name": "Phoenix LiveView",
+    "author": "Official",
+    "category": "fullstack",
+    "language": "elixir",
+    "runtime": "node",
+    "ports": [
+      4000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 4000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 4000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "fullstack",
+      "phoenix",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "phoenix-liveview/preview.png"
+  },
+  {
+    "id": "expo-router-firebase",
+    "name": "Expo + Expo Router + Firebase",
+    "author": "Official",
+    "category": "mobile",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      8081
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8081",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8081",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "mobile",
+      "expo",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "expo-router-firebase/preview.png"
+  },
+  {
+    "id": "flutter-riverpod",
+    "name": "Flutter + Riverpod",
+    "author": "Official",
+    "category": "mobile",
+    "language": "dart",
+    "runtime": "node",
+    "ports": [
+      8080
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8080",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8080",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "mobile",
+      "flutter",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "flutter-riverpod/preview.png"
+  },
+  {
+    "id": "streamlit-dashboard",
+    "name": "Streamlit Dashboard",
+    "author": "Official",
+    "category": "ai-ml",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8501
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8501",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8501",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "ai-ml",
+      "streamlit",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "streamlit-dashboard/preview.png"
+  },
+  {
+    "id": "gradio-demo",
+    "name": "Gradio Demo",
+    "author": "Official",
+    "category": "ai-ml",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      7860
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 7860",
+    "build": "npm run build",
+    "start": "npm run start -- --port 7860",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "ai-ml",
+      "gradio",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "gradio-demo/preview.png"
+  },
+  {
+    "id": "langchain-pgvector-agent",
+    "name": "LangChain Agent + pgvector",
+    "author": "Official",
+    "category": "ai-ml",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "ai-ml",
+      "langchain",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "langchain-pgvector-agent/preview.png"
+  },
+  {
+    "id": "rag-claude-api",
+    "name": "RAG Claude API",
+    "author": "Official",
+    "category": "ai-ml",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "ai-ml",
+      "rag",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "rag-claude-api/preview.png"
+  },
+  {
+    "id": "openai-realtime-voice",
+    "name": "OpenAI Realtime Voice",
+    "author": "Official",
+    "category": "ai-ml",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "ai-ml",
+      "openai",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "openai-realtime-voice/preview.png"
+  },
+  {
+    "id": "telegram-bot-python",
+    "name": "Telegram Bot Python",
+    "author": "Official",
+    "category": "bots",
+    "language": "python",
+    "runtime": "python",
+    "ports": [
+      8080
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8080",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8080",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "bots",
+      "telegram",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "intermediate",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "telegram-bot-python/preview.png"
+  },
+  {
+    "id": "telegram-bot-node",
+    "name": "Telegram Bot Node",
+    "author": "Official",
+    "category": "bots",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "bots",
+      "telegram",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "telegram-bot-node/preview.png"
+  },
+  {
+    "id": "discord-slash-bot",
+    "name": "Discord Slash Bot",
+    "author": "Official",
+    "category": "bots",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "bots",
+      "discord",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "discord-slash-bot/preview.png"
+  },
+  {
+    "id": "slack-oauth-app",
+    "name": "Slack OAuth App",
+    "author": "Official",
+    "category": "bots",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "bots",
+      "slack",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "slack-oauth-app/preview.png"
+  },
+  {
+    "id": "chrome-mv3-extension",
+    "name": "Chrome Manifest V3 Extension",
+    "author": "Official",
+    "category": "extension",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      8080
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 8080",
+    "build": "npm run build",
+    "start": "npm run start -- --port 8080",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "extension",
+      "chrome",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "chrome-mv3-extension/preview.png"
+  },
+  {
+    "id": "phaser-game",
+    "name": "Phaser Game",
+    "author": "Official",
+    "category": "creative",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      5173
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 5173",
+    "build": "npm run build",
+    "start": "npm run start -- --port 5173",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "creative",
+      "phaser",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "phaser-game/preview.png"
+  },
+  {
+    "id": "three-r3f-scene",
+    "name": "Three.js + React Three Fiber",
+    "author": "Official",
+    "category": "creative",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      5173
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 5173",
+    "build": "npm run build",
+    "start": "npm run start -- --port 5173",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "creative",
+      "three.js",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "three-r3f-scene/preview.png"
+  },
+  {
+    "id": "graphql-apollo-postgres",
+    "name": "GraphQL Apollo + Postgres",
+    "author": "Official",
+    "category": "services",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      4000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 4000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 4000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "services",
+      "graphql",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "graphql-apollo-postgres/preview.png"
+  },
+  {
+    "id": "trpc-fullstack",
+    "name": "tRPC Fullstack",
+    "author": "Official",
+    "category": "services",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "services",
+      "trpc",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "trpc-fullstack/preview.png"
+  },
+  {
+    "id": "socketio-chat",
+    "name": "Socket.IO Chat",
+    "author": "Official",
+    "category": "services",
+    "language": "typescript",
+    "runtime": "node",
+    "ports": [
+      3000
+    ],
+    "install": "npm install",
+    "dev": "npm run dev -- --port 3000",
+    "build": "npm run build",
+    "start": "npm run start -- --port 3000",
+    "hidden": [
+      "node_modules",
+      "dist",
+      ".next",
+      ".git"
+    ],
+    "recommendedExtensions": [
+      "ecode.cloud-run",
+      "ecode.gcs",
+      "ecode.secret-manager"
+    ],
+    "suggestedCloudRun": {
+      "region": "us-central1",
+      "cpu": "1",
+      "memory": "512Mi",
+      "minInstances": 0,
+      "maxInstances": 5,
+      "timeoutSeconds": 300
+    },
+    "tags": [
+      "services",
+      "socket.io",
+      "cloud-run",
+      "official"
+    ],
+    "difficulty": "advanced",
+    "previewBucket": "ecode-templates-previews",
+    "previewObject": "socketio-chat/preview.png"
+  }
+]

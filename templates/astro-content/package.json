@@ -1,0 +1,17 @@
+{
+  "name": "ecode-template-astro-content",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "install": "npm install",
+    "dev": "node server.mjs --port 4321",
+    "build": "node scripts/build.mjs",
+    "start": "node server.mjs --port 4321",
+    "test": "node tests/hello.test.mjs"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.18.0"
+  },
+  "devDependencies": {}
+}
