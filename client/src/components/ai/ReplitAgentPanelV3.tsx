@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMaxAutonomy } from '@/hooks/useMaxAutonomy';
 import { devLog } from '@/lib/dev-logger';
 import { apiRequest,getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
-import { normalizeSSEChunk,parseSSEDataLine } from '@/lib/sse-client-parser';
+import { drainSSEEvents,normalizeSSEChunk,parseSSEDataLine } from '@/lib/sse-client-parser';
 import { handleSSEWarning,type SSEWarningData } from '@/lib/sse-warning-handler';
 import { cn } from '@/lib/utils';
 import { useAgentConversationStore,type Message } from '@/stores/agentConversationStore';
@@ -1576,13 +1576,10 @@ export function ReplitAgentPanelV3({
 
               // ✅ FORTUNE 500 FIX: Parse complete SSE events (delimited by \n\n)
               // This ensures we only process complete events, not partial frames
-              const eventBoundary = '\n\n';
-              let boundaryIndex;
+              const drained = drainSSEEvents(sseBuffer);
+              sseBuffer = drained.remaining;
 
-              while ((boundaryIndex = sseBuffer.indexOf(eventBoundary)) !== -1) {
-                const eventText = sseBuffer.slice(0, boundaryIndex);
-                sseBuffer = sseBuffer.slice(boundaryIndex + eventBoundary.length);
-
+              for (const eventText of drained.events) {
                 // Parse the complete event
                 const lines = eventText.split('\n');
 
@@ -1704,29 +1701,34 @@ export function ReplitAgentPanelV3({
               sseBuffer += normalizeSSEChunk(trailingDecoded);
             }
 
-            if (sseBuffer.trim()) {
+            const trailingEvents = drainSSEEvents(sseBuffer, true);
+            sseBuffer = trailingEvents.remaining;
+
+            if (trailingEvents.events.length > 0) {
               console.debug('[AutoStart] Flushing trailing SSE buffer', {
                 projectId,
                 conversationId: chatConversationId,
-                bytes: sseBuffer.length,
+                events: trailingEvents.events.length,
               });
 
-              for (const line of sseBuffer.trim().split('\n')) {
-                try {
-                  const data = parseSSEDataLine(line);
-                  if (!data) continue;
-                  if (data.content) {
-                    fullContent += data.content;
-                    setStreamingContent(fullContent);
-                    setIsPendingResponse(false);
+              for (const eventText of trailingEvents.events) {
+                for (const line of eventText.split('\n')) {
+                  try {
+                    const data = parseSSEDataLine(line);
+                    if (!data) continue;
+                    if (data.content) {
+                      fullContent += data.content;
+                      setStreamingContent(fullContent);
+                      setIsPendingResponse(false);
+                    }
+                  } catch (e) {
+                    console.error('[AutoStart] Trailing SSE JSON parse error', {
+                      error: e,
+                      line,
+                      projectId,
+                      conversationId: chatConversationId,
+                    });
                   }
-                } catch (e) {
-                  console.error('[AutoStart] Trailing SSE JSON parse error', {
-                    error: e,
-                    line,
-                    projectId,
-                    conversationId: chatConversationId,
-                  });
                 }
               }
             }
@@ -2080,10 +2082,10 @@ export function ReplitAgentPanelV3({
         const chunk = decoder.decode(value, { stream: true });
         sseBuffer += normalizeSSEChunk(chunk);
 
-        let boundaryIndex;
-        while ((boundaryIndex = sseBuffer.indexOf('\n\n')) !== -1) {
-          const eventText = sseBuffer.slice(0, boundaryIndex);
-          sseBuffer = sseBuffer.slice(boundaryIndex + 2);
+        const drained = drainSSEEvents(sseBuffer);
+        sseBuffer = drained.remaining;
+
+        for (const eventText of drained.events) {
           const lines = eventText.split('\n');
 
           for (const line of lines) {
@@ -2247,37 +2249,42 @@ export function ReplitAgentPanelV3({
         sseBuffer += normalizeSSEChunk(trailingDecoded);
       }
 
-      if (sseBuffer.trim()) {
+      const trailingEvents = drainSSEEvents(sseBuffer, true);
+      sseBuffer = trailingEvents.remaining;
+
+      if (trailingEvents.events.length > 0) {
         console.debug('[AgentMessageFlow] Flushing trailing SSE buffer', {
           projectId,
           conversationId: chatConversationId,
-          bytes: sseBuffer.length,
+          events: trailingEvents.events.length,
         });
 
-        for (const line of sseBuffer.trim().split('\n')) {
-          try {
-            const data = parseSSEDataLine(line);
-            if (!data) continue;
-            if (data.content) {
-              fullContent += data.content;
-              setStreamingContent(fullContent);
-              setIsPendingResponse(false);
+        for (const eventText of trailingEvents.events) {
+          for (const line of eventText.split('\n')) {
+            try {
+              const data = parseSSEDataLine(line);
+              if (!data) continue;
+              if (data.content) {
+                fullContent += data.content;
+                setStreamingContent(fullContent);
+                setIsPendingResponse(false);
+              }
+              if (data.totalTokens !== undefined || data.cost !== undefined) {
+                messageMetadata = {
+                  cost: data.cost,
+                  tokens: data.totalTokens,
+                  model: data.model,
+                  provider: data.provider
+                };
+              }
+            } catch (e) {
+              console.error('[AgentMessageFlow] Trailing SSE JSON parse error', {
+                error: e,
+                line,
+                projectId,
+                conversationId: chatConversationId,
+              });
             }
-            if (data.totalTokens !== undefined || data.cost !== undefined) {
-              messageMetadata = {
-                cost: data.cost,
-                tokens: data.totalTokens,
-                model: data.model,
-                provider: data.provider
-              };
-            }
-          } catch (e) {
-            console.error('[AgentMessageFlow] Trailing SSE JSON parse error', {
-              error: e,
-              line,
-              projectId,
-              conversationId: chatConversationId,
-            });
           }
         }
       }
