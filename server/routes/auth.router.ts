@@ -19,9 +19,11 @@ import { consumeVerifiedChallenge,createTwoFactorChallenge } from "./2fa.router"
 
 const logger = createLogger('auth-router');
 
+// Provider errors sometimes echo request payloads back in their message.
+// Truncate hard to keep secrets out of logs even when the message is huge.
 function sanitizeError(error: unknown): string {
   if (error instanceof Error) {
-    return error.message;
+    return error.message.slice(0, 200);
   }
   return 'Unknown error occurred';
 }

@@ -14,6 +14,7 @@ import { appGenerationPersistence } from '../services/app-generation-persistence
 import { speculativeScaffold } from '../services/speculative-scaffold.service';
 import { type IStorage } from "../storage";
 import { createLogger } from '../utils/logger';
+import { redactErrorForLog } from '../utils/error-redaction';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 
 const projectLogger = createLogger('projects-router');
@@ -864,7 +865,7 @@ export class ProjectsRouter {
           res.end();
         }
       } catch (error: any) {
-        projectLogger.error('[ProjectAI] Error in AI chat:', error);
+        projectLogger.error('[ProjectAI] Error in AI chat', redactErrorForLog(error));
         
         // If headers not sent yet, send JSON error
         if (!res.headersSent) {
@@ -942,7 +943,7 @@ export class ProjectsRouter {
             });
 
           } catch (error: any) {
-            projectLogger.error(`[ProjectAI] Failed to create file:`, error);
+            projectLogger.error('[ProjectAI] Failed to create file', redactErrorForLog(error));
 
             // Log failed action
             await aiSecurityService.logAction(userId, projectId, action, {
@@ -1005,7 +1006,7 @@ export class ProjectsRouter {
             });
 
           } catch (error: any) {
-            projectLogger.error(`[ProjectAI] Failed to edit file:`, error);
+            projectLogger.error('[ProjectAI] Failed to edit file', redactErrorForLog(error));
 
             await aiSecurityService.logAction(userId, projectId, action, {
               success: false,
@@ -1026,7 +1027,7 @@ export class ProjectsRouter {
         }
 
       } catch (error: any) {
-        projectLogger.error('[ProjectAI] Error in approval endpoint:', error);
+        projectLogger.error('[ProjectAI] Error in approval endpoint', redactErrorForLog(error));
         return res.status(500).json({ 
           error: error.message || 'Failed to approve action',
           code: 'APPROVAL_ERROR' 
@@ -1060,7 +1061,7 @@ export class ProjectsRouter {
         });
 
       } catch (error: any) {
-        projectLogger.error('[ProjectAI] Error in reject endpoint:', error);
+        projectLogger.error('[ProjectAI] Error in reject endpoint', redactErrorForLog(error));
         return res.status(500).json({ 
           error: error.message || 'Failed to reject action',
           code: 'REJECTION_ERROR' 
@@ -1425,7 +1426,7 @@ export class ProjectsRouter {
         });
 
       } catch (error: any) {
-        projectLogger.error('[ProjectAI] Error getting pending actions:', error);
+        projectLogger.error('[ProjectAI] Error getting pending actions', redactErrorForLog(error));
         return res.status(500).json({ 
           error: error.message || 'Failed to get pending actions',
           code: 'PENDING_ERROR' 

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export { redactErrorForLog } from '../utils/error-redaction';
+
 export type GenerationErrorCode =
   | 'VALIDATION_FAILED'
   | 'PROVIDER_TIMEOUT'
@@ -45,18 +47,3 @@ export function classifyGenerationError(error: unknown): ClassifiedError {
   return { code: 'GENERATION_FAILED', status: 500, userMessage: 'Code generation failed.', retryable: false };
 }
 
-// Build a log-safe view of an error: never log the raw Error (stack frames
-// can carry SDK internals, request bodies with API keys, etc.).
-export function redactErrorForLog(error: unknown): Record<string, unknown> {
-  if (error instanceof z.ZodError) {
-    return { name: 'ZodError', issueCount: error.issues.length };
-  }
-  const e = (error ?? {}) as { name?: string; message?: string; status?: number; code?: string };
-  return {
-    name: e.name || 'Error',
-    status: e.status,
-    code: e.code,
-    // Truncate message hard — provider errors sometimes echo back request payloads.
-    message: typeof e.message === 'string' ? e.message.slice(0, 200) : undefined,
-  };
-}
