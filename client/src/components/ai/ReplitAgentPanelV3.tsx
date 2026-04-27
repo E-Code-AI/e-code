@@ -425,6 +425,15 @@ function createHttpStreamError(response: Response, fallbackMessage: string, body
   });
 }
 
+function parseSSEDataLine(line: string): any | null {
+  if (!line.startsWith('data: ')) return null;
+
+  const payload = line.slice(6).trim();
+  if (!payload || payload === '[DONE]') return null;
+
+  return JSON.parse(payload);
+}
+
 export function ReplitAgentPanelV3({
   projectId,
   className,
@@ -1592,12 +1601,8 @@ export function ReplitAgentPanelV3({
 
                   if (line.startsWith('data: ')) {
                     try {
-                      const payload = line.slice(6).trim();
-                      if (!payload || payload === '[DONE]') {
-                        continue;
-                      }
-
-                      const data = JSON.parse(payload);
+                      const data = parseSSEDataLine(line);
+                      if (!data) continue;
 
                       if (data.content) {
                         fullContent += data.content;
@@ -1715,12 +1720,9 @@ export function ReplitAgentPanelV3({
               });
 
               for (const line of sseBuffer.trim().split('\n')) {
-                if (!line.startsWith('data: ')) continue;
-                const payload = line.slice(6).trim();
-                if (!payload || payload === '[DONE]') continue;
-
                 try {
-                  const data = JSON.parse(payload);
+                  const data = parseSSEDataLine(line);
+                  if (!data) continue;
                   if (data.content) {
                     fullContent += data.content;
                     setStreamingContent(fullContent);
@@ -2101,12 +2103,8 @@ export function ReplitAgentPanelV3({
 
             if (line.startsWith('data: ')) {
               try {
-                const payload = line.slice(6).trim();
-                if (!payload || payload === '[DONE]') {
-                  continue;
-                }
-
-                const data = JSON.parse(payload);
+                const data = parseSSEDataLine(line);
+                if (!data) continue;
 
               // Handle context truncation warnings (check for presence of warning-specific fields)
               if (data.message && typeof data.message === 'string' && !data.content && !data.step && !data.toolCallId) {
@@ -2265,12 +2263,9 @@ export function ReplitAgentPanelV3({
         });
 
         for (const line of sseBuffer.trim().split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6).trim();
-          if (!payload || payload === '[DONE]') continue;
-
           try {
-            const data = JSON.parse(payload);
+            const data = parseSSEDataLine(line);
+            if (!data) continue;
             if (data.content) {
               fullContent += data.content;
               setStreamingContent(fullContent);
