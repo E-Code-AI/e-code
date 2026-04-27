@@ -88,7 +88,19 @@ export function TabletIDEView({ projectId, className, bootstrapToken, onWorkspac
   const layout = useTabletLayout();
   const { toast } = useToast();
   const { isReady: isSchemaReady } = useSchemaWarmingStore();
-  
+
+  // Mirror UnifiedIDELayout: subscribe to the schema-warming SSE stream when a
+  // bootstrapToken is present so isSchemaReady eventually flips to true on
+  // page reloads / deep-links where no startWarming() call drove the store.
+  // Without this, shouldGatePreview stays true forever and the tablet preview
+  // panel sits on AppNotReadyPlaceholder.
+  useEffect(() => {
+    if (!bootstrapToken || !projectId || isSchemaReady) return;
+    const store = useSchemaWarmingStore.getState();
+    if (store.eventSource && store.projectId === projectId) return;
+    store.subscribeToStream(projectId);
+  }, [bootstrapToken, projectId, isSchemaReady]);
+
   // Agent Tools state for tablet
   const numericProjectId = parseInt(projectId, 10) || 1;
   const { settings: agentSettings, updateSettings: updateAgentSettings } = useAgentTools(numericProjectId);
