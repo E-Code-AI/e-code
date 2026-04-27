@@ -71,6 +71,14 @@ const checks = [
       'Redis unavailable in production; refusing process-local agent recovery queue',
     ],
   },
+  {
+    file: 'server/ai.ts',
+    mustContain: [
+      'ai:project-chat-history:${projectId}',
+      'Redis unavailable in production; refusing process-local project chat history',
+      'Local dev read-through cache only. Production history is Redis-backed.',
+    ],
+  },
 ];
 
 let failed = false;

@@ -1,6 +1,7 @@
 import { Request,Response } from 'express';
 import { aiProviderManager } from './ai/ai-provider-manager';
 import { ProjectContext,ProjectContextService } from './services/project-context.service';
+import { redisCache } from './services/redis-cache.service';
 import { storage } from './storage';
 import { validateAndSetSSEHeaders } from './utils/sse-headers';
 
@@ -600,7 +601,38 @@ function getPromptForLanguage(language: string, code: string): string {
   }
 }
 
-// In-memory project chat history (keyed by projectId)
+const PROJECT_CHAT_HISTORY_TTL_SECONDS = 7 * 24 * 60 * 60;
+
+function projectChatHistoryKey(projectId: string): string {
+  return `ai:project-chat-history:${projectId}`;
+}
+
+function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
+
+async function loadProjectChatHistory(projectId: string): Promise<any[]> {
+  const cached = await redisCache.get<any[]>(projectChatHistoryKey(projectId));
+  if (Array.isArray(cached)) {
+    return cached;
+  }
+
+  return isProductionRuntime() ? [] : projectChatHistory.get(projectId) || [];
+}
+
+async function storeProjectChatHistory(projectId: string, history: any[]): Promise<void> {
+  const boundedHistory = history.slice(-100);
+  const stored = await redisCache.set(projectChatHistoryKey(projectId), boundedHistory, PROJECT_CHAT_HISTORY_TTL_SECONDS);
+  if (!stored && isProductionRuntime()) {
+    throw new Error('Redis unavailable in production; refusing process-local project chat history');
+  }
+
+  if (!isProductionRuntime()) {
+    projectChatHistory.set(projectId, boundedHistory);
+  }
+}
+
+// Local dev read-through cache only. Production history is Redis-backed.
 const projectChatHistory = new Map<string, any[]>();
 
 // POST /api/ai/:projectId/chat — project-specific AI chat (used by ReplitAssistant, AIAssistant)
@@ -648,10 +680,10 @@ ${context?.file ? `The user is working on file: ${context.file}` : ''}`;
     };
 
     // Store in history
-    const history2 = projectChatHistory.get(projectId) || [];
+    const history2 = await loadProjectChatHistory(projectId);
     history2.push({ id: Date.now().toString(), role: 'user', content: message, timestamp: new Date().toISOString() });
     history2.push(responseMessage);
-    projectChatHistory.set(projectId, history2.slice(-100));
+    await storeProjectChatHistory(projectId, history2);
 
     res.json(responseMessage);
   } catch (error: any) {
@@ -664,7 +696,7 @@ ${context?.file ? `The user is working on file: ${context.file}` : ''}`;
 export async function getProjectHistory(req: Request, res: Response) {
   try {
     const { projectId } = req.params;
-    const history = projectChatHistory.get(projectId) || [];
+    const history = await loadProjectChatHistory(projectId);
     res.json(history);
   } catch (error: any) {
     console.error('Error getting project history:', error);
