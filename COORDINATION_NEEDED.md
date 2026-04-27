@@ -52,3 +52,18 @@ The greenfield AI generator UI is implemented under the owned `apps/web/src/ai-g
 - `POST /api/ai-generator/generations/:id/undo`: revert the last AI-generated commit.
 
 The page route `/new/ai` and command palette registration must also be wired by the frontend shell owner because the active router lives under `client/src/**`.
+
+## Deployment API integration
+
+Branch: `parallel/05-deploy`
+
+The GCP deployer service, deploy UI module, and Terraform module are implemented in owned paths. The active API router is outside my ownership, so the backend owner must proxy or mount:
+
+- `GET /api/deploy/projects/:projectId`
+- `POST /api/deploy/releases`
+- `GET /api/deploy/releases/:releaseId/logs`
+- `POST /api/deploy/projects/:projectId/releases/:releaseId/promote`
+- `POST /api/deploy/projects/:projectId/releases/:releaseId/rollback`
+- `POST /api/deploy/projects/:projectId/domains/verify`
+
+The frontend shell owner must wire the persistent Deploy button/header entry to `apps/web/src/deploy/DeployPanel` because the active header/workbench routes live outside assigned ownership.

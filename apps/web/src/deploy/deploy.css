@@ -1,0 +1,35 @@
+.ecode-deploy-panel {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+}
+
+.ecode-deploy-card {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.ecode-deploy-header,
+.ecode-deploy-grid,
+.ecode-release-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ecode-deploy-grid label {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.ecode-deploy-card pre {
+  max-height: 360px;
+  overflow: auto;
+  border-radius: 6px;
+  background: hsl(var(--ecode-sunken, 210 40% 96%));
+  padding: 12px;
+}
