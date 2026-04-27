@@ -1,7 +1,7 @@
 # E-Code Platform
 
 ## Overview
-E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security features. The platform aims to provide a comprehensive, secure, and high-performance development experience, positioning itself as a leader in AI-powered software development.
+E-Code is an AI-assisted web-based Integrated Development Environment (IDE) designed to enhance developer productivity and provide a comprehensive, secure, and high-performance development experience. It offers automated workspace setup, real-time code execution, integrated AI capabilities, collaboration tools, enterprise-grade testing, and robust security features. The platform aims to be a leader in AI-powered software development by leveraging AI to streamline the entire software development lifecycle, from coding and testing to deployment and maintenance.
 
 ## User Preferences
 - Communication: Simple, everyday language
@@ -71,13 +71,13 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite-based f
 
 ### UI/UX Decisions
 - Leverages the Replit RUI Design System for consistent, modern, and responsive interfaces.
-- Public-facing pages use vertical Y-shift animations (`whileInView`) for better user experience.
+- Public-facing pages use vertical Y-shift animations (`whileInView`).
 - Key public routes are accessible without authentication.
 - The IDE features intelligent default tab visibility and a persistent preview panel.
 - The Console Panel is responsive, adapting to various screen sizes.
 
 ### Technical Implementations
-- **AI Integration**: Features a comprehensive AI system with XML prompts, task classification, caching, SSE streaming, multi-provider model selection, real API model names, normalization, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, and autonomous build session management. Includes voice input via MediaRecorder API for transcription with multi-provider fallback.
+- **AI Integration**: Comprehensive AI system with XML prompts, task classification, caching, SSE streaming, multi-provider model selection, real API model names, normalization, database-backed conversation history, retry logic, Agent Step Cache, Memory Bank, schema warming, and autonomous build session management. Includes voice input via MediaRecorder API for transcription with multi-provider fallback.
 - **Real-time Communication**: Uses SSE and WebSockets for real-time server/runtime log streaming and HTML live preview with CSS hot-swapping.
 - **Security Framework**: Implements AES-256-GCM encryption, XSS prevention, CSRF protection, input sanitization, tier-based rate limiting, API versioning, session-based authentication, encrypted GitHub tokens, isolated preview subprocess environments, Zod-based route validation, GitHub OAuth CSRF protection, Stripe webhook secret validation, JWT bootstrap validation, dynamic expression blocking, Redis password enforcement, and deep linking support.
 - **System Reliability**: Includes Checkpoints & Rollback, Playwright-based Background Auto-Testing, and robust cleanup for stuck autonomous build sessions. Sentry is integrated for error monitoring.
@@ -89,7 +89,7 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite-based f
 - **Routing**: API routes support dual-mounting and specific ordering for user routes. `notFoundHandler` distinguishes API from SPA routes. API route aliases are used for backward compatibility.
 - **Environment Configuration**: Environment variables are strictly validated using Zod schemas.
 - **Project Management**: New projects auto-generate starter files and enforce tenant isolation. Template forking normalizes and validates language. The `/api/projects` endpoint supports pagination. Project authentication is managed via a dedicated panel with multiple provider options.
-- **IDE Tooling**: Tools require registration in `availableTools` and `TOOL_REGISTRY`. `UnifiedIDELayout.tsx` manages tool content rendering.
+- **IDE Tooling**: Tools require registration in `availableTools` and `TOOL_REGISTRY` and are managed by `UnifiedIDELayout.tsx`.
 - **Admin Functionality**: Includes an Admin AI Studio for managing AI interactions and client projects, and various admin pages for system management. Admin schemas are distinct from user schemas.
 - **Model Management**: `model-normalizer.ts` maps deprecated/fake model names to real API names across various providers.
 - **Code Editor**: `Monaco Editor` is used with a safe disposal pattern. `Highlight.js` uses `safeRegister()` for language registration.
