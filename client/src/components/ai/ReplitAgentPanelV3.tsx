@@ -100,6 +100,25 @@ interface ToolExecution {
   error?: string;
 }
 
+interface AgentSSEData {
+  content?: string;
+  message?: string;
+  step?: ThinkingStep & { timestamp: string | Date };
+  toolCallId?: string;
+  tool?: string;
+  parameters?: any;
+  result?: any;
+  success?: boolean;
+  metadata?: ToolExecution['metadata'];
+  error?: string;
+  enabled?: boolean;
+  nodesRetrieved?: number;
+  totalTokens?: number;
+  cost?: string;
+  model?: string;
+  provider?: string;
+}
+
 interface FileAttachment {
   id: string;
   name: string;
@@ -1582,7 +1601,7 @@ export function ReplitAgentPanelV3({
               for (const eventText of drained.events) {
                 for (const line of extractSSEDataLines(eventText)) {
                     try {
-                      const data = parseSSEDataLine(line);
+                      const data = parseSSEDataLine<AgentSSEData>(line);
                       if (!data) continue;
 
                       if (data.content) {
@@ -1705,7 +1724,7 @@ export function ReplitAgentPanelV3({
               for (const eventText of trailingEvents.events) {
                 for (const line of extractSSEDataLines(eventText)) {
                   try {
-                    const data = parseSSEDataLine(line);
+                    const data = parseSSEDataLine<AgentSSEData>(line);
                     if (!data) continue;
                     if (data.content) {
                       fullContent += data.content;
@@ -2079,7 +2098,7 @@ export function ReplitAgentPanelV3({
         for (const eventText of drained.events) {
           for (const line of extractSSEDataLines(eventText)) {
               try {
-                const data = parseSSEDataLine(line);
+                const data = parseSSEDataLine<AgentSSEData>(line);
                 if (!data) continue;
 
               // Handle context truncation warnings (check for presence of warning-specific fields)
@@ -2243,7 +2262,7 @@ export function ReplitAgentPanelV3({
         for (const eventText of trailingEvents.events) {
           for (const line of extractSSEDataLines(eventText)) {
             try {
-              const data = parseSSEDataLine(line);
+              const data = parseSSEDataLine<AgentSSEData>(line);
               if (!data) continue;
               if (data.content) {
                 fullContent += data.content;

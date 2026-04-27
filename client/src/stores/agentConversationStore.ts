@@ -226,6 +226,7 @@ export interface Message {
     streamingDuration?: number;
     finishReason?: 'stop' | 'length' | 'content_filter' | 'tool_calls';
     error?: boolean;
+    errorDetails?: unknown;
   };
 }
 

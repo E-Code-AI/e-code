@@ -12,7 +12,7 @@ import type { ActivityItem } from '@/components/ide/ReplitActivityBar';
 import type { Tab as EditorTab } from '@/components/ide/ReplitTabBar';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest,isPlaywrightRuntime } from '@/lib/queryClient';
 import { safeSessionStorage } from '@/lib/safe-storage';
 import type { File,Project } from '@shared/schema';
 import { useQuery,useQueryClient } from '@tanstack/react-query';
@@ -209,6 +209,7 @@ export function useIDEWorkspace(projectId: string) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const e2eStabilityMode = isPlaywrightRuntime();
 
   // Parse URL params
   const searchParams = typeof window !== 'undefined' 
@@ -326,7 +327,8 @@ export function useIDEWorkspace(projectId: string) {
       return res;
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
-    staleTime: Infinity,
+    staleTime: e2eStabilityMode ? 30 * 1000 : Infinity,
+    gcTime: e2eStabilityMode ? 60 * 1000 : undefined,
   });
 
   const { data: files = [], isLoading: isLoadingFiles } = useQuery<File[]>({
@@ -337,7 +339,8 @@ export function useIDEWorkspace(projectId: string) {
       return dedupeWorkspaceFiles(res || []);
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
-    staleTime: Infinity,
+    staleTime: e2eStabilityMode ? 30 * 1000 : Infinity,
+    gcTime: e2eStabilityMode ? 60 * 1000 : undefined,
   });
 
   const { data: publishState } = useQuery<PublishState>({
@@ -393,6 +396,17 @@ export function useIDEWorkspace(projectId: string) {
   }, [files]);
 
   // ========== EFFECTS ==========
+
+  useEffect(() => {
+    return () => {
+      if (!e2eStabilityMode || !projectId) return;
+      queryClient.cancelQueries({ queryKey: ['/api/projects', projectId] });
+      queryClient.cancelQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.removeQueries({ queryKey: ['/api/projects', projectId] });
+      queryClient.removeQueries({ queryKey: ['/api/projects', projectId, 'files'] });
+      queryClient.removeQueries({ queryKey: ['/api/preview/url', projectId] });
+    };
+  }, [e2eStabilityMode, projectId, queryClient]);
 
   // Persist prompt from URL param
   useEffect(() => {

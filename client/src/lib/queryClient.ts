@@ -85,6 +85,32 @@ async function throwIfResNotOk(res: Response, url?: string): Promise<void> {
 
 let csrfToken: string | null = null;
 
+export function isPlaywrightRuntime(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return Boolean(
+      (navigator as any).webdriver ||
+      window.localStorage?.getItem('ECODE_E2E_STABILITY') === '1' ||
+      new URLSearchParams(window.location.search).get('e2e') === '1'
+    );
+  } catch {
+    return Boolean((navigator as any).webdriver);
+  }
+}
+
+async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}, timeoutMs = 10_000): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: init.signal || controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 function getBootstrapToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
@@ -133,10 +159,20 @@ export async function getCSRFToken(): Promise<string> {
 }
 
 async function fetchCSRFToken(): Promise<string> {
-  const response = await fetch('/api/csrf-token', {
-    credentials: 'include',
-    method: 'GET'
-  });
+  let response: Response;
+  try {
+    response = await fetchWithTimeout('/api/csrf-token', {
+      credentials: 'include',
+      method: 'GET'
+    });
+  } catch (error) {
+    console.warn('[CSRF] token fetch timed out or failed, retrying once', error);
+    response = await fetchWithTimeout('/api/csrf-token', {
+      credentials: 'include',
+      method: 'GET',
+      cache: 'no-store',
+    }, 15_000);
+  }
 
   const headerToken = response.headers.get('X-CSRF-Token');
 
@@ -305,8 +341,8 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "returnNull" }), // Graceful 401 handling - return null for unauth
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: 10 * 60 * 1000, // 10 minutes - data considered fresh
-      gcTime: 30 * 60 * 1000, // 30 minutes - data kept in cache (renamed from cacheTime in v5)
+      staleTime: isPlaywrightRuntime() ? 30 * 1000 : 10 * 60 * 1000,
+      gcTime: isPlaywrightRuntime() ? 60 * 1000 : 10 * 60 * 1000,
       retry: (failureCount, error: any) => {
         // Don't retry on 401 Unauthorized - redirect already triggered
         if (error?.status === 401 || error?.message?.includes('401')) return false;

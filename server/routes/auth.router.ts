@@ -8,7 +8,7 @@ import { sessionManager } from "../auth/session-manager";
 import { revokeAllUserTokens,revokeToken } from "../auth/token-revocation";
 import { db,withTransaction } from "../db";
 import { ensureAuthenticated as sharedEnsureAuth } from "../middleware/auth";
-import { csrfProtection } from "../middleware/csrf";
+import { csrfProtection,generateCSRFToken } from "../middleware/csrf";
 import { tierRateLimiters } from "../middleware/tier-rate-limiter";
 import { type IStorage } from "../storage";
 import { decodeTokenWithoutVerification,generateEmailVerificationToken,generatePasswordResetToken,hashToken } from "../utils/auth-utils";
@@ -332,6 +332,10 @@ export class AuthRouter {
             }
             
             // Save session to persist user data
+            const csrfToken = generateCSRFToken();
+            (req.session as any).csrfToken = csrfToken;
+            res.setHeader('X-CSRF-Token', csrfToken);
+
             req.session.save((saveErr: any) => {
               if (saveErr) {
                 logger.warn('Session save warning:', saveErr.message);
@@ -340,6 +344,7 @@ export class AuthRouter {
               logger.info(`User ${user.id} logged in successfully`);
               res.json({ 
                 message: "Login successful",
+                csrfToken,
                 user: this.sanitizeUser(user)
               });
             });
@@ -422,6 +427,10 @@ export class AuthRouter {
               });
             }
             
+            const csrfToken = generateCSRFToken();
+            (req.session as any).csrfToken = csrfToken;
+            res.setHeader('X-CSRF-Token', csrfToken);
+
             req.session.save((saveErr: any) => {
               if (saveErr) {
                 logger.warn('Session save warning:', saveErr.message);
@@ -430,6 +439,7 @@ export class AuthRouter {
               logger.info(`User ${user.id} completed 2FA login`);
               res.json({ 
                 message: "Login successful",
+                csrfToken,
                 user: this.sanitizeUser(user)
               });
             });
@@ -679,6 +689,10 @@ export class AuthRouter {
               });
             }
             
+            const csrfToken = generateCSRFToken();
+            (req.session as any).csrfToken = csrfToken;
+            res.setHeader('X-CSRF-Token', csrfToken);
+
             req.session.save((saveErr: any) => {
               if (saveErr) {
                 logger.warn('Session save warning:', saveErr.message);
@@ -687,6 +701,7 @@ export class AuthRouter {
               logger.info(`User ${user.id} logged in successfully via /auth/login`);
               res.json({ 
                 message: "Login successful",
+                csrfToken,
                 user: this.sanitizeUser(user)
               });
             });

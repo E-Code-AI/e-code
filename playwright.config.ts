@@ -47,6 +47,10 @@ const TIMEOUT_TIERS = {
   TEST_GLOBAL: 300_000,   // 5 minutes
 } as const;
 
+const stableWorkers = process.env.PW_WORKERS
+  ? parseInt(process.env.PW_WORKERS, 10)
+  : (process.env.CI || process.env.E2E_STABILITY === '1' ? 1 : undefined);
+
 export default defineConfig({
   testDir: './test/e2e',
   
@@ -67,7 +71,7 @@ export default defineConfig({
   // Worker configuration
   // - CI: Single worker for stability
   // - Local: Auto-detect based on CPU cores
-  workers: process.env.CI ? 1 : undefined,
+  workers: stableWorkers,
   
   // Comprehensive reporting for debugging
   reporter: [
@@ -82,7 +86,7 @@ export default defineConfig({
     baseURL: getBaseURL(),
     
     // Fortune 500-Grade: Trace always for debugging production issues
-    trace: process.env.TRACE || 'on',
+    trace: process.env.TRACE || 'retain-on-failure',
     
     // Capture screenshots on every failure
     screenshot: process.env.SCREENSHOT || 'only-on-failure',
