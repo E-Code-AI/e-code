@@ -63,6 +63,14 @@ const checks = [
       'Redis unavailable in production; refusing process-local session-manager state',
     ],
   },
+  {
+    file: 'server/services/agent-orchestrator.service.ts',
+    mustContain: [
+      'agent:orchestrator:recovery:pending',
+      'agent:orchestrator:recovery:item:${sessionId}',
+      'Redis unavailable in production; refusing process-local agent recovery queue',
+    ],
+  },
 ];
 
 let failed = false;

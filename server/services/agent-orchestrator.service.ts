@@ -260,6 +260,8 @@ export class AgentOrchestratorService extends EventEmitter {
   private static readonly RECOVERY_INTERVAL_MS = 30000; // 30 seconds
   private static readonly MAX_RECOVERY_RETRIES = 10; // Max retries before giving up
   private static readonly MAX_PENDING_RECOVERY_SIZE = 1000; // Max items in recovery queue
+  private static readonly RECOVERY_QUEUE_INDEX_KEY = 'agent:orchestrator:recovery:pending';
+  private static readonly RECOVERY_QUEUE_TTL_SECONDS = 24 * 60 * 60;
   private static readonly WORKFLOW_TIMEOUT_MS = 600000; // 10 minutes workflow execution timeout
 
   constructor() {
@@ -365,7 +367,75 @@ export class AgentOrchestratorService extends EventEmitter {
    * Get recovery queue status for health monitoring
    * ✅ HEALTH ENDPOINT (Dec 7, 2025): Exposes pending recovery items for monitoring tools
    */
-  getRecoveryQueueStatus(): {
+  private getRecoveryQueueItemKey(sessionId: string): string {
+    return `agent:orchestrator:recovery:item:${sessionId}`;
+  }
+
+  private isProductionRuntime(): boolean {
+    return process.env.NODE_ENV === 'production';
+  }
+
+  private deserializeRecoveryItem(item: any): PendingRecoveryItem {
+    return {
+      ...item,
+      addedAt: new Date(item.addedAt),
+    };
+  }
+
+  private async loadRecoveryItems(): Promise<PendingRecoveryItem[]> {
+    const sessionIds = await redisCache.smembers(AgentOrchestratorService.RECOVERY_QUEUE_INDEX_KEY);
+    const items: PendingRecoveryItem[] = [];
+
+    for (const sessionId of sessionIds) {
+      const item = await redisCache.get<PendingRecoveryItem>(this.getRecoveryQueueItemKey(sessionId));
+      if (item) {
+        const normalized = this.deserializeRecoveryItem(item);
+        items.push(normalized);
+        if (!this.isProductionRuntime()) {
+          this.pendingRecovery.set(sessionId, normalized);
+        }
+      }
+    }
+
+    if (items.length === 0 && !this.isProductionRuntime()) {
+      return Array.from(this.pendingRecovery.values());
+    }
+
+    return items;
+  }
+
+  private async persistRecoveryItem(item: PendingRecoveryItem): Promise<void> {
+    const stored = await redisCache.set(
+      this.getRecoveryQueueItemKey(item.sessionId),
+      item,
+      AgentOrchestratorService.RECOVERY_QUEUE_TTL_SECONDS
+    );
+    await redisCache.sadd(AgentOrchestratorService.RECOVERY_QUEUE_INDEX_KEY, item.sessionId);
+    await redisCache.expire(
+      AgentOrchestratorService.RECOVERY_QUEUE_INDEX_KEY,
+      AgentOrchestratorService.RECOVERY_QUEUE_TTL_SECONDS
+    );
+
+    if (!stored && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local agent recovery queue');
+    }
+
+    if (!this.isProductionRuntime()) {
+      this.pendingRecovery.set(item.sessionId, item);
+    }
+  }
+
+  private async removeRecoveryItem(sessionId: string): Promise<void> {
+    const deleted = await redisCache.del(this.getRecoveryQueueItemKey(sessionId));
+    await redisCache.srem(AgentOrchestratorService.RECOVERY_QUEUE_INDEX_KEY, sessionId);
+    this.pendingRecovery.delete(sessionId);
+
+    if (!deleted && this.isProductionRuntime()) {
+      throw new Error('Redis unavailable in production; refusing process-local agent recovery queue');
+    }
+  }
+
+  async getRecoveryQueueStatus(): Promise<{
     pendingItems: number;
     oldestItem?: string;
     lastProcessed?: string;
@@ -375,8 +445,8 @@ export class AgentOrchestratorService extends EventEmitter {
       addedAt: string;
       retryCount: number;
     }>;
-  } {
-    const items = Array.from(this.pendingRecovery.values());
+  }> {
+    const items = await this.loadRecoveryItems();
     const sortedByAge = [...items].sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
     
     return {
@@ -1483,36 +1553,39 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
    * Add a session to the pending recovery queue for eventual consistency
    * ✅ DURABLE RECOVERY (Dec 7, 2025): Ensures sessions don't stay stuck when DB is unavailable
    */
-  private addToRecoveryQueue(
+  private async addToRecoveryQueue(
     sessionId: string,
     targetStatus: string,
     projectId?: string,
     error?: string
-  ): void {
-    const existingItem = this.pendingRecovery.get(sessionId);
+  ): Promise<void> {
+    const existingItem = (await redisCache.get<PendingRecoveryItem>(this.getRecoveryQueueItemKey(sessionId)))
+      || (!this.isProductionRuntime() ? this.pendingRecovery.get(sessionId) : null);
     
     if (existingItem) {
+      const normalized = this.deserializeRecoveryItem(existingItem);
       // Update existing entry with new target status (latest status wins)
-      existingItem.targetStatus = targetStatus;
-      existingItem.retryCount += 1;
-      existingItem.lastError = error;
+      normalized.targetStatus = targetStatus;
+      normalized.retryCount += 1;
+      normalized.lastError = error;
+      await this.persistRecoveryItem(normalized);
       logger.info(`[Recovery Queue] Updated session ${sessionId} in recovery queue`, {
         targetStatus,
-        retryCount: existingItem.retryCount
+        retryCount: normalized.retryCount
       });
     } else {
       // ✅ SIZE LIMIT CHECK (Dec 16, 2025): Enforce max queue size to prevent memory exhaustion
-      if (this.pendingRecovery.size >= AgentOrchestratorService.MAX_PENDING_RECOVERY_SIZE) {
+      const items = await this.loadRecoveryItems();
+      if (items.length >= AgentOrchestratorService.MAX_PENDING_RECOVERY_SIZE) {
         // Remove oldest items by addedAt to make room
-        const entries = Array.from(this.pendingRecovery.entries());
-        entries.sort((a, b) => a[1].addedAt.getTime() - b[1].addedAt.getTime());
+        const entries = items.sort((a, b) => a.addedAt.getTime() - b.addedAt.getTime());
         
         // Remove oldest 10% or at least 1 item
         const removeCount = Math.max(1, Math.floor(entries.length * 0.1));
         for (let i = 0; i < removeCount; i++) {
-          const [oldSessionId, oldItem] = entries[i];
-          this.pendingRecovery.delete(oldSessionId);
-          logger.warn(`[Recovery Queue] Evicted oldest session ${oldSessionId} to make room`, {
+          const oldItem = entries[i];
+          await this.removeRecoveryItem(oldItem.sessionId);
+          logger.warn(`[Recovery Queue] Evicted oldest session ${oldItem.sessionId} to make room`, {
             targetStatus: oldItem.targetStatus,
             age: Date.now() - oldItem.addedAt.getTime(),
             retryCount: oldItem.retryCount
@@ -1523,7 +1596,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       }
       
       // Add new entry
-      this.pendingRecovery.set(sessionId, {
+      await this.persistRecoveryItem({
         sessionId,
         targetStatus,
         projectId,
@@ -1533,7 +1606,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       });
       logger.info(`[Recovery Queue] Added session ${sessionId} to recovery queue`, {
         targetStatus,
-        queueSize: this.pendingRecovery.size
+        queueSize: (await this.loadRecoveryItems()).length
       });
     }
   }
@@ -1562,13 +1635,15 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
    * ✅ DURABLE RECOVERY (Dec 7, 2025): Retries failed DB status updates
    */
   private async processRecoveryQueue(): Promise<void> {
-    if (this.pendingRecovery.size === 0) {
+    const items = await this.loadRecoveryItems();
+    if (items.length === 0) {
       return; // Nothing to process
     }
 
-    logger.info(`[Recovery Worker] Processing recovery queue (${this.pendingRecovery.size} items)`);
+    logger.info(`[Recovery Worker] Processing recovery queue (${items.length} items)`);
 
-    for (const [sessionId, item] of this.pendingRecovery.entries()) {
+    for (const item of items) {
+      const sessionId = item.sessionId;
       try {
         // Attempt to update the session status
         await db.update(agentSessions)
@@ -1576,7 +1651,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
           .where(eq(agentSessions.id, sessionId));
 
         // Success! Remove from queue and log
-        this.pendingRecovery.delete(sessionId);
+        await this.removeRecoveryItem(sessionId);
         logger.info(`[Recovery Worker] ✅ Successfully recovered session ${sessionId}`, {
           targetStatus: item.targetStatus,
           retryCount: item.retryCount,
@@ -1598,7 +1673,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
 
         if (item.retryCount >= AgentOrchestratorService.MAX_RECOVERY_RETRIES) {
           // Give up after max retries
-          this.pendingRecovery.delete(sessionId);
+          await this.removeRecoveryItem(sessionId);
           logger.error(`[Recovery Worker] ❌ Giving up on session ${sessionId} after ${item.retryCount} retries`, {
             targetStatus: item.targetStatus,
             lastError: item.lastError,
@@ -1614,6 +1689,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
             error: item.lastError
           });
         } else {
+          await this.persistRecoveryItem(item);
           logger.warn(`[Recovery Worker] Retry failed for session ${sessionId}`, {
             targetStatus: item.targetStatus,
             retryCount: item.retryCount,
@@ -1669,7 +1745,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       const executingOk = await this.retryDbStatusUpdate(sessionId, 'executing');
       if (!executingOk) {
         logger.warn(`[Execute Plan] Could not persist 'executing' status, continuing execution`, { sessionId, projectId });
-        this.addToRecoveryQueue(sessionId, 'executing', projectId, 'Could not persist executing status');
+        await this.addToRecoveryQueue(sessionId, 'executing', projectId, 'Could not persist executing status');
       }
       
       // Emit executing status via WebSocket even if DB persistence lags so the UI
@@ -1888,7 +1964,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
         } else {
           logger.error(`[Execute Plan] Could not persist final status '${finalStatus}' after retries`, { sessionId });
           // ✅ DURABLE RECOVERY (Dec 7, 2025): Add to recovery queue for eventual consistency
-          this.addToRecoveryQueue(sessionId, finalStatus, projectId, 'DB unreachable after retries');
+          await this.addToRecoveryQueue(sessionId, finalStatus, projectId, 'DB unreachable after retries');
           // Still broadcast failure to UI to prevent zombie state, but log the inconsistency
           agentWebSocketService.broadcastPlanCompleted(projectId, sessionId, false);
         }
@@ -1921,7 +1997,7 @@ I'm fully functional and operating at 100% capacity. Let me know how I can help 
       if (!failedOk) {
         logger.error('[Execute Plan] Session stuck in executing - DB unreachable after retries', { sessionId });
         // ✅ DURABLE RECOVERY (Dec 7, 2025): Add to recovery queue for eventual consistency
-        this.addToRecoveryQueue(sessionId, 'failed', projectId, 'DB unreachable after retries');
+        await this.addToRecoveryQueue(sessionId, 'failed', projectId, 'DB unreachable after retries');
       }
       
       // Send error via WebSocket (using static import)

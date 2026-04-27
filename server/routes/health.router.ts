@@ -317,7 +317,7 @@ export class HealthRouter {
         const circuitBreakers = aiProviderManager.getCircuitBreakerStatuses();
         
         // Get recovery queue status from Agent Orchestrator
-        const recoveryQueueFull = agentOrchestrator.getRecoveryQueueStatus();
+        const recoveryQueueFull = await agentOrchestrator.getRecoveryQueueStatus();
         const recoveryQueue = {
           pendingItems: recoveryQueueFull.pendingItems,
           oldestItem: recoveryQueueFull.oldestItem,
