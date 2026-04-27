@@ -125,6 +125,30 @@ const defaultAgentToolsSettings: AgentToolsSettings = {
   webSearch: false
 };
 
+const normalizeWorkspaceFilePath = (file: Pick<File, 'path' | 'name'>) =>
+  String(file.path || file.name || '').replace(/^\/+/, '').replace(/\/+/g, '/').replace(/\/+$/g, '');
+
+const dedupeWorkspaceFiles = (fileList: File[] = []) => {
+  const byPath = new Map<string, File>();
+
+  for (const file of fileList) {
+    const key = normalizeWorkspaceFilePath(file);
+    if (!key) continue;
+
+    const existing = byPath.get(key);
+    const existingTime = existing?.updatedAt ? new Date(existing.updatedAt).getTime() : 0;
+    const nextTime = file.updatedAt ? new Date(file.updatedAt).getTime() : 0;
+
+    if (!existing || nextTime > existingTime || (nextTime === existingTime && Number(file.id) > Number(existing.id))) {
+      byPath.set(key, { ...file, path: key });
+    }
+  }
+
+  return Array.from(byPath.values()).sort((a, b) =>
+    normalizeWorkspaceFilePath(a).localeCompare(normalizeWorkspaceFilePath(b))
+  );
+};
+
 const getStoredAgentToolsSettings = (projectId: string): AgentToolsSettings | null => {
   if (typeof window === 'undefined') return null;
   const stored = safeSessionStorage.getItem(`agent-tools-settings-${projectId}`);
@@ -310,7 +334,7 @@ export function useIDEWorkspace(projectId: string) {
     queryFn: async () => {
       const url = `/api/projects/${projectId}/files${bootstrapToken ? `?bootstrap=${bootstrapToken}` : ''}`;
       const res = await apiRequest<File[]>('GET', url);
-      return res || [];
+      return dedupeWorkspaceFiles(res || []);
     },
     enabled: !!projectId && (!!user || !!bootstrapToken),
     staleTime: Infinity,

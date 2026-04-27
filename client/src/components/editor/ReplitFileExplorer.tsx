@@ -64,12 +64,24 @@ interface FileNode {
   children?: FileNode[];
   isOpen?: boolean;
   isHidden?: boolean;
+  isVirtual?: boolean;
   permissions?: {
     read: boolean;
     write: boolean;
     execute: boolean;
   };
 }
+
+const normalizeFilePath = (value: string | undefined | null) =>
+  String(value || '').replace(/^\/+/, '').replace(/\/+/g, '/').replace(/\/+$/g, '');
+
+const virtualFolderId = (path: string) => {
+  let hash = 0;
+  for (let index = 0; index < path.length; index += 1) {
+    hash = ((hash << 5) - hash + path.charCodeAt(index)) | 0;
+  }
+  return -Math.abs(hash || 1);
+};
 
 interface ReplitFileExplorerProps {
   projectId: string | number;
@@ -185,11 +197,13 @@ export function ReplitFileExplorer({
     },
   });
 
-  // Build file tree structure
+  // Build file tree structure from path, not only parentId. Some generators
+  // create rows with full paths but no folder parent rows; rendering by parentId
+  // alone makes `src/App.tsx` look like a duplicate root `App.tsx`.
   const buildFileTree = (files: FileNode[]): FileNode[] => {
     const dedupedFiles = Array.from(
       files.reduce((byPath, file) => {
-        const key = (file.path || file.name).replace(/^\/+/, '').replace(/\/+/g, '/');
+        const key = normalizeFilePath(file.path || file.name);
         const existing = byPath.get(key);
         const existingTime = existing?.lastModified ? new Date(existing.lastModified).getTime() : 0;
         const nextTime = file.lastModified ? new Date(file.lastModified).getTime() : 0;
@@ -201,23 +215,78 @@ export function ReplitFileExplorer({
         return byPath;
       }, new Map<string, FileNode>()).values()
     );
-    const fileMap = new Map<number, FileNode>();
     const rootFiles: FileNode[] = [];
+    const nodesByPath = new Map<string, FileNode>();
 
-    // First pass: create map
-    dedupedFiles.forEach(file => {
-      fileMap.set(file.id, { ...file, children: [] });
-    });
+    const getOrCreateFolder = (folderPath: string): FileNode => {
+      const normalizedPath = normalizeFilePath(folderPath);
+      const existing = nodesByPath.get(normalizedPath);
+      if (existing) return existing;
 
-    // Second pass: build tree
-    dedupedFiles.forEach(file => {
-      const fileNode = fileMap.get(file.id)!;
-      if (file.parentId === null) {
+      const matchingDirectory = dedupedFiles.find((file) => {
+        const filePath = normalizeFilePath(file.path || file.name);
+        const isDirectory = file.type === 'folder' || (file as any).isDirectory;
+        return isDirectory && filePath === normalizedPath;
+      });
+
+      const folderNode: FileNode = matchingDirectory
+        ? { ...matchingDirectory, type: 'folder', path: normalizedPath, children: [] }
+        : {
+            id: virtualFolderId(normalizedPath),
+            name: normalizedPath.split('/').pop() || normalizedPath,
+            type: 'folder',
+            path: normalizedPath,
+            parentId: null,
+            children: [],
+            isVirtual: true,
+          };
+
+      nodesByPath.set(normalizedPath, folderNode);
+
+      const parentPath = normalizedPath.split('/').slice(0, -1).join('/');
+      if (parentPath) {
+        const parent = getOrCreateFolder(parentPath);
+        if (!parent.children?.some((child) => child.path === folderNode.path)) {
+          parent.children = [...(parent.children || []), folderNode];
+        }
+      } else if (!rootFiles.some((child) => child.path === folderNode.path)) {
+        rootFiles.push(folderNode);
+      }
+
+      return folderNode;
+    };
+
+    const sortedFiles = [...dedupedFiles].sort((a, b) =>
+      normalizeFilePath(a.path || a.name).localeCompare(normalizeFilePath(b.path || b.name))
+    );
+
+    sortedFiles.forEach(file => {
+      const normalizedPath = normalizeFilePath(file.path || file.name);
+      if (!normalizedPath) return;
+
+      const isDirectory = file.type === 'folder' || (file as any).isDirectory;
+      if (isDirectory) {
+        getOrCreateFolder(normalizedPath);
+        return;
+      }
+
+      const pathParts = normalizedPath.split('/');
+      const fileNode: FileNode = {
+        ...file,
+        name: pathParts[pathParts.length - 1] || file.name,
+        path: normalizedPath,
+        type: 'file',
+        children: [],
+      };
+      nodesByPath.set(normalizedPath, fileNode);
+
+      const parentPath = pathParts.slice(0, -1).join('/');
+      if (!parentPath) {
         rootFiles.push(fileNode);
       } else {
-        const parent = fileMap.get(file.parentId);
-        if (parent && parent.children) {
-          parent.children.push(fileNode);
+        const parent = getOrCreateFolder(parentPath);
+        if (!parent.children?.some((child) => child.path === fileNode.path)) {
+          parent.children = [...(parent.children || []), fileNode];
         }
       }
     });
@@ -474,26 +543,26 @@ export function ReplitFileExplorer({
             <ContextMenuContent className="w-48" data-testid={`file-context-menu-${node.id}`}>
               {node.type === "folder" && (
                 <>
-                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "file", name: "" })} data-testid={`menu-new-file-${node.id}`}>
+                  <ContextMenuItem disabled={node.isVirtual} onClick={() => setNewItemDialog({ parentId: node.id, type: "file", name: "" })} data-testid={`menu-new-file-${node.id}`}>
                     <FilePlus className="h-4 w-4 mr-2" />
                     New File
                   </ContextMenuItem>
-                  <ContextMenuItem onClick={() => setNewItemDialog({ parentId: node.id, type: "folder", name: "" })} data-testid={`menu-new-folder-${node.id}`}>
+                  <ContextMenuItem disabled={node.isVirtual} onClick={() => setNewItemDialog({ parentId: node.id, type: "folder", name: "" })} data-testid={`menu-new-folder-${node.id}`}>
                     <FolderPlus className="h-4 w-4 mr-2" />
                     New Folder
                   </ContextMenuItem>
                   <ContextMenuSeparator />
                 </>
               )}
-              <ContextMenuItem onClick={() => setRenameDialog({ file: node, newName: node.name })} data-testid={`menu-rename-${node.id}`}>
+              <ContextMenuItem disabled={node.isVirtual} onClick={() => setRenameDialog({ file: node, newName: node.name })} data-testid={`menu-rename-${node.id}`}>
                 <Edit2 className="h-4 w-4 mr-2" />
                 Rename
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCopy(node)} data-testid={`menu-copy-${node.id}`}>
+              <ContextMenuItem disabled={node.isVirtual} onClick={() => handleCopy(node)} data-testid={`menu-copy-${node.id}`}>
                 <Copy className="h-4 w-4 mr-2" />
                 Copy
               </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleCut(node)} data-testid={`menu-cut-${node.id}`}>
+              <ContextMenuItem disabled={node.isVirtual} onClick={() => handleCut(node)} data-testid={`menu-cut-${node.id}`}>
                 <Scissors className="h-4 w-4 mr-2" />
                 Cut
               </ContextMenuItem>
@@ -505,6 +574,7 @@ export function ReplitFileExplorer({
               )}
               <ContextMenuSeparator />
               <ContextMenuItem 
+                disabled={node.isVirtual}
                 onClick={() => setDeleteConfirmDialog(node)} 
                 className="text-status-critical focus:text-status-critical"
                 data-testid={`menu-delete-${node.id}`}
