@@ -1,0 +1,57 @@
+:root {
+  --ecode-bg: 210 40% 98%;
+  --ecode-elevated: 0 0% 100%;
+  --ecode-overlay: 222 47% 11%;
+  --ecode-sunken: 214 32% 91%;
+  --ecode-fg: 222 47% 11%;
+  --ecode-muted: 215 16% 47%;
+  --ecode-border: 214 32% 91%;
+  --ecode-primary: 221 83% 53%;
+  --ecode-primary-fg: 0 0% 100%;
+  --ecode-danger: 0 72% 51%;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --ecode-bg: 222 47% 7%;
+  --ecode-elevated: 222 47% 10%;
+  --ecode-overlay: 222 47% 4%;
+  --ecode-sunken: 222 47% 5%;
+  --ecode-fg: 210 40% 98%;
+  --ecode-muted: 215 20% 65%;
+  --ecode-border: 217 33% 18%;
+  --ecode-primary: 217 91% 60%;
+  --ecode-primary-fg: 222 47% 7%;
+  --ecode-danger: 0 84% 60%;
+  color-scheme: dark;
+}
+
+[data-theme='black'] {
+  --ecode-bg: 0 0% 0%;
+  --ecode-elevated: 0 0% 4%;
+  --ecode-overlay: 0 0% 0%;
+  --ecode-sunken: 0 0% 2%;
+  --ecode-fg: 0 0% 98%;
+  --ecode-muted: 220 9% 64%;
+  --ecode-border: 0 0% 13%;
+  --ecode-primary: 217 91% 60%;
+  --ecode-primary-fg: 0 0% 0%;
+  --ecode-danger: 0 84% 60%;
+  color-scheme: dark;
+}
+
+.ecode-focus-ring {
+  outline: 2px solid hsl(var(--ecode-primary));
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
