@@ -789,16 +789,31 @@ export class PreviewService {
       const preview = this.previews.get(projectId);
       
       if (!preview || preview.status !== 'running') {
-        return res.status(404).json({ error: 'Preview not available' });
+        return res.status(503).json({ error: 'Preview not available', status: preview?.status || 'stopped' });
       }
       
       if (!preview.ports.includes(port)) {
         return res.status(404).json({ error: `Port ${port} not exposed by this preview` });
       }
-      
-      if (!preview.healthChecks.get(port)) {
-        return res.status(503).json({ error: `Service on port ${port} is not healthy` });
+
+      // ✅ Live verification: previously cached healthChecks could lie when the
+      // child process crashed silently. Verify the port responds RIGHT NOW so
+      // we never hand the iframe a 5KB HTML wrapper for a dead runtime (which
+      // is what made the user see a blank preview screen).
+      const liveHealthy = await this.checkPortHealth(port);
+      if (!liveHealthy) {
+        preview.healthChecks.set(port, false);
+        if (port === preview.primaryPort) {
+          preview.status = 'error';
+          preview.errorMessage = `Runtime on port ${port} stopped responding`;
+        }
+        return res.status(503).json({
+          error: `Service on port ${port} is not responding`,
+          status: 'error',
+          hint: 'The preview runtime crashed or has not finished starting. Reopen the preview to restart it.'
+        });
       }
+      preview.healthChecks.set(port, true);
 
       // Update idle timestamp so this preview isn't swept by the idle cleanup
       preview.lastHealthCheck = new Date();
@@ -824,8 +839,8 @@ export class PreviewService {
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
-            if (res && typeof res.status === 'function') {
-              res.status(502).json({ error: 'Preview server error' });
+            if (res && typeof res.status === 'function' && !res.headersSent) {
+              res.status(502).json({ error: 'Preview server error', detail: err?.message || 'Upstream connection failed' });
             }
           }
         }
@@ -839,8 +854,22 @@ export class PreviewService {
       const preview = this.previews.get(projectId);
       
       if (!preview || preview.status !== 'running') {
-        return res.status(404).json({ error: 'Preview not available' });
+        return res.status(503).json({ error: 'Preview not available', status: preview?.status || 'stopped' });
       }
+
+      // ✅ Live verification (see /preview/:projectId/:port/* for rationale)
+      const liveHealthy = await this.checkPortHealth(preview.primaryPort);
+      if (!liveHealthy) {
+        preview.healthChecks.set(preview.primaryPort, false);
+        preview.status = 'error';
+        preview.errorMessage = `Runtime on port ${preview.primaryPort} stopped responding`;
+        return res.status(503).json({
+          error: `Service on port ${preview.primaryPort} is not responding`,
+          status: 'error',
+          hint: 'The preview runtime crashed or has not finished starting. Reopen the preview to restart it.'
+        });
+      }
+      preview.healthChecks.set(preview.primaryPort, true);
 
       // Update idle timestamp so this preview isn't swept by the idle cleanup
       preview.lastHealthCheck = new Date();
@@ -866,8 +895,8 @@ export class PreviewService {
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId}:`, err);
-            if (res && typeof res.status === 'function') {
-              res.status(502).json({ error: 'Preview server error' });
+            if (res && typeof res.status === 'function' && !res.headersSent) {
+              res.status(502).json({ error: 'Preview server error', detail: err?.message || 'Upstream connection failed' });
             }
           }
         }
@@ -1693,7 +1722,7 @@ http.createServer((req, res) => {
     preview.lastHealthCheck = new Date();
   }
 
-  private async checkPortHealth(port: number): Promise<boolean> {
+  async checkPortHealth(port: number): Promise<boolean> {
     try {
       // Use 127.0.0.1 explicitly — "localhost" can resolve to ::1 (IPv6) on some hosts,
       // while the preview servers bind to 127.0.0.1 only.

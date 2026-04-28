@@ -633,7 +633,32 @@ router.get('/url', async (req, res) => {
         message: preview?.errorMessage || 'Preview server not running'
       });
     }
-    
+
+    // ✅ Live health check: the in-memory `running` status can become stale if the
+    // child process crashes between periodic health checks (every 30s). Verify the
+    // primary port is actually accepting connections RIGHT NOW before promising the
+    // client it can iframe this URL — otherwise the iframe loads HTML wrappers but
+    // fetches return errors and the user sees a blank page with no feedback.
+    const livePortHealthy = await previewService.checkPortHealth(preview.primaryPort);
+    if (!livePortHealthy) {
+      console.warn('[preview:url] Stale running status detected — port unreachable, restarting', {
+        projectId,
+        port: preview.primaryPort,
+      });
+      // Mark stopped and trigger restart in background so subsequent polls see fresh state
+      try {
+        await previewService.stopPreview(projectId);
+      } catch {}
+      previewService.startPreviewFromProject(projectId).catch((err: any) => {
+        console.error('[preview:url] Background restart failed', { projectId, error: err?.message });
+      });
+      return res.json({
+        previewUrl: null,
+        status: 'starting',
+        message: 'Preview server is restarting...'
+      });
+    }
+
     // Preview is running, return the URL
     const previewUrl = withBootstrapQuery(previewService.getPreviewUrl(projectId, preview.primaryPort), req);
     const availablePorts = previewService.getPreviewPorts(projectId);
