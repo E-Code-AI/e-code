@@ -3,7 +3,7 @@ import {
   Monitor, ExternalLink, 
   ChevronLeft, ChevronRight, ArrowRight,
   Globe, MoreVertical, Play, Loader2,
-  Layers, RotateCcw, X
+  Layers, RotateCcw, RefreshCw, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -587,7 +587,25 @@ export function MobilePreviewPanel({
               Installing dependencies and starting the dev server. This can take 1–2 minutes on first run.
             </p>
           </div>
-        ) : null}
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full bg-background gap-4 px-6 text-center">
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <p className="text-[14px] text-muted-foreground font-medium">Reconnecting to your preview…</p>
+            <p className="text-[12px] text-muted-foreground/70 max-w-xs">
+              Your app is running but the preview link is still being prepared. This usually clears up in a few seconds.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRetry}
+              className="mt-2"
+              data-testid="mobile-preview-recover"
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-2" />
+              Retry preview
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

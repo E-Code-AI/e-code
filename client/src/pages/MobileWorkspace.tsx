@@ -75,14 +75,6 @@ export default function MobileWorkspace() {
     return new URLSearchParams(window.location.search).get('bootstrap');
   }, [projectId]);
 
-  if (!projectId) {
-    return (
-      <div className="h-screen flex items-center justify-center p-6">
-        <p className="text-muted-foreground">Project ID required. Navigate from dashboard.</p>
-      </div>
-    );
-  }
-
   const [formFactor, setFormFactor] = useState<MobileFormFactor>(() => getMobileFormFactor());
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -485,6 +477,14 @@ export default function MobileWorkspace() {
       </div>
     );
   };
+
+  if (!projectId) {
+    return (
+      <div className="h-screen flex items-center justify-center p-6">
+        <p className="text-muted-foreground">Project ID required. Navigate from dashboard.</p>
+      </div>
+    );
+  }
 
   return (
     <div
