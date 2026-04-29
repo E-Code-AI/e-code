@@ -62,7 +62,7 @@ export function SessionRecording({ sessionId, projectId, className }: SessionRec
   const { toast } = useToast();
 
   // Fetch session recordings
-  const { data: recordingsData, isLoading: isLoadingRecordings } = useQuery({
+  const { data: recordingsData, isLoading: isLoadingRecordings } = useQuery<{ recordings: SessionRecording[] }>({
     queryKey: ['/api/admin/agent/recording/session', sessionId],
   });
 

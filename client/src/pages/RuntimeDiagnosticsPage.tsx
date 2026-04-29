@@ -24,13 +24,13 @@ XCircle
 
 export default function RuntimeDiagnosticsPage() {
   // Fetch runtime dashboard data
-  const { data: dashboard, isLoading: isDashboardLoading, error: dashboardError } = useQuery({
+  const { data: dashboard, isLoading: isDashboardLoading, error: dashboardError } = useQuery<any>({
     queryKey: ['/api/runtime/dashboard'],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   // Fetch detailed dependencies data
-  const { data: dependencies, isLoading: isDependenciesLoading, error: dependenciesError } = useQuery({
+  const { data: dependencies, isLoading: isDependenciesLoading, error: dependenciesError } = useQuery<any>({
     queryKey: ['/api/runtime/dependencies'],
     refetchInterval: false, // Don't auto-refresh this data
   });

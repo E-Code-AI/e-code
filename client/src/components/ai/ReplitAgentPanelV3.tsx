@@ -844,7 +844,11 @@ export function ReplitAgentPanelV3({
   // ✅ FIX (Dec 10, 2025): Always fetch when conversationId is available
   // Previously used `!hasConversation(conversationId)` which prevented fetching
   // when localStorage had rehydrated stale data
-  const { data: backendMessages, isLoading: _isLoadingMessages } = useQuery({
+  const { data: backendMessages, isLoading: _isLoadingMessages } = useQuery<{
+    messages?: any[];
+    hasMore?: boolean;
+    totalCount?: number;
+  }>({
     queryKey: ['/api/agent/conversation', conversationId, 'messages'],
     enabled: !!conversationId,
   });

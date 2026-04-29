@@ -5,11 +5,11 @@ import { Trophy, Target, DollarSign, Clock, Users, TrendingUp } from 'lucide-rea
 import { useQuery } from '@tanstack/react-query';
 
 export default function Bounties() {
-  const { data: bounties, isLoading } = useQuery({
+  const { data: bounties, isLoading } = useQuery<any>({
     queryKey: ['/api/bounties']
   });
 
-  const { data: userBounties } = useQuery({
+  const { data: userBounties } = useQuery<any>({
     queryKey: ['/api/user/bounties']
   });
 

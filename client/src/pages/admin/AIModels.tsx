@@ -10,12 +10,12 @@ export default function AIModels() {
   const [_activeProvider, _setActiveProvider] = useState('all');
 
   // Get usage statistics
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<any>({
     queryKey: ['/api/admin/ai-usage/stats'],
     retry: false
   });
 
-  const { data: healthData } = useQuery({
+  const { data: healthData } = useQuery<any>({
     queryKey: ['/api/health/providers'],
     refetchInterval: 30000
   });

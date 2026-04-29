@@ -6,11 +6,11 @@ import { Calendar,Clock,CreditCard,TrendingUp } from 'lucide-react';
 
 export default function Cycles() {
   // Fetch user billing data
-  const { data: billingData, isLoading } = useQuery({
+  const { data: billingData, isLoading } = useQuery<any>({
     queryKey: ['/api/user/billing']
   });
 
-  const { data: usageData } = useQuery({
+  const { data: usageData } = useQuery<any>({
     queryKey: ['/api/user/usage']
   });
 

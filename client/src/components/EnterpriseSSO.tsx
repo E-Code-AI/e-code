@@ -78,19 +78,19 @@ export function EnterpriseSSO() {
   const queryClient = useQueryClient();
 
   // Fetch SSO providers
-  const { data: providersData, isLoading: providersLoading } = useQuery({
+  const { data: providersData, isLoading: providersLoading } = useQuery<{ providers?: any[] }>({
     queryKey: ['/api/sso/providers'],
     staleTime: 30000
   });
 
   // Fetch SCIM users
-  const { data: scimUsersData, isLoading: usersLoading } = useQuery({
+  const { data: scimUsersData, isLoading: usersLoading } = useQuery<{ Resources?: any[] }>({
     queryKey: ['/api/scim/v2/Users'],
     staleTime: 30000
   });
 
   // Fetch SCIM groups
-  const { data: scimGroupsData, isLoading: groupsLoading } = useQuery({
+  const { data: scimGroupsData, isLoading: groupsLoading } = useQuery<{ Resources?: any[] }>({
     queryKey: ['/api/scim/v2/Groups'],
     staleTime: 30000
   });

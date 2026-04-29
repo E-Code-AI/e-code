@@ -92,7 +92,7 @@ export function AIAssistant({ projectId, selectedFile, selectedCode, className }
   const { toast } = useToast();
 
   // Fetch active AI rules for this project
-  const { data: projectRules = [] } = useQuery({
+  const { data: projectRules = [] } = useQuery<any[]>({
     queryKey: [`/api/projects/${projectId}/ai-rules`, { activeOnly: true }],
     enabled: !!projectId,
   });

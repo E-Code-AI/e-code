@@ -26,7 +26,11 @@ export function AuthenticationDemo({ projectId: providedProjectId }: Authenticat
     (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('projectId') : null);
 
   // Check current user status
-  const { data: currentUser, refetch: refetchUser } = useQuery({
+  const { data: currentUser, refetch: refetchUser } = useQuery<{
+    username?: string;
+    email?: string;
+    displayName?: string;
+  } | null>({
     queryKey: ['/api/auth/user'],
     retry: false
   });

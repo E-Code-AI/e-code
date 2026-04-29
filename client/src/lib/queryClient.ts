@@ -308,7 +308,12 @@ export async function apiRequest<T = any>(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-export const getQueryFn: <T>(options: {
+// The default queryFn returns parsed JSON whose runtime shape is dynamic.
+// We intentionally widen the inferred TData to `any` so untyped useQuery
+// call sites (which read `.users`, `.rows`, etc. directly off the response)
+// don't trigger strict TS2339. Call sites that want type safety should pass
+// an explicit generic: `useQuery<MyResponse>({...})`.
+export const getQueryFn: <T = any>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>

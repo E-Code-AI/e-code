@@ -5,11 +5,11 @@ import { Award, Medal, Trophy, Star, Target, Shield, Zap, GitBranch, Code, Users
 import { useQuery } from '@tanstack/react-query';
 
 export default function Badges() {
-  const { data: userBadges, isLoading } = useQuery({
+  const { data: userBadges, isLoading } = useQuery<any>({
     queryKey: ['/api/user/badges']
   });
 
-  const { data: allBadges } = useQuery({
+  const { data: allBadges } = useQuery<any>({
     queryKey: ['/api/badges']
   });
 

@@ -59,7 +59,7 @@ export default function UserManagement() {
   const pageSize = 20;
 
   // Fetch users with pagination and filtering
-  const { data: usersData, isLoading } = useQuery({
+  const { data: usersData, isLoading } = useQuery<{ users: any[]; total: number }>({
     queryKey: ['/api/admin/users', { search: searchQuery, status: filterStatus, limit: pageSize, offset: page * pageSize }],
     refetchInterval: 30000
   });

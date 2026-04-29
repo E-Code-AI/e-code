@@ -216,7 +216,7 @@ export function ProgressPanel({
   const [events, setEvents] = useState<ActivityEvent[]>([]);
 
   // Fetch activity events from API
-  const { data: actionsData, isLoading, refetch } = useQuery({
+  const { data: actionsData, isLoading, refetch } = useQuery<{ rows: any[] }>({
     queryKey: ['/api/agent-grid/actions', { sessionId, projectId }],
     enabled: !!sessionId || !!projectId,
     refetchInterval: isLive && !isPaused ? 3000 : false,

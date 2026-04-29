@@ -33,13 +33,13 @@ export function AllModelsSelector() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Fetch OpenAI models
-  const { data: openaiModels } = useQuery({
+  const { data: openaiModels } = useQuery<{ models?: any[] }>({
     queryKey: ['/api/openai/models'],
     retry: false
   });
 
   // Fetch open-source models
-  const { data: opensourceData } = useQuery({
+  const { data: opensourceData } = useQuery<{ models?: any[] }>({
     queryKey: ['/api/opensource/models'],
     retry: false
   });

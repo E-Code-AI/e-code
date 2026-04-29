@@ -99,7 +99,7 @@ export default function Plans() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
 
-  const { data: billingData } = useQuery({
+  const { data: billingData } = useQuery<any>({
     queryKey: ['/api/user/billing'],
     enabled: !!user,
   });

@@ -13,12 +13,12 @@ export default function BlogDetail() {
   const params = useParams() as { slug: string };
   const [, setLocation] = useLocation();
   
-  const { data: post, isLoading, error } = useQuery({
+  const { data: post, isLoading, error } = useQuery<any>({
     queryKey: [`/api/blog/posts/${params.slug}`],
     enabled: !!params.slug,
   });
 
-  const { data: relatedPosts } = useQuery({
+  const { data: relatedPosts } = useQuery<any>({
     queryKey: [`/api/blog/categories/${post?.category}`],
     enabled: !!post?.category,
   });

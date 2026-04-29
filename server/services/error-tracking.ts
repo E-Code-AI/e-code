@@ -65,6 +65,12 @@ export class ErrorTrackingService {
         release: process.env.APP_VERSION,
         tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE || '0.1'),
         sendDefaultPii: false,
+        // Sentry v8 auto-instrumentation requires loading before express via
+        // node --import. We only use Sentry for error capture (not OTEL
+        // performance traces), so disable the OTEL setup to silence the
+        // "express is not instrumented" boot warning. Error reporting via
+        // captureException continues to work without it.
+        skipOpenTelemetrySetup: true,
       });
       logger.info('Sentry error tracking initialized');
 
@@ -82,9 +88,21 @@ export class ErrorTrackingService {
     }
 
     try {
-      if (typeof this.sentry.setupExpressErrorHandler === 'function') {
-        this.sentry.setupExpressErrorHandler(app);
-      }
+      // Sentry v8's setupExpressErrorHandler relies on OTEL auto-instrumentation
+      // loaded before express via `node --import`. We don't run with --import,
+      // so calling setupExpressErrorHandler emits the noisy "express is not
+      // instrumented" warning on every boot. Register a plain Express
+      // error-handling middleware instead — it covers the only thing we
+      // actually use Sentry for (error capture).
+      const sentry = this.sentry;
+      app.use((err: any, _req: any, _res: any, next: any) => {
+        try {
+          sentry.captureException(err);
+        } catch {
+          // Sentry capture must never break the request pipeline.
+        }
+        return next(err);
+      });
       logger.info('Sentry Express error handler registered');
     } catch (error: any) {
       logger.warn(`Failed to register Sentry Express error handler: ${error?.message || error}`);

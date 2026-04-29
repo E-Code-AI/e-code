@@ -62,13 +62,13 @@ export function TemplatePreview({
   const [_copied, setCopied] = useState(false);
 
   // Fetch template reviews
-  const { data: reviews, isLoading: reviewsLoading } = useQuery({
+  const { data: reviews, isLoading: reviewsLoading } = useQuery<{ reviews?: any[] }>({
     queryKey: [`/api/marketplace/template/${template?.id}/reviews`],
     enabled: !!template?.id && isOpen,
   });
 
   // Fetch similar templates
-  const { data: similarTemplates } = useQuery({
+  const { data: similarTemplates } = useQuery<any[]>({
     queryKey: [`/api/marketplace/template/${template?.id}/similar`],
     enabled: !!template?.id && isOpen,
   });
