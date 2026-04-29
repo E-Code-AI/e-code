@@ -6,7 +6,9 @@
     "server/routes.ts",
     "server/routes/**/*",
     "client/src/App.tsx",
-    "shared/schema.ts"
+    "shared/schema.ts",
+    "types/**/*",
+    "server/types/**/*"
   ],
   "exclude": ["node_modules", "build", "dist"],
   "compilerOptions": {
