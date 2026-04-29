@@ -24,11 +24,17 @@ console.log('cookies count after login:', cookies.length);
 // 2) Open Home, enter prompt, click create
 console.log('--- navigate home ---');
 await page.goto(BASE + '/', { waitUntil: 'commit', timeout: 90000 });
-await page.waitForTimeout(8000);
 
-// Find the prompt input on the landing page
+// Vite cold-compile the e-code IDE bundle on first navigation; on a fresh
+// server boot this can take 30s+ before the React tree mounts. Wait for
+// the prompt input rather than a fixed timeout.
 const input = page.getByTestId('input-app-description').first();
-const visible = await input.isVisible().catch(() => false);
+let visible = false;
+for (let i = 0; i < 24; i++) {
+  visible = await input.isVisible().catch(() => false);
+  if (visible) break;
+  await page.waitForTimeout(2000);
+}
 console.log('prompt input visible:', visible);
 
 if (!visible) {
