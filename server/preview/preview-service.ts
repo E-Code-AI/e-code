@@ -528,6 +528,10 @@ interface PreviewInstance {
 
 export class PreviewService {
   private previews: Map<string, PreviewInstance> = new Map();
+  // De-dupe concurrent startPreviewFromProject calls for the same project so
+  // poll-driven callers do not race past the existence check while file
+  // syncing is still in flight, ending up with two parallel boot pipelines.
+  private startInFlight: Map<string, Promise<PreviewInstance>> = new Map();
   // Port range 20000-29999 — safely away from the app (5000), runner (8080), and common dev ports
   private basePort = 20000;
   private portRange = 9999;
@@ -1002,9 +1006,26 @@ export class PreviewService {
    * This is the primary path used when the user opens a project — no port needed.
    */
   async startPreviewFromProject(projectId: string): Promise<PreviewInstance> {
+    const inFlight = this.startInFlight.get(projectId);
+    if (inFlight) return inFlight;
+
+    const promise = this._startPreviewFromProjectImpl(projectId).finally(() => {
+      this.startInFlight.delete(projectId);
+    });
+    this.startInFlight.set(projectId, promise);
+    return promise;
+  }
+
+  private async _startPreviewFromProjectImpl(projectId: string): Promise<PreviewInstance> {
     const existing = this.previews.get(projectId);
     if (existing) {
-      existing.status = 'stopped';
+      // A boot is already in progress (or running) — return the live instance
+      // instead of tearing it down and starting from scratch. The route layer
+      // calls into this on every poll while status is 'stopped', and concurrent
+      // calls were colliding into duplicate spawn cycles.
+      if (existing.status === 'starting' || existing.status === 'running') {
+        return existing;
+      }
       for (const [port, proc] of existing.processes) {
         try { proc.kill('SIGKILL'); } catch {}
         this.allocatedPorts.delete(port);
@@ -1257,6 +1278,60 @@ export class PreviewService {
     return { type: 'static' as const };
   }
 
+  // The bootstrap step does an `npm install` in the workspace dir
+  // (/tmp/projects/{id}). The preview spawns from /tmp/preview-{id}, which is
+  // a synced mirror of the same files. Re-running install there costs 2-3 min
+  // on a cold cache and produces an identical tree, so we instead point
+  // the preview node_modules at the workspace one via a symlink.
+  //
+  // Returns true when the symlink is in place (or already was) and the
+  // caller can skip running `npm install` entirely.
+  private async tryReuseWorkspaceModules(
+    projectId: string,
+    appRootPath: string,
+    appRoot: string,
+  ): Promise<boolean> {
+    try {
+      const workspaceRoot = getProjectWorkspacePath(projectId);
+      const workspaceAppRoot = path.join(workspaceRoot, appRoot === '.' ? '' : appRoot);
+      const sourceModules = path.join(workspaceAppRoot, 'node_modules');
+      const targetModules = path.join(appRootPath, 'node_modules');
+
+      const sourceStat = await fs.stat(sourceModules).catch(() => null);
+      if (!sourceStat || !sourceStat.isDirectory()) return false;
+
+      // Bootstrap's `npm install` runs in the background — if it hasn't
+      // finished yet, node_modules can exist but be missing critical deps.
+      // The `.package-lock.json` marker is written by npm only at the end
+      // of a successful install. Without it we must fall back to a regular
+      // install in the preview dir to avoid spawning vite on a half-tree.
+      const installFinished = await fs
+        .stat(path.join(sourceModules, '.package-lock.json'))
+        .then(() => true)
+        .catch(() => false);
+      if (!installFinished) return false;
+
+      const targetLstat = await fs.lstat(targetModules).catch(() => null);
+      if (targetLstat?.isSymbolicLink()) {
+        const existingTarget = await fs.readlink(targetModules).catch(() => null);
+        if (existingTarget === sourceModules) return true;
+        // Stale or wrong symlink — replace it with the correct one.
+        await fs.unlink(targetModules).catch(() => undefined);
+      } else if (targetLstat?.isDirectory()) {
+        // A real node_modules is already in place; trust it rather than
+        // risk overwriting an in-progress install.
+        return true;
+      }
+
+      await fs.mkdir(appRootPath, { recursive: true });
+      await fs.symlink(sourceModules, targetModules, 'dir');
+      return true;
+    } catch (err) {
+      logger.warn(`[preview] node_modules reuse skipped for project ${projectId}: ${(err as Error).message}`);
+      return false;
+    }
+  }
+
   private async ensureNodePreviewRuntimeDeps(
     preview: PreviewInstance,
     frameworkInfo: any,
@@ -1335,18 +1410,35 @@ export class PreviewService {
     };
 
     preview.logs.push(`Starting ${frameworkInfo.type} application...`);
-    
+
+    // The bootstrap step already runs `npm install` in the workspace dir
+    // (/tmp/projects/{id}). The preview workspace at /tmp/preview-{id} is just
+    // a synced mirror of the same files, so we can reuse the workspace's
+    // node_modules via a symlink and skip a second 2-3 min install entirely.
+    // If the workspace install hasn't finished yet (or never ran), we fall
+    // through to the regular npm install path.
+    const reusedFromWorkspace = await this.tryReuseWorkspaceModules(
+      preview.projectId,
+      appRootPath,
+      frameworkInfo.appRoot || '.',
+    );
+
     try {
-      preview.logs.push('Installing dependencies...');
-      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
-      await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], appRootPath, {
-        NODE_ENV: 'development',
-        npm_config_production: 'false',
-        NPM_CONFIG_PRODUCTION: 'false',
-      });
+      if (reusedFromWorkspace) {
+        preview.logs.push('Reusing dependencies from workspace install.');
+        previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Reusing dependencies from workspace install.' });
+      } else {
+        preview.logs.push('Installing dependencies...');
+        previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Installing dependencies...' });
+        await this.runCommand('npm', ['install', '--include=dev', '--ignore-scripts', '--no-audit', '--no-fund'], appRootPath, {
+          NODE_ENV: 'development',
+          npm_config_production: 'false',
+          NPM_CONFIG_PRODUCTION: 'false',
+        });
+      }
       await this.ensureNodePreviewRuntimeDeps(preview, frameworkInfo, previewPath, files);
-      preview.logs.push('Dependencies installed.');
-      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies installed. Starting dev server...' });
+      preview.logs.push('Dependencies ready.');
+      previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: 'Dependencies ready. Starting dev server...' });
     } catch (installErr: any) {
       preview.logs.push(`[WARN] npm install had warnings: ${installErr.message} — continuing anyway`);
       previewEvents.emit('preview:log', { projectId: preview.projectId, runId: preview.runId, log: `npm install warning: ${installErr.message}` });
@@ -1697,20 +1789,47 @@ http.createServer((req, res) => {
   }
 
   private async performHealthChecks(preview: PreviewInstance) {
+    const HEALTH_FAIL_THRESHOLD = 3;
+    const failCounts = (preview as any)._healthFailCounts as Map<number, number> | undefined
+      ?? new Map<number, number>();
+    (preview as any)._healthFailCounts = failCounts;
+
     for (const port of preview.ports) {
       const isHealthy = await this.checkPortHealth(port);
-      const wasHealthy = preview.healthChecks.get(port) ?? true;
       preview.healthChecks.set(port, isHealthy);
-      
-      if (!isHealthy && wasHealthy && port === preview.primaryPort) {
+
+      if (isHealthy) {
+        // Recover from a transient stretch of failures rather than staying
+        // stuck in 'error' state — under host memory/latency spikes the
+        // health probe routinely times out for one cycle even though the
+        // dev server is fine.
+        if ((failCounts.get(port) ?? 0) > 0) {
+          failCounts.set(port, 0);
+          if (port === preview.primaryPort && preview.status === 'error') {
+            preview.status = 'running';
+            preview.errorMessage = undefined;
+            logger.info(`Primary port ${port} recovered for project ${preview.projectId}`);
+            previewEvents.emit('preview:recovered', {
+              projectId: preview.projectId,
+              runId: preview.runId,
+            });
+          }
+        }
+        continue;
+      }
+
+      const failures = (failCounts.get(port) ?? 0) + 1;
+      failCounts.set(port, failures);
+
+      if (failures >= HEALTH_FAIL_THRESHOLD && port === preview.primaryPort && preview.status === 'running') {
         preview.status = 'error';
-        logger.warn(`Primary port ${port} became unhealthy for project ${preview.projectId}`);
+        logger.warn(`Primary port ${port} became unhealthy for project ${preview.projectId} (${failures} consecutive failures)`);
         previewEvents.emit('preview:error', {
           projectId: preview.projectId,
           runId: preview.runId,
           error: `Runtime on port ${port} is no longer responding`
         });
-      } else if (!isHealthy) {
+      } else {
         previewEvents.emit('preview:health-check-failed', {
           projectId: preview.projectId,
           runId: preview.runId,
