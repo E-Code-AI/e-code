@@ -50,6 +50,22 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
         var apiBase = ${JSON.stringify(apiBase)};
         var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
 
+        // The iframe is served at /preview/{id}/{port}/, but the React app
+        // inside the iframe expects to live at "/". Without this, every
+        // client-side router (wouter, react-router, etc.) sees the proxy
+        // path as the active route and matches nothing — leaving the iframe
+        // visually blank even though Vite, JS, and CSS all load fine.
+        // Replace the visible URL with "/" so router.pathname === "/" while
+        // pushState/replaceState below keep the proxy prefix on real
+        // navigations.
+        try {
+          var here = new URL(window.location.href);
+          var virtualPath = here.pathname.replace(primaryBase, '') || '/';
+          var bootstrapMarker = bootstrap ? '?bootstrap=' + encodeURIComponent(bootstrap) : '';
+          var virtualUrl = virtualPath + (here.search && here.search !== bootstrapMarker ? here.search : '') + here.hash;
+          history.replaceState(history.state, document.title, virtualUrl);
+        } catch {}
+
         function appendBootstrap(url) {
           if (!bootstrap || typeof url !== 'string' || url.indexOf('bootstrap=') !== -1) return url;
           return url + (url.indexOf('?') === -1 ? '?' : '&') + 'bootstrap=' + encodeURIComponent(bootstrap);
@@ -823,14 +839,20 @@ export class PreviewService {
       preview.lastHealthCheck = new Date();
       const apiService = preview.exposedServices.find((service) => service.path === '/api');
       
+      // Express's `app.use('/preview/:projectId/:port/*', ...)` strips the
+      // matched prefix from req.url, leaving "/" — which would forward every
+      // asset request to "/" on Vite and get the index.html back, breaking
+      // every JS/CSS load and leaving the iframe blank. Restore the upstream
+      // path from req.originalUrl before handing the request to the proxy so
+      // /preview/{id}/{port}/src/main.tsx reaches Vite at /src/main.tsx.
+      const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}/${port}`), '') || '/';
+      req.url = upstreamPath;
+
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${port}`,
         changeOrigin: true,
         ws: true,
         selfHandleResponse: true,
-        pathRewrite: {
-          [`^/preview/${projectId}/${port}`]: ''
-        },
         on: {
           proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
             const contentType = String(proxyRes.headers['content-type'] || '');
@@ -879,14 +901,17 @@ export class PreviewService {
       preview.lastHealthCheck = new Date();
       const apiService = preview.exposedServices.find((service) => service.path === '/api');
       
+      // See note on the /:port/* handler above — express strips the route
+      // prefix from req.url, so we restore the upstream path from
+      // req.originalUrl before the proxy fires.
+      const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}`), '') || '/';
+      req.url = upstreamPath;
+
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${preview.primaryPort}`,
         changeOrigin: true,
         ws: true,
         selfHandleResponse: true,
-        pathRewrite: {
-          [`^/preview/${projectId}`]: ''
-        },
         on: {
           proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
             const contentType = String(proxyRes.headers['content-type'] || '');
