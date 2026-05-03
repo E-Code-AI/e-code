@@ -19,6 +19,13 @@ import { redactErrorForLog } from '../utils/error-redaction';
 const logger = createLogger('shell-router');
 const router = Router();
 
+// Production limits
+const MAX_SESSIONS_PER_USER = 5;
+const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const SCROLLBACK_SIZE = 5000; // lines / chunks
+const OUTPUT_RATE_LIMIT_BYTES = 500_000; // 500 KB/s max per session
+const OUTPUT_RATE_WINDOW_MS = 1000;
+
 function resolveShellBinary(): string {
   if (process.platform === 'win32') {
     return process.env.COMSPEC || 'powershell.exe';
@@ -83,16 +90,62 @@ function buildShellEnv(userHome: string, userId: number, shellBinary: string): N
   };
 }
 
+/** Circular scrollback buffer */
+class ScrollbackBuffer {
+  private chunks: string[] = [];
+  constructor(private maxSize: number) {}
+
+  push(data: string): void {
+    this.chunks.push(data);
+    if (this.chunks.length > this.maxSize) {
+      this.chunks.shift();
+    }
+  }
+
+  replay(): string {
+    return this.chunks.join('');
+  }
+
+  clear(): void {
+    this.chunks = [];
+  }
+}
+
 interface ShellSession {
   id: string;
   userId: number;
+  projectId: string | null;
   process: any;
   cwd: string;
   created: Date;
+  lastActivity: Date;
+  clients: Set<WebSocket>;
+  scrollback: ScrollbackBuffer;
+  idleTimer: NodeJS.Timeout | null;
+  memoryTimer: NodeJS.Timeout | null; // per-session RSS watchdog
+  // Rate limiting state
+  bytesThisWindow: number;
+  windowStart: number;
+  dropping: boolean;
 }
 
-const shellSessions = new Map<string, ShellSession>();
+// Global session store (persists across reconnects) — single source of truth.
+// Exported so shell.router.ts can share this map without a separate session store.
+export const shellSessions = new Map<string, ShellSession>();
+// userId -> Set of sessionIds (for per-user limits)
+const userSessionIndex = new Map<number, Set<string>>();
 let ptyModule: typeof import('node-pty') | null = null;
+
+// Prometheus-style counters
+const metrics = {
+  activeSessions: 0,
+  totalCreated: 0,
+  totalDestroyed: 0,
+  totalBytesOut: 0,
+  totalReconnects: 0,
+  droppedFrames: 0,
+  peakRssBytes: 0, // tracked by memory watchdog
+};
 
 export function handleShellClientMessage(
   raw: string,
@@ -126,6 +179,63 @@ async function getPty(): Promise<typeof import('node-pty')> {
     ptyModule = await import('node-pty');
   }
   return ptyModule;
+}
+
+// ── Per-session resource controls ────────────────────────────────────────────
+const MAX_SESSION_RSS_BYTES = 512 * 1024 * 1024; // 512 MB RSS limit per shell
+const MEMORY_POLL_INTERVAL_MS = 10_000;           // check every 10 s
+
+/** Lower CPU scheduling priority and start a periodic memory watchdog. */
+function applyResourceLimits(sessionId: string, pid: number | undefined): void {
+  if (!pid) return;
+
+  // ── CPU priority ──────────────────────────────────────────────────────────
+  try {
+    // nice value 10 = lower-than-default scheduling priority
+    process.setPriority(pid, 10);
+    logger.debug(`[Shell] Set nice=10 for PID ${pid} (session ${sessionId})`);
+  } catch {
+    // Not all platforms / privilege levels support this — ignore
+  }
+
+  // ── Memory watchdog ───────────────────────────────────────────────────────
+  const timer = setInterval(async () => {
+    const session = shellSessions.get(sessionId);
+    if (!session) {
+      clearInterval(timer);
+      return;
+    }
+
+    // Read /proc/{pid}/status on Linux to get the RSS without spawning a child
+    try {
+      const status = await fs.readFile(`/proc/${pid}/status`, 'utf8');
+      const match = status.match(/VmRSS:\s+(\d+)\s+kB/);
+      if (match) {
+        const rssBytes = parseInt(match[1]) * 1024;
+        metrics.peakRssBytes = Math.max(metrics.peakRssBytes ?? 0, rssBytes);
+        if (rssBytes > MAX_SESSION_RSS_BYTES) {
+          logger.warn(
+            `[Shell] Session ${sessionId} exceeded RSS limit ` +
+            `(${Math.round(rssBytes / 1024 / 1024)} MB > ${Math.round(MAX_SESSION_RSS_BYTES / 1024 / 1024)} MB), killing`
+          );
+          const notice = `\r\n\x1b[1;31m✗ Shell process exceeded memory limit (${Math.round(MAX_SESSION_RSS_BYTES / 1024 / 1024)} MB) and was stopped.\x1b[0m\r\n`;
+          for (const client of session.clients) {
+            if (client.readyState === WebSocket.OPEN) client.send(notice);
+          }
+          destroySession(sessionId);
+          clearInterval(timer);
+        }
+      }
+    } catch {
+      // Process may have already exited or /proc unavailable (non-Linux)
+    }
+  }, MEMORY_POLL_INTERVAL_MS);
+
+  // Store the timer reference on the typed session field
+  const session = shellSessions.get(sessionId);
+  if (session) {
+    session.memoryTimer = timer;
+  }
 }
 
 async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<number | null> {
@@ -165,7 +275,11 @@ async function getAuthenticatedUserIdFromUpgrade(req: IncomingMessage): Promise<
       return null;
     }
 
-    const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+    const sessionSecret = process.env.SESSION_SECRET;
+    if (!sessionSecret) {
+      logger.error('[Shell] SESSION_SECRET env var is not set — cannot authenticate cookie session');
+      return null;
+    }
     let sessionId: string | null = null;
 
     if (rawSessionCookie.startsWith('s:')) {
@@ -208,38 +322,92 @@ async function ensureSpawnCwd(preferredCwd: string, fallbackCwd: string): Promis
   }
 }
 
+function scheduleIdleCleanup(sessionId: string): void {
+  const session = shellSessions.get(sessionId);
+  if (!session) return;
+
+  if (session.idleTimer) {
+    clearTimeout(session.idleTimer);
+  }
+
+  session.idleTimer = setTimeout(() => {
+    const s = shellSessions.get(sessionId);
+    if (s && s.clients.size === 0) {
+      logger.info(`[Shell] Idle timeout reached for session ${sessionId}, cleaning up`);
+      destroySession(sessionId);
+    }
+  }, IDLE_TIMEOUT_MS);
+}
+
+export function destroySession(sessionId: string): void {
+  const session = shellSessions.get(sessionId);
+  if (!session) return;
+
+  if (session.idleTimer) {
+    clearTimeout(session.idleTimer);
+    session.idleTimer = null;
+  }
+
+  // Clean up memory watchdog timer
+  if (session.memoryTimer) {
+    clearInterval(session.memoryTimer);
+    session.memoryTimer = null;
+  }
+
+  // Notify all remaining clients
+  for (const ws of session.clients) {
+    try {
+      ws.send('\r\n\x1b[1;33m⚠ Session ended (idle timeout or server shutdown)\x1b[0m\r\n');
+      ws.close(1000, 'Session ended');
+    } catch {}
+  }
+  session.clients.clear();
+
+  try {
+    session.process.kill();
+  } catch {}
+
+  shellSessions.delete(sessionId);
+
+  // Remove from user index
+  const userSessions = userSessionIndex.get(session.userId);
+  if (userSessions) {
+    userSessions.delete(sessionId);
+    if (userSessions.size === 0) {
+      userSessionIndex.delete(session.userId);
+    }
+  }
+
+  metrics.activeSessions = shellSessions.size;
+  metrics.totalDestroyed++;
+
+  logger.info(`[Shell] Session ${sessionId} destroyed (active: ${metrics.activeSessions})`);
+}
+
 // WebSocket server for shell connections (noServer mode)
 let shellWss: WebSocketServer | null = null;
 
-// Clean up old sessions periodically
+// Clean up sessions exceeding 24 hours regardless
 setInterval(() => {
   const now = Date.now();
-  const entries = Array.from(shellSessions.entries());
-  for (const [sessionId, session] of entries) {
-    if (now - session.created.getTime() > 24 * 60 * 60 * 1000) { // 24 hours
-      session.process.kill();
-      shellSessions.delete(sessionId);
+  for (const [sessionId, session] of shellSessions.entries()) {
+    if (now - session.created.getTime() > 24 * 60 * 60 * 1000) {
+      logger.info(`[Shell] Cleaning up session ${sessionId} (24h limit)`);
+      destroySession(sessionId);
     }
   }
-}, 60 * 60 * 1000); // Check every hour
+}, 60 * 60 * 1000);
 
-/**
- * Initialize shell WebSocket with central dispatcher
- * Uses noServer mode for integration with central upgrade handler
- */
 function initializeShellWebSocket() {
   if (shellWss) return;
   
   shellWss = new WebSocketServer({ noServer: true });
   
-  // Handle new connections
   shellWss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
     const url = new URL(req.url || '', `http://${req.headers.host}`);
     const sessionId = url.searchParams.get('sessionId');
     const projectId = url.searchParams.get('projectId');
     
-    // SECURITY FIX #20: Get authenticated userId from request, not query params
-    // The userId must come from authenticated session, not client-supplied params
     const userId = await getAuthenticatedUserIdFromUpgrade(req);
     
     if (!sessionId) {
@@ -247,20 +415,18 @@ function initializeShellWebSocket() {
       return;
     }
 
-    // SECURITY FIX #20: Require authenticated user
     if (!userId || !Number.isInteger(userId) || userId < 0) {
       ws.close(1008, 'Authentication required');
       return;
     }
     
-    // SECURITY FIX #20: Validate project access if projectId provided
     if (projectId) {
       try {
-        const { storage } = await import('../storage');
-        const project = await storage.getProject(projectId);
+        const { storage: _storage } = await import('../storage');
+        const project = await _storage.getProject(projectId);
         const hasAccess = !!project && (
           project.ownerId === userId ||
-          await storage.isProjectCollaborator(projectId, userId)
+          await _storage.isProjectCollaborator(projectId, userId)
         );
         if (!hasAccess) {
           ws.close(1008, 'Access denied: You do not have access to this project');
@@ -273,7 +439,72 @@ function initializeShellWebSocket() {
       }
     }
 
-    // Create shell home directory for user with path traversal protection
+    // --- Session reuse: check if this sessionId already has a live PTY ---
+    const existingSession = shellSessions.get(sessionId);
+
+    if (existingSession) {
+      // Security: ensure the reconnecting user owns this session
+      if (existingSession.userId !== userId) {
+        ws.close(1008, 'Session does not belong to this user');
+        return;
+      }
+
+      logger.info(`[Shell] Client reattaching to session ${sessionId}`);
+      metrics.totalReconnects++;
+
+      // Cancel idle timer since we have a client again
+      if (existingSession.idleTimer) {
+        clearTimeout(existingSession.idleTimer);
+        existingSession.idleTimer = null;
+      }
+
+      existingSession.clients.add(ws);
+      existingSession.lastActivity = new Date();
+
+      // Replay scrollback buffer so client sees prior output
+      const history = existingSession.scrollback.replay();
+      if (history) {
+        ws.send(history);
+      }
+
+      // IMPORTANT: Do NOT register a new onData handler here.
+      // The broadcaster installed at session creation iterates session.clients,
+      // so simply adding ws to that Set is sufficient for it to receive future
+      // output. Adding a per-reconnect listener would cause duplicate delivery
+      // and accumulate unbounded handler registrations.
+
+      ws.on('message', (data) => {
+        handleShellClientMessage(data.toString(), existingSession.process);
+        existingSession.lastActivity = new Date();
+      });
+
+      ws.on('close', () => {
+        existingSession.clients.delete(ws);
+        if (existingSession.clients.size === 0) {
+          scheduleIdleCleanup(sessionId);
+        }
+      });
+
+      ws.on('error', (error) => {
+        logger.error('Shell WebSocket error on reconnect:', redactErrorForLog(error));
+        existingSession.clients.delete(ws);
+        if (existingSession.clients.size === 0) {
+          scheduleIdleCleanup(sessionId);
+        }
+      });
+
+      return;
+    }
+
+    // --- New session: enforce per-user limits ---
+    const userSessions = userSessionIndex.get(userId) || new Set<string>();
+    if (userSessions.size >= MAX_SESSIONS_PER_USER) {
+      ws.send(`\r\n\x1b[1;31m✗ Session limit reached (max ${MAX_SESSIONS_PER_USER} per user). Close an existing shell tab first.\x1b[0m\r\n`);
+      ws.close(1008, 'Session limit exceeded');
+      return;
+    }
+
+    // Create shell home directory for user
     const shellsBaseDir = path.join(os.homedir(), 'ecode-shells');
     const userHome = safePath(shellsBaseDir, `user-${userId}`);
     
@@ -284,14 +515,11 @@ function initializeShellWebSocket() {
     
     try {
       await fs.mkdir(userHome, { recursive: true });
-      
-      // Create initial directory structure
       const dirs = ['projects', 'tmp', '.config'];
       for (const dir of dirs) {
         await fs.mkdir(path.join(userHome, dir), { recursive: true });
       }
       
-      // Create .bashrc with custom prompt
       const bashrcContent = `
 # E-Code Shell Configuration
 export PS1='Workspace: '
@@ -310,12 +538,11 @@ echo -e "\\033[32m● Connected to E-Code Shell\\033[0m"
 echo ""
 `;
       await fs.writeFile(path.join(userHome, '.bashrc'), bashrcContent);
-      
     } catch (error) {
       logger.error('Failed to create user shell directory:', redactErrorForLog(error));
     }
 
-    // Determine the working directory: use the canonical project workspace
+    // Set working directory
     let shellCwd = userHome;
     if (projectId) {
       try {
@@ -354,50 +581,104 @@ echo ""
       env: buildShellEnv(userHome, userId, shellBinary),
     });
 
+    const scrollback = new ScrollbackBuffer(SCROLLBACK_SIZE);
+
     const session: ShellSession = {
       id: sessionId,
       userId,
+      projectId: projectId || null,
       process: shell,
       cwd: shellCwd,
       created: new Date(),
+      lastActivity: new Date(),
+      clients: new Set([ws]),
+      scrollback,
+      idleTimer: null,
+      memoryTimer: null,
+      bytesThisWindow: 0,
+      windowStart: Date.now(),
+      dropping: false,
     };
 
     shellSessions.set(sessionId, session);
 
+    // Track in user index
+    userSessions.add(sessionId);
+    userSessionIndex.set(userId, userSessions);
+
+    metrics.activeSessions = shellSessions.size;
+    metrics.totalCreated++;
+
+    logger.info(`[Shell] Created session ${sessionId} for user ${userId} (active: ${metrics.activeSessions})`);
+
+    // ── Resource controls ────────────────────────────────────────────────────
+    applyResourceLimits(sessionId, shell.pid);
+
     shell.onData((data: string) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(data);
+      // Write to scrollback buffer
+      scrollback.push(data);
+      metrics.totalBytesOut += data.length;
+
+      // Rate limiting
+      const now = Date.now();
+      if (now - session.windowStart > OUTPUT_RATE_WINDOW_MS) {
+        session.bytesThisWindow = data.length;
+        session.windowStart = now;
+        session.dropping = false;
+      } else {
+        session.bytesThisWindow += data.length;
+      }
+
+      if (session.bytesThisWindow > OUTPUT_RATE_LIMIT_BYTES) {
+        if (!session.dropping) {
+          session.dropping = true;
+          metrics.droppedFrames++;
+          logger.warn(`[Shell] Rate limit exceeded for session ${sessionId}`);
+        }
+        return;
+      }
+
+      // Broadcast to all connected clients
+      for (const client of session.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(data);
+        }
       }
     });
 
     shell.onExit(({ exitCode }: { exitCode: number }) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(`\r\n\x1b[31mShell exited with code ${exitCode}\x1b[0m\r\n`);
-        ws.close();
+      const exitMsg = `\r\n\x1b[90mProcess exited with code ${exitCode}\x1b[0m\r\n`;
+      scrollback.push(exitMsg);
+      for (const client of session.clients) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(exitMsg);
+        }
       }
-      shellSessions.delete(sessionId);
+      destroySession(sessionId);
     });
 
-    // Handle WebSocket messages from xterm.js.
     ws.on('message', (data) => {
       handleShellClientMessage(data.toString(), shell);
+      session.lastActivity = new Date();
     });
 
-    // Handle WebSocket close
     ws.on('close', () => {
-      shell.kill();
-      shellSessions.delete(sessionId);
+      session.clients.delete(ws);
+      if (session.clients.size === 0) {
+        // Don't kill immediately - give idle timeout a chance
+        scheduleIdleCleanup(sessionId);
+      }
     });
 
-    // Handle errors
     ws.on('error', (error) => {
       logger.error('Shell WebSocket error:', redactErrorForLog(error));
-      shell.kill();
-      shellSessions.delete(sessionId);
+      session.clients.delete(ws);
+      if (session.clients.size === 0) {
+        scheduleIdleCleanup(sessionId);
+      }
     });
   });
   
-  // Register with central upgrade dispatcher
   centralUpgradeDispatcher.register(
     '/shell',
     (req: IncomingMessage, socket: Duplex, head: Buffer) => {
@@ -411,44 +692,62 @@ echo ""
   logger.info('[Shell] WebSocket service initialized at /shell');
 }
 
-// Initialize immediately when module loads
 initializeShellWebSocket();
 
-// API endpoint to get shell sessions
+// REST: list sessions for authenticated user
 router.get('/sessions', ensureAuthenticated, (req, res) => {
   const userId = (req.user as any).id;
   const sessions = Array.from(shellSessions.values())
-    .filter(session => session.userId === userId)
-    .map(session => ({
-      id: session.id,
-      created: session.created,
-      cwd: session.cwd,
+    .filter(s => s.userId === userId)
+    .map(s => ({
+      id: s.id,
+      created: s.created,
+      lastActivity: s.lastActivity,
+      cwd: s.cwd,
+      projectId: s.projectId,
+      connectedClients: s.clients.size,
     }));
   
-  res.json(sessions);
+  res.json({ sessions });
 });
 
-// API endpoint to create a new shell session
+// REST: create a new shell session token (actual PTY is created on WS connect)
 router.post('/sessions', ensureAuthenticated, (req, res) => {
   const sessionId = `shell-${Date.now()}-${process.hrtime.bigint().toString(36).slice(0, 9)}`;
   res.json({ sessionId });
 });
 
-// API endpoint to kill a shell session
+// REST: delete / kill a session
 router.delete('/sessions/:sessionId', ensureAuthenticated, (req, res) => {
   const { sessionId } = req.params;
   const session = shellSessions.get(sessionId);
   
   if (session && session.userId === (req.user as any).id) {
-    session.process.kill();
-    shellSessions.delete(sessionId);
+    destroySession(sessionId);
     res.json({ success: true });
   } else {
     res.status(404).json({ error: 'Session not found' });
   }
 });
 
-// API endpoint to generate shell command with AI
+// REST: metrics (Prometheus-style)
+router.get('/metrics', ensureAuthenticated, (_req, res) => {
+  res.json({
+    activeSessions: shellSessions.size,
+    maxSessionsPerUser: MAX_SESSIONS_PER_USER,
+    totalCreated: metrics.totalCreated,
+    totalDestroyed: metrics.totalDestroyed,
+    totalBytesOut: metrics.totalBytesOut,
+    totalReconnects: metrics.totalReconnects,
+    droppedFrames: metrics.droppedFrames,
+    peakRssBytes: metrics.peakRssBytes,
+    idleTimeoutMs: IDLE_TIMEOUT_MS,
+    scrollbackSize: SCROLLBACK_SIZE,
+    rateLimitBytesPerSec: OUTPUT_RATE_LIMIT_BYTES,
+  });
+});
+
+// REST: AI command generation
 router.post('/generate-command', ensureAuthenticated, async (req, res) => {
   try {
     const { prompt, projectId: _projectId } = req.body;
@@ -457,7 +756,6 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Use OpenAI to generate shell command
     const OpenAI = (await import('openai')).default;
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
@@ -466,7 +764,7 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: `You are a shell command generator. Given a natural language description, output ONLY the shell command that accomplishes the task. No explanations, no markdown, just the raw command. The command should work in a bash shell on Linux. Be concise and accurate.`
+          content: `You are a shell command generator. Given a natural language description, output ONLY the shell command that accomplishes the task. No explanations, no markdown code blocks, just the raw command. The command should work in a bash shell on Linux. Be concise and accurate. Never include a trailing newline.`
         },
         {
           role: 'user',
@@ -486,10 +784,13 @@ router.post('/generate-command', ensureAuthenticated, async (req, res) => {
   }
 });
 
-// API endpoint to clear shell output (reset session buffer)
+// REST: clear session buffer
 router.post('/clear', ensureAuthenticated, (req, res) => {
   const { sessionId } = req.body;
-  // Clear is handled client-side, just acknowledge
+  const session = shellSessions.get(sessionId);
+  if (session && session.userId === (req.user as any).id) {
+    session.scrollback.clear();
+  }
   res.json({ success: true, sessionId });
 });
 
