@@ -98,8 +98,8 @@ export function GitIntegration({ projectId, className }: GitIntegrationProps) {
         remote: data.remote,
         ahead: data.ahead || 0,
         behind: data.behind || 0,
-        staged: data.added?.map((file: string) => ({ path: file, status: 'added' as const })) || [],
-        unstaged: data.modified?.map((file: string) => ({ path: file, status: 'modified' as const })) || [],
+        staged: (data.staged || []).map((file: string) => ({ path: file, status: 'modified' as const })),
+        unstaged: (data.unstaged || []).map((file: string) => ({ path: file, status: 'modified' as const })),
         untracked: data.untracked || []
       });
       setIsInitialized(true);
