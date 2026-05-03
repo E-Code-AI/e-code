@@ -1,7 +1,11 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { assertReactSingleton } from "@/utils/assert-react-singleton";
 import "./critical.css";
+
+// Fail loudly in DEV if a second React copy is already present at bootstrap.
+assertReactSingleton();
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   import('@sentry/react').then((Sentry) => {
@@ -43,8 +47,8 @@ const deferredInit = () => {
 };
 
 if (typeof window !== 'undefined') {
-  if ('requestIdleCallback' in window) {
-    (window as any).requestIdleCallback(deferredInit, { timeout: 3000 });
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(deferredInit, { timeout: 3000 });
   } else {
     requestAnimationFrame(() => setTimeout(deferredInit, 100));
   }
