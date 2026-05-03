@@ -1,7 +1,9 @@
 // @ts-nocheck
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import * as crypto from 'crypto';
+import { RateLimiterMemory, RateLimiterRedis, RateLimiterRes } from 'rate-limiter-flexible';
+import Redis from 'ioredis';
 import { ensureAuthenticated } from '../middleware/auth';
 import { csrfProtection } from '../middleware/csrf';
 import { createLogger } from '../utils/logger';
@@ -11,6 +13,222 @@ const router = Router();
 const logger = createLogger('ssh-keys');
 
 const MAX_KEYS_PER_USER = 20;
+
+// ─── Dedicated brute-force limiter for SSH key write endpoints ───────────────
+// Stricter than the shared API limiter: 10 write requests per 15 minutes per user.
+// Falls back to per-IP keying when unauthenticated (defense-in-depth; ensureAuthenticated
+// will normally have rejected the request first).
+const SSH_WRITE_POINTS = 10;
+const SSH_WRITE_DURATION_SEC = 15 * 60;
+
+let sshWriteRedisClient: Redis | null = null;
+const sshWriteRedisUrl = process.env.REDIS_URL || process.env.REDIS_TLS_URL;
+const sshWriteRedisEnabled = process.env.RATE_LIMIT_REDIS_ENABLED !== 'false';
+if (sshWriteRedisUrl && sshWriteRedisEnabled) {
+  try {
+    sshWriteRedisClient = new Redis(sshWriteRedisUrl.replace('rediss://', 'redis://'), {
+      maxRetriesPerRequest: 2,
+      enableReadyCheck: true,
+      lazyConnect: true,
+    });
+    sshWriteRedisClient.on('error', (err) => {
+      logger.warn('[SSH] Redis rate limiter error, falling back to memory', { error: err.message });
+      sshWriteRedisClient = null;
+    });
+    sshWriteRedisClient.connect().catch((err) => {
+      logger.warn('[SSH] Redis rate limiter connect failed, using memory fallback', {
+        error: err?.message || 'unknown',
+      });
+      sshWriteRedisClient = null;
+    });
+  } catch (err: any) {
+    logger.warn('[SSH] Redis rate limiter init failed, using memory fallback', {
+      error: err?.message,
+    });
+    sshWriteRedisClient = null;
+  }
+}
+
+// Always-available in-memory limiter. Used as the primary limiter when Redis is not
+// configured, and as a guaranteed fail-safe fallback when Redis is configured but
+// experiences a backend error at request time. This ensures brute-force protection
+// remains in force on this security-critical endpoint even under degraded
+// infrastructure conditions (the previous design fail-opened on Redis errors,
+// effectively disabling the limiter).
+const sshWriteMemoryLimiter = new RateLimiterMemory({
+  keyPrefix: 'rl_ssh_write_mem',
+  points: SSH_WRITE_POINTS,
+  duration: SSH_WRITE_DURATION_SEC,
+  blockDuration: SSH_WRITE_DURATION_SEC,
+});
+
+const sshWriteRedisLimiter: RateLimiterRedis | null = sshWriteRedisClient
+  ? new RateLimiterRedis({
+      storeClient: sshWriteRedisClient,
+      keyPrefix: 'rl_ssh_write',
+      points: SSH_WRITE_POINTS,
+      duration: SSH_WRITE_DURATION_SEC,
+      blockDuration: SSH_WRITE_DURATION_SEC,
+      execEvenly: false,
+      // ✅ rate-limiter-flexible has built-in insurance: on storeClient error it
+      // transparently delegates to insuranceLimiter. We still defensively retry
+      // ourselves below in case insurance is unavailable.
+      insuranceLimiter: sshWriteMemoryLimiter,
+    })
+  : null;
+
+function isRealLimitHit(rejRes: any): boolean {
+  // A real limit-hit produces a RateLimiterRes-like object with msBeforeNext set.
+  return rejRes instanceof RateLimiterRes || typeof rejRes?.msBeforeNext === 'number';
+}
+
+async function sshWriteRateLimit(req: Request, res: Response, next: NextFunction) {
+  // Bypass rate limiting in test mode (unless explicitly enabled), matching project conventions.
+  if (process.env.NODE_ENV === 'test' && process.env.ENABLE_RATE_LIMITING !== 'true') {
+    return next();
+  }
+  if ((req as any)._skipRateLimit === true) {
+    return next();
+  }
+
+  const userId = (req.user as any)?.id;
+  const key = userId ? `user:${userId}` : `ip:${req.ip || 'unknown'}`;
+
+  // Try Redis (distributed) first when available; on backend error fall back to
+  // the in-memory limiter so we never silently disable rate limiting.
+  let result: RateLimiterRes | undefined;
+  let limitHit: any = null;
+  let usedFallback = false;
+
+  if (sshWriteRedisLimiter) {
+    try {
+      result = await sshWriteRedisLimiter.consume(key);
+    } catch (err: any) {
+      if (isRealLimitHit(err)) {
+        limitHit = err;
+      } else {
+        logger.warn('[SSH] Redis write limiter backend error, using memory fallback', {
+          error: err?.message || String(err),
+        });
+        usedFallback = true;
+        try {
+          result = await sshWriteMemoryLimiter.consume(key);
+        } catch (memErr: any) {
+          if (isRealLimitHit(memErr)) {
+            limitHit = memErr;
+          } else {
+            // Memory limiter should not produce backend errors, but if it somehow does,
+            // fail closed on this security-critical surface.
+            logger.error('[SSH] memory write limiter unexpected error; failing closed', {
+              error: memErr?.message || String(memErr),
+            });
+            res.setHeader('Retry-After', SSH_WRITE_DURATION_SEC);
+            return res.status(429).json({
+              error: 'Too many SSH key changes',
+              message: 'SSH key write rate limiter is temporarily unavailable. Please try again later.',
+              retryAfter: SSH_WRITE_DURATION_SEC,
+            });
+          }
+        }
+      }
+    }
+  } else {
+    try {
+      result = await sshWriteMemoryLimiter.consume(key);
+    } catch (err: any) {
+      if (isRealLimitHit(err)) {
+        limitHit = err;
+      } else {
+        logger.error('[SSH] memory write limiter unexpected error; failing closed', {
+          error: err?.message || String(err),
+        });
+        res.setHeader('Retry-After', SSH_WRITE_DURATION_SEC);
+        return res.status(429).json({
+          error: 'Too many SSH key changes',
+          message: 'SSH key write rate limiter is temporarily unavailable. Please try again later.',
+          retryAfter: SSH_WRITE_DURATION_SEC,
+        });
+      }
+    }
+  }
+
+  if (!limitHit && result) {
+    res.setHeader('X-RateLimit-Limit', SSH_WRITE_POINTS);
+    res.setHeader('X-RateLimit-Remaining', result.remainingPoints ?? 0);
+    res.setHeader(
+      'X-RateLimit-Reset',
+      new Date(Date.now() + (result.msBeforeNext || 0)).toISOString(),
+    );
+    if (usedFallback) {
+      res.setHeader('X-RateLimit-Backend', 'memory-fallback');
+    }
+    return next();
+  }
+
+  // Real limit hit — emit 429 with Retry-After.
+  {
+    const rejRes = limitHit;
+    const retryAfter = Math.max(1, Math.round((rejRes.msBeforeNext || SSH_WRITE_DURATION_SEC * 1000) / 1000));
+    logger.warn('[SSH] write rate limit exceeded', {
+      userId,
+      ip: req.ip,
+      method: req.method,
+      path: req.path,
+      retryAfter,
+    });
+
+    res.setHeader('Retry-After', retryAfter);
+    res.setHeader('X-RateLimit-Limit', SSH_WRITE_POINTS);
+    res.setHeader('X-RateLimit-Remaining', rejRes.remainingPoints ?? 0);
+    res.setHeader(
+      'X-RateLimit-Reset',
+      new Date(Date.now() + (rejRes.msBeforeNext || 0)).toISOString(),
+    );
+    return res.status(429).json({
+      error: 'Too many SSH key changes',
+      message: `Please wait ${retryAfter} seconds before modifying SSH keys again. SSH key writes are limited to ${SSH_WRITE_POINTS} per ${SSH_WRITE_DURATION_SEC / 60} minutes.`,
+      retryAfter,
+    });
+  }
+}
+
+/**
+ * Constant-time check for whether a fingerprint already exists among a user's keys.
+ * Always iterates over every key so the work performed is independent of which (if any)
+ * key matches, preventing timing-based enumeration of stored fingerprints.
+ */
+function findFingerprintMatchConstantTime(
+  keys: Array<{ fingerprint: string; [k: string]: any }>,
+  fingerprint: string,
+): { fingerprint: string; [k: string]: any } | undefined {
+  const candidate = Buffer.from(fingerprint, 'utf8');
+  let match: { fingerprint: string; [k: string]: any } | undefined;
+  for (const k of keys) {
+    const stored = Buffer.from(k.fingerprint || '', 'utf8');
+    let equal = false;
+    if (stored.length === candidate.length) {
+      try {
+        equal = crypto.timingSafeEqual(stored, candidate);
+      } catch {
+        equal = false;
+      }
+    } else {
+      // Still perform a comparison of equal-length buffers to keep work uniform.
+      const padded = Buffer.alloc(candidate.length);
+      stored.copy(padded, 0, 0, Math.min(stored.length, candidate.length));
+      try {
+        crypto.timingSafeEqual(padded, candidate);
+      } catch {
+        /* ignore */
+      }
+      equal = false;
+    }
+    if (equal && !match) {
+      match = k;
+    }
+  }
+  return match;
+}
 
 const VALID_KEY_TYPES = [
   'ssh-ed25519',
@@ -125,7 +343,7 @@ router.get('/config', ensureAuthenticated, (req, res) => {
 });
 
 // POST /api/ssh-keys — add a new SSH public key
-router.post('/', ensureAuthenticated, csrfProtection, async (req, res) => {
+router.post('/', ensureAuthenticated, sshWriteRateLimit, csrfProtection, async (req, res) => {
   const result = addKeySchema.safeParse(req.body);
   if (!result.success) {
     return res.status(400).json({
@@ -155,8 +373,11 @@ router.post('/', ensureAuthenticated, csrfProtection, async (req, res) => {
     return res.status(422).json({ error: err.message });
   }
 
-  // Reject exact duplicate by fingerprint per user
-  const existing = await storage.getSshKeyByFingerprint(userId, fingerprint);
+  // Reject exact duplicate by fingerprint per user.
+  // Use a constant-time scan over the user's existing keys instead of a short-circuiting
+  // lookup so an attacker cannot infer which fingerprints are stored from response timing.
+  const userKeys = await storage.listSshKeys(userId);
+  const existing = findFingerprintMatchConstantTime(userKeys, fingerprint);
   if (existing) {
     return res.status(409).json({ error: 'This SSH public key is already registered to your account.' });
   }
@@ -187,7 +408,7 @@ router.post('/', ensureAuthenticated, csrfProtection, async (req, res) => {
 });
 
 // DELETE /api/ssh-keys/:id — remove a key belonging to the authenticated user
-router.delete('/:id', ensureAuthenticated, csrfProtection, async (req, res) => {
+router.delete('/:id', ensureAuthenticated, sshWriteRateLimit, csrfProtection, async (req, res) => {
   const { id } = req.params;
   const userId = (req.user as any).id;
   const storage = getStorage();
