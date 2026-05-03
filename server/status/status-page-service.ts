@@ -146,9 +146,11 @@ export class StatusPageService {
       this.collectMetrics();
     }, 60000);
 
-    // Initial check
-    this.checkAllServices();
-    this.collectMetrics();
+    // Initial check — delay 10s so all routes are mounted before probing
+    setTimeout(() => {
+      this.checkAllServices();
+      this.collectMetrics();
+    }, 10000);
   }
 
   async checkAllServices(): Promise<void> {
@@ -233,7 +235,7 @@ export class StatusPageService {
         case 'Authentication':
           // Check if auth endpoints respond
           try {
-            const response = await fetch('http://localhost:5000/api/user', { timeout: 2000 });
+            const response = await fetch('http://localhost:5000/api/user/me', { timeout: 2000 });
             return response.status === 401 || response.status === 200; // Either authenticated or not
           } catch {
             return false;
