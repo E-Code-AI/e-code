@@ -78,7 +78,10 @@ export function useAgentModelPreference(): AgentModelPreference {
                                  !hasSavedPreference;
     
     if (shouldApplyFallback) {
-      const defaultModel = availableModels.find(m => m.provider === 'openai') || availableModels[0];
+      const defaultModel =
+        availableModels.find(m => m.provider === 'anthropic') ||
+        availableModels.find(m => m.provider === 'openai') ||
+        availableModels[0];
       setSelectedModelId(defaultModel.id);
     }
   }, [currentModelId, availableModels, modelsLoading, preferredSuccess, preferredData]);

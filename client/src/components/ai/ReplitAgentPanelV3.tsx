@@ -1511,8 +1511,8 @@ export function ReplitAgentPanelV3({
         // Call the AI streaming API
         (async () => {
           try {
-            // Use selected provider from model preference (fallback to openai)
-            const selectedProvider = provider || 'openai';
+            // Use selected provider from model preference (fallback to anthropic, then openai)
+            const selectedProvider = provider || 'anthropic';
 
             // ✅ FIX (Dec 7, 2025): Only send conversationId if it's a valid numeric ID
             // The backend expects an integer, not a string like "conv-123456"
@@ -1994,8 +1994,8 @@ export function ReplitAgentPanelV3({
     let assistantMessageId: string | null = null;
 
     try {
-      // Use selected provider from model preference (fallback to openai)
-      const selectedProvider = provider || 'openai';
+      // Use selected provider from model preference (fallback to anthropic, then openai)
+      const selectedProvider = provider || 'anthropic';
 
       // ✅ FIX (Jan 2026): Use effectiveConversationId for Replit-style always-ready chat
       // This uses -projectId as temp ID when real conversation not yet created

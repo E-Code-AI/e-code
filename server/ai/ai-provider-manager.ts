@@ -1296,14 +1296,24 @@ export class AIProviderManager {
    * Legacy API: Get default provider
    */
   getDefaultProvider(): LegacyProviderAdapter {
-    // Try providers in order of preference - UPDATED January 2026
-    const preferredModels = [
-      'gpt-4.1',
-      'claude-sonnet-4-6',
-      'gemini-2.5-flash',
-      'grok-3',
-      'moonshot-v1-32k'
-    ];
+    // Try providers in order of preference.
+    // When the user has supplied their own ANTHROPIC_API_KEY, prefer Claude
+    // so requests use the user's key instead of OpenAI/Replit ModelFarm.
+    const preferredModels = process.env.ANTHROPIC_API_KEY
+      ? [
+          'claude-sonnet-4-6',
+          'gpt-4.1',
+          'gemini-2.5-flash',
+          'grok-3',
+          'moonshot-v1-32k',
+        ]
+      : [
+          'gpt-4.1',
+          'claude-sonnet-4-6',
+          'gemini-2.5-flash',
+          'grok-3',
+          'moonshot-v1-32k',
+        ];
     
     for (const modelId of preferredModels) {
       const model = this.getModel(modelId);

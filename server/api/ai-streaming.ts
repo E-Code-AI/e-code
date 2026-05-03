@@ -197,7 +197,7 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
     messages: rawMessages,  // Support both message (string) and messages (array)
     projectId, 
     conversationId,
-    provider = 'openai',
+    provider = process.env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai',
     model: rawModel,
     modelId, // Frontend sends modelId, map to model
     fastMode = false, // Fast Mode for quick 10-60s targeted changes
@@ -232,7 +232,7 @@ router.post('/agent/chat/stream', ensureAuthenticated, async (req, res) => {
       case 'gemini': return 'gemini-2.5-flash';
       case 'xai': return 'grok-3';
       case 'moonshot': return 'moonshot-v1-32k';
-      default: return 'gpt-4.1';
+      default: return process.env.ANTHROPIC_API_KEY ? 'claude-sonnet-4-6' : 'gpt-4.1';
     }
   };
   
