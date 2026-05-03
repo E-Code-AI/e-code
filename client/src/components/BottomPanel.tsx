@@ -1,8 +1,7 @@
 import { File } from "@shared/schema";
 import { Terminal, AlertCircle, Workflow } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { ReplitWorkflows } from "@/components/ReplitWorkflows";
+import { WorkflowsPanel } from "@/components/ide/WorkflowsPanel";
 import { ReplitOutputPanel } from "@/components/editor/ReplitOutputPanel";
 import { ReplitProblemsPanel } from "@/components/editor/ReplitProblemsPanel";
 
@@ -42,18 +41,14 @@ const BottomPanel = ({ projectId }: BottomPanelProps) => {
           <ReplitProblemsPanel projectId={projectIdStr} />
         </TabsContent>
 
-        <TabsContent value="workflows" className="flex-1 p-0 m-0">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              {projectId ? (
-                <ReplitWorkflows projectId={projectId} />
-              ) : (
-                <div className="text-[13px] text-muted-foreground py-8 text-center">
-                  Project information unavailable. Open a project to manage workflows.
-                </div>
-              )}
+        <TabsContent value="workflows" className="flex-1 p-0 m-0 overflow-hidden">
+          {projectIdStr ? (
+            <WorkflowsPanel projectId={projectIdStr} />
+          ) : (
+            <div className="text-[13px] text-muted-foreground py-8 text-center">
+              Project information unavailable. Open a project to manage workflows.
             </div>
-          </ScrollArea>
+          )}
         </TabsContent>
       </Tabs>
     </div>

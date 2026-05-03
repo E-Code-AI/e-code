@@ -878,7 +878,45 @@ router.post('/projects/:id/preview/start', ensureProjectAccess, async (req, res)
       // Auto mode: read files from DB, detect framework, spawn server
       preview = await previewService.startPreviewFromProject(projectId);
     }
-    
+
+    // Auto-launch runOnStart workflows (fire-and-forget, non-blocking)
+    try {
+      const numericProjectId = parseInt(projectId, 10);
+      if (!isNaN(numericProjectId)) {
+        const { db } = await import('../db');
+        const { projectWorkflows, workflowRuns, workflowTasks } = await import('@shared/schema');
+        const { eq, and, asc } = await import('drizzle-orm');
+
+        const autoStartWorkflows = await db.select().from(projectWorkflows).where(
+          and(
+            eq(projectWorkflows.projectId, numericProjectId),
+            eq(projectWorkflows.runOnStart, true),
+            eq(projectWorkflows.enabled, true),
+          )
+        );
+
+        for (const wf of autoStartWorkflows) {
+          const tasks = await db.select().from(workflowTasks)
+            .where(eq(workflowTasks.workflowId, wf.id))
+            .orderBy(asc(workflowTasks.orderIndex));
+
+          const [run] = await db.insert(workflowRuns).values({
+            workflowId: wf.id,
+            status: 'running',
+            triggeredBy: 'auto-start',
+            logs: '',
+          }).returning();
+
+          // Import and invoke workflow execution asynchronously (non-blocking)
+          import('./workflows.router').then(mod => {
+            (mod as any).executeWorkflowById?.(wf.id, run.id);
+          }).catch(() => { /* ignore if not exported */ });
+        }
+      }
+    } catch (autoStartErr) {
+      console.warn('[preview:start] run-on-start workflow launch failed (non-fatal):', autoStartErr);
+    }
+
     res.json({
       success: true,
       preview: {

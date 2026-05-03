@@ -4558,11 +4558,13 @@ export const projectWorkflows = pgTable('project_workflows', {
   isGenerated: boolean('is_generated').notNull().default(false),
   isSystem: boolean('is_system').notNull().default(false),
   enabled: boolean('enabled').notNull().default(true),
+  runOnStart: boolean('run_on_start').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => [
   index('project_workflows_project_id_idx').on(table.projectId),
   index('project_workflows_is_run_button_idx').on(table.isRunButton),
+  index('project_workflows_run_on_start_idx').on(table.runOnStart),
 ]);
 
 export const workflowTasks = pgTable('workflow_tasks', {
@@ -4570,12 +4572,9 @@ export const workflowTasks = pgTable('workflow_tasks', {
   workflowId: integer('workflow_id').notNull().references(() => projectWorkflows.id, { onDelete: 'cascade' }),
   orderIndex: integer('order_index').notNull().default(0),
   taskType: workflowTaskTypeEnum('task_type').notNull().default('shell'),
-  // For shell: the command to execute
-  // For packages: 'all' or specific package names
-  // For workflow: the target workflow ID
   command: text('command'),
-  // For workflow task type: reference to another workflow
   targetWorkflowId: integer('target_workflow_id').references(() => projectWorkflows.id, { onDelete: 'set null' }),
+  waitForPort: integer('wait_for_port'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   index('workflow_tasks_workflow_id_idx').on(table.workflowId),
@@ -4630,12 +4629,14 @@ export const workflowWithTasksSchema = z.object({
   isGenerated: z.boolean(),
   isSystem: z.boolean(),
   enabled: z.boolean(),
+  runOnStart: z.boolean(),
   tasks: z.array(z.object({
     id: z.number(),
     orderIndex: z.number(),
     taskType: z.enum(['shell', 'packages', 'workflow']),
     command: z.string().nullable(),
     targetWorkflowId: z.number().nullable(),
+    waitForPort: z.number().nullable(),
   })),
 });
 
