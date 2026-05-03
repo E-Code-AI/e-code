@@ -140,7 +140,7 @@ async function ensureDatabaseMigrated(force = false) {
     const isMissingMigrationFile = /No file .+ found in .+ folder/i.test(fullErrorText);
 
     if (isAlreadyExists || isMissingMigrationFile) {
-      logger.warn(`[DB Init] Non-fatal migration issue — continuing: ${errorMessage.slice(0, 200)}`);
+      logger.debug(`[DB Init] Non-fatal migration issue — continuing: ${errorMessage.slice(0, 200)}`);
       migrationsEnsured = true;
     } else {
       logger.error("Automatic database migration failed:", migrationError);

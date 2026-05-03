@@ -160,7 +160,14 @@ export class UnifiedCollaborationService {
     );
     
     this.engineServer.on('connection_error', (err) => {
-      logger.warn('[Collaboration] Engine connection error:', err.message, err.context);
+      const msg = err?.message || '';
+      const ctx = err?.context || {};
+      const isBenign = msg === 'Transport unknown' || msg === 'Bad request' || msg === 'Bad handshake method';
+      if (isBenign) {
+        logger.debug('[Collaboration] Engine connection skipped (benign):', msg);
+      } else {
+        logger.warn('[Collaboration] Engine connection error:', msg, ctx);
+      }
     });
     
     this.io.on('connect_error', (err) => {

@@ -94,11 +94,16 @@ export function securityLoggingMiddleware(req: Request, res: Response, next: Nex
   const isSensitive = sensitivePatterns.some(pattern => req.path.startsWith(pattern));
 
   if (isSensitive) {
-    logger.security(`Sensitive endpoint accessed: ${req.method} ${req.path}`, {
-      ip: extractIp(req),
-      userAgent: req.headers['user-agent'],
-      userId: extractUserId(req),
-    });
+    const userId = extractUserId(req);
+    const isReadOnly = req.method === 'GET' || req.method === 'HEAD';
+    const isUnauthenticatedReadProbe = isReadOnly && !userId;
+    if (!isUnauthenticatedReadProbe) {
+      logger.security(`Sensitive endpoint accessed: ${req.method} ${req.path}`, {
+        ip: extractIp(req),
+        userAgent: req.headers['user-agent'],
+        userId,
+      });
+    }
   }
 
   const suspiciousPatterns = [

@@ -358,11 +358,11 @@ export class PerformanceMonitoringService extends EventEmitter {
         this.metricsPersistenceDisabled = true;
         logger.warn('Disabling performance metrics persistence due to schema mismatch', {
           code: error?.code || error?.cause?.code,
-          message: error?.message || error?.cause?.message,
+          message: (error?.message || error?.cause?.message || '').slice(0, 200),
         });
         return;
       }
-      logger.error('Failed to store metrics in database:', error);
+      logger.error('Failed to store metrics in database:', error?.message || error);
     }
   }
 
@@ -436,7 +436,7 @@ export class PerformanceMonitoringService extends EventEmitter {
         this.alertsPersistenceDisabled = true;
         logger.warn('Disabling alert persistence due to schema mismatch', {
           code: error?.code || error?.cause?.code,
-          message: error?.message || error?.cause?.message,
+          message: (error?.message || error?.cause?.message || "").slice(0, 200),
         });
         return;
       }
@@ -462,7 +462,7 @@ export class PerformanceMonitoringService extends EventEmitter {
         this.metricsPersistenceDisabled = true;
         logger.warn('Disabling metrics cleanup due to schema mismatch', {
           code: error?.code || error?.cause?.code,
-          message: error?.message || error?.cause?.message,
+          message: (error?.message || error?.cause?.message || "").slice(0, 200),
         });
         return;
       }
@@ -524,7 +524,7 @@ export class PerformanceMonitoringService extends EventEmitter {
         this.metricsPersistenceDisabled = true;
         logger.warn('Disabling metrics reads due to schema mismatch', {
           code: error?.code || error?.cause?.code,
-          message: error?.message || error?.cause?.message,
+          message: (error?.message || error?.cause?.message || "").slice(0, 200),
         });
         return memoryMetrics;
       }
@@ -558,7 +558,7 @@ export class PerformanceMonitoringService extends EventEmitter {
         this.metricsPersistenceDisabled = true;
         logger.warn('Disabling historical metrics reads due to schema mismatch', {
           code: error?.code || error?.cause?.code,
-          message: error?.message || error?.cause?.message,
+          message: (error?.message || error?.cause?.message || "").slice(0, 200),
         });
         return [];
       }
