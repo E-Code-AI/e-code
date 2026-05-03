@@ -13,6 +13,7 @@ import { containsPlanOrTasks,extractAndFormatTasks } from '@/lib/task-extractor'
 import { cn } from '@/lib/utils';
 import type { AutonomousBuildMode,Message } from '@/stores/agentConversationStore';
 import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import {
 AlertCircle,
 Bot,
@@ -109,7 +110,16 @@ const messageVariants = {
 function formatRelativeTimestamp(timestamp: Date | string | undefined) {
   if (!timestamp) return '';
   try {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true, locale: fr });
+  } catch {
+    return '';
+  }
+}
+
+function formatAbsoluteTimestamp(timestamp: Date | string | undefined) {
+  if (!timestamp) return '';
+  try {
+    return new Date(timestamp).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' });
   } catch {
     return '';
   }
@@ -119,23 +129,23 @@ function formatWorkedDuration(totalMs: number) {
   const safeMs = Math.max(0, Math.round(totalMs));
   const totalSeconds = Math.floor(safeMs / 1000);
   if (totalSeconds === 0) {
-    return 'under a second';
+    return 'moins d\u2019une seconde';
   }
   if (totalSeconds < 60) {
-    return `${totalSeconds} second${totalSeconds === 1 ? '' : 's'}`;
+    return `${totalSeconds} seconde${totalSeconds === 1 ? '' : 's'}`;
   }
   const totalMinutes = Math.floor(totalSeconds / 60);
   const remainingSeconds = totalSeconds % 60;
   if (totalMinutes < 60) {
     return remainingSeconds > 0
-      ? `${totalMinutes} minute${totalMinutes === 1 ? '' : 's'} ${remainingSeconds} second${remainingSeconds === 1 ? '' : 's'}`
+      ? `${totalMinutes} min ${remainingSeconds} s`
       : `${totalMinutes} minute${totalMinutes === 1 ? '' : 's'}`;
   }
   const totalHours = Math.floor(totalMinutes / 60);
   const remainingMinutes = totalMinutes % 60;
   return remainingMinutes > 0
-    ? `${totalHours} hour${totalHours === 1 ? '' : 's'} ${remainingMinutes} minute${remainingMinutes === 1 ? '' : 's'}`
-    : `${totalHours} hour${totalHours === 1 ? '' : 's'}`;
+    ? `${totalHours} h ${remainingMinutes} min`
+    : `${totalHours} heure${totalHours === 1 ? '' : 's'}`;
 }
 
 export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, EnhancedChatMessageProps>(function EnhancedChatMessage({
@@ -238,6 +248,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   })) as Task[];
 
   const relativeTimestamp = useMemo(() => formatRelativeTimestamp(message.timestamp), [message.timestamp]);
+  const absoluteTimestamp = useMemo(() => formatAbsoluteTimestamp(message.timestamp), [message.timestamp]);
 
   const messageStructureSummary = useMemo(() => {
     const toolExecutions = message.toolExecutions || [];
@@ -370,10 +381,26 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
   }, [message.toolExecutions]);
 
   const messageStatus = message.status as string | undefined;
+  const hasActiveWork = useMemo(() => {
+    const tools = message.toolExecutions || [];
+    if (tools.some((t) => t.status === 'running' || t.status === 'pending')) return true;
+    const tasks = (displayTasks || []) as Task[];
+    if (tasks.some((t) => {
+      const s = (t as any).status;
+      return s === 'pending' || s === 'in_progress' || s === 'active';
+    })) return true;
+    const actions = message.actions || [];
+    if (actions.some((a) => {
+      const s = (a as any).status;
+      return s === 'pending' || s === 'executing';
+    })) return true;
+    return false;
+  }, [message.toolExecutions, displayTasks, message.actions]);
+
   const userStatusLabel = useMemo(() => {
-    if (messageStatus === 'error') return 'Failed';
-    if (messageStatus === 'sending' || messageStatus === 'pending') return 'Sending';
-    return 'Sent';
+    if (messageStatus === 'error') return 'Échec';
+    if (messageStatus === 'sending' || messageStatus === 'pending') return 'Envoi…';
+    return 'Envoyé';
   }, [messageStatus]);
   
   return (
@@ -457,19 +484,34 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-[12px] font-semibold text-foreground">
                     Agent
-                    {message.isStreaming && (
+                    {message.isStreaming ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
                         <Radio className="h-2.5 w-2.5" />
-                        Live
+                        En direct
                       </span>
-                    )}
+                    ) : isError ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] font-medium text-destructive">
+                        <AlertCircle className="h-2.5 w-2.5" />
+                        Erreur
+                      </span>
+                    ) : hasActiveWork ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[9px] font-medium text-violet-600 dark:text-violet-400">
+                        <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                        En cours
+                      </span>
+                    ) : (message.content || hasTasks || hasTools) ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <Check className="h-2.5 w-2.5" />
+                        Terminé
+                      </span>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground">
                     {message.metadata?.model && (
                       <span className="truncate max-w-[180px]">{message.metadata.model}</span>
                     )}
                     {relativeTimestamp && (
-                      <span className="inline-flex items-center gap-1">
+                      <span className="inline-flex items-center gap-1" title={absoluteTimestamp}>
                         <Clock3 className="h-2.5 w-2.5" />
                         {relativeTimestamp}
                       </span>
@@ -502,7 +544,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                   <span className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <UserRound className="h-3 w-3" />
                   </span>
-                  You
+                  Vous
                 </span>
                 <span
                   className={cn(
@@ -528,7 +570,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                 <RichMessageContent content={message.content} className="[&_p:first-child]:mt-0 [&_p:last-child]:mb-0" />
               </div>
               {relativeTimestamp && (
-                <div className="flex justify-end text-[10px] text-muted-foreground">
+                <div className="flex justify-end text-[10px] text-muted-foreground" title={absoluteTimestamp}>
                   {relativeTimestamp}
                 </div>
               )}
@@ -547,7 +589,7 @@ export const EnhancedChatMessage = memo(forwardRef<EnhancedChatMessageRef, Enhan
                   data-testid={`enhanced-message-expand-${message.id}`}
                 >
                   <PanelsTopLeft className="mr-1.5 h-3 w-3" />
-                  Show full message
+                  Afficher le message complet
                 </Button>
               </div>
             ) : (
@@ -1079,7 +1121,7 @@ export const StreamingSkeleton = memo(function StreamingSkeleton() {
   );
 });
 
-export const TypingIndicator = memo(function TypingIndicator({ text = "Thinking" }: { text?: string }) {
+export const TypingIndicator = memo(function TypingIndicator({ text = "Réflexion" }: { text?: string }) {
   return (
     <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}

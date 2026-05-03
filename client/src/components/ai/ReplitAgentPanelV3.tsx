@@ -3278,13 +3278,13 @@ export function ReplitAgentPanelV3({
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       )}
                       data-testid="button-voice"
-                      title={isRecording ? "Stop recording" : "Voice input"}
+                      title={isRecording ? "Arrêter l'enregistrement" : "Saisie vocale"}
                     >
                       <Mic className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>{isRecording ? "Stop recording" : "Voice input"}</p>
+                    <p>{isRecording ? "Arrêter l'enregistrement" : "Saisie vocale"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3350,7 +3350,7 @@ export function ReplitAgentPanelV3({
                       : "bg-muted text-muted-foreground"
                   )}
                   data-testid="button-send"
-                  title="Send message"
+                  title="Envoyer le message"
                 >
                   {isWorking ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

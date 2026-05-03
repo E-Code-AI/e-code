@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 import { getCSRFToken,withBootstrapHeaders } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
-import { Bot,DollarSign,Loader2,User,Volume2,VolumeX } from 'lucide-react';
-import { useCallback,useRef,useState } from 'react';
+import { AlertCircle,Bot,Check,Clock,Copy,DollarSign,Loader2,User,Volume2,VolumeX } from 'lucide-react';
+import { useCallback,useEffect,useRef,useState } from 'react';
 import { ActionMessage } from './ActionMessage';
 import { MultiFileDiff } from './FileDiffViewer';
 import { RichMessageContent } from './RichMessageContent';
@@ -139,20 +139,87 @@ function useTTS(text: string) {
   return { state, speak, stop };
 }
 
+/** Format a Date as French relative time, refreshed every minute. */
+function useRelativeTime(date: Date | undefined): string {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => force((n) => n + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+  if (!date) return '';
+  const ts = date instanceof Date ? date.getTime() : new Date(date).getTime();
+  const diff = Math.max(0, Date.now() - ts);
+  const s = Math.floor(diff / 1000);
+  if (s < 10) return "à l'instant";
+  if (s < 60) return `il y a ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `il y a ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `il y a ${h} h`;
+  const d = Math.floor(h / 24);
+  return `il y a ${d} j`;
+}
+
+function formatAbsolute(date: Date | undefined): string {
+  if (!date) return '';
+  const d = date instanceof Date ? date : new Date(date);
+  return d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'medium' });
+}
+
+/** Compute a high-level status for an assistant message. */
+function getMessageStatus(message: AgentMessage): 'working' | 'error' | 'done' | null {
+  if (message.role !== 'assistant') return null;
+  if (message.error) return 'error';
+  if (message.thinking?.isStreaming) return 'working';
+  if (message.tasks?.some((t) => t.status === 'in_progress' || t.status === 'pending')) return 'working';
+  if (message.actions?.some((a) => a.status === 'pending')) return 'working';
+  if (message.content || message.tasks?.length || message.actions?.length || message.checkpoint) return 'done';
+  return null;
+}
+
 export function MessageRenderer({ message, onApproveAction, onRejectAction }: MessageRendererProps) {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const { state: ttsState, speak } = useTTS(message.content || '');
+  const relTime = useRelativeTime(message.timestamp);
+  const absTime = formatAbsolute(message.timestamp);
+  const status = getMessageStatus(message);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    if (!message.content) return;
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast({ description: 'Impossible de copier dans le presse-papiers.', variant: 'destructive' });
+    }
+  }, [message.content]);
 
   // System messages (progress, notifications)
   if (isSystem) {
+    const isProgress = message.type === 'progress';
+    const isError = message.type === 'error';
     return (
       <div className="px-4 py-2" data-testid="system-message">
         <div className={cn(
           "text-[11px] flex items-center gap-2",
-          message.type === 'progress' ? "text-[var(--ecode-accent)]" : "text-[var(--ecode-text-secondary)]"
+          isProgress && "text-[var(--ecode-accent)]",
+          isError && "text-red-500",
+          !isProgress && !isError && "text-[var(--ecode-text-secondary)]"
         )}>
-          {message.content}
+          {isProgress && <Loader2 className="h-3 w-3 animate-spin flex-shrink-0" />}
+          {isError && <AlertCircle className="h-3 w-3 flex-shrink-0" />}
+          <span className="flex-1 min-w-0">{message.content}</span>
+          {relTime && (
+            <span
+              className="text-[10px] text-[var(--ecode-text-tertiary)] flex-shrink-0"
+              title={absTime}
+            >
+              {relTime}
+            </span>
+          )}
         </div>
         {message.progress && (
           <div className="mt-2 w-full bg-[var(--ecode-surface)] rounded-full h-2 overflow-hidden">
@@ -190,6 +257,40 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
 
       {/* Content */}
       <div className="flex-1 min-w-0 space-y-3">
+        {/* Header row: role label + status pill + relative time */}
+        <div className="flex items-center gap-2 -mt-0.5">
+          <span className="text-[11px] font-medium text-[var(--ecode-text-secondary)]">
+            {isUser ? 'Vous' : 'Agent'}
+          </span>
+          {status === 'working' && (
+            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-500 border border-violet-500/20">
+              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+              en cours
+            </span>
+          )}
+          {status === 'error' && (
+            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/20">
+              <AlertCircle className="h-2.5 w-2.5" />
+              erreur
+            </span>
+          )}
+          {status === 'done' && (
+            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <Check className="h-2.5 w-2.5" />
+              terminé
+            </span>
+          )}
+          {relTime && (
+            <span
+              className="ml-auto text-[10px] text-[var(--ecode-text-tertiary)] inline-flex items-center gap-1"
+              title={absTime}
+            >
+              <Clock className="h-2.5 w-2.5" />
+              {relTime}
+            </span>
+          )}
+        </div>
+
         {/* Main text content with rich markdown formatting */}
         {message.content && (
           <RichMessageContent content={message.content} />
@@ -291,28 +392,53 @@ export function MessageRenderer({ message, onApproveAction, onRejectAction }: Me
             <div />
           )}
 
-          {/* TTS button — assistant messages only, appears on hover */}
-          {!isUser && message.content && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn(
-                "h-7 w-7 rounded-full transition-all",
-                ttsState === 'idle'
-                  ? "opacity-0 group-hover:opacity-100 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-surface)]"
-                  : "opacity-100 text-primary"
+          {/* Action buttons — appear on hover */}
+          {message.content && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={copied ? 'Message copié' : 'Copier le message'}
+                className={cn(
+                  "h-7 w-7 rounded-full transition-all",
+                  copied
+                    ? "opacity-100 text-emerald-500"
+                    : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-surface)]"
+                )}
+                title={copied ? 'Copié !' : 'Copier le message'}
+                onClick={handleCopy}
+                data-testid={`button-copy-message-${message.id}`}
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              {!isUser && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={ttsState === 'playing' ? 'Arrêter la lecture' : 'Lire à voix haute'}
+                  className={cn(
+                    "h-7 w-7 rounded-full transition-all",
+                    ttsState === 'idle'
+                      ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 text-[var(--ecode-text-secondary)] hover:text-[var(--ecode-text)] hover:bg-[var(--ecode-surface)]"
+                      : "opacity-100 text-primary"
+                  )}
+                  title={ttsState === 'playing' ? 'Arrêter la lecture' : 'Lire à voix haute'}
+                  onClick={speak}
+                >
+                  {ttsState === 'loading' ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : ttsState === 'playing' ? (
+                    <VolumeX className="h-3.5 w-3.5" />
+                  ) : (
+                    <Volume2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
               )}
-              title={ttsState === 'playing' ? 'Arrêter la lecture' : 'Lire à voix haute'}
-              onClick={speak}
-            >
-              {ttsState === 'loading' ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : ttsState === 'playing' ? (
-                <VolumeX className="h-3.5 w-3.5" />
-              ) : (
-                <Volume2 className="h-3.5 w-3.5" />
-              )}
-            </Button>
+            </div>
           )}
         </div>
       </div>
