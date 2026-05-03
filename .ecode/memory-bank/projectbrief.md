@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Overview
-Automated test project
+preview-test-blank
 
 ## Core Requirements
 [To be extracted from requirements]

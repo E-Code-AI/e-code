@@ -680,8 +680,20 @@ router.get('/url', async (req, res) => {
   }
 });
 
-// Redirect non-trailing-slash to trailing-slash for preview root
-router.get('/projects/:id/preview', (req, res) => {
+// Redirect non-trailing-slash to trailing-slash for preview root.
+// IMPORTANT: Express runs without strict routing, so the path pattern
+// '/projects/:id/preview' matches BOTH '/projects/:id/preview' and
+// '/projects/:id/preview/'. Without the explicit trailing-slash guard
+// below, requests to the trailing-slash URL would match this redirect
+// handler first (it's declared before the real handler at
+// '/projects/:id/preview/') and 307 right back to themselves, producing
+// an infinite redirect loop that leaves the preview iframe blank.
+router.get('/projects/:id/preview', (req, res, next) => {
+  // req.path strips the query string; guard against the trailing-slash
+  // variant that the dedicated handler below should serve instead.
+  if (req.path.endsWith('/')) {
+    return next();
+  }
   const query = req.originalUrl.includes('?')
     ? req.originalUrl.slice(req.originalUrl.indexOf('?'))
     : '';
