@@ -1123,5 +1123,145 @@ export default function createAgentToolsRouter(): Router {
     }
   });
 
+  // ============================================
+  // IMAGE GENERATION ENDPOINT
+  // ============================================
+
+  /**
+   * Typed capability interface for providers that support image generation.
+   * Using a type predicate avoids unsafe `any` casts in production route code.
+   */
+  interface ImageCapableProvider {
+    generateImage(params: { prompt: string; width: number; height: number; style: string }): Promise<Record<string, unknown>>;
+  }
+
+  function hasImageGeneration(p: unknown): p is ImageCapableProvider {
+    return (
+      typeof p === 'object' &&
+      p !== null &&
+      'generateImage' in p &&
+      typeof (p as Record<string, unknown>).generateImage === 'function'
+    );
+  }
+
+  /**
+   * POST /api/agent/tools/image-generation
+   * Generate an image from a text prompt using the available AI provider.
+   * Falls back gracefully when no vision-capable provider is configured.
+   */
+  router.post('/tools/image-generation', async (req, res) => {
+    try {
+      const { ImageGenerationRequestSchema } = await import('@shared/agent-types');
+      const parsed = ImageGenerationRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ success: false, error: 'Invalid request', details: parsed.error.flatten() });
+      }
+      const { prompt, projectId: _projectId, conversationId: _conversationId, width = 1024, height = 1024, style = 'natural' } = parsed.data;
+
+      // Attempt image generation via the AI provider manager
+      const { aiProviderManager } = await import('../ai/ai-provider-manager');
+      const provider = aiProviderManager.getProviderByName('openai') || aiProviderManager.getDefaultProvider();
+
+      if (!hasImageGeneration(provider)) {
+        return res.status(501).json({
+          success: false,
+          error: 'Image generation not available — configure an OpenAI provider with DALL-E access.',
+        });
+      }
+
+      const result = await provider.generateImage({ prompt, width, height, style });
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      logger.error('Image generation error:', redactErrorForLog(error));
+      res.status(500).json({ success: false, error: 'Image generation failed' });
+    }
+  });
+
+  // ============================================
+  // REPLIT.MD UPDATE ENDPOINT
+  // ============================================
+
+  /**
+   * POST /api/agent/tools/replit-md
+   * Update the project's replit.md file.
+   * The Agent calls this when it learns something new about the project
+   * that should persist across sessions (architecture, preferences, etc.).
+   * REQUIRES: Authentication + Project ownership enforced by checkAgentProjectAccess.
+   */
+  router.post('/tools/replit-md', async (req, res) => {
+    try {
+      const { UpdateReplitMdRequestSchema } = await import('@shared/agent-types');
+      const parsed = UpdateReplitMdRequestSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ success: false, error: 'Invalid request', details: parsed.error.flatten() });
+      }
+      const { projectId, content, reason } = parsed.data;
+      const projectIdNum = Number(projectId);
+      if (isNaN(projectIdNum) || !Number.isFinite(projectIdNum) || projectIdNum <= 0) {
+        return res.status(400).json({ success: false, error: 'Invalid project ID — must be a positive integer' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectIdNum)) {
+        return;
+      }
+
+      const { getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      const workspacePath = await getProjectWorkspacePath(projectIdNum);
+      if (!workspacePath) {
+        return res.status(404).json({ success: false, error: 'Project workspace not found' });
+      }
+
+      const { promises: fs } = await import('fs');
+      const path = await import('path');
+      const replitMdPath = path.join(workspacePath, 'replit.md');
+
+      await fs.writeFile(replitMdPath, content, 'utf-8');
+      logger.info(`[AgentTools] replit.md updated for project ${projectIdNum}${reason ? ` (reason: ${reason})` : ''}`);
+
+      res.json({ success: true, path: 'replit.md', bytesWritten: Buffer.byteLength(content) });
+    } catch (error: any) {
+      logger.error('replit.md update error:', redactErrorForLog(error));
+      res.status(500).json({ success: false, error: 'Failed to update replit.md' });
+    }
+  });
+
+  /**
+   * GET /api/agent/tools/replit-md/:projectId
+   * Read the current replit.md content so the agent can include it in context.
+   * REQUIRES: Authentication + Project ownership enforced by checkAgentProjectAccess.
+   */
+  router.get('/tools/replit-md/:projectId', async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId, 10);
+      if (isNaN(projectId)) {
+        return res.status(400).json({ success: false, error: 'Invalid project ID' });
+      }
+
+      if (!await checkAgentProjectAccess(req, res, projectId)) {
+        return;
+      }
+
+      const { getProjectWorkspacePath } = await import('../utils/project-fs-sync');
+      const workspacePath = await getProjectWorkspacePath(projectId);
+      if (!workspacePath) {
+        return res.status(404).json({ success: false, error: 'Project workspace not found' });
+      }
+
+      const { promises: fs } = await import('fs');
+      const path = await import('path');
+      const replitMdPath = path.join(workspacePath, 'replit.md');
+
+      try {
+        const content = await fs.readFile(replitMdPath, 'utf-8');
+        res.json({ success: true, content, path: 'replit.md', size: Buffer.byteLength(content) });
+      } catch {
+        res.json({ success: true, content: '', path: 'replit.md', size: 0, exists: false });
+      }
+    } catch (error: any) {
+      logger.error('replit.md read error:', redactErrorForLog(error));
+      res.status(500).json({ success: false, error: 'Failed to read replit.md' });
+    }
+  });
+
   return router;
 }

@@ -3,6 +3,7 @@ import { agentSessions,agentWorkflows,AI_MODELS,commandExecutions,fileOperations
 import { eq } from 'drizzle-orm';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 import { db } from '../db';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { ensureAuthenticated } from '../middleware/auth';
@@ -22,6 +23,10 @@ import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 import { redactErrorForLog } from '../utils/error-redaction';
+import { ChatRequestSchema } from '@shared/agent-types';
+
+// SSE heartbeat interval (ms) — keeps proxy connections alive during long generations
+const SSE_HEARTBEAT_INTERVAL_MS = 15_000;
 
 const logger = createLogger('agent-router');
 const router = Router();
@@ -290,11 +295,26 @@ router.post('/chat', async (req, res) => {
 
 // POST /api/agent/chat/stream — SSE streaming chat used by editor AIAgentPanel
 router.post('/chat/stream', async (req, res) => {
+  let heartbeat: ReturnType<typeof setInterval> | null = null;
   try {
-    const { projectId, message, context, provider: _providerName, systemPrompt: extraSystemPrompt, maxTokens, temperature } = req.body;
-    if (!message) return res.status(400).json({ error: 'message is required' });
+    // Zod validation — reject malformed payloads before touching the AI layer
+    const parsed = ChatRequestSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
+    }
+    const { projectId, message, context, systemPrompt: extraSystemPrompt, maxTokens, temperature } = parsed.data;
 
     if (!validateAndSetSSEHeaders(res, req)) return;
+
+    // SSE heartbeat — keeps proxy/load-balancer connections alive during long generations
+    heartbeat = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ type: 'heartbeat', ts: Date.now() })}\n\n`);
+      }
+    }, SSE_HEARTBEAT_INTERVAL_MS);
+
+    // Clean up heartbeat whenever the client disconnects
+    res.on('close', () => { if (heartbeat) clearInterval(heartbeat); });
 
     const { aiProviderManager } = await import('../ai/ai-provider-manager');
     const provider = aiProviderManager.getDefaultProvider();
@@ -326,7 +346,7 @@ router.post('/chat/stream', async (req, res) => {
       const chunk = responseText.slice(i, i + chunkSize);
       res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
     }
-    res.write(`data: ${JSON.stringify({ totalTokens: Math.ceil(responseText.length / 4) })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'metadata', totalTokens: Math.ceil(responseText.length / 4) })}\n\n`);
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {
@@ -337,6 +357,8 @@ router.post('/chat/stream', async (req, res) => {
       res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
       res.end();
     }
+  } finally {
+    if (heartbeat) clearInterval(heartbeat);
   }
 });
 
