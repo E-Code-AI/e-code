@@ -7,6 +7,17 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
 import { Tabs,TabsContent,TabsList,TabsTrigger } from "@/components/ui/tabs";
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from '@/lib/queryClient';
 import {
@@ -15,7 +26,8 @@ Database,
 Download,
 Key,
 Shield,
-Terminal
+Terminal,
+Trash2
 } from "lucide-react";
 import { useEffect,useState } from 'react';
 import { useParams } from 'wouter';
@@ -207,6 +219,26 @@ export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreS
       setSSHKeys(keys);
     } catch (error) {
       console.error('Failed to fetch SSH keys:', error);
+    }
+  };
+
+  const deleteSshKey = async (keyId: string, keyLabel: string) => {
+    setLoading(true);
+    try {
+      await apiRequest('DELETE', `/api/ssh-keys/${keyId}`);
+      setSSHKeys(prev => prev.filter(k => k.id !== keyId));
+      toast({
+        title: "SSH Key Deleted",
+        description: `Key "${keyLabel}" has been removed.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to Delete Key",
+        description: error?.message || "Unable to delete SSH key",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -527,20 +559,55 @@ export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreS
                     <div className="flex items-center justify-center h-full py-8 text-[11px] text-muted-foreground">
                       No SSH keys registered
                     </div>
-                  ) : sshKeys.map((key: any) => (
-                    <div key={key.id} className="flex items-center justify-between px-2.5 py-2 border-b border-[var(--ecode-border)]">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-[var(--ecode-text)]">{key.label || key.name}</p>
-                        <p className="text-[10px] text-[var(--ecode-text-muted)] font-mono truncate">
-                          {key.keyType || key.type} · {key.fingerprint}
-                        </p>
-                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
-                          Added {new Date(key.createdAt || key.created).toLocaleDateString()}
-                        </p>
+                  ) : sshKeys.map((key: any) => {
+                    const displayLabel = key.label || key.name;
+                    return (
+                      <div key={key.id} className="flex items-center justify-between px-2.5 py-2 border-b border-[var(--ecode-border)]" data-testid={`ssh-key-${key.id}`}>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-[var(--ecode-text)]">{displayLabel}</p>
+                          <p className="text-[10px] text-[var(--ecode-text-muted)] font-mono truncate">
+                            {key.keyType || key.type} · {key.fingerprint}
+                          </p>
+                          <p className="text-[10px] text-[var(--ecode-text-muted)]">
+                            Added {new Date(key.createdAt || key.created).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-2 shrink-0">
+                          <Badge className="text-[10px] h-5 bg-green-500">Active</Badge>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                disabled={loading}
+                                data-testid={`button-delete-ssh-key-${key.id}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent data-testid={`dialog-confirm-delete-ssh-key-${key.id}`}>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete SSH key?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently revoke "{displayLabel}". Anyone using the matching private key will lose SSH access. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel data-testid={`button-cancel-delete-ssh-key-${key.id}`}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteSshKey(key.id, displayLabel)}
+                                  data-testid={`button-confirm-delete-ssh-key-${key.id}`}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
                       </div>
-                      <Badge className="text-[10px] h-5 bg-green-500 ml-2 shrink-0">Active</Badge>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </ScrollArea>
               </div>
             </CardContent>

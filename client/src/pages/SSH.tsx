@@ -12,6 +12,17 @@ DialogHeader,
 DialogTitle,
 DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogTitle,
+AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -197,16 +208,36 @@ export default function SSH() {
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(key.fingerprint, key.label)}>
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive"
-                        onClick={() => deleteKeyMutation.mutate(key.id)}
-                        disabled={deleteKeyMutation.isPending}
-                        data-testid={`button-delete-ssh-key-${key.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive"
+                            disabled={deleteKeyMutation.isPending}
+                            data-testid={`button-delete-ssh-key-${key.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent data-testid={`dialog-confirm-delete-ssh-key-${key.id}`}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete SSH key?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently revoke "{key.label}". Anyone using the matching private key will lose SSH access. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel data-testid={`button-cancel-delete-ssh-key-${key.id}`}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteKeyMutation.mutate(key.id)}
+                              data-testid={`button-confirm-delete-ssh-key-${key.id}`}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 </div>

@@ -5,6 +5,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Terminal, X, Plus, Trash2, Key, Copy, Check, ChevronDown, ChevronRight,
   Loader2, ExternalLink, Monitor, AlertCircle,
 } from "lucide-react";
@@ -260,13 +271,34 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
                           {key.lastUsedAt && ` · Used ${new Date(key.lastUsedAt).toLocaleDateString()}`}
                         </p>
                       </div>
-                      <button
-                        className="p-1 text-[var(--ide-text-muted)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                        onClick={() => deleteKeyMutation.mutate(key.id)}
-                        data-testid={`button-delete-ssh-key-${key.id}`}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            className="p-1 text-[var(--ide-text-muted)] hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                            disabled={deleteKeyMutation.isPending}
+                            data-testid={`button-delete-ssh-key-${key.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent data-testid={`dialog-confirm-delete-ssh-key-${key.id}`}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete SSH key?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently revoke "{key.label}". Anyone using the matching private key will lose SSH access. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel data-testid={`button-cancel-delete-ssh-key-${key.id}`}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteKeyMutation.mutate(key.id)}
+                              data-testid={`button-confirm-delete-ssh-key-${key.id}`}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))}
