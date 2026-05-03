@@ -20,35 +20,35 @@ interface TaskMessageProps {
 const STATUS_CONFIG: Record<TaskStatus, { icon: typeof Circle; label: string; color: string; bgColor: string; borderColor: string }> = {
   pending: {
     icon: Circle,
-    label: 'Pending',
+    label: 'En attente',
     color: 'text-gray-600 dark:text-gray-400',
     bgColor: 'bg-gray-50 dark:bg-gray-950/10',
     borderColor: 'border-gray-200 dark:border-gray-800'
   },
   in_progress: {
     icon: Loader2,
-    label: 'In Progress',
+    label: 'En cours',
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-50 dark:bg-blue-950/10',
     borderColor: 'border-blue-200 dark:border-blue-800'
   },
   completed: {
     icon: CheckCircle2,
-    label: 'Completed',
+    label: 'Terminé',
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-50 dark:bg-green-950/10',
     borderColor: 'border-green-200 dark:border-green-800'
   },
   failed: {
     icon: XCircle,
-    label: 'Failed',
+    label: 'Échec',
     color: 'text-red-600 dark:text-red-400',
     bgColor: 'bg-red-50 dark:bg-red-950/10',
     borderColor: 'border-red-200 dark:border-red-800'
   },
   cancelled: {
     icon: XCircle,
-    label: 'Cancelled',
+    label: 'Annulé',
     color: 'text-orange-600 dark:text-orange-400',
     bgColor: 'bg-orange-50 dark:bg-orange-950/10',
     borderColor: 'border-orange-200 dark:border-orange-800'
@@ -84,7 +84,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[11px] font-medium text-[var(--ecode-text)]">
-              Tasks Progress
+              Avancement des tâches
             </span>
             <span className="text-[11px] text-[var(--ecode-text-secondary)]">
               {completedTasks} / {totalTasks}
@@ -187,7 +187,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                           <div className="flex items-center gap-2 mb-1">
                             <FileText className="h-3 w-3 text-green-600 dark:text-green-400" />
                             <span className="text-[11px] font-medium text-[var(--ecode-text)]">
-                              Files Created ({task.artifacts.filesCreated.length})
+                              Fichiers créés ({task.artifacts.filesCreated.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
@@ -205,7 +205,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                           <div className="flex items-center gap-2 mb-1">
                             <FileText className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                             <span className="text-[11px] font-medium text-[var(--ecode-text)]">
-                              Files Modified ({task.artifacts.filesModified.length})
+                              Fichiers modifiés ({task.artifacts.filesModified.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
@@ -223,7 +223,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                           <div className="flex items-center gap-2 mb-1">
                             <Package className="h-3 w-3 text-purple-600 dark:text-purple-400" />
                             <span className="text-[11px] font-medium text-[var(--ecode-text)]">
-                              Packages Installed ({task.artifacts.packagesInstalled.length})
+                              Paquets installés ({task.artifacts.packagesInstalled.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">
@@ -241,7 +241,7 @@ export function TaskMessage({ tasks, className }: TaskMessageProps) {
                           <div className="flex items-center gap-2 mb-1">
                             <Terminal className="h-3 w-3 text-orange-600 dark:text-orange-400" />
                             <span className="text-[11px] font-medium text-[var(--ecode-text)]">
-                              Commands Executed ({task.artifacts.commands.length})
+                              Commandes exécutées ({task.artifacts.commands.length})
                             </span>
                           </div>
                           <div className="pl-5 space-y-1">

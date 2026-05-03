@@ -67,14 +67,14 @@ interface StatusConfig {
 
 const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
   idle: {
-    label: 'Ready',
+    label: 'Prêt',
     icon: Sparkles,
     color: 'text-muted-foreground',
     bgColor: 'bg-muted/50',
     animation: 'pulse',
   },
   thinking: {
-    label: 'Thinking',
+    label: 'Réflexion',
     icon: Brain,
     color: 'text-purple-500',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
@@ -82,7 +82,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🧠',
   },
   vibing: {
-    label: 'Vibing',
+    label: 'Inspiration',
     icon: Music,
     color: 'text-pink-500',
     bgColor: 'bg-pink-100 dark:bg-pink-900/30',
@@ -90,7 +90,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '✨',
   },
   working: {
-    label: 'Working',
+    label: 'En cours',
     icon: Wand2,
     color: 'text-blue-500',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30',
@@ -98,7 +98,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🔧',
   },
   building: {
-    label: 'Building',
+    label: 'Construction',
     icon: Hammer,
     color: 'text-amber-500',
     bgColor: 'bg-amber-100 dark:bg-amber-900/30',
@@ -106,7 +106,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🏗️',
   },
   styling: {
-    label: 'Styling',
+    label: 'Mise en forme',
     icon: Palette,
     color: 'text-fuchsia-500',
     bgColor: 'bg-fuchsia-100 dark:bg-fuchsia-900/30',
@@ -114,7 +114,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🎨',
   },
   testing: {
-    label: 'Testing',
+    label: 'Tests',
     icon: Shield,
     color: 'text-cyan-500',
     bgColor: 'bg-cyan-100 dark:bg-cyan-900/30',
@@ -122,7 +122,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🧪',
   },
   deploying: {
-    label: 'Deploying',
+    label: 'Déploiement',
     icon: Rocket,
     color: 'text-orange-500',
     bgColor: 'bg-orange-100 dark:bg-orange-900/30',
@@ -130,7 +130,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '🚀',
   },
   complete: {
-    label: 'Complete',
+    label: 'Terminé',
     icon: CheckCircle2,
     color: 'text-green-500',
     bgColor: 'bg-green-100 dark:bg-green-900/30',
@@ -138,7 +138,7 @@ const STATUS_CONFIGS: Record<AgentStatus, StatusConfig> = {
     emoji: '✅',
   },
   error: {
-    label: 'Error',
+    label: 'Erreur',
     icon: Package,
     color: 'text-red-500',
     bgColor: 'bg-red-100 dark:bg-red-900/30',
@@ -407,7 +407,7 @@ export function TaskProgressItem({ name, status, index, isLast }: TaskProgressIt
                 ))
               )}
             </div>
-            <span className="text-[11px] text-muted-foreground">In progress</span>
+            <span className="text-[11px] text-muted-foreground">En cours</span>
           </LazyMotionDiv>
         )}
       </div>
@@ -427,7 +427,7 @@ interface InlineWorkingIndicatorProps {
 }
 
 export function InlineWorkingIndicator({
-  message = 'Working...',
+  message = 'En cours…',
   status = 'working',
   subMessage
 }: InlineWorkingIndicatorProps) {
@@ -454,7 +454,7 @@ export function InlineSearchIndicator({ query }: InlineSearchIndicatorProps) {
       className="flex items-center gap-2 text-[13px] text-muted-foreground py-1"
     >
       <Search className="h-4 w-4" />
-      <span>Searched Replit's integrations for "{query}"</span>
+      <span>Recherche dans les intégrations Replit pour « {query} »</span>
     </LazyMotionDiv>
   );
 }
@@ -470,7 +470,7 @@ export function InlineAppType({ appType }: InlineAppTypeProps) {
       animate={{ opacity: 1, y: 0 }}
       className="flex items-center gap-2 text-[13px] py-1"
     >
-      <span className="text-muted-foreground">App type</span>
+      <span className="text-muted-foreground">Type d’app</span>
       <span className="text-muted-foreground">○</span>
       <span className="font-medium">{appType}</span>
     </LazyMotionDiv>
@@ -563,7 +563,7 @@ export function InlinePlanCard({
           <span className="text-[13px] font-medium">{title}</span>
           {features.length > 0 && (
             <span className="text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-              {features.length} features
+              {features.length} fonctionnalité{features.length > 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -639,7 +639,7 @@ export function InlinePlanCard({
                     data-testid="button-toggle-full-plan"
                   >
                     {showFullPlan ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                    {showFullPlan ? 'Hide full plan' : 'Show full plan'}
+                    {showFullPlan ? 'Masquer le plan complet' : 'Afficher le plan complet'}
                   </button>
 
                   <div className={cn("collapsible-content", showFullPlan && "expanded")}>
@@ -669,7 +669,7 @@ export function InlinePlanCard({
                   data-testid="button-change-plan"
                 >
                   <ExternalLink className="h-3 w-3" />
-                  Change plan
+                  Changer de plan
                 </Button>
               )}
             </div>
@@ -692,17 +692,17 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
   const options = [
     {
       id: 'full-app' as BuildMode,
-      title: 'Build the entire app',
-      time: '20+ mins',
-      description: 'Best if you want Agent to build out the full functionality of your app',
+      title: 'Construire toute l\u2019application',
+      time: '20+ min',
+      description: 'Idéal si vous voulez que l\u2019Agent construise toutes les fonctionnalités de votre app',
       icon: Hammer,
       color: 'emerald'
     },
     {
       id: 'design-first' as BuildMode,
-      title: 'Start with a design',
-      time: '5-10 mins',
-      description: 'Best if you want to see a design prototype first, then iterate on visuals or features',
+      title: 'Commencer par un design',
+      time: '5-10 min',
+      description: 'Idéal pour voir d\u2019abord un prototype de design, puis itérer sur le visuel ou les fonctionnalités',
       icon: Paintbrush,
       color: 'purple'
     }
@@ -715,8 +715,8 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
       className="border rounded-lg bg-card p-4 my-3 space-y-4"
     >
       <div>
-        <p className="text-[13px] font-medium">I've created a feature list based on your request. If everything looks good, we can start building.</p>
-        <p className="text-[13px] text-muted-foreground mt-1">How do you want to continue?</p>
+        <p className="text-[13px] font-medium">J’ai créé une liste de fonctionnalités à partir de votre demande. Si tout semble bon, nous pouvons commencer la construction.</p>
+        <p className="text-[13px] text-muted-foreground mt-1">Comment souhaitez-vous continuer ?</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -784,17 +784,17 @@ export function InlineBuildOptions({ onSelectMode, disabled, selectedMode }: Inl
         onClick={() => selectedMode && onSelectMode(selectedMode)}
         data-testid="button-start-building"
       >
-        Start building
+        Commencer la construction
         <Sparkles className="h-4 w-4" />
       </Button>
 
       <div className="flex items-center justify-between text-[11px] text-muted-foreground">
         <Button variant="ghost" size="sm" className="text-[11px] h-7" data-testid="button-edit-plan">
-          Edit plan
+          Modifier le plan
         </Button>
         <Button variant="ghost" size="sm" className="text-[11px] h-7 gap-1" data-testid="button-agent-tools">
           <Code className="h-3 w-3" />
-          Agent tools
+          Outils de l’Agent
         </Button>
       </div>
     </LazyMotionDiv>
@@ -864,12 +864,12 @@ export function InlineBuildProgressCard({
         status={currentStatus}
         message={
           phase === 'planning'
-            ? (planText ? 'Generating design guidelines...' : 'Analyzing your request...')
+            ? (planText ? 'Génération des consignes de design…' : 'Analyse de votre demande…')
             : currentTask || STATUS_CONFIGS[currentStatus].label
         }
         subMessage={
           phase === 'executing'
-            ? `${completedTasks}/${tasks.length} tasks • ${Math.round(progress)}% complete`
+            ? `${completedTasks}/${tasks.length} tâches • ${Math.round(progress)} % terminées`
             : undefined
         }
         compact={false}
@@ -953,8 +953,8 @@ export function InlineBuildProgressCard({
             <CheckCircle2 className="h-6 w-6 text-green-500" />
           )}
           <div>
-            <p className="font-medium text-green-600 dark:text-green-400">Build complete!</p>
-            <p className="text-[11px] text-muted-foreground">All tasks finished successfully</p>
+            <p className="font-medium text-green-600 dark:text-green-400">Construction terminée !</p>
+            <p className="text-[11px] text-muted-foreground">Toutes les tâches sont terminées avec succès</p>
           </div>
         </LazyMotionDiv>
       )}
@@ -979,7 +979,7 @@ export function InlineStartBuildingButton({ onClick, timestamp }: InlineStartBui
         className="bg-primary hover:bg-primary/90"
         data-testid="button-start-building-inline"
       >
-        Start building
+        Commencer la construction
       </Button>
       {timestamp && (
         <span className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -996,7 +996,7 @@ interface InlineCompleteIndicatorProps {
   projectUrl?: string;
 }
 
-export function InlineCompleteIndicator({ message = 'Build complete!', projectUrl }: InlineCompleteIndicatorProps) {
+export function InlineCompleteIndicator({ message = 'Construction terminée !', projectUrl }: InlineCompleteIndicatorProps) {
   return (
     <LazyMotionDiv
       initial={{ opacity: 0, y: 10 }}
@@ -1010,7 +1010,7 @@ export function InlineCompleteIndicator({ message = 'Build complete!', projectUr
         </div>
         <div className="flex-1">
           <p className="font-medium text-green-700 dark:text-green-300">{message}</p>
-          <p className="text-[13px] text-muted-foreground mt-0.5">Your workspace is ready to use</p>
+          <p className="text-[13px] text-muted-foreground mt-0.5">Votre espace de travail est prêt à l’emploi</p>
         </div>
       </div>
       {projectUrl && (
@@ -1022,7 +1022,7 @@ export function InlineCompleteIndicator({ message = 'Build complete!', projectUr
           data-testid="button-open-project"
         >
           <ExternalLink className="h-4 w-4" />
-          Open Project
+          Ouvrir le projet
         </Button>
       )}
     </LazyMotionDiv>
@@ -1057,7 +1057,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
                 onClick={() => setShowDetails(!showDetails)}
                 className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 hover:text-foreground"
               >
-                {showDetails ? 'Hide' : 'Show'} details
+                {showDetails ? 'Masquer les détails' : 'Afficher les détails'}
                 {showDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
               </button>
               <div className={cn("collapsible-content", showDetails && "expanded")}>
@@ -1081,7 +1081,7 @@ export function InlineErrorIndicator({ message, details, onRetry }: InlineErrorI
           onClick={onRetry}
           data-testid="button-retry-build"
         >
-          Try again
+          Réessayer
         </Button>
       )}
     </LazyMotionDiv>
@@ -1109,31 +1109,31 @@ const FILE_OPERATION_CONFIG: Record<FileOperationType, {
   bgColor: string;
 }> = {
   create: {
-    label: 'Created',
+    label: 'Créé',
     icon: FileCode,
     color: 'text-green-600 dark:text-green-400',
     bgColor: 'bg-green-100 dark:bg-green-900/30'
   },
   edit: {
-    label: 'Edited',
+    label: 'Modifié',
     icon: FileText,
     color: 'text-blue-600 dark:text-blue-400',
     bgColor: 'bg-blue-100 dark:bg-blue-900/30'
   },
   delete: {
-    label: 'Deleted',
+    label: 'Supprimé',
     icon: FileCode,
     color: 'text-red-600 dark:text-red-400',
     bgColor: 'bg-red-100 dark:bg-red-900/30'
   },
   read: {
-    label: 'Read',
+    label: 'Lu',
     icon: FolderOpen,
     color: 'text-amber-600 dark:text-amber-400',
     bgColor: 'bg-amber-100 dark:bg-amber-900/30'
   },
   move: {
-    label: 'Moved',
+    label: 'Déplacé',
     icon: FolderOpen,
     color: 'text-purple-600 dark:text-purple-400',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30'
@@ -1201,7 +1201,7 @@ export function InlineFileOperation({
             "text-[10px] font-mono",
             operation === 'delete' ? 'text-red-500' : 'text-green-500'
           )}>
-            {operation === 'delete' ? '-' : '+'}{linesChanged} lines
+            {operation === 'delete' ? '-' : '+'}{linesChanged} ligne{linesChanged > 1 ? 's' : ''}
           </span>
         )}
         {preview && (
@@ -1228,7 +1228,7 @@ export function InlineFileOperation({
           onKeyDown={handleKeyDown}
           aria-expanded={showPreview}
           aria-controls={previewToggleId}
-          aria-label={`${config.label} ${fileName}, ${showPreview ? 'preview visible, press to hide' : 'press to show preview'}`}
+          aria-label={`${config.label} ${fileName}, ${showPreview ? 'aperçu visible, appuyer pour masquer' : 'appuyer pour afficher l’aperçu'}`}
           data-testid={`file-operation-toggle-${operation}`}
         >
           {contentRow}
@@ -1322,7 +1322,7 @@ export function InlineTerminalOutput({
         )}
         {exitCode !== undefined && exitCode !== 0 && (
           <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-4">
-            Exit {exitCode}
+            Code de sortie {exitCode}
           </Badge>
         )}
         {output && (
@@ -1349,7 +1349,7 @@ export function InlineTerminalOutput({
           onKeyDown={handleKeyDown}
           aria-expanded={showOutput}
           aria-controls={terminalOutputId}
-          aria-label={`Terminal command: ${command}, ${showOutput ? 'output visible, press to hide' : 'press to show output'}`}
+          aria-label={`Commande terminal : ${command}, ${showOutput ? 'sortie visible, appuyer pour masquer' : 'appuyer pour afficher la sortie'}`}
           data-testid="terminal-output-toggle"
         >
           {terminalContentRow}
@@ -1358,7 +1358,7 @@ export function InlineTerminalOutput({
         <div
           className="flex items-center gap-2 px-3 py-2"
           role="status"
-          aria-label={`Terminal command: ${command}, ${status === 'running' ? 'running' : status === 'success' ? 'completed successfully' : 'completed with error'}`}
+          aria-label={`Commande terminal : ${command}, ${status === 'running' ? 'en cours d’exécution' : status === 'success' ? 'terminée avec succès' : 'terminée avec une erreur'}`}
           data-testid="terminal-output-info"
         >
           {terminalContentRow}
@@ -1436,7 +1436,7 @@ export function InlineCodeBlock({ code, language, filename, action }: InlineCode
               action === 'removing' && 'text-red-600 dark:text-red-400',
               action === 'modifying' && 'text-blue-600 dark:text-blue-400'
             )}>
-              {action === 'adding' ? '+ Adding' : action === 'removing' ? '- Removing' : '~ Modifying'}
+              {action === 'adding' ? '+ Ajout' : action === 'removing' ? '- Suppression' : '~ Modification'}
             </span>
           )}
         </div>
@@ -1586,8 +1586,8 @@ export function InlineDependencyInstall({
           <Package className="h-4 w-4 text-red-500" />
         )}
         <span className="text-[13px] font-medium">
-          {status === 'installing' ? 'Installing dependencies...' :
-           status === 'success' ? 'Dependencies installed' : 'Installation failed'}
+          {status === 'installing' ? 'Installation des dépendances…' :
+           status === 'success' ? 'Dépendances installées' : 'Échec de l’installation'}
         </span>
         <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 ml-auto">{manager}</Badge>
       </div>
@@ -1680,9 +1680,9 @@ export function InlineProgressTimeline({
     >
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
         <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-[11px] font-medium">Progress</span>
+        <span className="text-[11px] font-medium">Avancement</span>
         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 ml-auto">
-          {events.length} events
+          {events.length} événement{events.length > 1 ? 's' : ''}
         </Badge>
       </div>
 
@@ -1821,7 +1821,7 @@ export function InlineCheckpoint({
             {eta && (
               <span className="flex items-center gap-1">
                 <Clock className="h-2.5 w-2.5" />
-                ETA: {eta}
+                ETA : {eta}
               </span>
             )}
           </div>
@@ -1851,7 +1851,7 @@ interface InlineTaskListEnhancedProps {
 }
 
 export function InlineTaskListEnhanced({
-  title = 'Tasks',
+  title = 'Tâches',
   tasks,
   showProgress = true,
   onFileClick,
@@ -1901,7 +1901,7 @@ export function InlineTaskListEnhanced({
         <div className="flex items-center gap-2">
           {inProgressCount > 0 && (
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-              {inProgressCount} in progress
+              {inProgressCount} en cours
             </Badge>
           )}
           <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
@@ -1949,7 +1949,7 @@ export function InlineTaskListEnhanced({
                   onClick={() => onFileClick(task.filePath!)}
                 >
                   <ExternalLink className="h-2.5 w-2.5" />
-                  Open file
+                  Ouvrir le fichier
                 </button>
               )}
             </div>
@@ -1979,7 +1979,7 @@ interface InlinePreviewWindowProps {
 
 export function InlinePreviewWindow({
   previewUrl,
-  title = 'Preview',
+  title = 'Aperçu',
   isLoading = false,
   isLive = false,
   onRefresh,
@@ -2014,7 +2014,7 @@ export function InlinePreviewWindow({
               ) : (
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
               )}
-              Live
+              En direct
             </Badge>
           )}
         </div>
@@ -2064,21 +2064,21 @@ export function InlinePreviewWindow({
               ) : (
                 <Loader2 className="h-6 w-6 text-muted-foreground" />
               )}
-              <span className="text-[11px] text-muted-foreground">Loading preview...</span>
+              <span className="text-[11px] text-muted-foreground">Chargement de l’aperçu…</span>
             </div>
           </div>
         ) : previewUrl ? (
           <iframe
             src={previewUrl}
             className="w-full h-full border-0"
-            title="Live Preview"
+            title="Aperçu en direct"
             sandbox="allow-scripts allow-same-origin allow-forms"
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <Globe className="h-8 w-8" />
-              <span className="text-[11px]">Preview will appear here</span>
+              <span className="text-[11px]">L’aperçu apparaîtra ici</span>
             </div>
           </div>
         )}

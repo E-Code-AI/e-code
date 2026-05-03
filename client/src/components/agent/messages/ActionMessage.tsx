@@ -20,39 +20,39 @@ interface ActionMessageProps {
 const ACTION_CONFIG: Record<ActionType, { icon: typeof FileText; label: string; color: string; verb: string }> = {
   create_file: {
     icon: FileText,
-    label: 'Create File',
+    label: 'Créer un fichier',
     color: 'text-green-600 dark:text-green-400',
-    verb: 'Create'
+    verb: 'Créer'
   },
   edit_file: {
     icon: Edit,
-    label: 'Edit File',
+    label: 'Modifier un fichier',
     color: 'text-blue-600 dark:text-blue-400',
-    verb: 'Edit'
+    verb: 'Modifier'
   },
   delete_file: {
     icon: Trash2,
-    label: 'Delete File',
+    label: 'Supprimer un fichier',
     color: 'text-red-600 dark:text-red-400',
-    verb: 'Delete'
+    verb: 'Supprimer'
   },
   run_command: {
     icon: Terminal,
-    label: 'Run Command',
+    label: 'Exécuter une commande',
     color: 'text-purple-600 dark:text-purple-400',
-    verb: 'Run'
+    verb: 'Exécuter'
   },
   install_package: {
     icon: Package,
-    label: 'Install Package',
+    label: 'Installer un paquet',
     color: 'text-orange-600 dark:text-orange-400',
-    verb: 'Install'
+    verb: 'Installer'
   },
   create_folder: {
     icon: FolderPlus,
-    label: 'Create Folder',
+    label: 'Créer un dossier',
     color: 'text-teal-600 dark:text-teal-400',
-    verb: 'Create'
+    verb: 'Créer'
   }
 };
 
@@ -109,19 +109,19 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
               {isPending && (
                 <Badge variant="outline" className="text-[11px] flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-                  Requires Approval
+                  Approbation requise
                 </Badge>
               )}
               {isExecuted && (
                 <Badge variant="outline" className="text-[11px] flex items-center gap-1 bg-green-100 dark:bg-green-950">
                   <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
-                  Executed
+                  Exécuté
                 </Badge>
               )}
               {isRejected && (
                 <Badge variant="outline" className="text-[11px] flex items-center gap-1 bg-red-100 dark:bg-red-950">
                   <X className="h-3 w-3 text-red-600 dark:text-red-400" />
-                  Rejected
+                  Rejeté
                 </Badge>
               )}
             </div>
@@ -158,7 +158,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                   ? "bg-green-100 dark:bg-green-950/20 text-green-800 dark:text-green-200"
                   : "bg-red-100 dark:bg-red-950/20 text-red-800 dark:text-red-200"
               )}>
-                {action.result.message || (action.result.success ? 'Executed successfully' : 'Execution failed')}
+                {action.result.message || (action.result.success ? 'Exécuté avec succès' : 'Échec de l\u2019exécution')}
                 {action.result.error && (
                   <div className="mt-1 font-mono text-[11px]">{action.result.error}</div>
                 )}
@@ -176,7 +176,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                   data-testid={`approve-action-${action.id}`}
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Approve & Execute
+                  Approuver et exécuter
                 </Button>
                 <Button
                   size="sm"
@@ -186,7 +186,7 @@ export function ActionMessage({ actions, onApprove, onReject, className }: Actio
                   data-testid={`reject-action-${action.id}`}
                 >
                   <X className="h-3 w-3 mr-1" />
-                  Reject
+                  Rejeter
                 </Button>
               </div>
             )}

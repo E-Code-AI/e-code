@@ -65,17 +65,17 @@ const toolIcons: Record<string, React.ElementType> = {
 };
 
 const toolLabels: Record<string, string> = {
-  create_file: 'Create file',
-  edit_file: 'Edit file',
-  read_file: 'Read file',
-  delete_file: 'Delete file',
-  list_directory: 'List directory',
-  run_command: 'Run command',
-  install_package: 'Install package',
-  web_search: 'Search web',
-  search_code: 'Search code',
-  get_project_structure: 'Inspect project',
-  get_diagnostics: 'Run diagnostics',
+  create_file: 'Créer un fichier',
+  edit_file: 'Modifier un fichier',
+  read_file: 'Lire un fichier',
+  delete_file: 'Supprimer un fichier',
+  list_directory: 'Lister un dossier',
+  run_command: 'Exécuter une commande',
+  install_package: 'Installer un paquet',
+  web_search: 'Rechercher sur le web',
+  search_code: 'Rechercher dans le code',
+  get_project_structure: 'Inspecter le projet',
+  get_diagnostics: 'Diagnostics',
 };
 
 const toolCategories: Record<string, FilterType> = {
@@ -106,12 +106,12 @@ function CompactToolExecution({
   const Icon = toolIcons[tool] || Terminal;
   const label = toolLabels[tool] || tool;
   const verb = status === 'running'
-    ? 'Running'
+    ? 'En cours'
     : status === 'pending'
-      ? 'Queued'
+      ? 'En attente'
       : status === 'error' || (status === 'complete' && !success)
-        ? 'Failed'
-        : 'Completed';
+        ? 'Échec'
+        : 'Terminé';
 
   const getStatusIcon = () => {
     if (status === 'complete' && success) {
@@ -171,7 +171,7 @@ function CompactToolExecution({
     return diagnostics.map((diagnostic: any, index: number) => ({
       id: diagnostic.id || `${tool}-${index}`,
       severity: diagnostic.severity || diagnostic.level || 'info',
-      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Unknown file',
+      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Fichier inconnu',
       line: diagnostic.startLine || diagnostic.line || diagnostic.row || 0,
       message: diagnostic.message || diagnostic.description || diagnostic.summary || 'Diagnostic',
       source: diagnostic.source || diagnostic.rule || '',
@@ -219,7 +219,7 @@ function CompactToolExecution({
             {/* Target on mobile (hidden above) */}
             {target && (
               <div className="xs:hidden">
-                <span className="text-muted-foreground">Target: </span>
+                <span className="text-muted-foreground">Cible : </span>
                 <code className="bg-muted px-1 rounded break-all">{target}</code>
               </div>
             )}
@@ -227,14 +227,14 @@ function CompactToolExecution({
             {/* Execution time on mobile */}
             {metadata?.executionTime && (
               <div className="sm:hidden text-muted-foreground">
-                Duration: {metadata.executionTime}ms
+                Durée : {metadata.executionTime} ms
               </div>
             )}
 
             {/* File changes */}
             {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
               <div>
-                <span className="text-muted-foreground">Files changed:</span>
+                <span className="text-muted-foreground">Fichiers modifiés :</span>
                 <ul className="mt-1 space-y-0.5">
                   {metadata.filesChanged.map((file, i) => (
                     <li key={i}>
@@ -248,7 +248,7 @@ function CompactToolExecution({
             {/* Command output */}
             {result?.stdout && (
               <div>
-                <span className="text-muted-foreground">Output:</span>
+                <span className="text-muted-foreground">Sortie :</span>
                 <pre className="bg-muted p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 sm:max-h-32 overflow-y-auto text-[9px] sm:text-[10px]">
                   {result.stdout}
                 </pre>
@@ -265,14 +265,14 @@ function CompactToolExecution({
             {/* Diagnostics summary */}
             {diagnosticsRows.length > 0 && (
               <div>
-                <span className="text-muted-foreground">Diagnostics:</span>
+                <span className="text-muted-foreground">Diagnostics :</span>
                 <div className="mt-1 overflow-hidden rounded border border-border/60 bg-background">
                   <table className="w-full text-left text-[10px]">
                     <thead className="bg-muted/70 text-muted-foreground">
                       <tr>
-                        <th className="px-2 py-1 font-medium">Severity</th>
-                        <th className="px-2 py-1 font-medium">File</th>
-                        <th className="px-2 py-1 font-medium">Line</th>
+                        <th className="px-2 py-1 font-medium">Gravité</th>
+                        <th className="px-2 py-1 font-medium">Fichier</th>
+                        <th className="px-2 py-1 font-medium">Ligne</th>
                         <th className="px-2 py-1 font-medium">Message</th>
                       </tr>
                     </thead>
@@ -293,7 +293,7 @@ function CompactToolExecution({
                 </div>
                 {diagnosticsRows.length > 6 && (
                   <div className="mt-1 text-[10px] text-muted-foreground">
-                    {diagnosticsRows.length - 6} more diagnostic{diagnosticsRows.length - 6 === 1 ? '' : 's'}
+                    {diagnosticsRows.length - 6} diagnostic{diagnosticsRows.length - 6 === 1 ? '' : 's'} supplémentaire{diagnosticsRows.length - 6 === 1 ? '' : 's'}
                   </div>
                 )}
               </div>
@@ -302,14 +302,14 @@ function CompactToolExecution({
             {/* File size / lines changed */}
             {(result?.size || result?.linesChanged) && (
               <p className="text-muted-foreground">
-                {result.size ? `Size: ${result.size} bytes` : `Lines changed: ${result.linesChanged}`}
+                {result.size ? `Taille : ${result.size} octets` : `Lignes modifiées : ${result.linesChanged}`}
               </p>
             )}
 
             {/* Error display */}
             {(status === 'error' || error) && (
               <div className="text-red-600 dark:text-red-400">
-                <p>✗ {error || 'Execution failed'}</p>
+                <p>✗ {error || 'Échec de l\u2019exécution'}</p>
                 {result?.stderr && (
                   <pre className="bg-red-950 p-1.5 sm:p-2 rounded mt-1 overflow-x-auto max-h-24 overflow-y-auto text-[9px] sm:text-[10px]">
                     {result.stderr}
@@ -378,10 +378,10 @@ export function ToolExecutionList({
   }
 
   const filterButtons: { id: FilterType; label: string; icon: React.ElementType; count: number }[] = [
-    { id: 'all', label: 'All', icon: Filter, count: toolExecutions.length },
-    { id: 'files', label: 'Files', icon: FileText, count: stats.files },
-    { id: 'commands', label: 'Commands', icon: Command, count: stats.commands },
-    { id: 'errors', label: 'Errors', icon: XCircle, count: stats.errors },
+    { id: 'all', label: 'Tout', icon: Filter, count: toolExecutions.length },
+    { id: 'files', label: 'Fichiers', icon: FileText, count: stats.files },
+    { id: 'commands', label: 'Commandes', icon: Command, count: stats.commands },
+    { id: 'errors', label: 'Erreurs', icon: XCircle, count: stats.errors },
   ];
 
   return (
@@ -391,32 +391,32 @@ export function ToolExecutionList({
         <div className="flex flex-wrap items-center gap-1.5">
           {stats.success > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-emerald-950 text-emerald-400 border-emerald-500">
-              {stats.success} done
+              {stats.success} terminée{stats.success > 1 ? 's' : ''}
             </Badge>
           )}
           {stats.running > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-blue-950 text-blue-400 border-blue-500 animate-pulse">
-              {stats.running} running
+              {stats.running} en cours
             </Badge>
           )}
           {stats.errors > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-red-950 text-red-400 border-red-500">
-              {stats.errors} failed
+              {stats.errors} en échec
             </Badge>
           )}
           {stats.files > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
-              {stats.files} files
+              {stats.files} fichier{stats.files > 1 ? 's' : ''}
             </Badge>
           )}
           {stats.commands > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
-              {stats.commands} commands
+              {stats.commands} commande{stats.commands > 1 ? 's' : ''}
             </Badge>
           )}
           {stats.search > 0 && (
             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">
-              {stats.search} searches
+              {stats.search} recherche{stats.search > 1 ? 's' : ''}
             </Badge>
           )}
         </div>
@@ -426,7 +426,7 @@ export function ToolExecutionList({
       {showFilters && toolExecutions.length > 5 && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-muted-foreground">
-            Agent Actions ({toolExecutions.length})
+            Actions de l’Agent ({toolExecutions.length})
           </span>
         </div>
       )}
@@ -475,7 +475,7 @@ export function ToolExecutionList({
           onClick={() => setShowAll(true)}
           data-testid="button-show-more"
         >
-          Show {filteredExecutions.length - maxVisible} more actions
+          Afficher {filteredExecutions.length - maxVisible} action{filteredExecutions.length - maxVisible > 1 ? 's' : ''} de plus
         </Button>
       )}
     </div>
@@ -527,7 +527,7 @@ export function ToolExecutionDisplay({
     return diagnostics.map((diagnostic: any, index: number) => ({
       id: diagnostic.id || `${tool}-${index}`,
       severity: diagnostic.severity || diagnostic.level || 'info',
-      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Unknown file',
+      file: diagnostic.filePath || diagnostic.file || diagnostic.path || 'Fichier inconnu',
       line: diagnostic.startLine || diagnostic.line || diagnostic.row || 0,
       column: diagnostic.startColumn || diagnostic.column || 0,
       message: diagnostic.message || diagnostic.description || diagnostic.summary || 'Diagnostic',
@@ -553,7 +553,7 @@ export function ToolExecutionDisplay({
         <div className="space-y-2">
           {(tool === 'create_file' || tool === 'edit_file') && (
             <div className="text-[11px]">
-              <span className="text-muted-foreground">Path: </span>
+              <span className="text-muted-foreground">Chemin : </span>
               <code className="bg-muted px-1 rounded">{parameters.path}</code>
               {parameters.description && (
                 <p className="text-muted-foreground mt-1">{parameters.description}</p>
@@ -563,7 +563,7 @@ export function ToolExecutionDisplay({
 
           {(tool === 'run_command' || tool === 'install_package') && (
             <div className="text-[11px]">
-              <span className="text-muted-foreground">Command: </span>
+              <span className="text-muted-foreground">Commande : </span>
               <code className="bg-muted px-1 rounded text-[11px] block mt-1 p-2 rounded overflow-x-auto">
                 {parameters.command || `npm install ${parameters.package_name}${parameters.dev ? ' --save-dev' : ''}`}
               </code>
@@ -575,7 +575,7 @@ export function ToolExecutionDisplay({
 
           {(tool === 'web_search' || tool === 'search_code') && (
             <div className="text-[11px]">
-              <span className="text-muted-foreground">Query: </span>
+              <span className="text-muted-foreground">Requête : </span>
               <code className="bg-muted px-1 rounded">{parameters.query || parameters.pattern}</code>
             </div>
           )}
@@ -589,9 +589,9 @@ export function ToolExecutionDisplay({
                     <table className="w-full text-left text-[11px]">
                       <thead className="bg-muted/70 text-muted-foreground">
                         <tr>
-                          <th className="px-3 py-2 font-medium">Severity</th>
-                          <th className="px-3 py-2 font-medium">File</th>
-                          <th className="px-3 py-2 font-medium">Line</th>
+                          <th className="px-3 py-2 font-medium">Gravité</th>
+                          <th className="px-3 py-2 font-medium">Fichier</th>
+                          <th className="px-3 py-2 font-medium">Ligne</th>
                           <th className="px-3 py-2 font-medium">Message</th>
                         </tr>
                       </thead>
@@ -617,7 +617,7 @@ export function ToolExecutionDisplay({
 
               {metadata?.filesChanged && metadata.filesChanged.length > 0 && (
                 <div>
-                  <span className="text-muted-foreground">Files changed:</span>
+                  <span className="text-muted-foreground">Fichiers modifiés :</span>
                   <ul className="mt-1 space-y-1">
                     {metadata.filesChanged.map((file, i) => (
                       <li key={i} className="ml-2">
@@ -630,7 +630,7 @@ export function ToolExecutionDisplay({
 
               {result.stdout && (
                 <div className="mt-2">
-                  <span className="text-muted-foreground">Output:</span>
+                  <span className="text-muted-foreground">Sortie :</span>
                   <pre className="bg-muted p-2 rounded text-[11px] mt-1 overflow-x-auto max-h-32 overflow-y-auto">
                     {result.stdout}
                   </pre>
@@ -645,7 +645,7 @@ export function ToolExecutionDisplay({
 
               {(result.size || result.linesChanged) && (
                 <p className="text-muted-foreground mt-1">
-                  {result.size ? `Size: ${result.size} bytes` : `Lines changed: ${result.linesChanged}`}
+                  {result.size ? `Taille : ${result.size} octets` : `Lignes modifiées : ${result.linesChanged}`}
                 </p>
               )}
 
@@ -658,7 +658,7 @@ export function ToolExecutionDisplay({
           {(status === 'error' || error) && (
             <div className="mt-2 pt-2 border-t">
               <p className="text-red-600 dark:text-red-400 text-[11px]">
-                ✗ {error || 'Tool execution failed'}
+                ✗ {error || 'Échec de l\u2019exécution de l\u2019outil'}
               </p>
               {result?.stderr && (
                 <pre className="bg-red-950 p-2 rounded text-[11px] mt-1 overflow-x-auto max-h-32 overflow-y-auto">

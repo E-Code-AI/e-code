@@ -18,10 +18,10 @@ interface ThinkingMessageProps {
 }
 
 const STEP_TYPE_CONFIG = {
-  reasoning: { icon: Brain, label: 'Reasoning', color: 'text-blue-500' },
-  analysis: { icon: Brain, label: 'Analysis', color: 'text-purple-500' },
-  planning: { icon: Brain, label: 'Planning', color: 'text-green-500' },
-  tool_use: { icon: Brain, label: 'Tool Use', color: 'text-orange-500' },
+  reasoning: { icon: Brain, label: 'Raisonnement', color: 'text-blue-500' },
+  analysis: { icon: Brain, label: 'Analyse', color: 'text-purple-500' },
+  planning: { icon: Brain, label: 'Planification', color: 'text-green-500' },
+  tool_use: { icon: Brain, label: 'Utilisation d\u2019outil', color: 'text-orange-500' },
 };
 
 export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime }: ThinkingMessageProps) {
@@ -50,7 +50,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
             <Brain className="h-5 w-5 md:h-4 md:w-4 text-violet-500" />
           </div>
           <span className="text-[13px] font-medium text-[var(--ecode-text)] truncate">
-            {isStreaming ? 'Thinking...' : 'Thought Process'}
+            {isStreaming ? 'Réflexion en cours…' : 'Processus de réflexion'}
           </span>
           {isStreaming && <VibingAnimation size="sm" />}
         </div>
@@ -63,12 +63,12 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
           )}
           {!isStreaming && totalTokens && (
             <Badge variant="outline" className="text-[11px] whitespace-nowrap">
-              {totalTokens} tokens
+              {totalTokens} jetons
             </Badge>
           )}
           {safeSteps.length > 0 && (
             <Badge variant="outline" className="text-[11px] whitespace-nowrap">
-              {safeSteps.filter(s => s.status === 'completed').length}/{safeSteps.length} steps
+              {safeSteps.filter(s => s.status === 'completed').length}/{safeSteps.length} étapes
             </Badge>
           )}
         </div>
@@ -128,7 +128,7 @@ export function ThinkingMessage({ steps, isStreaming, totalTokens, thinkingTime 
             <div className="flex items-center gap-3 p-3 rounded-md bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800">
               <VibingAnimation />
               <span className="text-[13px] text-[var(--ecode-text)]">
-                Processing your request...
+                Traitement de votre demande…
               </span>
             </div>
           )}
