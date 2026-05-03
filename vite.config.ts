@@ -110,7 +110,6 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    force: true,
     include: ["react", "react-dom", "react/jsx-runtime", "scheduler", "wouter"],
   },
   base: process.env.CDN_BASE_URL || process.env.ASSET_BASE_URL || '/',
