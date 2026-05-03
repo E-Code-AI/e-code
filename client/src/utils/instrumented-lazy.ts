@@ -14,6 +14,60 @@ const RETRY_DELAY = 200;
 const RETRY_DELAY_REPLIT = 3000;
 const RELOAD_KEY = 'lazy-load-reload-attempted';
 
+export interface LazyChunkLoadError extends Error {
+  isChunkLoadError: true;
+  modulePath: string;
+  retryAttempts: number;
+  maxRetries: number;
+  originalError: unknown;
+}
+
+export function isLazyChunkLoadError(error: unknown): error is LazyChunkLoadError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as LazyChunkLoadError).isChunkLoadError === true
+  );
+}
+
+function looksLikeChunkLoadError(error: unknown): boolean {
+  if (!error) return false;
+  const name = (error as any)?.name || '';
+  const message = (error as any)?.message || String(error);
+  return (
+    name === 'ChunkLoadError' ||
+    /Loading chunk \d+ failed/i.test(message) ||
+    /Failed to fetch dynamically imported module/i.test(message) ||
+    /Importing a module script failed/i.test(message) ||
+    /dynamically imported module/i.test(message)
+  );
+}
+
+function buildChunkLoadError(
+  originalError: unknown,
+  path: string,
+  attempts: number,
+  maxRetries: number
+): LazyChunkLoadError {
+  const baseMessage =
+    originalError instanceof Error
+      ? originalError.message
+      : String(originalError ?? 'unknown');
+  const err = new Error(
+    `Failed to load module after ${attempts} attempt(s): ${path} (${baseMessage})`
+  ) as LazyChunkLoadError;
+  err.name = 'ChunkLoadError';
+  err.isChunkLoadError = true;
+  err.modulePath = path;
+  err.retryAttempts = attempts;
+  err.maxRetries = maxRetries;
+  err.originalError = originalError;
+  if (originalError instanceof Error && originalError.stack) {
+    err.stack = originalError.stack;
+  }
+  return err;
+}
+
 async function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -79,14 +133,17 @@ export function instrumentedLazy<T extends ComponentType<any>>(
       isEmptyObject: typeof lastError === 'object' && Object.keys(lastError || {}).length === 0
     });
 
-    if (typeof lastError === 'object' && lastError !== null && Object.keys(lastError).length === 0) {
-      throw new Error(`Empty error thrown while loading module: ${path}`);
+    // Treat any final lazy-load failure (including empty errors and chunk load
+    // errors) as a recoverable chunk load error so the ErrorBoundary can offer
+    // a cache-busting reload.
+    if (
+      looksLikeChunkLoadError(lastError) ||
+      (typeof lastError === 'object' && lastError !== null && Object.keys(lastError).length === 0) ||
+      !(lastError instanceof Error)
+    ) {
+      throw buildChunkLoadError(lastError, path, maxRetries, maxRetries);
     }
 
-    if (!(lastError instanceof Error)) {
-      throw new Error(`Module load failed (${path}): ${String(lastError)}`);
-    }
-
-    throw lastError;
+    throw buildChunkLoadError(lastError, path, maxRetries, maxRetries);
   });
 }
