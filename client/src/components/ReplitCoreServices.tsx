@@ -84,8 +84,8 @@ export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreS
   
   // SSH Manager State
   const [sshKeys, setSSHKeys] = useState<SSHKey[]>([]);
-  const [newKeyName, setNewKeyName] = useState('');
-  const [keyType, setKeyType] = useState('ed25519');
+  const [newSshLabel, setNewSshLabel] = useState('');
+  const [newSshPublicKey, setNewSshPublicKey] = useState('');
   
   // Database Hosting State
   const [databases, setDatabases] = useState<DatabaseInstance[]>([]);
@@ -203,33 +203,35 @@ export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreS
   // SSH Manager Functions
   const fetchSSHKeys = async () => {
     try {
-      const keys = await apiRequest<SSHKey[]>('GET', '/api/ssh/keys');
+      const keys = await apiRequest<SSHKey[]>('GET', '/api/ssh-keys');
       setSSHKeys(keys);
     } catch (error) {
       console.error('Failed to fetch SSH keys:', error);
     }
   };
 
-  const generateSSHKey = async () => {
+  const addSshKey = async () => {
+    if (!newSshLabel.trim() || !newSshPublicKey.trim()) return;
     setLoading(true);
     
     try {
-      const newKey = await apiRequest('POST', '/api/ssh/keys', {
-        name: newKeyName,
-        type: keyType
+      const newKey = await apiRequest('POST', '/api/ssh-keys', {
+        label: newSshLabel,
+        publicKey: newSshPublicKey,
       });
 
       setSSHKeys(prev => [...prev, newKey]);
-      setNewKeyName('');
+      setNewSshLabel('');
+      setNewSshPublicKey('');
       
       toast({
-        title: "SSH Key Generated",
-        description: `New ${keyType} key "${newKeyName}" created successfully`,
+        title: "SSH Key Added",
+        description: `Key "${newSshLabel}" has been registered.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Key Generation Failed",
-        description: "Unable to generate SSH key",
+        title: "Failed to Add Key",
+        description: error?.message || "Unable to add SSH key",
         variant: "destructive",
       });
     } finally {
@@ -482,62 +484,61 @@ export function ReplitCoreServices({ projectId: providedProjectId }: ReplitCoreS
                 SSH Access Management
               </CardTitle>
               <CardDescription>
-                Generate and manage SSH keys for secure remote access
+                Register SSH public keys for secure remote access to your workspace
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="key-name">Key Name</Label>
+                  <Label htmlFor="ssh-key-label">Label</Label>
                   <Input
-                    id="key-name"
-                    value={newKeyName}
-                    onChange={(e) => setNewKeyName(e.target.value)}
-                    placeholder="my-ssh-key"
+                    id="ssh-key-label"
+                    value={newSshLabel}
+                    onChange={(e) => setNewSshLabel(e.target.value)}
+                    placeholder="Work laptop"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="key-type">Key Type</Label>
-                  <Select value={keyType} onValueChange={setKeyType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ed25519">ED25519 (Recommended)</SelectItem>
-                      <SelectItem value="rsa">RSA 4096</SelectItem>
-                      <SelectItem value="ecdsa">ECDSA</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="flex items-end">
-                  <Button 
-                    onClick={generateSSHKey} 
-                    disabled={loading || !newKeyName}
+                  <Button
+                    onClick={addSshKey}
+                    disabled={loading || !newSshLabel.trim() || !newSshPublicKey.trim()}
                     className="flex items-center gap-2"
                   >
                     <Key className="h-4 w-4" />
-                    Generate Key
+                    Add Key
                   </Button>
                 </div>
               </div>
+              <div>
+                <Label htmlFor="ssh-public-key-input">Public Key</Label>
+                <textarea
+                  id="ssh-public-key-input"
+                  value={newSshPublicKey}
+                  onChange={(e) => setNewSshPublicKey(e.target.value)}
+                  placeholder="ssh-ed25519 AAAA... user@host"
+                  className="w-full mt-1 border border-input rounded-md bg-background text-sm font-mono px-3 py-2 h-20 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
 
               <div className="space-y-2">
-                <h3 className="text-xs font-medium text-[var(--ecode-text)]">SSH Keys</h3>
-                <ScrollArea className="h-64 border border-[var(--ecode-border)] rounded-md">
-                  {sshKeys.map((key) => (
+                <h3 className="text-xs font-medium text-[var(--ecode-text)]">Registered Keys ({sshKeys.length})</h3>
+                <ScrollArea className="h-48 border border-[var(--ecode-border)] rounded-md">
+                  {sshKeys.length === 0 ? (
+                    <div className="flex items-center justify-center h-full py-8 text-[11px] text-muted-foreground">
+                      No SSH keys registered
+                    </div>
+                  ) : sshKeys.map((key: any) => (
                     <div key={key.id} className="flex items-center justify-between px-2.5 py-2 border-b border-[var(--ecode-border)]">
-                      <div className="flex-1">
-                        <p className="text-xs font-medium text-[var(--ecode-text)]">{key.name}</p>
-                        <p className="text-[10px] text-[var(--ecode-text-muted)]">
-                          {key.type.toUpperCase()} • {key.fingerprint}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-[var(--ecode-text)]">{key.label || key.name}</p>
+                        <p className="text-[10px] text-[var(--ecode-text-muted)] font-mono truncate">
+                          {key.keyType || key.type} · {key.fingerprint}
                         </p>
                         <p className="text-[10px] text-[var(--ecode-text-muted)]">
-                          Created {new Date(key.created).toLocaleDateString()}
+                          Added {new Date(key.createdAt || key.created).toLocaleDateString()}
                         </p>
                       </div>
-                      <Badge className={`text-[10px] h-5 ${key.isActive ? 'bg-green-500' : 'bg-gray-500'}`}>
-                        {key.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
+                      <Badge className="text-[10px] h-5 bg-green-500 ml-2 shrink-0">Active</Badge>
                     </div>
                   ))}
                 </ScrollArea>

@@ -1502,6 +1502,14 @@ httpServer.listen(port, "0.0.0.0", () => {
   console.log(banner);
   logger.info(`[Startup] ✅ Server ready (${startupMs}ms)`);
 
+  // ── SSH Gateway (optional, enabled via SSH_GATEWAY_ENABLED=true) ──────────
+  try {
+    const { startSshGateway } = await import('./ssh/gateway');
+    await startSshGateway();
+  } catch (err: any) {
+    logger.warn(`[SSH Gateway] Failed to start: ${err.message}`);
+  }
+
   // ✅ PRODUCTION OPTIMIZATION: Graceful shutdown handler
   const gracefulShutdown = async (signal: string) => {
     logger.info(`\n[Shutdown] Received ${signal}, starting graceful shutdown...`);
@@ -1536,6 +1544,15 @@ httpServer.listen(port, "0.0.0.0", () => {
       logger.info('[Shutdown] Database pool closed');
     } catch (e) {
       logger.warn(`[Shutdown] Database pool close failed: ${e}`);
+    }
+
+    // Stop SSH gateway
+    try {
+      const { stopSshGateway } = await import('./ssh/gateway');
+      stopSshGateway();
+      logger.info('[Shutdown] SSH gateway stopped');
+    } catch (e) {
+      logger.warn(`[Shutdown] SSH gateway stop failed: ${e}`);
     }
 
     // Close Redis connections

@@ -182,7 +182,8 @@ users,
 voiceVideoParticipants,
 voiceVideoSessions,
 vulnerabilities,
-webSearchHistory
+webSearchHistory,
+sshKeys
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -943,6 +944,15 @@ export interface IStorage {
   // Admin Activity Log operations
   createAdminActivityLog(log: InsertAdminActivityLog): Promise<AdminActivityLog>;
   getAdminActivityLogs(filter?: { adminId?: number; entityType?: string }): Promise<AdminActivityLog[]>;
+
+  // SSH Key operations
+  listSshKeys(userId: number): Promise<any[]>;
+  getSshKeyByFingerprint(userId: number, fingerprint: string): Promise<any | undefined>;
+  getSshKeyByFingerprintGlobal(fingerprint: string): Promise<any | undefined>;
+  createSshKey(key: { userId: number; label: string; publicKey: string; fingerprint: string; keyType: string }): Promise<any>;
+  deleteSshKey(userId: number, id: string): Promise<boolean>;
+  touchSshKey(id: string): Promise<void>;
+  countSshKeys(userId: number): Promise<number>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -5875,6 +5885,59 @@ Constraints: {{constraints}}`,
       return await query.where(and(...conditions)).orderBy(desc(adminActivityLogs.createdAt));
     }
     return await query.orderBy(desc(adminActivityLogs.createdAt));
+  }
+
+  // SSH Key operations
+  async listSshKeys(userId: number): Promise<any[]> {
+    return await this.db
+      .select()
+      .from(sshKeys)
+      .where(eq(sshKeys.userId, _num(userId)))
+      .orderBy(desc(sshKeys.createdAt));
+  }
+
+  async getSshKeyByFingerprint(userId: number, fingerprint: string): Promise<any | undefined> {
+    const [key] = await this.db
+      .select()
+      .from(sshKeys)
+      .where(and(eq(sshKeys.userId, _num(userId)), eq(sshKeys.fingerprint, fingerprint)));
+    return key;
+  }
+
+  async getSshKeyByFingerprintGlobal(fingerprint: string): Promise<any | undefined> {
+    const [key] = await this.db
+      .select()
+      .from(sshKeys)
+      .where(eq(sshKeys.fingerprint, fingerprint));
+    return key;
+  }
+
+  async createSshKey(key: { userId: number; label: string; publicKey: string; fingerprint: string; keyType: string }): Promise<any> {
+    const [created] = await this.db.insert(sshKeys).values(key as any).returning();
+    return created;
+  }
+
+  async deleteSshKey(userId: number, id: string): Promise<boolean> {
+    const result = await this.db
+      .delete(sshKeys)
+      .where(and(eq(sshKeys.id, id), eq(sshKeys.userId, _num(userId))))
+      .returning({ id: sshKeys.id });
+    return result.length > 0;
+  }
+
+  async touchSshKey(id: string): Promise<void> {
+    await this.db
+      .update(sshKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(sshKeys.id, id));
+  }
+
+  async countSshKeys(userId: number): Promise<number> {
+    const result = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(sshKeys)
+      .where(eq(sshKeys.userId, _num(userId)));
+    return result[0]?.count ?? 0;
   }
 }
 

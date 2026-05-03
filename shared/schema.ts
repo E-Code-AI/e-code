@@ -467,6 +467,25 @@ export const terminalLogs = pgTable("terminal_logs", {
   timestamp: timestamp("timestamp").notNull().defaultNow(),
 }, (table) => [index("terminal_logs_project_idx").on(table.projectId), index("terminal_logs_timestamp_idx").on(table.timestamp)]);
 
+// SSH Keys table - persisted user SSH public keys for gateway authentication
+export const sshKeys = pgTable("ssh_keys", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  label: varchar("label", { length: 100 }).notNull(),
+  publicKey: text("public_key").notNull(),
+  fingerprint: varchar("fingerprint", { length: 100 }).notNull(),
+  keyType: varchar("key_type", { length: 30 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+}, (table) => [
+  index("ssh_keys_user_id_idx").on(table.userId),
+  unique("ssh_keys_user_fingerprint_unique").on(table.userId, table.fingerprint),
+]);
+
+export const insertSshKeySchema = createInsertSchema(sshKeys).omit({ id: true, createdAt: true, lastUsedAt: true });
+export type InsertSshKey = z.infer<typeof insertSshKeySchema>;
+export type SshKey = typeof sshKeys.$inferSelect;
+
 export const newsletterSubscribers = pgTable("newsletter_subscribers", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 320 }).notNull().unique(),

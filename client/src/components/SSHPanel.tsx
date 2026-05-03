@@ -6,14 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Terminal, X, Plus, Trash2, Key, Copy, Check, ChevronDown, ChevronRight,
-  Loader2, ExternalLink, Monitor,
+  Loader2, ExternalLink, Monitor, AlertCircle,
 } from "lucide-react";
 
 interface SshKey {
   id: string;
   label: string;
   fingerprint: string;
+  keyType: string;
   createdAt: string;
+  lastUsedAt: string | null;
+}
+
+interface GatewayConfig {
+  enabled: boolean;
+  host: string | null;
+  port: number;
+  user: string;
+  projectPath: string;
 }
 
 interface SSHPanelProps {
@@ -32,12 +42,21 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
   const [copiedConfig, setCopiedConfig] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
 
-  const hostname = typeof window !== "undefined" ? window.location.hostname : "localhost";
-  const sshPort = 2222;
-  const sshUser = projectId;
-  const sshCommand = `ssh -i ~/.ssh/id_ed25519 -p ${sshPort} ${sshUser}@${hostname}`;
-  const sshConfig = `Host ${hostname}-${projectId.slice(0, 8)}
-  HostName ${hostname}
+  const configQuery = useQuery<GatewayConfig>({
+    queryKey: ["/api/ssh-keys/config"],
+    queryFn: async () => apiRequest<GatewayConfig>("GET", "/api/ssh-keys/config").catch(() => ({
+      enabled: false, host: null, port: 2222, user: "runner", projectPath: "/home/runner",
+    })),
+    staleTime: 60_000,
+  });
+
+  const gateway = configQuery.data ?? { enabled: false, host: null, port: 2222, user: "runner", projectPath: "/home/runner" };
+  const sshUser = gateway.user;
+  const sshHost = gateway.host ?? (typeof window !== "undefined" ? window.location.hostname : "localhost");
+  const sshPort = gateway.port;
+  const sshCommand = `ssh -i ~/.ssh/id_ed25519 -p ${sshPort} ${sshUser}@${sshHost}`;
+  const sshConfig = `Host ${sshHost}-replit
+  HostName ${sshHost}
   Port ${sshPort}
   User ${sshUser}
   IdentityFile ~/.ssh/id_ed25519`;
@@ -227,12 +246,18 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
                         <Key className="w-3.5 h-3.5 text-[#F5A623]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] text-[var(--ide-text)] font-medium truncate">{key.label}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-[11px] text-[var(--ide-text)] font-medium truncate">{key.label}</p>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-[var(--ide-surface)] text-[var(--ide-text-muted)] font-mono shrink-0">
+                            {key.keyType}
+                          </span>
+                        </div>
                         <p className="text-[9px] text-[var(--ide-text-muted)] font-mono truncate" data-testid={`ssh-key-fingerprint-${key.id}`}>
                           {key.fingerprint}
                         </p>
                         <p className="text-[8px] text-[var(--ide-text-muted)] mt-0.5">
                           Added {new Date(key.createdAt).toLocaleDateString()}
+                          {key.lastUsedAt && ` · Used ${new Date(key.lastUsedAt).toLocaleDateString()}`}
                         </p>
                       </div>
                       <button
@@ -252,35 +277,49 @@ export default function SSHPanel({ projectId, onClose }: SSHPanelProps) {
 
         {activeTab === "connect" && (
           <div className="px-3 py-3 space-y-4">
-            <div>
-              <span className="text-[10px] font-bold text-[var(--ide-text-muted)] uppercase tracking-widest block mb-2">
-                Quick Launch
-              </span>
-              <div className="space-y-1.5">
-                <Button
-                  className="w-full h-8 text-[11px] bg-[#0079F2] hover:bg-[#0079F2]/80 text-white rounded-md font-medium gap-2 justify-start"
-                  onClick={() => {
-                    window.open(`vscode://vscode-remote/ssh-remote+${sshUser}@${hostname}:${sshPort}/home/runner`, "_blank");
-                  }}
-                  data-testid="button-launch-vscode"
-                >
-                  <Monitor className="w-3.5 h-3.5" />
-                  Launch VS Code
-                  <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
-                </Button>
-                <Button
-                  className="w-full h-8 text-[11px] bg-[#7C65CB] hover:bg-[#7C65CB]/80 text-white rounded-md font-medium gap-2 justify-start"
-                  onClick={() => {
-                    window.open(`cursor://vscode-remote/ssh-remote+${sshUser}@${hostname}:${sshPort}/home/runner`, "_blank");
-                  }}
-                  data-testid="button-launch-cursor"
-                >
-                  <Monitor className="w-3.5 h-3.5" />
-                  Launch Cursor
-                  <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
-                </Button>
+            {!gateway.enabled ? (
+              <div className="rounded-md bg-[var(--ide-bg)] border border-[var(--ide-border)] p-3">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 text-[var(--ide-text-muted)]" />
+                  <span className="text-[10px] font-semibold text-[var(--ide-text-muted)]">SSH Gateway Not Configured</span>
+                </div>
+                <p className="text-[9px] text-[var(--ide-text-muted)]">
+                  Set the <code className="bg-[var(--ide-surface)] px-1 rounded">SSH_GATEWAY_ENABLED=true</code>,{" "}
+                  <code className="bg-[var(--ide-surface)] px-1 rounded">SSH_GATEWAY_HOST</code>, and{" "}
+                  <code className="bg-[var(--ide-surface)] px-1 rounded">SSH_GATEWAY_PORT</code> environment variables to enable SSH access.
+                </p>
               </div>
-            </div>
+            ) : (
+              <div>
+                <span className="text-[10px] font-bold text-[var(--ide-text-muted)] uppercase tracking-widest block mb-2">
+                  Quick Launch
+                </span>
+                <div className="space-y-1.5">
+                  <Button
+                    className="w-full h-8 text-[11px] bg-[#0079F2] hover:bg-[#0079F2]/80 text-white rounded-md font-medium gap-2 justify-start"
+                    onClick={() => {
+                      window.open(`vscode://vscode-remote/ssh-remote+${sshUser}@${sshHost}:${sshPort}${gateway.projectPath}`, "_blank");
+                    }}
+                    data-testid="button-launch-vscode"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                    Launch VS Code
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+                  </Button>
+                  <Button
+                    className="w-full h-8 text-[11px] bg-[#7C65CB] hover:bg-[#7C65CB]/80 text-white rounded-md font-medium gap-2 justify-start"
+                    onClick={() => {
+                      window.open(`cursor://vscode-remote/ssh-remote+${sshUser}@${sshHost}:${sshPort}${gateway.projectPath}`, "_blank");
+                    }}
+                    data-testid="button-launch-cursor"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                    Launch Cursor
+                    <ExternalLink className="w-3 h-3 ml-auto opacity-50" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div>
               <span className="text-[10px] font-bold text-[var(--ide-text-muted)] uppercase tracking-widest block mb-2">

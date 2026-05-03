@@ -14,6 +14,7 @@ DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest,queryClient } from "@/lib/queryClient";
 import { useMutation,useQuery } from "@tanstack/react-query";
@@ -24,7 +25,9 @@ interface SSHKeyRecord {
   id: string;
   label: string;
   fingerprint: string;
+  keyType: string;
   createdAt: string;
+  lastUsedAt: string | null;
 }
 
 export default function SSH() {
@@ -47,7 +50,7 @@ export default function SSH() {
       queryClient.invalidateQueries({ queryKey: ["/api/ssh-keys"] });
       setAddKeyDialogOpen(false);
       setNewKey({ label: "", publicKey: "" });
-      toast({ title: "SSH key added", description: "The public key has been stored." });
+      toast({ title: "SSH key added", description: "Your public key has been stored." });
     },
     onError: (error: Error) => {
       toast({ title: "Failed to add SSH key", description: error.message, variant: "destructive" });
@@ -84,7 +87,7 @@ export default function SSH() {
     <PageShell>
       <PageHeader
         title="SSH Access"
-        description="Manage the real user-level SSH keys currently supported by the backend."
+        description="Manage SSH public keys for secure remote access to your workspace."
         icon={Terminal}
         actions={(
           <Dialog open={addKeyDialogOpen} onOpenChange={setAddKeyDialogOpen}>
@@ -97,7 +100,10 @@ export default function SSH() {
             <DialogContent data-testid="dialog-add-ssh-key">
               <DialogHeader>
                 <DialogTitle>Add SSH Public Key</DialogTitle>
-                <DialogDescription>Store a public key for your account. Private key generation and session tracking are not exposed by the backend today.</DialogDescription>
+                <DialogDescription>
+                  Paste your existing public key (e.g. from <code>~/.ssh/id_ed25519.pub</code>).
+                  Supported types: ed25519, rsa (≥2048 bit), ecdsa.
+                </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="space-y-2">
@@ -112,18 +118,22 @@ export default function SSH() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="ssh-public-key">Public Key</Label>
-                  <Input
+                  <Textarea
                     id="ssh-public-key"
                     value={newKey.publicKey}
                     onChange={(event) => setNewKey((prev) => ({ ...prev, publicKey: event.target.value }))}
                     placeholder="ssh-ed25519 AAAA..."
+                    className="font-mono text-sm resize-none h-24"
                     data-testid="input-ssh-public-key"
                   />
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddKeyDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => addKeyMutation.mutate(undefined)} disabled={!newKey.label.trim() || !newKey.publicKey.trim() || addKeyMutation.isPending}>
+                <Button
+                  onClick={() => addKeyMutation.mutate(undefined)}
+                  disabled={!newKey.label.trim() || !newKey.publicKey.trim() || addKeyMutation.isPending}
+                >
                   {addKeyMutation.isPending ? "Adding..." : "Add Key"}
                 </Button>
               </DialogFooter>
@@ -134,17 +144,19 @@ export default function SSH() {
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>Current backend scope</AlertTitle>
+        <AlertTitle>How SSH access works</AlertTitle>
         <AlertDescription>
-          The mounted SSH backend currently supports listing, adding, and deleting user SSH public keys at <code>/api/ssh-keys</code>. Generated private keys, active SSH sessions, and live connection orchestration are not available on this route yet.
+          Add your existing SSH public key here. Use the matching private key from your local machine
+          to connect when the SSH gateway is enabled in the runtime environment.
         </AlertDescription>
       </Alert>
 
       <Alert>
         <Shield className="h-4 w-4" />
-        <AlertTitle>Connection pattern</AlertTitle>
+        <AlertTitle>Key requirements</AlertTitle>
         <AlertDescription>
-          Add your existing public key here, then use the corresponding private key from your local machine when the SSH endpoint is enabled in the runtime environment.
+          Supported key types: <strong>ed25519</strong> (recommended), <strong>rsa</strong> (≥2048 bit), <strong>ecdsa</strong>.
+          Each key must be unique per account. You may store up to 20 keys.
         </AlertDescription>
       </Alert>
 
@@ -160,7 +172,7 @@ export default function SSH() {
             <div className="py-10 text-center">
               <Key className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
               <p className="text-sm font-medium text-foreground">No SSH keys stored</p>
-              <p className="mt-1 text-sm text-muted-foreground">Add an existing public key to use this surface in real backend mode.</p>
+              <p className="mt-1 text-sm text-muted-foreground">Add a public key to enable SSH access to your workspace.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -170,19 +182,29 @@ export default function SSH() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-semibold">{key.label}</span>
-                        <Badge variant="outline">public key</Badge>
+                        <Badge variant="outline">{key.keyType}</Badge>
                       </div>
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                        <Fingerprint className="h-3 w-3" />
-                        <span className="truncate font-mono">{key.fingerprint}</span>
+                        <Fingerprint className="h-3 w-3 shrink-0" />
+                        <span className="truncate font-mono" data-testid={`ssh-key-fingerprint-${key.id}`}>{key.fingerprint}</span>
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">Added {new Date(key.createdAt).toLocaleString()}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Added {new Date(key.createdAt).toLocaleString()}
+                        {key.lastUsedAt && ` · Last used ${new Date(key.lastUsedAt).toLocaleString()}`}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(key.fingerprint, key.label)}>
                         <Copy className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteKeyMutation.mutate(key.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => deleteKeyMutation.mutate(key.id)}
+                        disabled={deleteKeyMutation.isPending}
+                        data-testid={`button-delete-ssh-key-${key.id}`}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
