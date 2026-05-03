@@ -8,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useTheme } from '@/components/ThemeProvider';
 import { ReplitSecretsPanel } from './ReplitSecretsPanel';
 import {
@@ -21,6 +24,9 @@ import {
   Save,
   RotateCcw,
   User,
+  ExternalLink,
+  Key,
+  Lock,
 } from 'lucide-react';
 import {
   Select,
@@ -30,6 +36,93 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+
+interface AccountSectionProps {
+  navigate: (path: string) => void;
+}
+
+function AccountSection({ navigate }: AccountSectionProps) {
+  const { data: me, isLoading } = useQuery<{
+    id: string;
+    username: string;
+    email?: string | null;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    subscriptionTier?: string | null;
+    twoFactorEnabled?: boolean;
+  }>({ queryKey: ['/api/me'] });
+
+  return (
+    <div className="space-y-4">
+      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Account</span>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2].map(i => <div key={i} className="h-8 rounded bg-muted animate-pulse" />)}
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+            <Avatar className="h-9 w-9 shrink-0">
+              <AvatarImage src={me?.avatarUrl || undefined} />
+              <AvatarFallback className="text-xs">
+                {(me?.displayName || me?.username || 'U')[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-[13px] font-medium truncate">{me?.displayName || me?.username}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{me?.email}</p>
+            </div>
+            {me?.subscriptionTier && me.subscriptionTier !== 'free' && (
+              <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] capitalize">{me.subscriptionTier}</Badge>
+            )}
+          </div>
+
+          <Separator />
+
+          <div className="space-y-1">
+            <button
+              className="w-full flex items-center gap-2 px-3 h-8 rounded-lg text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onClick={() => navigate('/settings')}
+              data-testid="button-open-user-settings"
+            >
+              <User className="w-3.5 h-3.5" />
+              <span className="flex-1 text-left">Profile &amp; Settings</span>
+              <ExternalLink className="w-3 h-3 opacity-50" />
+            </button>
+            <button
+              className="w-full flex items-center gap-2 px-3 h-8 rounded-lg text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onClick={() => navigate('/settings')}
+              data-testid="button-open-ssh-keys"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span className="flex-1 text-left">SSH Keys</span>
+              <ExternalLink className="w-3 h-3 opacity-50" />
+            </button>
+            <button
+              className="w-full flex items-center gap-2 px-3 h-8 rounded-lg text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onClick={() => navigate('/settings')}
+              data-testid="button-open-security"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span className="flex-1 text-left">Security &amp; 2FA</span>
+              <ExternalLink className="w-3 h-3 opacity-50" />
+            </button>
+            <button
+              className="w-full flex items-center gap-2 px-3 h-8 rounded-lg text-[13px] text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onClick={() => navigate('/settings')}
+              data-testid="button-open-account-settings"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span className="flex-1 text-left">Billing &amp; Plan</span>
+              <ExternalLink className="w-3 h-3 opacity-50" />
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 interface SettingSection {
   id: 'editor' | 'appearance' | 'project' | 'notifications' | 'environment' | 'account';
@@ -394,20 +487,7 @@ export function ReplitSettingsPanel({ projectId }: { projectId?: string }) {
 
       case 'account':
         return (
-          <div className="space-y-4">
-            <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Account</span>
-            <p className="text-sm text-muted-foreground">
-              Account security, billing, and profile details live in the dedicated account surfaces.
-            </p>
-            <div className="grid grid-cols-1 gap-2">
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/account')} data-testid="button-open-account-settings">
-                Open Account Settings
-              </Button>
-              <Button variant="outline" className="justify-start" onClick={() => navigate('/settings')} data-testid="button-open-user-settings">
-                Open User Settings
-              </Button>
-            </div>
-          </div>
+          <AccountSection navigate={navigate} />
         );
     }
   };

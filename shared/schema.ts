@@ -209,6 +209,8 @@ export const users = pgTable("users", {
   role: text("role").default('user'), // ✅ DB has role (text), not isAdmin (boolean)
   // AI Preferences
   preferredAiModel: varchar("preferred_ai_model"),
+  // User UI/AI/Editor preferences (jsonb — migrated via db-init on startup)
+  userPreferences: jsonb("user_preferences").$type<Record<string, unknown>>(),
   // GitHub OAuth Token (encrypted with AES-256-GCM)
   githubTokenCiphertext: text("github_token_ciphertext"),
   githubTokenIv: varchar("github_token_iv", { length: 32 }),

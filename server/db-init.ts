@@ -55,6 +55,27 @@ let migrationsEnsured = false;
  * This is a critical migration for multi-provider AI model selection
  * Runs automatically at startup - idempotent and safe
  */
+async function ensureUserPreferencesColumn() {
+  try {
+    const [result] = await client`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'users'
+          AND column_name = 'user_preferences'
+      ) as "exists";
+    `;
+    if (!result?.exists) {
+      await client`ALTER TABLE users ADD COLUMN user_preferences jsonb;`;
+      logger.info('[DB Init] ✓ user_preferences column created');
+    } else {
+      logger.info('[DB Init] ✓ user_preferences column already exists');
+    }
+  } catch (error: any) {
+    logger.warn('[DB Init] Failed to ensure user_preferences column:', error.message);
+  }
+}
+
 async function ensurePreferredAiModelColumn() {
   try {
     // Check if column exists
@@ -159,6 +180,7 @@ export async function initializeDatabase() {
       await ensureDatabaseMigrated();
       
       await ensurePreferredAiModelColumn();
+      await ensureUserPreferencesColumn();
 
       const verification = await verifyCoreTablesExist();
       if (!verification.ok) {

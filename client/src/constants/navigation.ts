@@ -93,11 +93,11 @@ export const secondaryNavigation: NavigationItem[] = [
   {
     key: "account",
     label: "Account",
-    path: "/account",
+    path: "/settings",
     icon: User,
     description: "Manage billing, security, and account data",
     ctaLabel: "Open account settings",
-    activePaths: ["/account", "/profile"],
+    activePaths: ["/settings", "/account", "/profile"],
   },
 ];
 

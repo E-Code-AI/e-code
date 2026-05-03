@@ -2,8 +2,14 @@
 import { Request,Response,Router } from "express";
 import { ensureAuthenticated } from "../middleware/auth";
 import { csrfProtection } from "../middleware/csrf";
+import { createRateLimitMiddleware } from "../middleware/rate-limiter";
 import { type IStorage } from "../storage";
 import bcrypt from "../utils/bcrypt-compat";
+import { z } from "zod";
+import { db } from "../db";
+import { auditLogs } from "@shared/schema";
+
+const authRateLimit = createRateLimitMiddleware('auth');
 
 export class UsersRouter {
   private router: Router;
@@ -277,6 +283,8 @@ export class UsersRouter {
       }
     });
 
+    // AI prefs, editor prefs, sessions — handled by user-prefs.router.ts (registered before this router)
+
     // Get usage for a specific user by ID (MUST be before /:id)
     this.router.get("/:id/usage", this.ensureAuth, async (req: Request, res: Response) => {
       try {
@@ -334,23 +342,85 @@ export class UsersRouter {
       }
     });
 
-    // Update user profile
-    this.router.put("/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
+    // Update user profile — supports optional password/email change with current-password verification
+    // Auth rate-limit applied here because this endpoint handles credential mutations.
+    this.router.put("/:id", this.ensureAuth, csrfProtection, authRateLimit, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
-        if (req.user!.id !== userId) {
+        if (String((req.user as any)!.id) !== String(userId)) {
           return res.status(403).json({ message: "Can only update own profile", code: "ACCESS_DENIED" });
         }
-        const updates = req.body;
-        delete updates.id;
-        delete updates.username;
-        if (updates.password) {
-          updates.password = await bcrypt.hash(updates.password, 10);
+
+        const { currentPassword, password, ...profileUpdates } = req.body as {
+          currentPassword?: string;
+          password?: string;
+          [key: string]: unknown;
+        };
+
+        delete (profileUpdates as any).id;
+        delete (profileUpdates as any).username;
+
+        // Password change: require and verify currentPassword before accepting new password
+        if (password !== undefined) {
+          if (!currentPassword) {
+            return res.status(400).json({
+              message: "Current password is required to change your password",
+              code: "CURRENT_PASSWORD_REQUIRED",
+            });
+          }
+          const existingUser = await this.storage.getUser(userId);
+          if (!existingUser) {
+            return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
+          }
+          const isValid = await bcrypt.compare(currentPassword, (existingUser as any).password || '');
+          if (!isValid) {
+            // Audit failed password-change attempt
+            try {
+              await db.insert(auditLogs).values({
+                userId: String(userId),
+                action: 'password_change_failed',
+                resource: 'user',
+                resourceId: String(userId),
+                ipAddress: req.ip ?? null,
+                userAgent: req.headers['user-agent'] ?? null,
+              });
+            } catch { /* non-fatal */ }
+            return res.status(401).json({
+              message: "Current password is incorrect",
+              code: "INVALID_CURRENT_PASSWORD",
+            });
+          }
+          if (typeof password !== 'string' || password.length < 8) {
+            return res.status(400).json({
+              message: "New password must be at least 8 characters",
+              code: "PASSWORD_TOO_SHORT",
+            });
+          }
+          (profileUpdates as any).password = await bcrypt.hash(password, 10);
         }
-        const user = await this.storage.updateUser(userId, updates);
+
+        const user = await this.storage.updateUser(userId, profileUpdates as any);
         if (!user) {
           return res.status(404).json({ message: "User not found", code: "USER_NOT_FOUND" });
         }
+
+        // Audit sensitive field changes
+        const sensitiveActions: string[] = [];
+        if (password !== undefined) sensitiveActions.push('password_changed');
+        if ((profileUpdates as any).email !== undefined) sensitiveActions.push('email_changed');
+        for (const action of sensitiveActions) {
+          try {
+            await db.insert(auditLogs).values({
+              userId: String(userId),
+              action,
+              resource: 'user',
+              resourceId: String(userId),
+              ipAddress: req.ip ?? null,
+              userAgent: req.headers['user-agent'] ?? null,
+            });
+          } catch { /* non-fatal */ }
+        }
+
         const publicUser = {
           id: user.id,
           username: user.username,
@@ -358,22 +428,36 @@ export class UsersRouter {
           displayName: user.displayName,
           avatarUrl: user.avatarUrl,
           bio: user.bio,
-          createdAt: user.createdAt
+          website: (user as any).website,
+          githubUsername: (user as any).githubUsername,
+          twitterUsername: (user as any).twitterUsername,
+          createdAt: user.createdAt,
         };
         res.json(publicUser);
       } catch (error) {
         console.error('Error updating user:', error);
-        res.status(500).json({ message: "Failed to update user", code: "UPDATE_ERROR" });
+        res.status(500).json({ message: "Internal server error", code: "UPDATE_ERROR" });
       }
     });
 
-    // Delete user account
-    this.router.delete("/:id", this.ensureAuth, csrfProtection, async (req: Request, res: Response) => {
+    // Delete user account — auth rate-limited; audited before destruction
+    this.router.delete("/:id", this.ensureAuth, csrfProtection, authRateLimit, async (req: Request, res: Response) => {
       try {
         const userId = req.params.id;
-        if (req.user!.id !== userId) {
+        if (String((req.user as any)!.id) !== String(userId)) {
           return res.status(403).json({ message: "Can only delete own account", code: "ACCESS_DENIED" });
         }
+        // Write audit record before deletion so it persists even if cascade removes user data
+        try {
+          await db.insert(auditLogs).values({
+            userId: String(userId),
+            action: 'account_deleted',
+            resource: 'user',
+            resourceId: String(userId),
+            ipAddress: req.ip ?? null,
+            userAgent: req.headers['user-agent'] ?? null,
+          });
+        } catch { /* non-fatal — proceed with deletion */ }
         await this.storage.deleteUser(userId);
         req.logout((err: any) => {
           if (err) console.error('Logout error after account deletion:', err);
@@ -381,7 +465,7 @@ export class UsersRouter {
         });
       } catch (error) {
         console.error('Error deleting user:', error);
-        res.status(500).json({ message: "Failed to delete user", code: "DELETE_ERROR" });
+        res.status(500).json({ message: "Internal server error", code: "DELETE_ERROR" });
       }
     });
   }

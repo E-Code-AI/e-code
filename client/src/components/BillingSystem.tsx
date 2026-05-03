@@ -382,7 +382,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => navigate('/account')}
+                  onClick={() => navigate('/settings')}
                 >
                   <Clock className="h-4 w-4 mr-2" />
                   Billing History
@@ -390,7 +390,7 @@ export function BillingSystem({ userId, className }: BillingSystemProps) {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  onClick={() => navigate('/account')}
+                  onClick={() => navigate('/settings')}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Payment Methods

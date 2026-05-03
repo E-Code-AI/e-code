@@ -1,5 +1,4 @@
-// @ts-nocheck
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { createLogger } from '../utils/logger';
 import { db } from '../db';
@@ -14,27 +13,34 @@ const logger = createLogger('settings');
 
 router.use(ensureAuthenticated);
 
-router.use((req, res, next) => {
+router.use((req: Request, res: Response, next: () => void) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
     return csrfProtection(req, res, next);
   }
   return next();
 });
 
-async function verifyProjectOwnership(userId: number | string, projectId: number | string): Promise<boolean> {
+async function verifyProjectOwnership(
+  userId: number | string,
+  projectId: number | string,
+): Promise<boolean> {
   try {
-    const userIdNum = typeof userId === 'number' ? userId : parseInt(String(userId), 10);
-    const projectIdNum = typeof projectId === 'number' ? projectId : parseInt(String(projectId), 10);
-    
-    if (isNaN(userIdNum) || isNaN(projectIdNum) || userIdNum <= 0 || projectIdNum <= 0) {
+    const userIdNum =
+      typeof userId === 'number' ? userId : parseInt(String(userId), 10);
+    const projectIdNum =
+      typeof projectId === 'number' ? projectId : parseInt(String(projectId), 10);
+
+    if (
+      isNaN(userIdNum) ||
+      isNaN(projectIdNum) ||
+      userIdNum <= 0 ||
+      projectIdNum <= 0
+    ) {
       return false;
     }
-    
+
     const project = await db.query.projects.findFirst({
-      where: and(
-        eq(projects.id, projectIdNum),
-        eq(projects.ownerId, userIdNum)
-      )
+      where: and(eq(projects.id, projectIdNum), eq(projects.ownerId, userIdNum)),
     });
     return !!project;
   } catch (error) {
@@ -79,31 +85,31 @@ const defaultSettings: ProjectSettingsData = {
   borderRadius: 4,
 };
 
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     const projectId = req.params.projectId;
-    const userId = req.user?.id;
-    
+    const userId = (req.user as { id: number } | undefined)?.id;
+
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     const isOwner = await verifyProjectOwnership(userId, projectId);
     if (!isOwner) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const projectIdNum = parseInt(projectId, 10);
     const project = await db.query.projects.findFirst({
-      where: eq(projects.id, projectIdNum)
+      where: eq(projects.id, projectIdNum),
     });
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
-    
+
     const settings = await db.query.projectSettings.findFirst({
-      where: eq(projectSettings.projectId, projectIdNum)
+      where: eq(projectSettings.projectId, projectIdNum),
     });
 
     if (!settings) {
@@ -112,12 +118,14 @@ router.get('/', async (req, res) => {
         ...defaultSettings,
         projectName: project.name ?? defaultSettings.projectName,
         projectDescription: project.description ?? defaultSettings.projectDescription,
-        projectPrivacy: (project.visibility as 'public' | 'private' | 'unlisted') ?? defaultSettings.projectPrivacy,
+        projectPrivacy:
+          (project.visibility as 'public' | 'private' | 'unlisted') ??
+          defaultSettings.projectPrivacy,
       });
     }
 
-    const customColors = settings.customColors as Record<string, any> || {};
-    
+    const customColors = (settings.customColors as Record<string, unknown>) || {};
+
     res.json({
       projectId: projectIdNum,
       fontSize: customColors.fontSize ?? defaultSettings.fontSize,
@@ -129,28 +137,34 @@ router.get('/', async (req, res) => {
       formatOnSave: customColors.formatOnSave ?? defaultSettings.formatOnSave,
       editorTheme: customColors.editorTheme ?? defaultSettings.editorTheme,
       projectName: project.name ?? customColors.projectName ?? defaultSettings.projectName,
-      projectDescription: project.description ?? customColors.projectDescription ?? defaultSettings.projectDescription,
-      projectPrivacy: (project.visibility as 'public' | 'private' | 'unlisted') ?? customColors.projectPrivacy ?? defaultSettings.projectPrivacy,
+      projectDescription:
+        project.description ??
+        customColors.projectDescription ??
+        defaultSettings.projectDescription,
+      projectPrivacy:
+        (project.visibility as 'public' | 'private' | 'unlisted') ??
+        customColors.projectPrivacy ??
+        defaultSettings.projectPrivacy,
       themeId: settings.themeId ?? defaultSettings.themeId,
       customColors: customColors.colors ?? defaultSettings.customColors,
       borderRadius: settings.borderRadius ?? defaultSettings.borderRadius,
     });
-  } catch (error: any) {
-    logger.error('Failed to get project settings:', redactErrorForLog(error));
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    logger.error('Failed to get project settings:', redactErrorForLog(error as Error));
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-router.put('/', async (req, res) => {
+router.put('/', async (req: Request, res: Response) => {
   try {
     const projectId = req.params.projectId;
-    const userId = req.user?.id;
+    const userId = (req.user as { id: number } | undefined)?.id;
     const data = updateSettingsSchema.parse(req.body);
-    
+
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
     }
-    
+
     const isOwner = await verifyProjectOwnership(userId, projectId);
     if (!isOwner) {
       return res.status(403).json({ error: 'Access denied' });
@@ -158,18 +172,27 @@ router.put('/', async (req, res) => {
 
     const projectIdNum = parseInt(projectId, 10);
 
-    if (data.projectName !== undefined || data.projectDescription !== undefined || data.projectPrivacy !== undefined) {
-      await db.update(projects)
+    if (
+      data.projectName !== undefined ||
+      data.projectDescription !== undefined ||
+      data.projectPrivacy !== undefined
+    ) {
+      await db
+        .update(projects)
         .set({
           ...(data.projectName !== undefined ? { name: data.projectName } : {}),
-          ...(data.projectDescription !== undefined ? { description: data.projectDescription } : {}),
-          ...(data.projectPrivacy !== undefined ? { visibility: data.projectPrivacy } : {}),
-          updatedAt: new Date()
+          ...(data.projectDescription !== undefined
+            ? { description: data.projectDescription }
+            : {}),
+          ...(data.projectPrivacy !== undefined
+            ? { visibility: data.projectPrivacy }
+            : {}),
+          updatedAt: new Date(),
         })
         .where(eq(projects.id, projectIdNum));
     }
-    
-    const customColorsData = {
+
+    const customColorsData: Record<string, unknown> = {
       fontSize: data.fontSize,
       tabSize: data.tabSize,
       wordWrap: data.wordWrap,
@@ -185,51 +208,92 @@ router.put('/', async (req, res) => {
     };
 
     const existing = await db.query.projectSettings.findFirst({
-      where: eq(projectSettings.projectId, projectIdNum)
+      where: eq(projectSettings.projectId, projectIdNum),
     });
 
     if (existing) {
-      const existingCustomColors = existing.customColors as Record<string, any> || {};
-      
-      const [updated] = await db.update(projectSettings)
+      const existingCustomColors =
+        (existing.customColors as Record<string, unknown>) || {};
+
+      const [updated] = await db
+        .update(projectSettings)
         .set({
           themeId: data.themeId ?? existing.themeId,
           fontSize: data.fontSize ? parseInt(data.fontSize, 10) : existing.fontSize,
           borderRadius: data.borderRadius ?? existing.borderRadius,
           customColors: { ...existingCustomColors, ...customColorsData },
-          updatedAt: new Date()
+          updatedAt: new Date(),
         })
         .where(eq(projectSettings.projectId, projectIdNum))
         .returning();
 
       const returnData = {
         projectId: projectIdNum,
-        fontSize: customColorsData.fontSize ?? existingCustomColors.fontSize ?? defaultSettings.fontSize,
-        tabSize: customColorsData.tabSize ?? existingCustomColors.tabSize ?? defaultSettings.tabSize,
-        wordWrap: customColorsData.wordWrap ?? existingCustomColors.wordWrap ?? defaultSettings.wordWrap,
-        lineNumbers: customColorsData.lineNumbers ?? existingCustomColors.lineNumbers ?? defaultSettings.lineNumbers,
-        minimap: customColorsData.minimap ?? existingCustomColors.minimap ?? defaultSettings.minimap,
-        autoSave: customColorsData.autoSave ?? existingCustomColors.autoSave ?? defaultSettings.autoSave,
-        formatOnSave: customColorsData.formatOnSave ?? existingCustomColors.formatOnSave ?? defaultSettings.formatOnSave,
-        editorTheme: customColorsData.editorTheme ?? existingCustomColors.editorTheme ?? defaultSettings.editorTheme,
-        projectName: data.projectName ?? existingCustomColors.projectName ?? defaultSettings.projectName,
-        projectDescription: data.projectDescription ?? existingCustomColors.projectDescription ?? defaultSettings.projectDescription,
-        projectPrivacy: data.projectPrivacy ?? existingCustomColors.projectPrivacy ?? defaultSettings.projectPrivacy,
+        fontSize:
+          customColorsData.fontSize ??
+          existingCustomColors.fontSize ??
+          defaultSettings.fontSize,
+        tabSize:
+          customColorsData.tabSize ??
+          existingCustomColors.tabSize ??
+          defaultSettings.tabSize,
+        wordWrap:
+          customColorsData.wordWrap ??
+          existingCustomColors.wordWrap ??
+          defaultSettings.wordWrap,
+        lineNumbers:
+          customColorsData.lineNumbers ??
+          existingCustomColors.lineNumbers ??
+          defaultSettings.lineNumbers,
+        minimap:
+          customColorsData.minimap ??
+          existingCustomColors.minimap ??
+          defaultSettings.minimap,
+        autoSave:
+          customColorsData.autoSave ??
+          existingCustomColors.autoSave ??
+          defaultSettings.autoSave,
+        formatOnSave:
+          customColorsData.formatOnSave ??
+          existingCustomColors.formatOnSave ??
+          defaultSettings.formatOnSave,
+        editorTheme:
+          customColorsData.editorTheme ??
+          existingCustomColors.editorTheme ??
+          defaultSettings.editorTheme,
+        projectName:
+          data.projectName ??
+          existingCustomColors.projectName ??
+          defaultSettings.projectName,
+        projectDescription:
+          data.projectDescription ??
+          existingCustomColors.projectDescription ??
+          defaultSettings.projectDescription,
+        projectPrivacy:
+          data.projectPrivacy ??
+          existingCustomColors.projectPrivacy ??
+          defaultSettings.projectPrivacy,
         themeId: updated.themeId ?? defaultSettings.themeId,
-        customColors: customColorsData.colors ?? existingCustomColors.colors ?? defaultSettings.customColors,
+        customColors:
+          customColorsData.colors ??
+          existingCustomColors.colors ??
+          defaultSettings.customColors,
         borderRadius: updated.borderRadius ?? defaultSettings.borderRadius,
       };
 
       return res.json(returnData);
     }
 
-    const [created] = await db.insert(projectSettings).values({
-      projectId: projectIdNum,
-      themeId: data.themeId ?? 'light',
-      fontSize: data.fontSize ? parseInt(data.fontSize, 10) : 14,
-      borderRadius: data.borderRadius ?? 4,
-      customColors: customColorsData,
-    }).returning();
+    const [created] = await db
+      .insert(projectSettings)
+      .values({
+        projectId: projectIdNum,
+        themeId: data.themeId ?? 'light',
+        fontSize: data.fontSize ? parseInt(data.fontSize, 10) : 14,
+        borderRadius: data.borderRadius ?? 4,
+        customColors: customColorsData,
+      })
+      .returning();
 
     res.status(201).json({
       projectId: projectIdNum,
@@ -248,12 +312,12 @@ router.put('/', async (req, res) => {
       customColors: data.customColors ?? defaultSettings.customColors,
       borderRadius: created.borderRadius ?? defaultSettings.borderRadius,
     });
-  } catch (error: any) {
-    logger.error('Failed to update project settings:', redactErrorForLog(error));
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    logger.error('Failed to update project settings:', redactErrorForLog(error as Error));
+    if (error instanceof z.ZodError) {
       return res.status(400).json({ error: error.errors });
     }
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

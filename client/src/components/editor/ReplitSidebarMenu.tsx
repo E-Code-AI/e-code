@@ -70,7 +70,7 @@ export function ReplitSidebarMenu({ isOpen, onClose, onNavigate }: ReplitSidebar
       id: 'account',
       title: 'Account',
       items: [
-        { icon: User, label: 'Account', path: '/account' },
+        { icon: User, label: 'Account', path: '/settings' },
         { icon: UserCircle, label: 'Profile', path: '/profile' },
         { icon: Bell, label: 'Notifications', path: '/notifications' }
       ]

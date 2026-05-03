@@ -9,6 +9,7 @@ import { AuthRouter } from "./auth.router";
 import { ProjectsRouter } from "./projects.router";
 import { FilesRouter } from "./files.router";
 import { UsersRouter } from "./users.router";
+import userPrefsRouter from "./user-prefs.router";
 import { HealthRouter } from "./health.router";
 import collaborationRouter from "./collaboration";
 import deploymentRouter from "./deployment";
@@ -274,6 +275,10 @@ export class MainRouter {
 
     // Apply tier-based rate limiting to all API routes (Fortune 500 requirement)
     // Free: 100 req/min, Pro: 1000 req/min, Enterprise: 10000 req/min
+
+    // User preferences (ai-prefs, editor-prefs, sessions, security-events, connected-services)
+    // MUST be registered BEFORE usersRouter so /api/users/sessions etc. are not swallowed by /:id
+    app.use('/api/users', userPrefsRouter);
 
     // User management routes
     app.use('/api/users', tierRateLimiters.api, this.usersRouter.getRouter());

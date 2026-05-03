@@ -480,7 +480,7 @@ export function ReplitHeader() {
             </DropdownMenuItem>
 
             <DropdownMenuItem 
-              onClick={() => navigate('/account')}
+              onClick={() => navigate('/settings')}
               className="text-[var(--ecode-text)] hover:bg-[var(--ecode-sidebar-hover)]">
               <Settings className="mr-2 h-4 w-4" />
               Account
