@@ -1549,6 +1549,245 @@ export class AgentToolFrameworkService extends EventEmitter {
       }
     });
 
+    // Object Storage Tools — scoped to the current project's bucket prefix
+    // Shared helper: verify the caller owns the project before any storage op
+    const verifyStorageAccess = async (userId: string, projectId: number) => {
+      const { projects } = await import('@shared/schema');
+      const [project] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(eq(projects.id, projectId), eq(projects.ownerId, parseInt(userId, 10))))
+        .limit(1);
+      if (!project) {
+        throw new Error(`Access denied: project ${projectId} not found or not owned by this user`);
+      }
+    };
+
+    /**
+     * Construct and strictly validate a storage key so it cannot escape the
+     * project's bucket prefix (prevents IDOR-style cross-project access).
+     *
+     * Mirrors the boundary check performed by `validateAndResolveStoragePath`
+     * in the HTTP router.
+     */
+    const resolveProjectStorageKey = (projectId: number, userPath: string): string => {
+      const requiredPrefix = `projects/${projectId}/storage/`;
+      // Strip leading slashes, then remove every traversal sequence
+      const normalized = userPath
+        .replace(/^\/+/, '')
+        .split('/')
+        .filter((seg) => seg !== '' && seg !== '..')
+        .join('/');
+      if (!normalized) {
+        throw new Error('Invalid path: must not be empty');
+      }
+      const fullKey = `${requiredPrefix}${normalized}`;
+      // Hard boundary check — fullKey must remain inside the project prefix
+      if (!fullKey.startsWith(requiredPrefix)) {
+        throw new Error('Invalid path: key escapes project storage scope');
+      }
+      return fullKey;
+    };
+
+    this.registerTool({
+      name: 'list_objects',
+      displayName: 'List Storage Objects',
+      description: 'List files and folders in the project object storage. Returns files with metadata (size, contentType, lastModified).',
+      capability: 'file_system',
+      inputSchema: z.object({
+        prefix: z.string().optional().describe('Optional sub-folder prefix to list within')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const bucketPrefix = `projects/${context.projectId}/storage`;
+          const requiredPrefix = `${bucketPrefix}/`;
+          // Build prefix; validate it stays within project scope
+          let listPrefix = bucketPrefix;
+          if (input.prefix) {
+            const subKey = resolveProjectStorageKey(context.projectId, input.prefix);
+            listPrefix = subKey.endsWith('/') ? subKey.slice(0, -1) : subKey;
+          }
+          // Hard boundary guard — must stay inside project prefix
+          if (listPrefix !== bucketPrefix && !listPrefix.startsWith(requiredPrefix)) {
+            throw new Error('Invalid prefix: escapes project storage scope');
+          }
+          const fileList = await storageService.listFiles(listPrefix);
+          return {
+            success: true,
+            prefix: input.prefix || '/',
+            objects: fileList.map((f) => ({
+              key: f.key.replace(`${bucketPrefix}/`, ''),
+              size: f.size,
+              contentType: f.contentType,
+              lastModified: f.lastModified
+            }))
+          };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
+    this.registerTool({
+      name: 'read_object',
+      displayName: 'Read Storage Object',
+      description: 'Read a file from project object storage. Text files are returned as UTF-8 strings; binary files are returned as base64.',
+      capability: 'file_system',
+      inputSchema: z.object({
+        path: z.string().describe('File path within project storage (e.g. "images/logo.png")')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const fullKey = resolveProjectStorageKey(context.projectId, input.path);
+          const buffer = await storageService.downloadFile(fullKey);
+          // Detect binary by checking for null bytes in first 8 KB
+          const probe = buffer.slice(0, 8192);
+          const isBinary = probe.includes(0x00);
+          if (isBinary) {
+            return {
+              success: true,
+              path: input.path,
+              encoding: 'base64',
+              content: buffer.toString('base64'),
+              size: buffer.length
+            };
+          }
+          return {
+            success: true,
+            path: input.path,
+            encoding: 'utf-8',
+            content: buffer.toString('utf-8'),
+            size: buffer.length
+          };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
+    this.registerTool({
+      name: 'write_object',
+      displayName: 'Write Storage Object',
+      description: 'Upload text or base64-encoded content to project object storage.',
+      capability: 'file_system',
+      inputSchema: z.object({
+        path: z.string().describe('Destination path within project storage (e.g. "data/config.json")'),
+        content: z.string().describe('Content to write. For binary files, provide base64-encoded content and set encoding to "base64".'),
+        encoding: z.enum(['utf-8', 'base64']).optional().default('utf-8').describe('Content encoding: "utf-8" (default) or "base64" for binary files'),
+        contentType: z.string().optional().default('text/plain').describe('MIME type of the content')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const fullKey = resolveProjectStorageKey(context.projectId, input.path);
+          const bucketPrefix = `projects/${context.projectId}/storage`;
+          // Quota enforcement — same 1 GB limit as the HTTP upload route
+          const MAX_AGENT_STORAGE = 1024 * 1024 * 1024;
+          const buf = input.encoding === 'base64'
+            ? Buffer.from(input.content, 'base64')
+            : Buffer.from(input.content, 'utf-8');
+          const stats = await storageService.getStorageStats(bucketPrefix);
+          if (stats.totalSize + buf.length > MAX_AGENT_STORAGE) {
+            throw new Error(
+              `Storage quota exceeded. Used ${stats.totalSize} of ${MAX_AGENT_STORAGE} bytes. ` +
+              `Free up space before writing.`
+            );
+          }
+          const result = await storageService.uploadFile(fullKey, buf, {
+            contentType: input.contentType || 'text/plain'
+          });
+          return { success: true, path: input.path, key: result.key, size: result.size };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
+    this.registerTool({
+      name: 'delete_object',
+      displayName: 'Delete Storage Object',
+      description: 'Delete a file from project object storage.',
+      capability: 'file_system',
+      inputSchema: z.object({
+        path: z.string().describe('Path of the file to delete within project storage')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const fullKey = resolveProjectStorageKey(context.projectId, input.path);
+          await storageService.deleteFile(fullKey);
+          return { success: true, deleted: input.path };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
+    this.registerTool({
+      name: 'get_signed_url',
+      displayName: 'Get Signed Storage URL',
+      description: 'Generate a time-limited signed URL for a file in project object storage. Useful for sharing files externally without requiring authentication.',
+      capability: 'file_system',
+      inputSchema: z.object({
+        path: z.string().describe('File path within project storage'),
+        expiresInSeconds: z.number().min(60).max(604800).optional().default(3600).describe('URL expiry in seconds (60–604800, default 3600 = 1 hour)')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const fullKey = resolveProjectStorageKey(context.projectId, input.path);
+          const expiresIn = Math.min(Math.max(input.expiresInSeconds || 3600, 60), 604800);
+          const url = await storageService.getSignedUrl(fullKey, expiresIn, 'read');
+          if (!url) throw new Error('Storage backend did not return a signed URL');
+          return { success: true, path: input.path, url, expiresInSeconds: expiresIn };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
+    this.registerTool({
+      name: 'create_folder',
+      displayName: 'Create Storage Folder',
+      description: 'Create a folder (directory) in project object storage.',
+      capability: 'file_system',
+      inputSchema: z.object({
+        path: z.string().describe('Folder path to create (e.g. "images/thumbnails")')
+      }),
+      requiresAuth: true,
+      execute: async (input, context) => {
+        try {
+          await verifyStorageAccess(context.userId, context.projectId);
+          const { storageService } = await import('./storage.service');
+          const folderKey = resolveProjectStorageKey(context.projectId, input.path);
+          const fullKey = `${folderKey}/.placeholder`;
+          const bucketPrefix = `projects/${context.projectId}/storage`;
+          // Quota enforcement — placeholder is 0 bytes but check anyway for consistency
+          const MAX_AGENT_STORAGE = 1024 * 1024 * 1024;
+          const stats = await storageService.getStorageStats(bucketPrefix);
+          if (stats.totalSize >= MAX_AGENT_STORAGE) {
+            throw new Error(`Storage quota exceeded. Cannot create folder.`);
+          }
+          await storageService.uploadFile(fullKey, Buffer.from(''), { contentType: 'text/plain' });
+          return { success: true, folder: input.path };
+        } catch (err: unknown) {
+          return { success: false, error: err instanceof Error ? err.message : String(err) };
+        }
+      }
+    });
+
     // 11. Screenshot capture — lets the agent capture the project preview
     this.registerTool({
       name: 'screenshot_capture',

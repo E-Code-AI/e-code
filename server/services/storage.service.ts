@@ -1,7 +1,7 @@
-// @ts-nocheck
 import * as crypto from 'crypto';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { createReadStream } from 'fs';
 import { Readable } from 'stream';
 import { createLogger } from '../utils/logger';
 import type { S3Client as S3ClientType } from '@aws-sdk/client-s3';
@@ -18,6 +18,8 @@ export interface StorageObject {
   etag: string;
   url?: string;
   metadata?: Record<string, string>;
+  /** Populated by listFiles() from durable backend state — not from in-memory registry. */
+  isPublic?: boolean;
 }
 
 export interface UploadOptions {
@@ -233,6 +235,9 @@ export class StorageService {
   ): Promise<StorageObject> {
     await this.ensureInitialized();
     key = this.sanitizeKey(key);
+    // Overwriting an existing key reverts it to private — clear any prior public state.
+    // Callers must re-invoke setObjectVisibility() if they want the new content public.
+    this.publicKeys.delete(key);
     const buffer = await this.toBuffer(content);
     logger.info(`Uploading: ${key} (${buffer.length} bytes) via ${this.config.backend}`);
 
@@ -278,7 +283,7 @@ export class StorageService {
     try {
       const { PutObjectCommand } = await import('@aws-sdk/client-s3');
       const contentType = options.contentType || 'application/octet-stream';
-      await this.s3Client.send(new PutObjectCommand({
+      await this.s3Client!.send(new PutObjectCommand({
         Bucket: this.config.s3Bucket,
         Key: key,
         Body: buffer,
@@ -354,13 +359,15 @@ export class StorageService {
     const rangeHeader = (options.start !== undefined || options.end !== undefined)
       ? `bytes=${options.start ?? 0}-${options.end ?? ''}`
       : undefined;
-    const resp = await this.s3Client.send(new GetObjectCommand({
+    const resp = await this.s3Client!.send(new GetObjectCommand({
       Bucket: this.config.s3Bucket,
       Key: key,
       Range: rangeHeader,
     }));
+    if (!resp.Body) throw new Error(`S3 download returned empty body for key: ${key}`);
+    const stream = resp.Body as AsyncIterable<Uint8Array>;
     const chunks: Buffer[] = [];
-    for await (const chunk of resp.Body) {
+    for await (const chunk of stream) {
       chunks.push(Buffer.from(chunk));
     }
     return Buffer.concat(chunks);
@@ -387,12 +394,16 @@ export class StorageService {
 
     switch (this.config.backend) {
       case 'replit':
-        return this.deleteReplit(key);
+        await this.deleteReplit(key);
+        break;
       case 's3':
-        return this.deleteS3(key);
+        await this.deleteS3(key);
+        break;
       default:
-        return this.deleteLocal(key);
+        await this.deleteLocal(key);
     }
+    // Always clear from the visibility registry — deleted objects are never public
+    this.publicKeys.delete(key);
   }
 
   private async deleteReplit(key: string): Promise<void> {
@@ -411,7 +422,7 @@ export class StorageService {
 
   private async deleteS3(key: string): Promise<void> {
     const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
-    await this.s3Client.send(new DeleteObjectCommand({
+    await this.s3Client!.send(new DeleteObjectCommand({
       Bucket: this.config.s3Bucket,
       Key: key,
     }));
@@ -435,6 +446,55 @@ export class StorageService {
     }
   }
 
+  /** Returns `projects/{id}/storage` prefix extracted from any key under it. */
+  private static projectPrefixFromKey(key: string): string {
+    const m = key.match(/^(projects\/\d+\/storage)/);
+    return m ? m[1] : key.split('/').slice(0, 3).join('/');
+  }
+
+  /** S3 sidecar key that stores the visibility index for a project prefix. */
+  private s3VisibilityIndexKey(prefix: string): string {
+    return `${prefix}/.replit-visibility-index`;
+  }
+
+  /**
+   * Load visibility index for S3 from the sidecar object.
+   * Returns a Set of keys that are currently public.
+   * Non-existent sidecar → empty set (all private).
+   */
+  private async loadS3VisibilityIndex(prefix: string): Promise<Set<string>> {
+    try {
+      const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+      const resp = await this.s3Client!.send(new GetObjectCommand({
+        Bucket: this.config.s3Bucket,
+        Key: this.s3VisibilityIndexKey(prefix),
+      }));
+      const body = resp.Body as NodeJS.ReadableStream;
+      const chunks: Buffer[] = [];
+      for await (const chunk of body) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const data = JSON.parse(Buffer.concat(chunks).toString('utf-8')) as string[];
+      return new Set(Array.isArray(data) ? data : []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  /**
+   * Persist the visibility index for S3 as a small JSON sidecar object.
+   */
+  private async saveS3VisibilityIndex(prefix: string, publicSet: Set<string>): Promise<void> {
+    const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+    const body = Buffer.from(JSON.stringify(Array.from(publicSet)), 'utf-8');
+    await this.s3Client!.send(new PutObjectCommand({
+      Bucket: this.config.s3Bucket,
+      Key: this.s3VisibilityIndexKey(prefix),
+      Body: body,
+      ContentType: 'application/json',
+    }));
+  }
+
   private async listReplit(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
     try {
       const storage = await this.getGcsStorage();
@@ -443,12 +503,16 @@ export class StorageService {
       const results: StorageObject[] = [];
       for (const file of files) {
         const [metadata] = await file.getMetadata();
+        // Read durable visibility from GCS custom object metadata.
+        // This survives process restarts and works across instances.
+        const isPublic = (metadata.metadata as Record<string, string> | undefined)?.['replit-visibility'] === 'public';
         results.push({
           key: file.name,
           size: parseInt(metadata.size as string) || 0,
           contentType: metadata.contentType || 'application/octet-stream',
           lastModified: new Date(metadata.updated || Date.now()),
           etag: metadata.etag || '',
+          isPublic,
         });
       }
       return results;
@@ -463,18 +527,26 @@ export class StorageService {
 
   private async listS3(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
     const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
-    const resp = await this.s3Client.send(new ListObjectsV2Command({
+    const resp = await this.s3Client!.send(new ListObjectsV2Command({
       Bucket: this.config.s3Bucket,
       Prefix: prefix,
       MaxKeys: maxResults,
     }));
-    return (resp.Contents || []).map((obj: any) => ({
-      key: obj.Key,
-      size: obj.Size || 0,
-      contentType: 'application/octet-stream',
-      lastModified: obj.LastModified || new Date(),
-      etag: obj.ETag || '',
-    }));
+    const allObjects = resp.Contents ?? [];
+    // Derive project prefix to load visibility sidecar (one extra API call per list).
+    const projectPrefix = prefix ? StorageService.projectPrefixFromKey(prefix + '/dummy') : '';
+    const publicSet = projectPrefix ? await this.loadS3VisibilityIndex(projectPrefix) : new Set<string>();
+    const sidecarKey = projectPrefix ? this.s3VisibilityIndexKey(projectPrefix) : '';
+    return allObjects
+      .filter(obj => obj.Key !== sidecarKey)   // hide the sidecar from file listings
+      .map((obj) => ({
+        key: obj.Key ?? '',
+        size: obj.Size ?? 0,
+        contentType: 'application/octet-stream',
+        lastModified: obj.LastModified ?? new Date(),
+        etag: obj.ETag ?? '',
+        isPublic: publicSet.has(obj.Key ?? ''),
+      }));
   }
 
   private async listLocal(prefix?: string, maxResults?: number): Promise<StorageObject[]> {
@@ -498,6 +570,7 @@ export class StorageService {
               contentType: 'application/octet-stream',
               lastModified: stats.mtime,
               etag: '',
+              isPublic: this.publicKeys.has(key),
             });
           }
         }
@@ -554,7 +627,7 @@ export class StorageService {
     const command = action === 'write'
       ? new (await import('@aws-sdk/client-s3')).PutObjectCommand({ Bucket: this.config.s3Bucket, Key: key })
       : new (await import('@aws-sdk/client-s3')).GetObjectCommand({ Bucket: this.config.s3Bucket, Key: key });
-    return getSignedUrl(this.s3Client, command, { expiresIn: ttlSeconds });
+    return getSignedUrl(this.s3Client!, command, { expiresIn: ttlSeconds });
   }
 
   private signedUrlLocal(key: string, ttlSeconds: number): string {
@@ -579,7 +652,7 @@ export class StorageService {
       case 's3':
         try {
           const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
-          await this.s3Client.send(new HeadObjectCommand({ Bucket: this.config.s3Bucket, Key: key }));
+          await this.s3Client!.send(new HeadObjectCommand({ Bucket: this.config.s3Bucket, Key: key }));
           return true;
         } catch {
           return false;
@@ -598,15 +671,308 @@ export class StorageService {
     }
   }
 
+  /**
+   * Set an object's public/private visibility. Writes state to both the backend
+   * AND a durable secondary store so that `listFiles()` reflects the correct
+   * `isPublic` value after process restarts and across instances:
+   *
+   * - GCS (replit): makePublic/makePrivate + custom object metadata tag
+   *   `replit-visibility: public|private` readable via getMetadata() in list.
+   * - S3: PutObjectAcl + update project-level sidecar JSON index for list queries.
+   * - local: in-memory registry only (dev/test use-case; no restart concern).
+   */
+  async setObjectVisibility(key: string, isPublic: boolean): Promise<void> {
+    await this.ensureInitialized();
+    key = this.sanitizeKey(key);
+    switch (this.config.backend) {
+      case 'replit': {
+        const storage = await this.getGcsStorage();
+        const file = storage.bucket(this.config.replitBucket!).file(key);
+        if (isPublic) {
+          await file.makePublic();
+        } else {
+          await file.makePrivate();
+        }
+        // Also write custom metadata so listReplit() can read isPublic without
+        // extra ACL API calls and correctly survives process restarts.
+        await file.setMetadata({
+          metadata: { 'replit-visibility': isPublic ? 'public' : 'private' },
+        });
+        break;
+      }
+      case 's3': {
+        const { PutObjectAclCommand } = await import('@aws-sdk/client-s3');
+        await this.s3Client!.send(new PutObjectAclCommand({
+          Bucket: this.config.s3Bucket,
+          Key: key,
+          ACL: isPublic ? 'public-read' : 'private',
+        }));
+        // Update the sidecar index so listS3() reflects the new state durably.
+        const prefix = StorageService.projectPrefixFromKey(key);
+        if (prefix) {
+          const publicSet = await this.loadS3VisibilityIndex(prefix);
+          if (isPublic) {
+            publicSet.add(key);
+          } else {
+            publicSet.delete(key);
+          }
+          await this.saveS3VisibilityIndex(prefix, publicSet);
+        }
+        break;
+      }
+      default:
+        // local — in-memory registry is sufficient (dev/test only, single process)
+        break;
+    }
+    // Keep the in-memory registry in sync for the local backend public route gate.
+    if (isPublic) {
+      this.publicKeys.add(key);
+    } else {
+      this.publicKeys.delete(key);
+    }
+  }
+
+  /**
+   * In-memory visibility registry for the LOCAL backend only.
+   * GCS and S3 visibility is stored durably in object metadata / sidecar index;
+   * this Set is only the authoritative gate for the local dev-mode public route.
+   */
+  private publicKeys: Set<string> = new Set();
+
+  /** Returns true if the key has been explicitly marked public via setObjectVisibility(). */
+  isPublic(key: string): boolean {
+    return this.publicKeys.has(key);
+  }
+
+  /**
+   * Read the durable visibility state of an object from the backend.
+   * Unlike `isPublic()` (which reads only the in-memory registry), this method
+   * queries the actual backend metadata so it survives process restarts and
+   * works correctly in multi-instance deployments.
+   *
+   * - GCS: reads `replit-visibility` custom object metadata tag
+   * - S3: reads the project sidecar visibility index
+   * - local: falls back to in-memory `publicKeys` (dev/test only)
+   */
+  private async getObjectVisibility(key: string): Promise<boolean> {
+    await this.ensureInitialized();
+    key = this.sanitizeKey(key);
+    try {
+      switch (this.config.backend) {
+        case 'replit': {
+          const storage = await this.getGcsStorage();
+          const file = storage.bucket(this.config.replitBucket!).file(key);
+          const [metadata] = await file.getMetadata();
+          const tag = (metadata.metadata as Record<string, string> | undefined)?.['replit-visibility'];
+          if (tag !== undefined) {
+            // Durable tag is present — it is authoritative
+            return tag === 'public';
+          }
+          // Tag absent (legacy object or manual ACL change): probe whether the object
+          // is publicly readable by checking the IAM / ACL. Fall through to in-memory
+          // as a safe default so we never expose a private object incorrectly.
+          return this.publicKeys.has(key);
+        }
+        case 's3': {
+          const prefix = StorageService.projectPrefixFromKey(key);
+          if (prefix) {
+            const publicSet = await this.loadS3VisibilityIndex(prefix);
+            return publicSet.has(key);
+          }
+          return false;
+        }
+        default:
+          // local: in-memory registry is authoritative for dev/test
+          return this.publicKeys.has(key);
+      }
+    } catch {
+      // If metadata read fails, fall back to in-memory registry to avoid breaking the copy/move
+      return this.publicKeys.has(key);
+    }
+  }
+
   async copyFile(sourceKey: string, destKey: string): Promise<StorageObject> {
+    // Read durable visibility from backend — survives process restarts
+    const srcPublic = await this.getObjectVisibility(sourceKey);
     const content = await this.downloadFile(sourceKey);
-    return this.uploadFile(destKey, content);
+    const result = await this.uploadFile(destKey, content);
+    // Propagate visibility: if source was public, make dest public too
+    if (srcPublic) {
+      await this.setObjectVisibility(destKey, true);
+    }
+    return result;
   }
 
   async moveFile(sourceKey: string, destKey: string): Promise<StorageObject> {
-    const result = await this.copyFile(sourceKey, destKey);
+    // Read durable visibility from backend — survives process restarts
+    const srcPublic = await this.getObjectVisibility(sourceKey);
+    const content = await this.downloadFile(sourceKey);
+    // uploadFile clears destKey from publicKeys; uploadFile clears sourceKey when overwriting
+    const result = await this.uploadFile(destKey, content);
     await this.deleteFile(sourceKey);
+    // Transfer visibility from source to dest
+    if (srcPublic) {
+      await this.setObjectVisibility(destKey, true);
+    }
     return result;
+  }
+
+  /**
+   * Recursively delete all objects under a virtual folder prefix.
+   * Lists everything under `prefix/`, deletes each one in sequence.
+   * Returns the count of successfully deleted objects.
+   */
+  async deleteFolder(prefix: string): Promise<{ deletedCount: number }> {
+    await this.ensureInitialized();
+    prefix = this.sanitizeKey(prefix);
+    const files = await this.listFiles(prefix);
+    let deletedCount = 0;
+    for (const file of files) {
+      try {
+        await this.deleteFile(file.key);
+        deletedCount++;
+      } catch (err) {
+        logger.warn(`deleteFolder: could not delete ${file.key}`, { error: err });
+      }
+    }
+    return { deletedCount };
+  }
+
+  /**
+   * Rename a virtual folder by moving every object under `oldPrefix/` to
+   * `newPrefix/`, preserving relative paths and visibility state.
+   * Returns the count of successfully moved objects.
+   */
+  async renameFolder(oldPrefix: string, newPrefix: string): Promise<{ movedCount: number }> {
+    await this.ensureInitialized();
+    oldPrefix = this.sanitizeKey(oldPrefix);
+    newPrefix = this.sanitizeKey(newPrefix);
+    const files = await this.listFiles(oldPrefix);
+    let movedCount = 0;
+    for (const file of files) {
+      const relativePath = file.key.slice(oldPrefix.length + 1); // strip "prefix/"
+      const destKey = `${newPrefix}/${relativePath}`;
+      try {
+        await this.moveFile(file.key, destKey);
+        movedCount++;
+      } catch (err) {
+        logger.warn(`renameFolder: could not move ${file.key}`, { error: err });
+      }
+    }
+    return { movedCount };
+  }
+
+  /**
+   * Returns the byte size of an object without downloading its content.
+   * GCS: file.getMetadata(); S3: HeadObjectCommand; local: fs.stat().
+   */
+  async getObjectSize(key: string): Promise<number> {
+    await this.ensureInitialized();
+    key = this.sanitizeKey(key);
+    switch (this.config.backend) {
+      case 'replit': {
+        const storage = await this.getGcsStorage();
+        const file = storage.bucket(this.config.replitBucket!).file(key);
+        const [metadata] = await file.getMetadata();
+        return parseInt(metadata.size as string) || 0;
+      }
+      case 's3': {
+        const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
+        const head = await this.s3Client!.send(new HeadObjectCommand({
+          Bucket: this.config.s3Bucket,
+          Key: key,
+        }));
+        return head.ContentLength || 0;
+      }
+      default: {
+        const filePath = this.getLocalPath(key);
+        const stat = await fs.stat(filePath);
+        return stat.size;
+      }
+    }
+  }
+
+  /**
+   * Streaming download with optional byte range. Returns a Readable stream.
+   * - GCS: file.createReadStream({ start, end })
+   * - S3:  GetObjectCommand with Range header; pipes body stream
+   * - local: fs.createReadStream with start/end
+   */
+  async downloadStream(
+    key: string,
+    options: DownloadOptions = {}
+  ): Promise<{ stream: Readable; totalSize: number; contentType: string }> {
+    await this.ensureInitialized();
+    key = this.sanitizeKey(key);
+
+    switch (this.config.backend) {
+      case 'replit': {
+        const storage = await this.getGcsStorage();
+        const bucket = storage.bucket(this.config.replitBucket!);
+        const file = bucket.file(key);
+        const [metadata] = await file.getMetadata();
+        const totalSize = parseInt(metadata.size as string) || 0;
+        const contentType = (metadata.contentType as string) || 'application/octet-stream';
+        const streamOptions: { start?: number; end?: number } = {};
+        if (options.start !== undefined) streamOptions.start = options.start;
+        if (options.end !== undefined) streamOptions.end = options.end;
+        return { stream: file.createReadStream(streamOptions), totalSize, contentType };
+      }
+      case 's3': {
+        const { GetObjectCommand, HeadObjectCommand } = await import('@aws-sdk/client-s3');
+        const head = await this.s3Client!.send(new HeadObjectCommand({
+          Bucket: this.config.s3Bucket,
+          Key: key,
+        }));
+        const totalSize = head.ContentLength || 0;
+        const contentType = head.ContentType || 'application/octet-stream';
+        const rangeHeader = (options.start !== undefined || options.end !== undefined)
+          ? `bytes=${options.start ?? 0}-${options.end ?? ''}`
+          : undefined;
+        const resp = await this.s3Client!.send(new GetObjectCommand({
+          Bucket: this.config.s3Bucket,
+          Key: key,
+          Range: rangeHeader,
+        }));
+        if (!resp.Body) throw new Error(`S3 download returned empty body for key: ${key}`);
+        return { stream: Readable.from(resp.Body as AsyncIterable<Uint8Array>), totalSize, contentType };
+      }
+      default: {
+        const filePath = this.getLocalPath(key);
+        try { await fs.access(filePath); } catch { throw new Error(`File not found: ${key}`); }
+        const stat = await fs.stat(filePath);
+        const totalSize = stat.size;
+        const streamOptions: Parameters<typeof createReadStream>[1] = {};
+        if (options.start !== undefined) streamOptions.start = options.start;
+        if (options.end !== undefined) streamOptions.end = options.end;
+        return {
+          stream: createReadStream(filePath, streamOptions),
+          totalSize,
+          contentType: 'application/octet-stream',
+        };
+      }
+    }
+  }
+
+  /**
+   * Returns the backend-native public URL for GCS/S3 backends, or null for local.
+   * Only valid after setObjectVisibility(key, true) has been called.
+   */
+  getBackendPublicUrl(key: string): string | null {
+    switch (this.config.backend) {
+      case 'replit':
+        return `https://storage.googleapis.com/${this.config.replitBucket}/${key}`;
+      case 's3': {
+        const endpoint = this.config.s3Endpoint;
+        if (endpoint) {
+          return `${endpoint}/${this.config.s3Bucket}/${key}`;
+        }
+        const region = this.config.s3Region || 'us-east-1';
+        return `https://${this.config.s3Bucket}.s3.${region}.amazonaws.com/${key}`;
+      }
+      default:
+        return null;
+    }
   }
 
   async getFileMetadata(key: string): Promise<StorageObject> {
@@ -627,7 +993,7 @@ export class StorageService {
       }
       case 's3': {
         const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
-        const resp = await this.s3Client.send(new HeadObjectCommand({ Bucket: this.config.s3Bucket, Key: key }));
+        const resp = await this.s3Client!.send(new HeadObjectCommand({ Bucket: this.config.s3Bucket, Key: key }));
         return {
           key,
           size: resp.ContentLength || 0,

@@ -4,6 +4,7 @@ import {
 ContextMenu,
 ContextMenuContent,
 ContextMenuItem,
+ContextMenuSeparator,
 ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import {
@@ -15,10 +16,11 @@ DialogHeader,
 DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest,queryClient } from '@/lib/queryClient';
+import { apiRequest, getCSRFToken, queryClient } from '@/lib/queryClient';
 import { cn } from '@/lib/utils';
 import { useMutation,useQuery } from '@tanstack/react-query';
 import {
@@ -39,13 +41,16 @@ FolderPlus,
 HardDrive,
 Image,
 Link,
+Globe,
+Lock,
 Loader2,
+Pencil,
 RefreshCw,
 Trash2,
 Upload,
 X,
 } from 'lucide-react';
-import { useCallback,useMemo,useState } from 'react';
+import { useCallback,useEffect,useMemo,useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useParams } from 'wouter';
 
@@ -56,6 +61,7 @@ interface TreeNode {
   size?: number;
   contentType?: string;
   lastModified?: string;
+  isPublic?: boolean;
   children?: TreeNode[];
 }
 
@@ -142,7 +148,11 @@ interface FileTreeItemProps {
   setSelectedFile: (path: string | null) => void;
   onDownload: (path: string, name: string) => void;
   onDelete: (path: string) => void;
+  onDeleteFolder: (path: string, name: string) => void;
   onCopyUrl: (path: string) => void;
+  onRename: (path: string, name: string) => void;
+  onRenameFolder: (path: string, name: string) => void;
+  onCopyFile: (path: string, name: string) => void;
 }
 
 function FileTreeItem({
@@ -155,11 +165,14 @@ function FileTreeItem({
   setSelectedFile,
   onDownload,
   onDelete,
+  onDeleteFolder,
   onCopyUrl,
+  onRename,
+  onRenameFolder,
+  onCopyFile,
 }: FileTreeItemProps) {
   const isExpanded = expandedFolders.has(node.path);
   const isSelected = selectedFile === node.path;
-  const _isImage = node.type === 'file' && isImageFile(node.contentType, node.name);
 
   if (node.name === '.placeholder') return null;
 
@@ -213,26 +226,52 @@ function FileTreeItem({
             )}
           </div>
         </ContextMenuTrigger>
-        {node.type === 'file' && (
-          <ContextMenuContent>
-            <ContextMenuItem onClick={() => onDownload(node.path, node.name)} data-testid={`menu-download-${node.name}`}>
-              <Download className="w-4 h-4 mr-2" />
-              Download
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => onCopyUrl(node.path)} data-testid={`menu-copy-url-${node.name}`}>
-              <Link className="w-4 h-4 mr-2" />
-              Copy URL
-            </ContextMenuItem>
-            <ContextMenuItem 
-              onClick={() => onDelete(node.path)} 
-              className="text-destructive"
-              data-testid={`menu-delete-${node.name}`}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </ContextMenuItem>
-          </ContextMenuContent>
-        )}
+        <ContextMenuContent>
+          {node.type === 'file' ? (
+            <>
+              <ContextMenuItem onClick={() => onDownload(node.path, node.name)} data-testid={`menu-download-${node.name}`}>
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => onCopyUrl(node.path)} data-testid={`menu-copy-url-${node.name}`}>
+                <Link className="w-4 h-4 mr-2" />
+                Copy URL
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => onCopyFile(node.path, node.name)} data-testid={`menu-copy-${node.name}`}>
+                <Copy className="w-4 h-4 mr-2" />
+                Copy / Duplicate
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => onRename(node.path, node.name)} data-testid={`menu-rename-${node.name}`}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Rename
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => onDelete(node.path)}
+                className="text-destructive"
+                data-testid={`menu-delete-${node.name}`}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </ContextMenuItem>
+            </>
+          ) : (
+            <>
+              <ContextMenuItem onClick={() => onRenameFolder(node.path, node.name)} data-testid={`menu-rename-folder-${node.name}`}>
+                <Pencil className="w-4 h-4 mr-2" />
+                Rename Folder
+              </ContextMenuItem>
+              <ContextMenuItem
+                onClick={() => onDeleteFolder(node.path, node.name)}
+                className="text-destructive"
+                data-testid={`menu-delete-folder-${node.name}`}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Folder
+              </ContextMenuItem>
+            </>
+          )}
+        </ContextMenuContent>
       </ContextMenu>
 
       {node.type === 'folder' && isExpanded && node.children && (
@@ -249,7 +288,11 @@ function FileTreeItem({
               setSelectedFile={setSelectedFile}
               onDownload={onDownload}
               onDelete={onDelete}
+              onDeleteFolder={onDeleteFolder}
               onCopyUrl={onCopyUrl}
+              onRename={onRename}
+              onRenameFolder={onRenameFolder}
+              onCopyFile={onCopyFile}
             />
           ))}
         </div>
@@ -266,6 +309,20 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
   const [newFolderName, setNewFolderName] = useState('');
   const [uploadingFiles, setUploadingFiles] = useState<string[]>([]);
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
+
+  // Rename dialog state
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<{ path: string; name: string } | null>(null);
+  const [renameTo, setRenameTo] = useState('');
+
+  // Copy/duplicate dialog state
+  const [showCopyDialog, setShowCopyDialog] = useState(false);
+  const [copySource, setCopySource] = useState<{ path: string; name: string } | null>(null);
+  const [copyDest, setCopyDest] = useState('');
+
+  // Per-file public/private visibility (optimistic local state)
+  const [publicFiles, setPublicFiles] = useState<Set<string>>(new Set());
+
   const { toast } = useToast();
   const resolvedProjectId = projectId ?? params.projectId ?? params.id ?? new URLSearchParams(window.location.search).get('projectId') ?? undefined;
 
@@ -281,17 +338,69 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
     staleTime: 30000,
   });
 
+  // Hydrate public-file state from backend truth on every list refresh
+  useEffect(() => {
+    if (!storageData?.files) return;
+    const collectPublic = (nodes: TreeNode[]): string[] => {
+      const acc: string[] = [];
+      for (const n of nodes) {
+        if (n.type === 'file' && n.isPublic) acc.push(n.path);
+        if (n.children) acc.push(...collectPublic(n.children));
+      }
+      return acc;
+    };
+    setPublicFiles(new Set(collectPublic(storageData.files)));
+  }, [storageData]);
+
+  const [fileUploadProgress, setFileUploadProgress] = useState<Record<string, number>>({});
+
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, folderPath }: { file: File; folderPath: string }) => {
+      const csrfToken = await getCSRFToken();
       const formData = new FormData();
       formData.append('file', file);
+      // Send the target folder path so the backend places the file in the right prefix
+      if (folderPath) formData.append('path', folderPath);
 
-      return apiRequest('POST', `/api/projects/${resolvedProjectId}/storage/upload`, formData);
+      return new Promise<unknown>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.withCredentials = true;
+
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            const pct = Math.round((ev.loaded / ev.total) * 100);
+            setFileUploadProgress(prev => ({ ...prev, [file.name]: pct }));
+          }
+        };
+
+        xhr.onload = () => {
+          setFileUploadProgress(prev => { const n = { ...prev }; delete n[file.name]; return n; });
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try { resolve(JSON.parse(xhr.responseText)); } catch { resolve({}); }
+          } else {
+            try {
+              const body = JSON.parse(xhr.responseText);
+              reject(new Error(body.message || body.error || `Upload failed: ${xhr.status}`));
+            } catch {
+              reject(new Error(`Upload failed: ${xhr.status}`));
+            }
+          }
+        };
+
+        xhr.onerror = () => {
+          setFileUploadProgress(prev => { const n = { ...prev }; delete n[file.name]; return n; });
+          reject(new Error('Network error during upload'));
+        };
+
+        xhr.open('POST', `/api/projects/${resolvedProjectId}/storage/upload`);
+        xhr.setRequestHeader('X-CSRF-Token', csrfToken);
+        xhr.send(formData);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Upload failed',
         description: error.message,
@@ -310,7 +419,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
       setShowNewFolderDialog(false);
       setNewFolderName('');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to create folder',
@@ -328,7 +437,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
       queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
       setSelectedFile(null);
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: 'Error',
         description: error.message || 'Failed to delete file',
@@ -337,17 +446,126 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
     },
   });
 
+  const moveMutation = useMutation({
+    mutationFn: async ({ sourcePath, destination, isFolder }: { sourcePath: string; destination: string; isFolder?: boolean }) => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(sourcePath)}/move`,
+        { destination, isFolder: isFolder ?? false }
+      );
+    },
+    onSuccess: (_data, { sourcePath }) => {
+      toast({ title: 'Renamed', description: 'File renamed successfully' });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
+      if (selectedFile === sourcePath) setSelectedFile(null);
+      setShowRenameDialog(false);
+      setRenameTarget(null);
+      setRenameTo('');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Rename failed',
+        description: error.message || 'Could not rename file',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const copyMutation = useMutation({
+    mutationFn: async ({ sourcePath, destination }: { sourcePath: string; destination: string }) => {
+      return apiRequest(
+        'POST',
+        `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(sourcePath)}/copy`,
+        { destination }
+      );
+    },
+    onSuccess: () => {
+      toast({ title: 'Copied', description: 'File duplicated successfully' });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
+      setShowCopyDialog(false);
+      setCopySource(null);
+      setCopyDest('');
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Copy failed',
+        description: error.message || 'Could not copy file',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (folderPath: string) => {
+      return apiRequest('DELETE', `/api/projects/${resolvedProjectId}/storage/folder/${encodeURIComponent(folderPath)}`);
+    },
+    onSuccess: (_data, folderPath) => {
+      toast({ title: 'Folder deleted', description: 'All contents removed' });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', resolvedProjectId, 'storage'] });
+      if (selectedFile?.startsWith(folderPath + '/') || selectedFile === folderPath) {
+        setSelectedFile(null);
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Delete folder failed',
+        description: error.message || 'Could not delete folder',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const visibilityMutation = useMutation({
+    mutationFn: async ({ filePath, isPublic }: { filePath: string; isPublic: boolean }) => {
+      return apiRequest<{ path: string; public: boolean; publicUrl: string | null }>(
+        'PATCH',
+        `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(filePath)}/visibility`,
+        { public: isPublic }
+      );
+    },
+    onSuccess: (data, { filePath, isPublic }) => {
+      setPublicFiles(prev => {
+        const next = new Set(prev);
+        if (isPublic) {
+          next.add(filePath);
+        } else {
+          next.delete(filePath);
+        }
+        return next;
+      });
+      toast({
+        title: isPublic ? 'File is now public' : 'File is now private',
+        description: isPublic
+          ? 'Anyone with the link can access this file.'
+          : 'File is only accessible by authenticated users.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Visibility update failed',
+        description: error.message || 'Could not change file visibility',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    // Derive the target folder from the currently selected file (if any).
+    // If a file inside a folder is selected, upload siblings into that folder.
+    // Otherwise upload to the bucket root.
+    const folderPath = selectedFile && selectedFile.includes('/')
+      ? selectedFile.substring(0, selectedFile.lastIndexOf('/'))
+      : '';
     for (const file of acceptedFiles) {
       setUploadingFiles(prev => [...prev, file.name]);
       try {
-        await uploadMutation.mutateAsync(file);
+        await uploadMutation.mutateAsync({ file, folderPath });
         toast({ title: 'Success', description: `Uploaded ${file.name}` });
       } finally {
         setUploadingFiles(prev => prev.filter(f => f !== file.name));
       }
     }
-  }, [uploadMutation, toast]);
+  }, [uploadMutation, toast, selectedFile]);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -384,12 +602,78 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
   }, [deleteMutation]);
 
   const handleCopyUrl = useCallback(async (path: string) => {
-    const url = `${window.location.origin}/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(path)}/download`;
-    await navigator.clipboard.writeText(url);
-    setCopiedPath(path);
-    setTimeout(() => setCopiedPath(null), 2000);
-    toast({ title: 'Copied', description: 'URL copied to clipboard' });
+    try {
+      const response = await apiRequest<{ url: string; expiresIn: number }>(
+        'GET',
+        `/api/projects/${resolvedProjectId}/storage/${encodeURIComponent(path)}/url`
+      );
+      if (!response?.url) throw new Error('Storage backend did not return a signed URL');
+      await navigator.clipboard.writeText(response.url);
+      setCopiedPath(path);
+      setTimeout(() => setCopiedPath(null), 2000);
+      toast({ title: 'Copied', description: 'Signed URL copied (valid for 1 hour)' });
+    } catch (err: unknown) {
+      toast({
+        title: 'Failed to copy signed URL',
+        description: err instanceof Error ? err.message : 'Could not generate a time-limited URL for this file',
+        variant: 'destructive',
+      });
+    }
   }, [resolvedProjectId, toast]);
+
+  const handleDeleteFolder = useCallback((folderPath: string, name: string) => {
+    if (confirm(`Delete folder "${name}" and all its contents? This cannot be undone.`)) {
+      deleteFolderMutation.mutate(folderPath);
+    }
+  }, [deleteFolderMutation]);
+
+  const handleRename = useCallback((path: string, name: string) => {
+    setRenameTarget({ path, name });
+    setRenameTo(name);
+    setShowRenameDialog(true);
+  }, []);
+
+  const handleRenameFolder = useCallback((path: string, name: string) => {
+    setRenameTarget({ path, name });
+    setRenameTo(name);
+    setShowRenameDialog(true);
+  }, []);
+
+  const handleCopyFile = useCallback((path: string, name: string) => {
+    const dir = path.includes('/') ? path.substring(0, path.lastIndexOf('/') + 1) : '';
+    const ext = name.includes('.') ? name.substring(name.lastIndexOf('.')) : '';
+    const base = name.includes('.') ? name.substring(0, name.lastIndexOf('.')) : name;
+    setCopySource({ path, name });
+    setCopyDest(`${dir}${base}_copy${ext}`);
+    setShowCopyDialog(true);
+  }, []);
+
+  const submitRename = useCallback(() => {
+    if (!renameTarget || !renameTo.trim() || renameTo.trim() === renameTarget.name) return;
+    const dir = renameTarget.path.includes('/')
+      ? renameTarget.path.substring(0, renameTarget.path.lastIndexOf('/') + 1)
+      : '';
+    const newPath = `${dir}${renameTo.trim()}`;
+    // Detect whether this is a folder rename by looking at the tree
+    const isFolder = storageData?.files
+      ? (() => {
+          const find = (nodes: TreeNode[], p: string): TreeNode | null => {
+            for (const n of nodes) {
+              if (n.path === p) return n;
+              if (n.children) { const f = find(n.children, p); if (f) return f; }
+            }
+            return null;
+          };
+          return find(storageData.files, renameTarget.path)?.type === 'folder';
+        })()
+      : false;
+    moveMutation.mutate({ sourcePath: renameTarget.path, destination: newPath, isFolder });
+  }, [renameTarget, renameTo, moveMutation, storageData]);
+
+  const submitCopy = useCallback(() => {
+    if (!copySource || !copyDest.trim()) return;
+    copyMutation.mutate({ sourcePath: copySource.path, destination: copyDest.trim() });
+  }, [copySource, copyDest, copyMutation]);
 
   const selectedFileData = useMemo(() => {
     if (!selectedFile || !storageData?.files) return null;
@@ -498,13 +782,20 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
             )}
 
             {uploadingFiles.length > 0 && (
-              <div className="mb-2 p-2 bg-muted rounded-lg">
-                {uploadingFiles.map(fileName => (
-                  <div key={fileName} className="flex items-center gap-2 text-[13px]">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="truncate">Uploading {fileName}...</span>
-                  </div>
-                ))}
+              <div className="mb-2 p-2 bg-muted rounded-lg space-y-2">
+                {uploadingFiles.map(fileName => {
+                  const pct = fileUploadProgress[fileName] ?? 0;
+                  return (
+                    <div key={fileName} className="space-y-1">
+                      <div className="flex items-center gap-2 text-[13px]">
+                        <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
+                        <span className="truncate flex-1">{fileName}</span>
+                        <span className="text-muted-foreground tabular-nums">{pct}%</span>
+                      </div>
+                      <Progress value={pct} className="h-1" />
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -550,7 +841,11 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                   setSelectedFile={setSelectedFile}
                   onDownload={handleDownload}
                   onDelete={handleDelete}
+                  onDeleteFolder={handleDeleteFolder}
                   onCopyUrl={handleCopyUrl}
+                  onRename={handleRename}
+                  onRenameFolder={handleRenameFolder}
+                  onCopyFile={handleCopyFile}
                 />
               ))
             )}
@@ -630,6 +925,24 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() => handleRename(selectedFileData.path, selectedFileData.name)}
+                  data-testid="button-rename-selected"
+                >
+                  <Pencil className="w-4 h-4 mr-1" />
+                  Rename
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyFile(selectedFileData.path, selectedFileData.name)}
+                  data-testid="button-copy-selected"
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Duplicate
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   className="text-destructive hover:text-destructive"
                   onClick={() => handleDelete(selectedFileData.path)}
                   disabled={deleteMutation.isPending}
@@ -642,6 +955,28 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                   )}
                   Delete
                 </Button>
+                <Button
+                  variant={publicFiles.has(selectedFileData.path) ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() =>
+                    visibilityMutation.mutate({
+                      filePath: selectedFileData.path,
+                      isPublic: !publicFiles.has(selectedFileData.path),
+                    })
+                  }
+                  disabled={visibilityMutation.isPending}
+                  data-testid="button-toggle-visibility"
+                  title={publicFiles.has(selectedFileData.path) ? 'Make private' : 'Make public'}
+                >
+                  {visibilityMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                  ) : publicFiles.has(selectedFileData.path) ? (
+                    <Globe className="w-4 h-4 mr-1" />
+                  ) : (
+                    <Lock className="w-4 h-4 mr-1" />
+                  )}
+                  {publicFiles.has(selectedFileData.path) ? 'Public' : 'Private'}
+                </Button>
               </div>
             </div>
           ) : (
@@ -653,6 +988,7 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
         </div>
       </div>
 
+      {/* New Folder Dialog */}
       <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -687,6 +1023,86 @@ export function AppStoragePanel({ projectId, className }: AppStoragePanelProps) 
                 <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Creating...</>
               ) : (
                 <><FolderPlus className="w-4 h-4 mr-1" /> Create</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={(open) => { setShowRenameDialog(open); if (!open) { setRenameTarget(null); setRenameTo(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename</DialogTitle>
+            <DialogDescription>
+              Enter a new name for <strong>{renameTarget?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="rename-input" className="mb-2 block text-sm">New name</Label>
+            <Input
+              id="rename-input"
+              value={renameTo}
+              onChange={(e) => setRenameTo(e.target.value)}
+              placeholder="New name"
+              data-testid="input-rename"
+              onKeyDown={(e) => { if (e.key === 'Enter') submitRename(); }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitRename}
+              disabled={!renameTo.trim() || renameTo.trim() === renameTarget?.name || moveMutation.isPending}
+              data-testid="button-confirm-rename"
+            >
+              {moveMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Renaming...</>
+              ) : (
+                <><Pencil className="w-4 h-4 mr-1" /> Rename</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Copy / Duplicate Dialog */}
+      <Dialog open={showCopyDialog} onOpenChange={(open) => { setShowCopyDialog(open); if (!open) { setCopySource(null); setCopyDest(''); } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Duplicate File</DialogTitle>
+            <DialogDescription>
+              Choose a destination path for the copy of <strong>{copySource?.name}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="copy-dest-input" className="mb-2 block text-sm">Destination path</Label>
+            <Input
+              id="copy-dest-input"
+              value={copyDest}
+              onChange={(e) => setCopyDest(e.target.value)}
+              placeholder="path/to/copy.ext"
+              data-testid="input-copy-dest"
+              onKeyDown={(e) => { if (e.key === 'Enter') submitCopy(); }}
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowCopyDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={submitCopy}
+              disabled={!copyDest.trim() || copyDest.trim() === copySource?.path || copyMutation.isPending}
+              data-testid="button-confirm-copy"
+            >
+              {copyMutation.isPending ? (
+                <><Loader2 className="w-4 h-4 mr-1 animate-spin" /> Copying...</>
+              ) : (
+                <><Copy className="w-4 h-4 mr-1" /> Duplicate</>
               )}
             </Button>
           </DialogFooter>
