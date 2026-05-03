@@ -30,8 +30,7 @@ import { ReplitStatusBar } from '../editor/ReplitStatusBar';
 import { ReplitTestingPanel } from '../editor/ReplitTestingPanel';
 import { ReplitThemesPanel } from '../editor/ReplitThemesPanel';
 import { ReplitToolDock } from '../editor/ReplitToolDock';
-import { ShellPanel } from '../editor/ShellPanel';
-import { ReplitTerminal } from '../terminal/ReplitTerminal';
+import { ReplitTerminalPanel } from '../editor/ReplitTerminalPanel';
 
 interface SplitsEditorLayoutProps {
   files?: File[];
@@ -152,7 +151,7 @@ export function SplitsEditorLayout({
       case 'secrets':
         return <ReplitSecretsPanel projectId={projectId} />;
       case 'shell':
-        return <ShellPanel projectId={projectId || ''} />;
+        return <ReplitTerminalPanel projectId={projectId} className="h-full" />;
       case 'storage':
         return <AppStoragePanel projectId={projectId || ''} />;
       case 'agent':
@@ -297,12 +296,7 @@ export function SplitsEditorLayout({
             <TabsContent value="terminal" className="flex-1 m-0 overflow-hidden">
               <div className="h-full bg-[var(--ecode-terminal-bg)]">
                 {terminalContent || (
-                  <ReplitTerminal 
-                    projectId={Number(projectId) || 1} 
-                    className="h-full"
-                    theme="dark"
-                    allowMultipleSessions={false}
-                  />
+                  <ReplitTerminalPanel projectId={projectId} className="h-full" />
                 )}
               </div>
             </TabsContent>
@@ -531,12 +525,7 @@ export function SplitsEditorLayout({
                       <TabsContent value="terminal" className="flex-1 m-0 overflow-hidden">
                         <div className="h-full bg-[var(--ecode-terminal-bg)]">
                           {terminalContent || (
-                            <ReplitTerminal 
-                              projectId={Number(projectId) || 1} 
-                              className="h-full"
-                              theme="dark"
-                              allowMultipleSessions={true}
-                            />
+                            <ReplitTerminalPanel projectId={projectId} className="h-full" />
                           )}
                         </div>
                       </TabsContent>

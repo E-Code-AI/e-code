@@ -26,10 +26,6 @@ export const LazyReplitTerminal = instrumentedLazy(() =>
   import('@/components/terminal/ReplitTerminal').then(mod => ({ default: mod.ReplitTerminal })), 'ReplitTerminal'
 );
 
-export const LazyAdvancedTerminal = instrumentedLazy(() => 
-  import('@/components/terminal/AdvancedTerminal').then(mod => ({ default: mod.AdvancedTerminal })), 'AdvancedTerminal'
-);
-
 export const LazyReplitTerminalPanel = instrumentedLazy(() => 
   import('@/components/editor/ReplitTerminalPanel').then(mod => ({ default: mod.ReplitTerminalPanel })), 'ReplitTerminalPanel'
 );

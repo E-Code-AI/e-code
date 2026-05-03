@@ -747,6 +747,41 @@ router.get('/metrics', ensureAuthenticated, (_req, res) => {
   });
 });
 
+const MAX_HISTORY_PER_KEY = 500;
+const commandHistoryStore = new Map<string, string[]>();
+
+function historyKey(projectId: string, userId: number) {
+  return `${userId}:${projectId}`;
+}
+
+router.get('/:projectId/history', ensureAuthenticated, (req, res) => {
+  const userId = (req.user as any).id;
+  const { projectId } = req.params;
+  const key = historyKey(projectId, userId);
+  const history = commandHistoryStore.get(key) || [];
+  res.json({ history });
+});
+
+router.post('/:projectId/history', ensureAuthenticated, (req, res) => {
+  const userId = (req.user as any).id;
+  const { projectId } = req.params;
+  const { command } = req.body;
+
+  if (typeof command !== 'string' || !command.trim()) {
+    return res.status(400).json({ error: 'command is required' });
+  }
+
+  const key = historyKey(projectId, userId);
+  const existing = commandHistoryStore.get(key) || [];
+
+  if (existing[existing.length - 1] !== command) {
+    const updated = [...existing, command.trim()].slice(-MAX_HISTORY_PER_KEY);
+    commandHistoryStore.set(key, updated);
+  }
+
+  res.json({ ok: true });
+});
+
 // REST: AI command generation
 router.post('/generate-command', ensureAuthenticated, async (req, res) => {
   try {
