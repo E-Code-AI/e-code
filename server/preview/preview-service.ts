@@ -773,8 +773,41 @@ export class PreviewService {
     }
   }
 
+  /**
+   * Middleware that checks if the requested port is public.
+   * Public ports bypass owner/collaborator checks and allow unauthenticated access.
+   * Private ports require an authenticated session or valid bootstrap token.
+   */
+  private async ensurePortPublicOrAuth(req: any, res: any, next: any) {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const port = parseInt(req.params.port);
+      if (isNaN(projectId) || isNaN(port)) return next();
+
+      const { db: _db } = await import('../db');
+      const { networkingPorts: _ports } = await import('@shared/schema');
+      const { eq, and } = await import('drizzle-orm');
+
+      const rows = await _db.select().from(_ports)
+        .where(and(eq(_ports.projectId, projectId), eq(_ports.internalPort, port)));
+
+      if (rows.length > 0 && rows[0].isPublic) {
+        req.portIsPublic = true;
+        return next();
+      }
+
+      return next();
+    } catch {
+      return next();
+    }
+  }
+
   private async ensureProjectAccess(req: any, res: any, next: any) {
     try {
+      if (req.portIsPublic) {
+        return next();
+      }
+
       const projectId = parseInt(req.params.projectId);
       if (isNaN(projectId)) {
         return res.status(400).json({ error: 'Invalid project ID' });
@@ -803,7 +836,7 @@ export class PreviewService {
   }
 
   registerRoutes(app: express.Application) {
-    app.use('/preview/:projectId/:port/*', this.ensurePreviewAuth, this.ensureProjectAccess.bind(this), async (req, res, next) => {
+    app.use('/preview/:projectId/:port/*', this.ensurePortPublicOrAuth.bind(this), this.ensurePreviewAuth, this.ensureProjectAccess.bind(this), async (req, res, next) => {
       const projectId = req.params.projectId;
       const port = parseInt(req.params.port);
       const preview = this.previews.get(projectId);

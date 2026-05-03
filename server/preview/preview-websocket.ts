@@ -269,6 +269,14 @@ class PreviewWebSocketService {
       changeType: data.changeType,
       timestamp: data.timestamp || new Date().toISOString()
     }));
+
+    // Port discovery: notify panel when scan finds new ports
+    createListener('ports:update', (data) => this.broadcastToProject(data.projectId, {
+      type: 'ports:update',
+      projectId: data.projectId,
+      newPorts: data.newPorts,
+      timestamp: new Date().toISOString()
+    }));
   }
 
   private async handleMessage(clientId: string, data: any) {

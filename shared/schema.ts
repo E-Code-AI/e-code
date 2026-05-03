@@ -5027,8 +5027,15 @@ export const networkingPorts = pgTable("networking_ports", {
   localhostOnly: boolean("localhost_only").default(false).notNull(),
   proxyUrl: text("proxy_url"),
   externalUrl: text("external_url"),
+  source: varchar("source", { length: 50 }).default('manual').notNull(),
+  detectedAt: timestamp("detected_at"),
+  lastSeenAt: timestamp("last_seen_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export type NetworkingPort = typeof networkingPorts.$inferSelect;
+export type InsertNetworkingPort = typeof networkingPorts.$inferInsert;
+export const insertNetworkingPortSchema = createInsertSchema(networkingPorts).omit({ id: true, createdAt: true });
 
 export const networkingDomains = pgTable("networking_domains", {
   id: serial("id").primaryKey(),
@@ -5040,6 +5047,9 @@ export const networkingDomains = pgTable("networking_domains", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   verifiedAt: timestamp("verified_at"),
 });
+
+export type NetworkingDomain = typeof networkingDomains.$inferSelect;
+export type InsertNetworkingDomain = typeof networkingDomains.$inferInsert;
 
 // Database schema for Video Editor Projects
 export const videoProjects = pgTable("video_projects", {
