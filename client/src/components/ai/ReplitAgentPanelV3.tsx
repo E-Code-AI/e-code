@@ -75,6 +75,7 @@ import { TaskDecompositionDisplay,type DecomposedTask } from '@/components/agent
 import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { CheckCircle2,Hammer,History,Package,Smartphone,Volume2,VolumeX,X,XCircle } from 'lucide-react';
 import { SiFigma } from 'react-icons/si';
+import { ConversationStatsBar } from './ConversationStatsBar';
 import {
 ConversationSyncIndicator,
 EmptyConversation,
@@ -2794,6 +2795,12 @@ export function ReplitAgentPanelV3({
         {/* Sync Indicator */}
         <ConversationSyncIndicator
           lastSyncedAt={conversationLastSyncedAt}
+        />
+
+        {/* Conversation stats bar (Replit-style: messages, edits, actions, tokens, time) */}
+        <ConversationStatsBar
+          messages={displayedMessages}
+          isWorking={isWorking}
         />
 
         {/* Connection Error/Reconnecting Banner with Retry Button */}
