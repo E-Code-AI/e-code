@@ -1,0 +1,210 @@
+157: Dependencies
+158: Build
+159: QA
+187: collapsible-content expanded
+273: Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?
+316: Problème de connexion
+317: Connexion au service IA perdue. Veuillez vérifier votre connexion Internet et réessayer.
+324: Problème de connexion
+325: Connexion au service IA perdue. Veuillez vérifier votre connexion Internet et réessayer.
+332: Load failed
+333: load failed
+333: failed to fetch
+335: Erreur de connexion
+336: Impossible de se connecter au service IA. Veuillez vérifier votre connexion et réessayer.
+341: Délai de requête dépassé
+342: La requête a pris trop de temps. Essayez une demande plus simple ou réessayez.
+347: Erreur d’authentification
+348: Échec de l’authentification. Veuillez actualiser la page et vous reconnecter.
+351: rate limit
+351: too many requests
+353: Limite de requêtes atteinte
+354: Trop de requêtes. Veuillez patienter un instant et réessayer.
+357: internal server error
+359: Erreur du serveur
+360: Le serveur a rencontré une erreur. Veuillez réessayer dans un instant.
+365: Erreur de l’Assistant IA
+366: Une erreur s’est produite. Veuillez réessayer.
+396: Erreur inconnue du flux de messages
+415: \n
+429: Limite de requêtes atteinte. Veuillez patienter un instant et réessayer.
+431: Erreur du serveur. Veuillez réessayer plus tard.
+496: Initializing Agent
+609: ⚡ Mode Rapide activé
+609: Mode Rapide désactivé
+611: Utilisation du modèle rapide pour des modifications ciblées de 10 à 60 s
+612: Retour au modèle standard
+681: Show Previous Messages
+691: post-build validation
+691: running post-build
+693: installing dependencies
+695: dependencies installed successfully
+698: dependencies failed
+701: verifying build
+703: build verified
+706: build failed
+709: running responsive qa
+709: responsive qa tests
+711: qa score
+739: POST
+742: X-Bootstrap-Token
+754: to real
+786: Échec de la configuration de la conversation
+787: Impossible d’initialiser la conversation de l’Agent. Vous pouvez tout de même discuter.
+797: Initializing Agent
+829: I'm ready to help! The connection took a moment, but you can start chatting now. Type your request below.
+860: GET
+874: GET
+882: GET
+911: Show Previous Messages
+921: Show Previous Messages
+934: GET
+1002: Autonomie maximale activée
+1003: L’Agent se supervisera lui-même pendant jusqu’à 200 minutes
+1009: Tests d’application activés
+1010: L’Agent testera via l’automatisation du navigateur avec des rejeux vidéo
+1017: Raisonnement plus poussé pour les problèmes difficiles
+1023: Modèles haute puissance activés
+1024: Utilisation d’une IA sophistiquée pour les tâches complexes
+1030: Recherche Web activée
+1031: L’Agent peut rechercher de la documentation et des API sur le Web
+1041: Modifications appliquées
+1042: Styles de l’élément mis à jour avec succès
+1050: Rejeux vidéo
+1051: Ouverture des enregistrements des sessions de test…
+1062: L’Agent effectuera les modifications de façon autonome
+1063: L’Agent réfléchira sans modifier le code
+1064: Modifications ciblées sur des fichiers précis avec un contrôle fin
+1065: Réponses rapides avec un raisonnement réduit pour plus de vitesse
+1069: Construction
+1070: Plan
+1071: Édition
+1072: Rapide
+1083: POST
+1099: POST
+1122: Failed to start autonomy session:
+1124: Échec du démarrage de la session
+1125: Impossible de démarrer la session autonome
+1157: POST
+1159: X-CSRF-Token
+1165: Échec de l’envoi des fichiers
+1173: Fichiers joints
+1178: File upload error:
+1180: Échec de l’envoi
+1181: Impossible d’envoyer les fichiers. Veuillez réessayer.
+1207: Microphone indisponible
+1208: Votre navigateur ne prend pas en charge l’accès au microphone. Veuillez utiliser Chrome ou Firefox.
+1218: NotAllowedError
+1219: Accès au microphone refusé. Veuillez autoriser l’accès au microphone et réessayer.
+1220: Aucun microphone détecté. Veuillez connecter un microphone et réessayer.
+1221: Erreur du microphone
+1225: audio/webm;codecs=opus
+1226: audio/webm;codecs=opus
+1248: Aucune parole détectée
+1248: Veuillez parler plus fort et réessayer.
+1252: Transcription en cours…
+1252: Conversion de votre voix en texte par l’IA.
+1257: Code, programming, software, build, create, function, component, API
+1260: POST
+1266: Aucune parole détectée
+1266: Veuillez réessayer en parlant clairement.
+1276: Mode Vibe : envoi !
+1279: Voix captée !
+1283: Échec de la transcription
+1284: Impossible de transcrire l’audio. Veuillez réessayer.
+1294: Erreur d’enregistrement
+1294: L’enregistrement a échoué. Veuillez réessayer.
+1300: Écoute en cours…
+1300: Énoncez votre demande de code. Cliquez à nouveau sur le micro pour arrêter.
+1527: POST
+1529: Content-Type
+1530: X-CSRF-Token
+1559: Échec de la récupération de la réponse IA
+1707: A malformed streaming event was received from the AI service.
+1759: I'll help you build that! Let me start working on it...
+1800: Une erreur inconnue s’est produite. Veuillez consulter la console pour plus de détails.
+1871: Compréhension de la demande
+1876: Identification des exigences clés
+1877: Recherche d’ambiguïtés
+1878: Détermination de la portée et de la complexité
+1884: Analyse des exigences techniques
+1885: Décomposition de la tâche en composants implémentables
+1889: Identification des technologies requises
+1890: Évaluation du niveau de complexité
+1891: Détermination de la meilleure approche
+1897: Planification de l’implémentation
+1898: Création d’un plan d’exécution étape par étape
+1902: Définition de la structure des composants
+1903: Organisation des fichiers
+1904: Identification des dépendances
+1925: t await, don
+1926: POST
+2028: POST
+2030: Content-Type
+2031: X-CSRF-Token
+2069: Échec de la récupération de la réponse IA
+2245: A malformed streaming event was received from the AI service.
+2304: I'll help you with that. Let me analyze your request...
+2462: Escape
+2469: ArrowDown
+2474: ArrowUp
+2479: Enter
+2487: Backspace
+2493: Enter
+2501: POST
+2517: Nouvelle conversation démarrée
+2518: Les conversations précédentes restent disponibles dans l’historique
+2522: Échec du démarrage de la conversation
+2523: Impossible de démarrer une nouvelle conversation
+2532: Reprise
+2532: Pause
+2533: L’Agent travaille à nouveau
+2533: Le travail de l’Agent a été mis en pause
+2540: Copié
+2541: Message copié dans le presse-papiers
+2547: Action approuvée
+2560: Action rejetée
+2576: POST
+2581: Point de restauration restauré
+2586: Échec de la restauration
+2587: Impossible de restaurer le point de restauration
+2618: Initializing Agent
+2651: ~30s
+2651: Fast
+2656: Mode Rapide actif
+2656: Activer le Mode Rapide
+2659: Utilisation du modèle rapide pour des modifications de 10 à 60 s
+2660: Mode rapide pour des modifications ciblées sur un seul fichier
+2709: Resume
+2709: Pause
+2736: Couper les notifications
+2736: Activer les sons
+2869: Show Previous Messages
+2922: popLayout
+3024: L’Agent effectuera les modifications de façon autonome
+3025: L’Agent réfléchira sans effectuer de modifications
+3026: Modifications ciblées sur des fichiers précis
+3027: Modifications rapides et précises en quelques secondes
+3072: Routage de secours
+3073: Routage indisponible
+3074: Routage actif
+3096: POST
+3099: POST
+3139: image/*,.pdf,.txt,.md,.json,.js,.ts,.jsx,.tsx,.py,.html,.css,.sql,.sh,.go,.rs,.java,.cpp,.c,.rb,.php
+3239: What would you like to build?
+3240: Describe the changes to make...
+3241: Ask a question or describe your plan...
+3263: Joindre un fichier
+3288: Arrêter l'enregistrement
+3288: Saisie vocale
+3294: Arrêter l'enregistrement
+3294: Saisie vocale
+3313: Mode Vibe activé (envoi automatique)
+3313: Mode Vibe désactivé
+3319: Mode Vibe activé — envoi vocal automatique
+3319: Activer le Mode Vibe
+3332: Importer depuis Figma
+3333: Import Figma
+3333: Connectez votre compte Figma dans les paramètres pour importer des designs.
+3354: transition-all duration-200
+3360: Envoyer le message

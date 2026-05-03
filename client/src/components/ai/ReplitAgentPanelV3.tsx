@@ -154,8 +154,8 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
   if (currentStep === 'idle') return null;
 
   const steps = [
-    { key: 'deps', label: 'Dependencies', icon: Package },
-    { key: 'build', label: 'Build', icon: Hammer },
+    { key: 'deps', label: 'Dépendances', icon: Package },
+    { key: 'build', label: 'Construction', icon: Hammer },
     { key: 'qa', label: 'QA', icon: Smartphone },
   ];
 
@@ -190,7 +190,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
       <div className="bg-muted/50 rounded-lg p-3 mb-3 border border-border/50">
       <div className="flex items-center gap-2 mb-2">
         <Loader2 className="h-4 w-4 animate-spin text-primary" />
-        <span className="text-[13px] font-medium">Post-Build Validation</span>
+        <span className="text-[13px] font-medium">Validation post-construction</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -232,7 +232,7 @@ function BuildValidationProgress({ currentStep, depsResult, buildResult, qaResul
 
       {qaResult && currentStep === 'qa_complete' && (
         <div className="mt-2 text-[11px] text-muted-foreground">
-          {qaResult.passedTests}/{qaResult.totalTests} responsive tests passed
+          {qaResult.passedTests}/{qaResult.totalTests} tests responsifs réussis
         </div>
       )}
       </div>
@@ -270,7 +270,7 @@ export interface ExternalInputHandlers {
 const DEFAULT_AGENT_WELCOME_MESSAGE: Message = {
   id: '1',
   role: 'assistant',
-  content: "Hi! I'm your AI assistant with extended thinking capabilities. I can help you build, debug, and improve your code with transparent reasoning. What would you like to create today?",
+  content: "Bonjour ! Je suis votre assistant IA avec capacités de réflexion approfondie. Je peux vous aider à construire, déboguer et améliorer votre code avec un raisonnement transparent. Que souhaitez-vous créer aujourd’hui ?",
   timestamp: new Date()
 };
 
@@ -313,16 +313,16 @@ function categorizeError(error: unknown): { title: string; message: string } {
     // Check for empty plain objects (not Error instances) - indicates connection lost
     if (Object.keys(err).length === 0) {
       return {
-        title: 'Connection Issue',
-        message: 'Lost connection to the AI service. Please check your internet and try again.'
+        title: 'Problème de connexion',
+        message: 'Connexion au service IA perdue. Veuillez vérifier votre connexion Internet et réessayer.'
       };
     }
     errorMessage = String(err.message || err.error || err.detail || JSON.stringify(error));
   } else if (!error) {
     // Handle null/undefined errors
     return {
-      title: 'Connection Issue',
-      message: 'Lost connection to the AI service. Please check your internet and try again.'
+      title: 'Problème de connexion',
+      message: 'Connexion au service IA perdue. Veuillez vérifier votre connexion Internet et réessayer.'
     };
   } else {
     errorMessage = String(error);
@@ -332,38 +332,38 @@ function categorizeError(error: unknown): { title: string; message: string } {
   // Handle "Load failed" and similar fetch errors
   if (errorMessage.includes('load failed') || errorMessage.includes('network') || errorMessage.includes('fetch') || errorMessage.includes('econnrefused') || errorMessage.includes('failed to fetch')) {
     return {
-      title: 'Connection Error',
-      message: 'Unable to connect to the AI service. Please check your connection and try again.'
+      title: 'Erreur de connexion',
+      message: 'Impossible de se connecter au service IA. Veuillez vérifier votre connexion et réessayer.'
     };
   }
   if (errorMessage.includes('timeout') || errorMessage.includes('etimedout') || errorMessage.includes('aborted')) {
     return {
-      title: 'Request Timeout',
-      message: 'The request took too long. Please try a simpler request or try again.'
+      title: 'Délai de requête dépassé',
+      message: 'La requête a pris trop de temps. Essayez une demande plus simple ou réessayez.'
     };
   }
   if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('authentication') || errorMessage.includes('unauthenticated')) {
     return {
-      title: 'Authentication Error',
-      message: 'Authentication failed. Please refresh the page and log in again.'
+      title: 'Erreur d’authentification',
+      message: 'Échec de l’authentification. Veuillez actualiser la page et vous reconnecter.'
     };
   }
   if (errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('too many requests')) {
     return {
-      title: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please wait a moment and try again.'
+      title: 'Limite de requêtes atteinte',
+      message: 'Trop de requêtes. Veuillez patienter un instant et réessayer.'
     };
   }
   if (errorMessage.includes('500') || errorMessage.includes('internal server error')) {
     return {
-      title: 'Server Error',
-      message: 'The server encountered an error. Please try again in a moment.'
+      title: 'Erreur du serveur',
+      message: 'Le serveur a rencontré une erreur. Veuillez réessayer dans un instant.'
     };
   }
 
   return {
-    title: 'AI Assistant Error',
-    message: 'Something went wrong. Please try again.'
+    title: 'Erreur de l’Assistant IA',
+    message: 'Une erreur s’est produite. Veuillez réessayer.'
   };
 }
 
@@ -393,7 +393,7 @@ function getMessageFlowErrorDetails(error: unknown, context?: Record<string, unk
       ? error
       : maybeRecord
         ? String(maybeRecord.message || maybeRecord.error || maybeRecord.detail || safeStringify(error))
-        : 'Unknown message flow error';
+        : 'Erreur inconnue du flux de messages';
 
   return {
     message,
@@ -408,13 +408,13 @@ function getMessageFlowErrorDetails(error: unknown, context?: Record<string, unk
 
 function createVisibleErrorContent(userFriendlyError: string, details: MessageFlowErrorDetails): string {
   const debugLines = [
-    `Message: ${details.message}`,
-    details.status ? `HTTP: ${details.status}${details.statusText ? ` ${details.statusText}` : ''}` : null,
-    details.body ? `Server body: ${details.body.slice(0, 1200)}` : null,
-    details.context ? `Context: ${safeStringify(details.context)}` : null,
+    `Message : ${details.message}`,
+    details.status ? `HTTP : ${details.status}${details.statusText ? ` ${details.statusText}` : ''}` : null,
+    details.body ? `Réponse serveur : ${details.body.slice(0, 1200)}` : null,
+    details.context ? `Contexte : ${safeStringify(details.context)}` : null,
   ].filter(Boolean).join('\n');
 
-  return `⚠️ ${userFriendlyError}\n\nDétails debug visibles:\n\`\`\`\n${debugLines}\n\`\`\`\n\nIf this issue persists, please try:\n- Refreshing the page\n- Checking your internet connection\n- Waiting a few moments before trying again`;
+  return `⚠️ ${userFriendlyError}\n\nDétails techniques :\n\`\`\`\n${debugLines}\n\`\`\`\n\nSi le problème persiste, veuillez essayer :\n- D’actualiser la page\n- De vérifier votre connexion Internet\n- D’attendre quelques instants avant de réessayer`;
 }
 
 function createHttpStreamError(response: Response, fallbackMessage: string, body: string): Error {
@@ -426,9 +426,9 @@ function createHttpStreamError(response: Response, fallbackMessage: string, body
     } else if (body.trim()) {
       message = body.trim().slice(0, 500);
     } else if (response.status === 429) {
-      message = 'Rate limit exceeded. Please wait a moment and try again.';
+      message = 'Limite de requêtes atteinte. Veuillez patienter un instant et réessayer.';
     } else if (response.status >= 500) {
-      message = 'Server error. Please try again later.';
+      message = 'Erreur du serveur. Veuillez réessayer plus tard.';
     }
   } catch (parseError) {
     console.error('[AgentMessageFlow] Failed to parse HTTP error body', {
@@ -606,10 +606,10 @@ export function ReplitAgentPanelV3({
     const newState = !fastMode;
     setFastMode(newState);
     toast({
-      title: newState ? '⚡ Fast Mode Enabled' : 'Fast Mode Disabled',
+      title: newState ? '⚡ Mode Rapide activé' : 'Mode Rapide désactivé',
       description: newState
-        ? 'Using fast model for quick 10-60s targeted edits'
-        : 'Switched back to standard model',
+        ? 'Utilisation du modèle rapide pour des modifications ciblées de 10 à 60 s'
+        : 'Retour au modèle standard',
     });
   }, [fastMode, toast]);
 
@@ -783,8 +783,8 @@ export function ReplitAgentPanelV3({
 
         if (!isAuthError) {
           toast({
-            title: "Conversation Setup Failed",
-            description: "Could not initialize agent conversation. You can still chat.",
+            title: "Échec de la configuration de la conversation",
+            description: "Impossible d’initialiser la conversation de l’Agent. Vous pouvez tout de même discuter.",
             variant: "destructive"
           });
         }
@@ -826,7 +826,7 @@ export function ReplitAgentPanelV3({
       const fallbackMessage: Message = {
         id: `system-bootstrap-timeout-${Date.now()}`,
         role: 'assistant',
-        content: "I'm ready to help! The connection took a moment, but you can start chatting now. Type your request below.",
+        content: "Je suis prêt à vous aider ! La connexion a pris un instant, mais vous pouvez commencer à discuter. Saisissez votre demande ci-dessous.",
         timestamp: new Date(),
       };
 
@@ -972,7 +972,7 @@ export function ReplitAgentPanelV3({
     if (contextInjectedRef.current !== contextKey) {
       contextInjectedRef.current = contextKey;
       // Add context to the input
-      const contextPrefix = `\n\n[Context: ${selectedFile}]\n\`\`\`\n${selectedCode.substring(0, 500)}${selectedCode.length > 500 ? '...' : ''}\n\`\`\`\n\n`;
+      const contextPrefix = `\n\n[Contexte : ${selectedFile}]\n\`\`\`\n${selectedCode.substring(0, 500)}${selectedCode.length > 500 ? '…' : ''}\n\`\`\`\n\n`;
       setInput(prev => prev ? prev + contextPrefix : contextPrefix);
     }
   }, [selectedFile, selectedCode]);
@@ -999,36 +999,36 @@ export function ReplitAgentPanelV3({
     // Show toasts for newly enabled features
     if (newSettings.maxAutonomy && !prevSettings.maxAutonomy) {
       toast({
-        title: "Max Autonomy Enabled",
-        description: "Agent will supervise itself for up to 200 minutes"
+        title: "Autonomie maximale activée",
+        description: "L’Agent se supervisera lui-même pendant jusqu’à 200 minutes"
       });
     }
 
     if (newSettings.appTesting && !prevSettings.appTesting) {
       toast({
-        title: "App Testing Enabled",
-        description: "Agent will test using browser automation with video replays"
+        title: "Tests d’application activés",
+        description: "L’Agent testera via l’automatisation du navigateur avec des rejeux vidéo"
       });
     }
 
     if (newSettings.extendedThinking && !prevSettings.extendedThinking) {
       toast({
-        title: "Extended Thinking Enabled",
-        description: "Deeper reasoning for harder problems"
+        title: "Réflexion approfondie activée",
+        description: "Raisonnement plus poussé pour les problèmes difficiles"
       });
     }
 
     if (newSettings.highPowerModels && !prevSettings.highPowerModels) {
       toast({
-        title: "High Power Models Enabled",
-        description: "Using sophisticated AI for complex tasks"
+        title: "Modèles haute puissance activés",
+        description: "Utilisation d’une IA sophistiquée pour les tâches complexes"
       });
     }
 
     if (newSettings.webSearch && !prevSettings.webSearch) {
       toast({
-        title: "Web Search Enabled",
-        description: "Agent can search the web for docs and APIs"
+        title: "Recherche Web activée",
+        description: "L’Agent peut rechercher de la documentation et des API sur le Web"
       });
     }
   }, [setAgentToolsSettings, toast]);
@@ -1038,8 +1038,8 @@ export function ReplitAgentPanelV3({
     setSelectedElement(null);
     setElementEditorActive(false);
     toast({
-      title: "Changes Applied",
-      description: "Element styles updated successfully"
+      title: "Modifications appliquées",
+      description: "Styles de l’élément mis à jour avec succès"
     });
   }, [toast]);
 
@@ -1047,8 +1047,8 @@ export function ReplitAgentPanelV3({
   const handleViewVideoReplays = useCallback(() => {
     setVideoReplayViewerOpen(true);
     toast({
-      title: "Video Replays",
-      description: "Opening test session recordings..."
+      title: "Rejeux vidéo",
+      description: "Ouverture des enregistrements des sessions de test…"
     });
   }, [toast]);
 
@@ -1059,14 +1059,21 @@ export function ReplitAgentPanelV3({
     setAgentMode(newMode);
 
     const modeDescriptions: Record<AgentMode, string> = {
-      build: "Agent will autonomously make changes",
-      plan: "Agent will brainstorm without making code changes",
-      edit: "Targeted changes to specific files with precise control",
-      fast: "Quick responses with reduced reasoning for speed"
+      build: "L’Agent effectuera les modifications de façon autonome",
+      plan: "L’Agent réfléchira sans modifier le code",
+      edit: "Modifications ciblées sur des fichiers précis avec un contrôle fin",
+      fast: "Réponses rapides avec un raisonnement réduit pour plus de vitesse"
+    };
+
+    const modeLabels: Record<AgentMode, string> = {
+      build: 'Construction',
+      plan: 'Plan',
+      edit: 'Édition',
+      fast: 'Rapide'
     };
 
     toast({
-      title: `Switched to ${newMode.charAt(0).toUpperCase() + newMode.slice(1)} Mode`,
+      title: `Passage au mode ${modeLabels[newMode]}`,
       description: modeDescriptions[newMode],
     });
 
@@ -1105,7 +1112,7 @@ export function ReplitAgentPanelV3({
         const systemMessage: Message = {
           id: `autonomy-start-${Date.now()}`,
           role: 'assistant',
-          content: `🚀 **Max Autonomy Session Started**\n\n**Goal:** ${goal}\n\nI'll work autonomously on this with automatic checkpoints and testing. You can pause or stop at any time.`,
+          content: `🚀 **Session d’autonomie maximale démarrée**\n\n**Objectif :** ${goal}\n\nJe vais travailler de façon autonome avec des points de restauration et des tests automatiques. Vous pouvez mettre en pause ou arrêter à tout moment.`,
           timestamp: new Date(),
           type: 'text'
         };
@@ -1114,8 +1121,8 @@ export function ReplitAgentPanelV3({
     } catch (error: any) {
       console.error('Failed to start autonomy session:', error);
       toast({
-        title: "Failed to Start Session",
-        description: error.message || "Could not start autonomous session",
+        title: "Échec du démarrage de la session",
+        description: error.message || "Impossible de démarrer la session autonome",
         variant: "destructive"
       });
     }
@@ -1155,7 +1162,7 @@ export function ReplitAgentPanelV3({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload files');
+        throw new Error(errorData.error || 'Échec de l’envoi des fichiers');
       }
 
       const data = await response.json();
@@ -1163,15 +1170,15 @@ export function ReplitAgentPanelV3({
       if (data.attachments && data.attachments.length > 0) {
         setPendingAttachments(prev => [...prev, ...data.attachments]);
         toast({
-          title: "Files Attached",
-          description: `${data.attachments.length} file(s) ready to send with your message.`,
+          title: "Fichiers joints",
+          description: `${data.attachments.length} fichier(s) prêt(s) à être envoyé(s) avec votre message.`,
         });
       }
     } catch (error: any) {
       console.error('File upload error:', error);
       toast({
-        title: "Upload Failed",
-        description: error.message || "Could not upload files. Please try again.",
+        title: "Échec de l’envoi",
+        description: error.message || "Impossible d’envoyer les fichiers. Veuillez réessayer.",
         variant: "destructive"
       });
     } finally {
@@ -1197,8 +1204,8 @@ export function ReplitAgentPanelV3({
 
     if (!navigator.mediaDevices?.getUserMedia) {
       toast({
-        title: "Microphone Not Available",
-        description: "Your browser does not support microphone access. Please use Chrome or Firefox.",
+        title: "Microphone indisponible",
+        description: "Votre navigateur ne prend pas en charge l’accès au microphone. Veuillez utiliser Chrome ou Firefox.",
         variant: "destructive"
       });
       return;
@@ -1209,9 +1216,9 @@ export function ReplitAgentPanelV3({
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (err: any) {
       const msg = err.name === 'NotAllowedError'
-        ? 'Microphone access denied. Please allow microphone access and try again.'
-        : 'No microphone found. Please connect a microphone and try again.';
-      toast({ title: "Microphone Error", description: msg, variant: "destructive" });
+        ? 'Accès au microphone refusé. Veuillez autoriser l’accès au microphone et réessayer.'
+        : 'Aucun microphone détecté. Veuillez connecter un microphone et réessayer.';
+      toast({ title: "Erreur du microphone", description: msg, variant: "destructive" });
       return;
     }
 
@@ -1238,11 +1245,11 @@ export function ReplitAgentPanelV3({
 
       const audioBlob = new Blob(chunks, { type: mimeType });
       if (audioBlob.size < 1000) {
-        toast({ title: "No speech detected", description: "Please speak louder and try again.", variant: "destructive" });
+        toast({ title: "Aucune parole détectée", description: "Veuillez parler plus fort et réessayer.", variant: "destructive" });
         return;
       }
 
-      toast({ title: "Transcribing...", description: "Converting your voice to text with AI." });
+      toast({ title: "Transcription en cours…", description: "Conversion de votre voix en texte par l’IA." });
 
       try {
         const formData = new FormData();
@@ -1256,7 +1263,7 @@ export function ReplitAgentPanelV3({
         );
 
         if (!transcript || transcript.trim().length === 0) {
-          toast({ title: "No speech detected", description: "Please try again and speak clearly.", variant: "destructive" });
+          toast({ title: "Aucune parole détectée", description: "Veuillez réessayer en parlant clairement.", variant: "destructive" });
           return;
         }
 
@@ -1266,15 +1273,15 @@ export function ReplitAgentPanelV3({
             const submitBtn = document.querySelector('[data-testid="button-send"]') as HTMLButtonElement;
             if (submitBtn) submitBtn.click();
           }, 120);
-          toast({ title: "Vibe Mode: Sending!", description: `"${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"` });
+          toast({ title: "Mode Vibe : envoi !", description: `« ${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''} »` });
         } else {
           setInput(prev => prev ? `${prev} ${transcript}` : transcript);
-          toast({ title: "Voice captured!", description: `"${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''}"` });
+          toast({ title: "Voix captée !", description: `« ${transcript.slice(0, 60)}${transcript.length > 60 ? '…' : ''} »` });
         }
       } catch (err: any) {
         toast({
-          title: "Transcription Failed",
-          description: err.message || "Could not transcribe audio. Please try again.",
+          title: "Échec de la transcription",
+          description: err.message || "Impossible de transcrire l’audio. Veuillez réessayer.",
           variant: "destructive"
         });
       }
@@ -1284,13 +1291,13 @@ export function ReplitAgentPanelV3({
       stream.getTracks().forEach(t => t.stop());
       setIsRecording(false);
       mediaRecorderRef.current = null;
-      toast({ title: "Recording Error", description: "Recording failed. Please try again.", variant: "destructive" });
+      toast({ title: "Erreur d’enregistrement", description: "L’enregistrement a échoué. Veuillez réessayer.", variant: "destructive" });
     };
 
     mediaRecorderRef.current = recorder;
     recorder.start(250);
     setIsRecording(true);
-    toast({ title: "Listening...", description: "Speak your coding request. Click mic again to stop." });
+    toast({ title: "Écoute en cours…", description: "Énoncez votre demande de code. Cliquez à nouveau sur le micro pour arrêter." });
   }, [isRecording, vibeModeEnabled, isWorking, toast]);
 
   // Cleanup media recorder on unmount
@@ -1549,7 +1556,7 @@ export function ReplitAgentPanelV3({
                 console.error('[AutoStart] Failed to read streaming error body', readError);
                 return '';
               });
-              const streamError = createHttpStreamError(response, 'Failed to get AI response', errorText);
+              const streamError = createHttpStreamError(response, 'Échec de la récupération de la réponse IA', errorText);
               console.error('[AutoStart] Streaming HTTP error', getMessageFlowErrorDetails(streamError, {
                 projectId,
                 conversationId: chatConversationId,
@@ -1697,7 +1704,7 @@ export function ReplitAgentPanelV3({
                         setMessages(prev => [...prev, {
                           id: `system-${Date.now()}`,
                           role: 'system' as const,
-                          content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
+                          content: createVisibleErrorContent('Un événement de streaming mal formé a été reçu du service IA.', parseDetails),
                           timestamp: new Date(),
                           status: 'error' as const,
                           metadata: {
@@ -1749,7 +1756,7 @@ export function ReplitAgentPanelV3({
             }
 
             // Update existing assistant message with final content
-            const finalContent = fullContent || "I'll help you build that! Let me start working on it...";
+            const finalContent = fullContent || "Je vais vous aider à construire cela ! Je commence à travailler dessus…";
             setMessages(prev => prev.map(msg =>
               msg.id === autoStartAssistantMessageId
                 ? {
@@ -1790,7 +1797,7 @@ export function ReplitAgentPanelV3({
 
             toast({
               title,
-              description: userFriendlyError || 'An unknown error occurred. Please check the console for details.',
+              description: userFriendlyError || 'Une erreur inconnue s’est produite. Veuillez consulter la console pour plus de détails.',
               variant: 'destructive',
             });
 
@@ -1861,40 +1868,40 @@ export function ReplitAgentPanelV3({
       {
         id: '1',
         type: 'reasoning',
-        title: 'Understanding the request',
-        content: `Analyzing: "${message.substring(0, 50)}..."`,
+        title: 'Compréhension de la demande',
+        content: `Analyse : « ${message.substring(0, 50)}… »`,
         status: 'complete',
         timestamp: new Date(baseTimestamp.getTime()),
         details: [
-          'Identifying key requirements',
-          'Checking for ambiguities',
-          'Determining scope and complexity'
+          'Identification des exigences clés',
+          'Recherche d’ambiguïtés',
+          'Détermination de la portée et de la complexité'
         ]
       },
       {
         id: '2',
         type: 'analysis',
-        title: 'Analyzing technical requirements',
-        content: 'Breaking down the task into implementable components',
+        title: 'Analyse des exigences techniques',
+        content: 'Décomposition de la tâche en composants implémentables',
         status: 'complete',
         timestamp: new Date(baseTimestamp.getTime() + 1000),
         details: [
-          'Identifying required technologies',
-          'Assessing complexity level',
-          'Determining best approach'
+          'Identification des technologies requises',
+          'Évaluation du niveau de complexité',
+          'Détermination de la meilleure approche'
         ]
       },
       {
         id: '3',
         type: 'planning',
-        title: 'Planning implementation',
-        content: 'Creating step-by-step execution plan',
+        title: 'Planification de l’implémentation',
+        content: 'Création d’un plan d’exécution étape par étape',
         status: 'complete',
         timestamp: new Date(baseTimestamp.getTime() + 2000),
         details: [
-          'Defining component structure',
-          'Planning file organization',
-          'Identifying dependencies'
+          'Définition de la structure des composants',
+          'Organisation des fichiers',
+          'Identification des dépendances'
         ]
       }
     ];
@@ -1939,11 +1946,11 @@ export function ReplitAgentPanelV3({
     if (currentAttachments.length > 0) {
       const attachmentContext = currentAttachments.map(att => {
         if (att.type === 'text' && att.content) {
-          return `\n\n--- File: ${att.name} ---\n${att.content}\n--- End of ${att.name} ---`;
+          return `\n\n--- Fichier : ${att.name} ---\n${att.content}\n--- Fin de ${att.name} ---`;
         } else if (att.type === 'image') {
-          return `\n\n[Attached image: ${att.name}]`;
+          return `\n\n[Image jointe : ${att.name}]`;
         } else {
-          return `\n\n[Attached file: ${att.name} (${(att.size / 1024).toFixed(1)} KB)]`;
+          return `\n\n[Fichier joint : ${att.name} (${(att.size / 1024).toFixed(1)} Ko)]`;
         }
       }).join('');
 
@@ -1960,7 +1967,7 @@ export function ReplitAgentPanelV3({
     const optimisticResult = addOptimisticMessage({
       role: 'user',
       content: currentAttachments.length > 0
-        ? `${userContent}\n\n📎 ${currentAttachments.length} file(s) attached`
+        ? `${userContent}\n\n📎 ${currentAttachments.length} fichier(s) joint(s)`
         : userContent,
     });
 
@@ -2059,7 +2066,7 @@ export function ReplitAgentPanelV3({
           console.error('[AgentMessageFlow] Failed to read chat stream error body', readError);
           return '';
         });
-        throw createHttpStreamError(response, 'Failed to get AI response', errorText);
+        throw createHttpStreamError(response, 'Échec de la récupération de la réponse IA', errorText);
       }
 
       const reader = response.body?.getReader();
@@ -2235,7 +2242,7 @@ export function ReplitAgentPanelV3({
                   warningMessages.push({
                     id: `system-${Date.now()}`,
                     role: 'system',
-                    content: createVisibleErrorContent('A malformed streaming event was received from the AI service.', parseDetails),
+                    content: createVisibleErrorContent('Un événement de streaming mal formé a été reçu du service IA.', parseDetails),
                     timestamp: new Date(),
                     status: 'error',
                     metadata: {
@@ -2294,7 +2301,7 @@ export function ReplitAgentPanelV3({
         }
       }
 
-      assistantMessage.content = fullContent || "I'll help you with that. Let me analyze your request...";
+      assistantMessage.content = fullContent || "Je vais vous aider. Je commence à analyser votre demande…";
       assistantMessage.isStreaming = false;
 
       // Confirm optimistic user message on successful stream completion
@@ -2442,10 +2449,10 @@ export function ReplitAgentPanelV3({
     textareaRef.current?.focus();
 
     toast({
-      title: `${server.name} selected`,
+      title: `${server.name} sélectionné`,
       description: server.connected
-        ? `Using ${server.name} integration`
-        : `Connect ${server.name} in settings to use this integration`,
+        ? `Utilisation de l’intégration ${server.name}`
+        : `Connectez ${server.name} dans les paramètres pour utiliser cette intégration`,
     });
   };
 
@@ -2507,13 +2514,13 @@ export function ReplitAgentPanelV3({
       setIsActiveBuildSession(true);
 
       toast({
-        title: 'New chat started',
-        description: 'Previous conversations remain available in history',
+        title: 'Nouvelle conversation démarrée',
+        description: 'Les conversations précédentes restent disponibles dans l’historique',
       });
     } catch (error) {
       toast({
-        title: 'New chat failed',
-        description: error instanceof Error ? error.message : 'Failed to start a new conversation',
+        title: 'Échec du démarrage de la conversation',
+        description: error instanceof Error ? error.message : 'Impossible de démarrer une nouvelle conversation',
         variant: 'destructive',
       });
     }
@@ -2522,23 +2529,23 @@ export function ReplitAgentPanelV3({
   const handlePauseResume = () => {
     setIsPaused(!isPaused);
     toast({
-      title: isPaused ? 'Resumed' : 'Paused',
-      description: isPaused ? 'Agent is working again' : 'Agent work has been paused',
+      title: isPaused ? 'Reprise' : 'Pause',
+      description: isPaused ? 'L’Agent travaille à nouveau' : 'Le travail de l’Agent a été mis en pause',
     });
   };
 
   const handleCopyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
     toast({
-      title: 'Copied',
-      description: 'Message copied to clipboard',
+      title: 'Copié',
+      description: 'Message copié dans le presse-papiers',
     });
   };
 
   const handleApproveAction = useCallback((action: Action) => {
     toast({
-      title: 'Action Approved',
-      description: `${action.type}: ${action.description}`,
+      title: 'Action approuvée',
+      description: `${action.type} : ${action.description}`,
     });
     setMessages(prev => prev.map(msg => ({
       ...msg,
@@ -2550,8 +2557,8 @@ export function ReplitAgentPanelV3({
 
   const handleRejectAction = useCallback((action: Action) => {
     toast({
-      title: 'Action Rejected',
-      description: `${action.type}: ${action.description}`,
+      title: 'Action rejetée',
+      description: `${action.type} : ${action.description}`,
     });
     setMessages(prev => prev.map(msg => ({
       ...msg,
@@ -2571,13 +2578,13 @@ export function ReplitAgentPanelV3({
         includeDatabase: false
       });
       toast({
-        title: 'Checkpoint Restored',
-        description: `Successfully restored checkpoint #${checkpointId}`
+        title: 'Point de restauration restauré',
+        description: `Point de restauration n°${checkpointId} restauré avec succès`
       });
     } catch (error) {
       toast({
-        title: 'Restore Failed',
-        description: error instanceof Error ? error.message : 'Failed to restore checkpoint',
+        title: 'Échec de la restauration',
+        description: error instanceof Error ? error.message : 'Impossible de restaurer le point de restauration',
         variant: 'destructive'
       });
     } finally {
@@ -2620,7 +2627,7 @@ export function ReplitAgentPanelV3({
             {isWorking && (
               <Badge variant="secondary" className="text-[10px] sm:text-[11px] animate-pulse flex-shrink-0" data-testid="header-badge-working">
                 <Loader2 className="h-3 w-3 mr-0.5 sm:mr-1 animate-spin" />
-                <span className="hidden sm:inline">Working</span>
+                <span className="hidden sm:inline">En cours</span>
               </Badge>
             )}
             {/* ✅ Memory Bank is 100% TRANSPARENT - no visible badge like Replit */}
@@ -2641,16 +2648,16 @@ export function ReplitAgentPanelV3({
                   >
                     <Zap className={cn("h-3 w-3", fastMode && "animate-pulse")} />
                     {!isCompactMode && (
-                      <span>{fastMode ? '~30s' : 'Fast'}</span>
+                      <span>{fastMode ? '~30 s' : 'Rapide'}</span>
                     )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="font-medium">{fastMode ? 'Fast Mode Active' : 'Enable Fast Mode'}</p>
+                  <p className="font-medium">{fastMode ? 'Mode Rapide actif' : 'Activer le Mode Rapide'}</p>
                   <p className="text-[11px] text-muted-foreground">
                     {fastMode
-                      ? 'Using fast model for quick 10-60s edits'
-                      : 'Quick mode for single-file targeted changes'}
+                      ? 'Utilisation du modèle rapide pour des modifications de 10 à 60 s'
+                      : 'Mode rapide pour des modifications ciblées sur un seul fichier'}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -2699,7 +2706,7 @@ export function ReplitAgentPanelV3({
                       {isPaused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>{isPaused ? 'Resume' : 'Pause'}</TooltipContent>
+                  <TooltipContent>{isPaused ? 'Reprendre' : 'Pause'}</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
@@ -2726,12 +2733,12 @@ export function ReplitAgentPanelV3({
                   ) : (
                     <VolumeX className="h-4 w-4 mr-2" />
                   )}
-                  {isAudioEnabled ? 'Mute notifications' : 'Enable sounds'}
+                  {isAudioEnabled ? 'Couper les notifications' : 'Activer les sons'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleNewChat} className="text-destructive" data-testid="dropdown-clear-chat">
                   <RefreshCw className="h-4 w-4 mr-2" />
-                  New chat
+                  Nouvelle conversation
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -2756,7 +2763,7 @@ export function ReplitAgentPanelV3({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      View session history
+                      Voir l’historique des sessions
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -2784,7 +2791,7 @@ export function ReplitAgentPanelV3({
           data-testid="bootstrap-warning-banner"
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
-          <span>Still connecting to the agent — this is taking longer than usual...</span>
+          <span>Connexion à l’Agent en cours — cela prend plus de temps que d’habitude…</span>
         </div>
       )}
 
@@ -2825,7 +2832,7 @@ export function ReplitAgentPanelV3({
               )}
               <span>
                 {reconnectAttempt > 0 && reconnectAttempt < maxReconnectAttempts
-                  ? `Reconnecting... (${reconnectAttempt}/${maxReconnectAttempts})`
+                  ? `Reconnexion… (${reconnectAttempt}/${maxReconnectAttempts})`
                   : connectionError}
               </span>
             </div>
@@ -2838,7 +2845,7 @@ export function ReplitAgentPanelV3({
                 data-testid="button-retry-connection"
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
-                Retry
+                Réessayer
               </Button>
             )}
           </div>
@@ -2872,12 +2879,12 @@ export function ReplitAgentPanelV3({
                 {isLoadingPrevious ? (
                   <>
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Loading...
+                    Chargement…
                   </>
                 ) : (
                   <>
                     <History className="h-3 w-3" />
-                    Show Previous Messages ({totalMessageCount - messages.length} more)
+                    Afficher les messages précédents ({totalMessageCount - messages.length} de plus)
                   </>
                 )}
               </Button>
@@ -3001,7 +3008,7 @@ export function ReplitAgentPanelV3({
         {vibeModeEnabled && (
           <div className="flex items-center gap-1.5 mb-2 text-[11px] text-yellow-500 font-medium">
             <Zap className="h-3 w-3 animate-pulse" />
-            <span>Vibe Mode ON — voice auto-sends to AI</span>
+            <span>Mode Vibe activé — la voix est envoyée automatiquement à l’IA</span>
           </div>
         )}
         <div className="space-y-2">
@@ -3014,10 +3021,10 @@ export function ReplitAgentPanelV3({
                 onChange={handleModeChange}
               />
               <span className="hidden sm:inline text-[10px] text-muted-foreground">
-                {(!isBootstrapping || conversationId) && agentMode === 'build' && "Agent will autonomously make changes"}
-                {(!isBootstrapping || conversationId) && agentMode === 'plan' && "Agent will brainstorm without changes"}
-                {(!isBootstrapping || conversationId) && agentMode === 'edit' && "Targeted changes to specific files"}
-                {(!isBootstrapping || conversationId) && agentMode === 'fast' && "Quick, precise changes in seconds"}
+                {(!isBootstrapping || conversationId) && agentMode === 'build' && "L’Agent effectuera les modifications de façon autonome"}
+                {(!isBootstrapping || conversationId) && agentMode === 'plan' && "L’Agent réfléchira sans effectuer de modifications"}
+                {(!isBootstrapping || conversationId) && agentMode === 'edit' && "Modifications ciblées sur des fichiers précis"}
+                {(!isBootstrapping || conversationId) && agentMode === 'fast' && "Modifications rapides et précises en quelques secondes"}
               </span>
             </div>
 
@@ -3062,14 +3069,14 @@ export function ReplitAgentPanelV3({
                         routingStatus.mode === 'unavailable' && "border-red-500/40 text-red-700 dark:text-red-300"
                       )}
                     >
-                      {routingStatus.mode === 'degraded' ? 'Routing fallback' :
-                        routingStatus.mode === 'unavailable' ? 'Routing unavailable' :
-                        'Routing live'}: {routingStatus.summary}
+                      {routingStatus.mode === 'degraded' ? 'Routage de secours' :
+                        routingStatus.mode === 'unavailable' ? 'Routage indisponible' :
+                        'Routage actif'} : {routingStatus.summary}
                     </Badge>
                   )}
                   {routingStatus.availableProviders > 1 && (
                     <Badge variant="secondary" className="text-[11px]">
-                      {routingStatus.availableProviders} providers live for parallel work
+                      {routingStatus.availableProviders} fournisseurs actifs pour le travail en parallèle
                     </Badge>
                   )}
                 </div>
@@ -3190,7 +3197,7 @@ export function ReplitAgentPanelV3({
                 {isUploadingFiles && (
                   <div className="flex items-center gap-1.5 px-2 py-1 text-[11px] text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    <span>Uploading...</span>
+                    <span>Envoi en cours…</span>
                   </div>
                 )}
               </div>
@@ -3229,9 +3236,9 @@ export function ReplitAgentPanelV3({
               }}
               onKeyDown={handleKeyPress}
               placeholder={
-                agentMode === 'build' ? "What would you like to build?" :
-                agentMode === 'edit' ? "Describe the changes to make..." :
-                "Ask a question or describe your plan..."
+                agentMode === 'build' ? "Que souhaitez-vous construire ?" :
+                agentMode === 'edit' ? "Décrivez les modifications à apporter…" :
+                "Posez une question ou décrivez votre plan…"
               }
               className={cn(
                 "pr-[132px] resize-none text-[13px] min-h-[52px] max-h-[200px]",
@@ -3253,13 +3260,13 @@ export function ReplitAgentPanelV3({
                       onClick={handleAttachmentClick}
                       className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       data-testid="button-attach"
-                      title="Attach file"
+                      title="Joindre un fichier"
                     >
                       <Paperclip className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>Attach file</p>
+                    <p>Joindre un fichier</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3303,13 +3310,13 @@ export function ReplitAgentPanelV3({
                           : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       )}
                       data-testid="button-vibe-mode"
-                      title={vibeModeEnabled ? "Vibe Mode ON (auto-send)" : "Vibe Mode OFF"}
+                      title={vibeModeEnabled ? "Mode Vibe activé (envoi automatique)" : "Mode Vibe désactivé"}
                     >
                       <Zap className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>{vibeModeEnabled ? "Vibe Mode ON — voice auto-sends" : "Enable Vibe Mode"}</p>
+                    <p>{vibeModeEnabled ? "Mode Vibe activé — envoi vocal automatique" : "Activer le Mode Vibe"}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -3322,14 +3329,14 @@ export function ReplitAgentPanelV3({
                       size="icon"
                       className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50"
                       data-testid="button-figma-import"
-                      title="Import from Figma"
-                      onClick={() => toast({ title: "Figma Import", description: "Connect your Figma account in settings to import designs." })}
+                      title="Importer depuis Figma"
+                      onClick={() => toast({ title: "Importer depuis Figma", description: "Connectez votre compte Figma dans les paramètres pour importer des designs." })}
                     >
                       <SiFigma className="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="top">
-                    <p>Import from Figma</p>
+                    <p>Importer depuis Figma</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
