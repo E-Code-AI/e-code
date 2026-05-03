@@ -63,7 +63,10 @@ export const helmetConfig = helmet({
         "https://*.replit.dev",
         "https://*.repl.co",
         "wss://*.replit.dev",
-        "wss://*.repl.co"
+        "wss://*.repl.co",
+        "https://*.ingest.sentry.io",
+        "https://*.ingest.de.sentry.io",
+        "https://*.ingest.us.sentry.io"
       ],
       frameSrc: [
         "'self'",

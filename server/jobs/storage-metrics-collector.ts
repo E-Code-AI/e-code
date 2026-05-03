@@ -49,7 +49,7 @@ export async function collectStorageMetrics(): Promise<void> {
 
     const poolMetrics = dbPool.getMetrics();
     const memoryUsage = process.memoryUsage();
-    const loadAvg = os.loadaverage();
+    const loadAvg = os.loadavg();
 
     await db.insert(storageMetricsHistory).values({
       databaseSizeBytes,
