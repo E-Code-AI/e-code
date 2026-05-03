@@ -1761,10 +1761,19 @@ http.createServer((req, res) => {
     });
   }
 
+  private static readonly MAX_LOG_ENTRIES = 500;
+
+  private appendLog(preview: PreviewInstance, line: string) {
+    preview.logs.push(line);
+    if (preview.logs.length > PreviewService.MAX_LOG_ENTRIES) {
+      preview.logs.splice(0, preview.logs.length - PreviewService.MAX_LOG_ENTRIES);
+    }
+  }
+
   private setupProcessHandlers(preview: PreviewInstance, process: any, port: number, serviceName: string) {
     process.stdout?.on('data', (data: Buffer) => {
       const log = data.toString();
-      preview.logs.push(`[${serviceName}:${port}] ${log}`);
+      this.appendLog(preview, `[${serviceName}:${port}] ${log}`);
       logger.info(`Preview ${preview.projectId} ${serviceName}:${port}: ${log}`);
       previewEvents.emit('preview:log', { 
         projectId: preview.projectId, 
@@ -1777,7 +1786,7 @@ http.createServer((req, res) => {
     
     process.stderr?.on('data', (data: Buffer) => {
       const log = data.toString();
-      preview.logs.push(`[${serviceName}:${port}] ERROR: ${log}`);
+      this.appendLog(preview, `[${serviceName}:${port}] ERROR: ${log}`);
       logger.error(`Preview ${preview.projectId} ${serviceName}:${port}: ${log}`);
       previewEvents.emit('preview:log', { 
         projectId: preview.projectId, 

@@ -44,6 +44,80 @@ class PreviewWebSocketService {
       noServer: true
     });
 
+    // Devtools WebSocket: bridges /ws/preview-devtools/:projectId to previewDevToolsService
+    centralUpgradeDispatcher.register('/ws/preview-devtools', async (request: IncomingMessage, socket: any, head: Buffer) => {
+      markSocketAsHandled(request, socket);
+
+      // Extract projectId from path first so bootstrap token scope can be verified against it
+      const pathMatch = (request.url || '').match(/\/ws\/preview-devtools\/(\d+)/);
+      const projectId = pathMatch ? parseInt(pathMatch[1], 10) : 0;
+      if (!projectId) {
+        socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+
+      // AuthN: session cookie (full access) or bootstrap JWT (project-scoped)
+      const cookies = parseCookie(request.headers.cookie || '');
+      const sessionId = cookies['ecode.sid'];
+      let userId: number | null = null;
+      let bootstrapAuthed = false;
+
+      if (sessionId) {
+        try { userId = await this.getUserIdFromSession(sessionId); } catch {}
+      }
+
+      if (!userId) {
+        const requestUrl = new URL(request.url || '/', 'http://localhost');
+        const bootstrapToken = requestUrl.searchParams.get('bootstrap');
+        if (bootstrapToken) {
+          try {
+            const decoded = jwt.verify(bootstrapToken, getJwtSecret()) as BootstrapTokenPayload;
+            // Bootstrap tokens are project-scoped: reject if token doesn't match this project
+            if (String(decoded.projectId) !== String(projectId)) {
+              socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+              socket.destroy();
+              return;
+            }
+            userId = decoded.userId;
+            bootstrapAuthed = true;
+          } catch {
+            socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+        }
+      }
+
+      if (!userId) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+
+      // AuthZ: bootstrap tokens are already project-scoped (verified above).
+      // Session-auth users must pass an explicit project ownership/collaboration check.
+      if (!bootstrapAuthed) {
+        const hasAccess = await this.verifyProjectAccess(userId, projectId);
+        if (!hasAccess) {
+          socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+      }
+
+      try {
+        this.wss!.handleUpgrade(request, socket, head, async (ws) => {
+          const { previewDevToolsService } = await import('../services/preview-devtools-service');
+          previewDevToolsService.addClient(ws as any, projectId, userId!);
+        });
+      } catch (error) {
+        console.error('DevTools WebSocket upgrade error:', error);
+        socket.write('HTTP/1.1 500 Internal Server Error\r\n\r\n');
+        socket.destroy();
+      }
+    }, { pathMatch: 'prefix', priority: 56 });
+
     centralUpgradeDispatcher.register('/ws/preview', async (request: IncomingMessage, socket: any, head: Buffer) => {
       markSocketAsHandled(request, socket);
 

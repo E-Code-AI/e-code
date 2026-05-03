@@ -103,6 +103,19 @@ export function PreviewPanel({
     },
   });
 
+  // Switch active port mutation — used when the project exposes multiple services
+  const switchPortMutation = useMutation({
+    mutationFn: async (port: number) => {
+      return apiRequest('POST', `/api/preview/projects/${projectId}/preview/switch-port`, { port });
+    },
+    onSuccess: () => {
+      refetchStatus();
+    },
+    onError: () => {
+      toast({ title: 'Could not switch port', variant: 'destructive' });
+    }
+  });
+
   // Stop preview mutation
   const stopPreviewMutation = useMutation({
     mutationFn: async () => {
@@ -216,16 +229,25 @@ export function PreviewPanel({
               {previewStatus.frameworkType}
             </Badge>
           )}
-          {isPreviewRunning && activePort && (
+          {isPreviewRunning && activePort && serviceCount <= 1 && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
               Port {activePort}
             </Badge>
           )}
-          {isPreviewRunning && serviceCount > 1 && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-              {serviceCount} services
-            </Badge>
-          )}
+          {isPreviewRunning && serviceCount > 1 && previewStatus?.services?.map((svc) => {
+            const isActive = svc.port === (previewStatus.primaryPort ?? previewStatus.ports?.[0]);
+            return (
+              <Badge
+                key={svc.port}
+                variant={isActive ? 'default' : 'outline'}
+                className="text-[10px] px-1.5 py-0 h-4 cursor-pointer hover:bg-accent transition-colors"
+                onClick={() => !isActive && switchPortMutation.mutate(svc.port)}
+                title={svc.name ?? `Port ${svc.port}`}
+              >
+                :{svc.port}
+              </Badge>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-0.5">

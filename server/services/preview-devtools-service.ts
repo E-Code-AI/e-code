@@ -13,14 +13,14 @@ interface DevToolsClient {
   userId: number;
 }
 
-interface ConsoleMessage {
+export interface ConsoleMessage {
   level: 'log' | 'info' | 'warn' | 'error' | 'debug';
   message: string;
   source?: string;
   stack?: string;
 }
 
-interface NetworkRequest {
+export interface NetworkRequest {
   id: string;
   method: string;
   url: string;
@@ -31,11 +31,11 @@ interface NetworkRequest {
   time?: number;
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
-  requestBody?: any;
-  responseBody?: any;
+  requestBody?: string;
+  responseBody?: string;
 }
 
-interface ElementInfo {
+export interface ElementInfo {
   tagName: string;
   id?: string;
   className?: string;
@@ -56,6 +56,12 @@ interface PerformanceMetric {
   status: 'good' | 'warning' | 'critical';
 }
 
+// Maximum number of entries retained per project bucket
+const MAX_CONSOLE_ENTRIES = 200;
+const MAX_NETWORK_ENTRIES = 200;
+// Evict project buckets that have had no active WS client for this long
+const PROJECT_DATA_TTL_MS = 30 * 60 * 1_000; // 30 minutes
+
 class PreviewDevToolsService extends EventEmitter {
   private clients: Map<string, DevToolsClient> = new Map();
   private projectData: Map<number, {
@@ -63,17 +69,38 @@ class PreviewDevToolsService extends EventEmitter {
     network: NetworkRequest[];
     performance: PerformanceMetric[];
   }> = new Map();
+  // Track last-active timestamp per project for TTL eviction
+  private projectLastActive: Map<number, number> = new Map();
 
   constructor() {
     super();
     this.initializeDefaultMetrics();
+    // Evict stale project buckets every 5 minutes
+    setInterval(() => this.evictStaleProjects(), 5 * 60_000);
   }
 
+  private evictStaleProjects() {
+    const now = Date.now();
+    for (const [pid, lastActive] of this.projectLastActive) {
+      const hasClients = [...this.clients.values()].some(c => c.projectId === pid);
+      if (!hasClients && now - lastActive > PROJECT_DATA_TTL_MS) {
+        this.projectData.delete(pid);
+        this.projectLastActive.delete(pid);
+      }
+    }
+  }
+
+  private touchProject(pid: number) {
+    this.projectLastActive.set(pid, Date.now());
+  }
+
+  private cpuUsageBaseline = process.cpuUsage();
+  private cpuTimestampBaseline = Date.now();
+
   private initializeDefaultMetrics() {
-    // Initialize with some default performance metrics
     setInterval(() => {
       this.updatePerformanceMetrics();
-    }, 1000);
+    }, 5000);
   }
 
   addClient(ws: WebSocket, projectId: number, userId: number): string {
@@ -127,96 +154,88 @@ class PreviewDevToolsService extends EventEmitter {
   }
 
   // Console logging from preview
-  logConsole(projectId: number, message: ConsoleMessage) {
-    // Initialize project data if not exists
+  private ensureProjectBucket(projectId: number) {
     if (!this.projectData.has(projectId)) {
-      this.projectData.set(projectId, {
-        console: [],
-        network: [],
-        performance: []
-      });
+      this.projectData.set(projectId, { console: [], network: [], performance: [] });
     }
+  }
+
+  logConsole(projectId: number, message: ConsoleMessage) {
+    this.ensureProjectBucket(projectId);
+    this.touchProject(projectId);
 
     const projectData = this.projectData.get(projectId)!;
     projectData.console.push(message);
 
-    // Keep only last 1000 messages
-    if (projectData.console.length > 1000) {
-      projectData.console = projectData.console.slice(-1000);
+    if (projectData.console.length > MAX_CONSOLE_ENTRIES) {
+      projectData.console = projectData.console.slice(-MAX_CONSOLE_ENTRIES);
     }
 
-    // Broadcast to all clients watching this project
-    this.broadcastToProject(projectId, {
-      type: 'console',
-      payload: message
-    });
+    this.broadcastToProject(projectId, { type: 'console', payload: message });
   }
 
   // Network request tracking
   trackNetworkRequest(projectId: number, request: NetworkRequest) {
-    if (!this.projectData.has(projectId)) {
-      this.projectData.set(projectId, {
-        console: [],
-        network: [],
-        performance: []
-      });
-    }
+    this.ensureProjectBucket(projectId);
+    this.touchProject(projectId);
 
     const projectData = this.projectData.get(projectId)!;
     const existingIndex = projectData.network.findIndex(r => r.id === request.id);
 
     if (existingIndex !== -1) {
-      // Update existing request
-      projectData.network[existingIndex] = {
-        ...projectData.network[existingIndex],
-        ...request
-      };
+      projectData.network[existingIndex] = { ...projectData.network[existingIndex], ...request };
     } else {
-      // Add new request
       projectData.network.push(request);
+      if (projectData.network.length > MAX_NETWORK_ENTRIES) {
+        projectData.network = projectData.network.slice(-MAX_NETWORK_ENTRIES);
+      }
     }
 
-    // Keep only last 500 requests
-    if (projectData.network.length > 500) {
-      projectData.network = projectData.network.slice(-500);
-    }
-
-    this.broadcastToProject(projectId, {
-      type: 'network',
-      payload: request
-    });
+    this.broadcastToProject(projectId, { type: 'network', payload: request });
   }
 
-  // Update performance metrics
+  // Update performance metrics using real process data
   private updatePerformanceMetrics() {
+    const mem = process.memoryUsage();
+    const heapUsedMB = mem.heapUsed / 1024 / 1024;
+    const rssUsedMB = mem.rss / 1024 / 1024;
+
+    const now = Date.now();
+    const currentCpu = process.cpuUsage(this.cpuUsageBaseline);
+    const elapsedMs = now - this.cpuTimestampBaseline;
+    const cpuPercent = elapsedMs > 0
+      ? Math.min(100, ((currentCpu.user + currentCpu.system) / 1000 / elapsedMs) * 100)
+      : 0;
+    this.cpuUsageBaseline = process.cpuUsage();
+    this.cpuTimestampBaseline = now;
+
     const metrics: PerformanceMetric[] = [
       {
-        name: 'Page Load Time',
-        value: Math.random() * 2000 + 500,
-        unit: 'ms',
-        status: Math.random() > 0.7 ? 'warning' : 'good'
-      },
-      {
-        name: 'First Contentful Paint',
-        value: Math.random() * 1000 + 200,
-        unit: 'ms',
-        status: Math.random() > 0.8 ? 'warning' : 'good'
-      },
-      {
-        name: 'Memory Usage',
-        value: Math.random() * 200 + 50,
+        name: 'Heap Used',
+        value: Math.round(heapUsedMB * 10) / 10,
         unit: 'MB',
-        status: Math.random() > 0.9 ? 'critical' : Math.random() > 0.7 ? 'warning' : 'good'
+        status: heapUsedMB > 300 ? 'critical' : heapUsedMB > 150 ? 'warning' : 'good'
+      },
+      {
+        name: 'RSS Memory',
+        value: Math.round(rssUsedMB * 10) / 10,
+        unit: 'MB',
+        status: rssUsedMB > 500 ? 'critical' : rssUsedMB > 250 ? 'warning' : 'good'
       },
       {
         name: 'CPU Usage',
-        value: Math.random() * 100,
+        value: Math.round(cpuPercent * 10) / 10,
         unit: '%',
-        status: Math.random() > 0.8 ? 'warning' : 'good'
+        status: cpuPercent > 80 ? 'critical' : cpuPercent > 50 ? 'warning' : 'good'
+      },
+      {
+        name: 'Event Loop',
+        value: Math.round(elapsedMs),
+        unit: 'ms',
+        status: elapsedMs > 200 ? 'warning' : 'good'
       }
     ];
 
-    // Update for all active projects
     Array.from(this.projectData.keys()).forEach(projectId => {
       this.broadcastToProject(projectId, {
         type: 'performance',
@@ -242,10 +261,8 @@ class PreviewDevToolsService extends EventEmitter {
 
   // Send element info when selected
   sendElementInfo(projectId: number, element: ElementInfo) {
-    this.broadcastToProject(projectId, {
-      type: 'element',
-      payload: element
-    });
+    this.touchProject(projectId);
+    this.broadcastToProject(projectId, { type: 'element', payload: element });
   }
 
   // Clear console
@@ -274,19 +291,32 @@ class PreviewDevToolsService extends EventEmitter {
   }
 
   // Inject dev tools script into preview
-  getDevToolsScript(projectId: number): string {
+  // bootstrapToken is forwarded so the injected script can auth REST calls and
+  // the devtools WebSocket in contexts where no session cookie is present.
+  getDevToolsScript(projectId: number, bootstrapToken?: string): string {
+    const tokenHeader = bootstrapToken
+      ? `, 'x-bootstrap-token': ${JSON.stringify(bootstrapToken)}`
+      : '';
+    const wsSuffix = bootstrapToken
+      ? `?bootstrap=${encodeURIComponent(bootstrapToken)}`
+      : '';
     return `
       <script>
         (function() {
+          // Capture originalFetch FIRST — before any monkey-patching — so all
+          // devtools telemetry uses the real fetch and never recurses.
+          var originalFetch = window.fetch.bind(window);
+          var DEVTOOLS_PREFIX = '/api/preview/devtools/';
+
           // Override console methods
           const originalConsole = {};
           ['log', 'info', 'warn', 'error', 'debug'].forEach(method => {
             originalConsole[method] = console[method];
             console[method] = function(...args) {
-              // Send to dev tools
-              fetch('/api/preview/devtools/console', {
+              // Send to dev tools via originalFetch (not the instrumented window.fetch)
+              originalFetch('/api/preview/devtools/console', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json'${tokenHeader} },
                 body: JSON.stringify({
                   projectId: ${projectId},
                   level: method,
@@ -306,22 +336,28 @@ class PreviewDevToolsService extends EventEmitter {
             };
           });
 
-          // Track network requests
-          const originalFetch = window.fetch;
+          // Track network requests — skip devtools URLs to prevent recursion
           window.fetch = function(...args) {
+            var urlArg = args[0];
+            var urlStr = typeof urlArg === 'string' ? urlArg : (urlArg instanceof Request ? urlArg.url : String(urlArg));
+            // Pass through devtools calls and relative paths that start with the devtools prefix
+            if (urlStr && (urlStr === DEVTOOLS_PREFIX || urlStr.startsWith(DEVTOOLS_PREFIX))) {
+              return originalFetch.apply(window, args);
+            }
+
             const requestId = Date.now().toString();
             const startTime = performance.now();
             const [url, options = {}] = args;
             
-            // Track request start
-            fetch('/api/preview/devtools/network', {
+            // Track request start via originalFetch (never recurses)
+            originalFetch('/api/preview/devtools/network', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json'${tokenHeader} },
               body: JSON.stringify({
                 projectId: ${projectId},
                 id: requestId,
                 method: options.method || 'GET',
-                url: url.toString(),
+                url: urlStr,
                 type: 'fetch',
                 requestHeaders: options.headers || {}
               })
@@ -330,11 +366,11 @@ class PreviewDevToolsService extends EventEmitter {
             return originalFetch.apply(window, args).then(response => {
               const endTime = performance.now();
               
-              // Track response
+              // Track response via originalFetch
               response.clone().text().then(body => {
-                fetch('/api/preview/devtools/network', {
+                originalFetch('/api/preview/devtools/network', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: { 'Content-Type': 'application/json'${tokenHeader} },
                   body: JSON.stringify({
                     projectId: ${projectId},
                     id: requestId,
@@ -394,9 +430,9 @@ class PreviewDevToolsService extends EventEmitter {
             const computedStyles = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
             
-            fetch('/api/preview/devtools/element', {
+            originalFetch('/api/preview/devtools/element', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 'Content-Type': 'application/json'${tokenHeader} },
               body: JSON.stringify({
                 projectId: ${projectId},
                 tagName: element.tagName,
@@ -433,17 +469,22 @@ class PreviewDevToolsService extends EventEmitter {
             }
           }, true);
 
-          // Listen for inspect mode changes
-          const ws = new WebSocket('ws://localhost:5000/ws/preview-inject/${projectId}');
-          ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'inspectMode') {
-              inspectMode = data.payload.enabled;
-              if (!inspectMode && highlightElement) {
-                highlightElement.style.display = 'none';
-              }
-            }
-          };
+          // Listen for inspect mode changes via devtools WebSocket
+          try {
+            var dtProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            var dtWs = new WebSocket(dtProtocol + '//' + window.location.host + '/ws/preview-devtools/${projectId}' + '${wsSuffix}');
+            dtWs.onmessage = function(event) {
+              try {
+                var data = JSON.parse(event.data);
+                if (data.type === 'inspectMode') {
+                  inspectMode = data.payload.enabled;
+                  if (!inspectMode && highlightElement) {
+                    highlightElement.style.display = 'none';
+                  }
+                }
+              } catch {}
+            };
+          } catch {}
 
           // Track errors
           window.addEventListener('error', (event) => {

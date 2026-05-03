@@ -13,11 +13,22 @@ import { NextFunction,Request,Response } from 'express';
 // Methods that require CSRF protection
 const PROTECTED_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 
-// Paths to exclude from CSRF protection (webhooks and anonymous endpoints)
+// Paths to exclude from CSRF protection.
+//
+// DevTools ingestion routes (/api/preview/devtools/*) are called from injected
+// scripts running inside preview iframes.  Iframes are sandboxed and cannot
+// participate in the parent-page session/cookie round-trip that the CSRF
+// double-submit pattern requires.  Instead these routes enforce:
+//   • A server-issued, project-scoped bootstrap JWT   (x-bootstrap-token header)
+//   • OR a valid session cookie with project ownership/collaborator check
+// The bootstrap JWT is a server-issued secret unknown to cross-site attackers,
+// providing equivalent anti-CSRF assurance.  No unauthenticated request can
+// succeed (resolveDevToolsAccess always requires one of the two credentials).
 const EXCLUDED_PATHS = [
   '/api/webhooks/stripe',
   '/api/webhooks/github',
   '/api/logs/ingest',
+  '/api/preview/devtools',
 ];
 
 // Base allowed origins for login/register endpoints

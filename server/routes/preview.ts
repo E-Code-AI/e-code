@@ -3,8 +3,69 @@ import * as fs from 'fs/promises';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import { storage } from '../storage';
+import type { ConsoleMessage, NetworkRequest, ElementInfo } from '../services/preview-devtools-service';
 import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
+
+// ─── DevTools ingestion rate limiter ────────────────────────────────────────
+// Simple in-memory sliding-window counter: max 120 requests per project per minute.
+const devtoolsRateLimitMap = new Map<number, { count: number; windowStart: number }>();
+const DEVTOOLS_RATE_LIMIT = 120;
+const DEVTOOLS_RATE_WINDOW_MS = 60_000;
+
+function checkDevToolsRateLimit(projectId: number): boolean {
+  const now = Date.now();
+  const bucket = devtoolsRateLimitMap.get(projectId);
+  if (!bucket || now - bucket.windowStart >= DEVTOOLS_RATE_WINDOW_MS) {
+    devtoolsRateLimitMap.set(projectId, { count: 1, windowStart: now });
+    return true;
+  }
+  if (bucket.count >= DEVTOOLS_RATE_LIMIT) return false;
+  bucket.count++;
+  return true;
+}
+
+// Authenticate a devtools ingestion request (body-based projectId).
+// Accepts session auth or bootstrap JWT; verifies project ownership/collaboration.
+async function resolveDevToolsAccess(req: any, res: any): Promise<number | null> {
+  const rawPid = req.body?.projectId;
+  const pid = parseInt(String(rawPid), 10);
+  if (!Number.isFinite(pid) || pid <= 0) {
+    res.status(400).json({ error: 'Invalid projectId' });
+    return null;
+  }
+
+  const bootstrapToken = req.query?.bootstrap || req.headers?.['x-bootstrap-token'];
+  if (bootstrapToken) {
+    try {
+      const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as { projectId: string | number };
+      if (String(decoded.projectId) !== String(pid)) {
+        res.status(403).json({ error: 'Bootstrap token does not match project' });
+        return null;
+      }
+      return pid;
+    } catch {
+      res.status(401).json({ error: 'Invalid or expired bootstrap token' });
+      return null;
+    }
+  }
+
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return null;
+  }
+
+  const project = await storage.getProject(String(pid)).catch(() => null);
+  if (!project) { res.status(404).json({ error: 'Project not found' }); return null; }
+  if (project.ownerId === userId) return pid;
+
+  const collaborators = await storage.getProjectCollaborators(String(pid)).catch(() => []);
+  if (collaborators.some((c: any) => c.userId === userId)) return pid;
+
+  res.status(403).json({ error: 'Access denied' });
+  return null;
+}
 
 // Hot-reload script to inject into HTML files
 // This connects to the preview WebSocket and reloads when file changes are detected
@@ -311,6 +372,7 @@ function getFetchInterceptorScript(projectId: string): string {
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith(basePrefix)) return url;
+          if (url.startsWith('/api/preview/devtools/')) return url;
           if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
           if (url.startsWith('/')) return appendBootstrap(basePrefix + url);
           return url;
@@ -351,10 +413,15 @@ function getFetchInterceptorScript(projectId: string): string {
     </script>`;
 }
 
-function injectPreviewScripts(content: string, projectId: string, bootstrapToken?: string | null): string {
+async function injectPreviewScripts(content: string, projectId: string, bootstrapToken?: string | null): Promise<string> {
   const hotReload = getHotReloadScript(projectId);
   const fetchInterceptor = getFetchInterceptorScript(projectId);
-  const scripts = fetchInterceptor + '\n' + hotReload;
+  const { previewDevToolsService } = await import('../services/preview-devtools-service');
+  const devTools = previewDevToolsService.getDevToolsScript(
+    parseInt(projectId, 10),
+    bootstrapToken ?? undefined
+  );
+  const scripts = fetchInterceptor + '\n' + hotReload + '\n' + devTools;
   
   let modifiedContent = rewriteAssetPaths(content, projectId, bootstrapToken);
   
@@ -522,6 +589,94 @@ const ensureProjectAccess = async (req: any, res: any, next: any) => {
 };
 
 const router = Router();
+
+// ─── DevTools data ingestion routes ────────────────────────────────────────
+// DevTools ingestion routes — called from the injected script inside preview iframes.
+// Auth: session cookie OR bootstrap JWT (x-bootstrap-token header / ?bootstrap= query).
+// Rate-limited to 120 requests/project/minute to prevent resource abuse.
+// The fetch interceptor in getFetchInterceptorScript() bypasses /api/preview/devtools/*
+// so these calls reach the host server rather than being proxied to the user's app.
+
+router.post('/devtools/console', async (req, res) => {
+  try {
+    const pid = await resolveDevToolsAccess(req, res);
+    if (pid === null) return;
+    if (!checkDevToolsRateLimit(pid)) return res.status(429).json({ error: 'Rate limit exceeded' });
+
+    const { level, message, source, stack } = req.body || {};
+    const VALID_LEVELS = new Set(['log', 'info', 'warn', 'error', 'debug']);
+    const entry: ConsoleMessage = {
+      level: VALID_LEVELS.has(level) ? (level as ConsoleMessage['level']) : 'log',
+      message: String(message ?? '').slice(0, 10_000),
+      source: source != null ? String(source).slice(0, 500) : undefined,
+      stack: stack != null ? String(stack).slice(0, 2_000) : undefined,
+    };
+    const { previewDevToolsService } = await import('../services/preview-devtools-service');
+    previewDevToolsService.logConsole(pid, entry);
+    res.status(204).end();
+  } catch {
+    res.status(500).json({ error: 'Failed to record console message' });
+  }
+});
+
+router.post('/devtools/network', async (req, res) => {
+  try {
+    const pid = await resolveDevToolsAccess(req, res);
+    if (pid === null) return;
+    if (!checkDevToolsRateLimit(pid)) return res.status(429).json({ error: 'Rate limit exceeded' });
+
+    const body = req.body || {};
+    const entry: NetworkRequest = {
+      id: String(body.id ?? Date.now()),
+      method: String(body.method ?? 'GET').toUpperCase().slice(0, 10),
+      url: String(body.url ?? '').slice(0, 2_000),
+      status: body.status != null ? parseInt(String(body.status), 10) : undefined,
+      statusText: body.statusText != null ? String(body.statusText).slice(0, 100) : undefined,
+      type: String(body.type ?? 'fetch').slice(0, 50),
+      size: body.size != null ? Number(body.size) : undefined,
+      time: body.time != null ? Number(body.time) : undefined,
+      requestHeaders: body.requestHeaders && typeof body.requestHeaders === 'object'
+        ? (body.requestHeaders as Record<string, string>) : undefined,
+      responseHeaders: body.responseHeaders && typeof body.responseHeaders === 'object'
+        ? (body.responseHeaders as Record<string, string>) : undefined,
+      requestBody: body.requestBody != null ? String(body.requestBody).slice(0, 4_000) : undefined,
+      responseBody: body.responseBody != null ? String(body.responseBody).slice(0, 4_000) : undefined,
+    };
+    const { previewDevToolsService } = await import('../services/preview-devtools-service');
+    previewDevToolsService.trackNetworkRequest(pid, entry);
+    res.status(204).end();
+  } catch {
+    res.status(500).json({ error: 'Failed to record network request' });
+  }
+});
+
+router.post('/devtools/element', async (req, res) => {
+  try {
+    const pid = await resolveDevToolsAccess(req, res);
+    if (pid === null) return;
+    if (!checkDevToolsRateLimit(pid)) return res.status(429).json({ error: 'Rate limit exceeded' });
+
+    const body = req.body || {};
+    const entry: ElementInfo = {
+      tagName: String(body.tagName ?? 'UNKNOWN').slice(0, 100),
+      id: body.id != null ? String(body.id).slice(0, 500) : undefined,
+      className: body.className != null ? String(body.className).slice(0, 500) : undefined,
+      attributes: body.attributes && typeof body.attributes === 'object'
+        ? (body.attributes as Record<string, string>) : {},
+      computedStyles: body.computedStyles && typeof body.computedStyles === 'object'
+        ? (body.computedStyles as Record<string, string>) : undefined,
+      dimensions: body.dimensions && typeof body.dimensions === 'object'
+        ? (body.dimensions as ElementInfo['dimensions']) : undefined,
+    };
+    const { previewDevToolsService } = await import('../services/preview-devtools-service');
+    previewDevToolsService.sendElementInfo(pid, entry);
+    res.status(204).end();
+  } catch {
+    res.status(500).json({ error: 'Failed to record element info' });
+  }
+});
+
+// ─── End DevTools routes ────────────────────────────────────────────────────
 
 // Get preview URL - matches frontend query endpoint
 // Note: Router is mounted at /api/preview, so this becomes /api/preview/url
@@ -774,7 +929,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
       if (requestedFile) {
         const content = requestedFile.content ?? '';
         if (fileParam.endsWith('.html')) {
-          const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
+          const modifiedContent = content ? await injectPreviewScripts(content, projectId, bootstrapToken) : '';
           res.type('html').send(modifiedContent);
         } else {
           const ext = path.extname(fileParam).toLowerCase();
@@ -806,7 +961,7 @@ router.get('/projects/:id/preview/', ensureProjectAccess, async (req, res) => {
         res.type('html').send('');
         return;
       }
-      const modifiedContent = injectPreviewScripts(content, projectId, bootstrapToken);
+      const modifiedContent = await injectPreviewScripts(content, projectId, bootstrapToken);
       res.type('html').send(modifiedContent);
       return;
     }
@@ -1007,7 +1162,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
       const indexFile = findIndexInDirectory(files, dirPath);
       if (indexFile) {
         const content = indexFile.content ?? '';
-        const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
+        const modifiedContent = content ? await injectPreviewScripts(content, projectId, bootstrapToken) : '';
         res.type('html').send(modifiedContent);
         return;
       }
@@ -1022,7 +1177,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
       const indexFile = findIndexInDirectory(files, normalizedPath);
       if (indexFile) {
         const content = indexFile.content ?? '';
-        const modifiedContent = content ? injectPreviewScripts(content, projectId, bootstrapToken) : '';
+        const modifiedContent = content ? await injectPreviewScripts(content, projectId, bootstrapToken) : '';
         res.type('html').send(modifiedContent);
         return;
       }
@@ -1076,7 +1231,7 @@ router.get('/projects/:id/preview/:filepath(*)', ensureProjectAccess, async (req
     
     // For HTML files, inject hot-reload script for live updates
     if (ext === '.html' && file.content) {
-      const modifiedContent = injectPreviewScripts(file.content, projectId, bootstrapToken);
+      const modifiedContent = await injectPreviewScripts(file.content, projectId, bootstrapToken);
       res.send(modifiedContent);
     } else {
       res.send(file.content || '');

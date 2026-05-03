@@ -2,34 +2,27 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Fortune 500-Grade Playwright E2E Test Configuration
- * 
+ *
  * Optimized for enterprise-grade reliability with:
  * - Extended timeouts for complex application flows
  * - Robust retry strategies for flaky network conditions
  * - Comprehensive tracing and debugging capabilities
  * - Multi-browser and device coverage
- * 
+ *
  * Timeout Tiers (Fortune 500 Standard):
  * - Critical: 120s (page loads, complex operations)
  * - Standard: 60s (navigation, form submissions)
  * - Fast: 30s (element interactions, assertions)
- * 
+ *
  * URL Resolution Priority:
- * 1. BASE_URL env var (explicit override)
- * 2. REPLIT_DEV_URL env var (Replit dev URL with :5000 auto-appended)
- * 3. APP_URL env var (production URL)
- * 4. localhost:5000 fallback
+ * 1. BASE_URL env var (explicit override, highest priority)
+ * 2. localhost:5000 (default — API-level tests must hit the local server
+ *    directly; REPLIT_DEV_URL routes through the Replit proxy which does
+ *    not forward all HTTP methods / upgrade headers reliably)
+ * 3. APP_URL env var (production URL, when BASE_URL is set to APP_URL)
  */
 function getBaseURL(): string {
   if (process.env.BASE_URL) return process.env.BASE_URL;
-  
-  const replitDevUrl = process.env.REPLIT_DEV_URL;
-  if (replitDevUrl) {
-    return replitDevUrl.includes(':') ? replitDevUrl : `${replitDevUrl}:5000`;
-  }
-  
-  if (process.env.APP_URL) return process.env.APP_URL;
-  
   return 'http://localhost:5000';
 }
 
