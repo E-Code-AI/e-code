@@ -57,15 +57,28 @@ setInterval(() => {
 // ── Host key ─────────────────────────────────────────────────────────────────
 function getHostKey(): Buffer {
   if (process.env.SSH_GATEWAY_HOST_KEY) {
-    return Buffer.from(process.env.SSH_GATEWAY_HOST_KEY, 'base64');
+    // Expected: base64-encoded OpenSSH private key (the file produced by
+    // `ssh-keygen`, starting with "-----BEGIN OPENSSH PRIVATE KEY-----").
+    const buf = Buffer.from(process.env.SSH_GATEWAY_HOST_KEY, 'base64');
+    const parsed = sshUtils.parseKey(buf);
+    if (parsed instanceof Error) {
+      throw new Error(
+        `[SSH Gateway] SSH_GATEWAY_HOST_KEY is not a valid OpenSSH private key ` +
+        `(ssh2: ${parsed.message}). Generate one with: ` +
+        `ssh-keygen -t ed25519 -f /tmp/host -N "" && base64 -w0 /tmp/host`
+      );
+    }
+    logger.info('[SSH Gateway] Loaded stable host key from SSH_GATEWAY_HOST_KEY');
+    return buf;
   }
-  // Ephemeral ed25519 key for development — not stable across restarts
-  const { privateKey } = crypto.generateKeyPairSync('ed25519');
-  const pem = privateKey.export({ type: 'pkcs8', format: 'pem' }) as string;
+  // Ephemeral ed25519 key for development — not stable across restarts.
+  // ssh2 only accepts OpenSSH-format private keys, so use its own generator
+  // rather than crypto.generateKeyPairSync (which emits PKCS#8 PEM).
+  const { private: privatePem } = sshUtils.generateKeyPairSync('ed25519');
   logger.warn(
     '[SSH Gateway] Using ephemeral host key — set SSH_GATEWAY_HOST_KEY env var for a stable fingerprint'
   );
-  return Buffer.from(pem);
+  return Buffer.from(privatePem);
 }
 
 // ── Fingerprint helper (mirrors ssh-keys.router.ts) ──────────────────────────

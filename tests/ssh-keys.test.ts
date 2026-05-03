@@ -250,4 +250,53 @@ describe('SSH Gateway helpers', () => {
     for (let i = 0; i < 5; i++) recordFailure(ip);
     expect(isBanned(ip)).toBe(true);
   });
+
+  it('startSshGateway boots and accepts a real ssh2 client (ephemeral host key path)', async () => {
+    const ssh2 = (await import('ssh2')).default ?? (await import('ssh2'));
+    const fs = await import('fs');
+    const { execSync } = await import('child_process');
+
+    // Generate a real OpenSSH ed25519 keypair for the client
+    const tmpKey = `/tmp/ssh-gateway-test-${process.pid}-${Date.now()}`;
+    execSync(`rm -f ${tmpKey} ${tmpKey}.pub && ssh-keygen -t ed25519 -f ${tmpKey} -N "" -q`);
+    const privPem = fs.readFileSync(tmpKey, 'utf8');
+    const opensshPubText = fs.readFileSync(`${tmpKey}.pub`, 'utf8').trim();
+    const blob = Buffer.from(opensshPubText.split(/\s+/)[1], 'base64');
+    const fingerprint = `SHA256:${crypto.createHash('sha256').update(blob).digest('base64')}`;
+
+    mockStorage.getSshKeyByFingerprintGlobal.mockImplementation(async (fp: string) =>
+      fp === fingerprint ? { id: 'k1', userId: 1, publicKey: opensshPubText, fingerprint } : null
+    );
+    let touched = false;
+    mockStorage.touchSshKey.mockImplementation(async () => { touched = true; });
+
+    const port = 23000 + (process.pid % 1000);
+    process.env.SSH_GATEWAY_ENABLED = 'true';
+    process.env.SSH_GATEWAY_PORT = String(port);
+    delete process.env.SSH_GATEWAY_HOST_KEY; // exercise ephemeral path
+
+    const gw = await import('../server/ssh/gateway');
+    await gw.startSshGateway();
+    try {
+      const out = await new Promise<string>((resolve, reject) => {
+        const c = new ssh2.Client();
+        c.on('ready', () => c.exec('echo gateway-ok', (e: any, s: any) => {
+          if (e) return reject(e);
+          let buf = '';
+          s.on('data', (d: Buffer) => { buf += d.toString(); });
+          s.on('close', () => { c.end(); resolve(buf); });
+        }));
+        c.on('error', reject);
+        c.connect({ host: '127.0.0.1', port, username: 'runner', privateKey: privPem, readyTimeout: 5000 });
+      });
+      expect(out).toContain('gateway-ok');
+      expect(touched).toBe(true);
+    } finally {
+      gw.stopSshGateway();
+      fs.unlinkSync(tmpKey);
+      fs.unlinkSync(`${tmpKey}.pub`);
+      delete process.env.SSH_GATEWAY_ENABLED;
+      delete process.env.SSH_GATEWAY_PORT;
+    }
+  }, 15000);
 });
