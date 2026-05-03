@@ -294,96 +294,101 @@ class PreviewDevToolsService extends EventEmitter {
   // bootstrapToken is forwarded so the injected script can auth REST calls and
   // the devtools WebSocket in contexts where no session cookie is present.
   getDevToolsScript(projectId: number, bootstrapToken?: string): string {
-    const tokenHeader = bootstrapToken
-      ? `, 'x-bootstrap-token': ${JSON.stringify(bootstrapToken)}`
-      : '';
     const wsSuffix = bootstrapToken
       ? `?bootstrap=${encodeURIComponent(bootstrapToken)}`
       : '';
     return `
       <script>
         (function() {
-          // Capture originalFetch FIRST — before any monkey-patching — so all
-          // devtools telemetry uses the real fetch and never recurses.
+          // Capture native fetch reference for our own use (non-recursive proxy)
           var originalFetch = window.fetch.bind(window);
-          var DEVTOOLS_PREFIX = '/api/preview/devtools/';
+
+          // Send devtools telemetry to the parent frame via postMessage so it
+          // bypasses the preview proxy's URL rewriter entirely. The parent
+          // (PreviewDevTools panel) listens for these messages on the same
+          // origin and updates its state directly.
+          var DEVTOOLS_NS = '__replitPreviewDevtools';
+          function sendToDevtools(kind, payload) {
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                  __replitPreviewDevtools: true,
+                  projectId: ${projectId},
+                  kind: kind,
+                  payload: payload
+                }, window.location.origin);
+              }
+            } catch (e) { /* swallow */ }
+          }
 
           // Override console methods
           const originalConsole = {};
           ['log', 'info', 'warn', 'error', 'debug'].forEach(method => {
             originalConsole[method] = console[method];
             console[method] = function(...args) {
-              // Send to dev tools via originalFetch (not the instrumented window.fetch)
-              originalFetch('/api/preview/devtools/console', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json'${tokenHeader} },
-                body: JSON.stringify({
-                  projectId: ${projectId},
-                  level: method,
-                  message: args.map(arg => {
-                    try {
-                      return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
-                    } catch (e) {
-                      return String(arg);
-                    }
-                  }).join(' '),
-                  source: new Error().stack?.split('\\n')[2]?.trim()
-                })
-              }).catch(() => {});
-              
+              sendToDevtools('console', {
+                level: method,
+                message: args.map(arg => {
+                  try {
+                    return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+                  } catch (e) {
+                    return String(arg);
+                  }
+                }).join(' '),
+                source: new Error().stack?.split('\\n')[2]?.trim()
+              });
+
               // Call original method
               originalConsole[method].apply(console, args);
             };
           });
 
-          // Track network requests — skip devtools URLs to prevent recursion
+          // Track network requests
           window.fetch = function(...args) {
             var urlArg = args[0];
             var urlStr = typeof urlArg === 'string' ? urlArg : (urlArg instanceof Request ? urlArg.url : String(urlArg));
-            // Pass through devtools calls and relative paths that start with the devtools prefix
-            if (urlStr && (urlStr === DEVTOOLS_PREFIX || urlStr.startsWith(DEVTOOLS_PREFIX))) {
-              return originalFetch.apply(window, args);
-            }
 
-            const requestId = Date.now().toString();
+            const requestId = Date.now().toString() + '-' + Math.random().toString(36).slice(2, 8);
             const startTime = performance.now();
-            const [url, options = {}] = args;
-            
-            // Track request start via originalFetch (never recurses)
-            originalFetch('/api/preview/devtools/network', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json'${tokenHeader} },
-              body: JSON.stringify({
-                projectId: ${projectId},
-                id: requestId,
-                method: options.method || 'GET',
-                url: urlStr,
-                type: 'fetch',
-                requestHeaders: options.headers || {}
-              })
-            }).catch(() => {});
+            const options = (args[1] && typeof args[1] === 'object') ? args[1] : {};
+
+            sendToDevtools('network', {
+              id: requestId,
+              method: (options.method || (urlArg instanceof Request ? urlArg.method : 'GET')) || 'GET',
+              url: urlStr,
+              type: 'fetch',
+              requestHeaders: options.headers || {}
+            });
 
             return originalFetch.apply(window, args).then(response => {
               const endTime = performance.now();
-              
-              // Track response via originalFetch
+
               response.clone().text().then(body => {
-                originalFetch('/api/preview/devtools/network', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json'${tokenHeader} },
-                  body: JSON.stringify({
-                    projectId: ${projectId},
-                    id: requestId,
-                    status: response.status,
-                    statusText: response.statusText,
-                    time: Math.round(endTime - startTime),
-                    size: body.length,
-                    responseHeaders: Object.fromEntries(response.headers.entries())
-                  })
-                }).catch(() => {});
-              });
-              
+                sendToDevtools('network', {
+                  id: requestId,
+                  method: (options.method || (urlArg instanceof Request ? urlArg.method : 'GET')) || 'GET',
+                  url: urlStr,
+                  type: 'fetch',
+                  status: response.status,
+                  statusText: response.statusText,
+                  time: Math.round(endTime - startTime),
+                  size: body.length,
+                  responseHeaders: Object.fromEntries(response.headers.entries())
+                });
+              }).catch(() => {});
+
               return response;
+            }).catch(err => {
+              sendToDevtools('network', {
+                id: requestId,
+                method: (options.method || (urlArg instanceof Request ? urlArg.method : 'GET')) || 'GET',
+                url: urlStr,
+                type: 'fetch',
+                status: 0,
+                statusText: String((err && err.message) || 'Network error'),
+                time: Math.round(performance.now() - startTime)
+              });
+              throw err;
             });
           };
 
@@ -430,38 +435,33 @@ class PreviewDevToolsService extends EventEmitter {
             const computedStyles = window.getComputedStyle(element);
             const rect = element.getBoundingClientRect();
             
-            originalFetch('/api/preview/devtools/element', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json'${tokenHeader} },
-              body: JSON.stringify({
-                projectId: ${projectId},
-                tagName: element.tagName,
-                id: element.id,
-                className: element.className,
-                attributes: Array.from(element.attributes).reduce((acc, attr) => {
-                  acc[attr.name] = attr.value;
-                  return acc;
-                }, {}),
-                computedStyles: {
-                  display: computedStyles.display,
-                  position: computedStyles.position,
-                  width: computedStyles.width,
-                  height: computedStyles.height,
-                  margin: computedStyles.margin,
-                  padding: computedStyles.padding,
-                  backgroundColor: computedStyles.backgroundColor,
-                  color: computedStyles.color,
-                  fontSize: computedStyles.fontSize,
-                  fontWeight: computedStyles.fontWeight
-                },
-                dimensions: {
-                  width: rect.width,
-                  height: rect.height,
-                  x: rect.x,
-                  y: rect.y
-                }
-              })
-            }).catch(() => {});
+            sendToDevtools('element', {
+              tagName: element.tagName,
+              id: element.id,
+              className: element.className,
+              attributes: Array.from(element.attributes).reduce((acc, attr) => {
+                acc[attr.name] = attr.value;
+                return acc;
+              }, {}),
+              computedStyles: {
+                display: computedStyles.display,
+                position: computedStyles.position,
+                width: computedStyles.width,
+                height: computedStyles.height,
+                margin: computedStyles.margin,
+                padding: computedStyles.padding,
+                backgroundColor: computedStyles.backgroundColor,
+                color: computedStyles.color,
+                fontSize: computedStyles.fontSize,
+                fontWeight: computedStyles.fontWeight
+              },
+              dimensions: {
+                width: rect.width,
+                height: rect.height,
+                x: rect.x,
+                y: rect.y
+              }
+            });
             
             inspectMode = false;
             if (highlightElement) {

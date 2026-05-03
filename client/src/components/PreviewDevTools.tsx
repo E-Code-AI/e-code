@@ -150,6 +150,33 @@ export function PreviewDevTools({ previewUrl, projectId, onClose }: PreviewDevTo
     };
   }, [previewUrl, projectId]);
 
+  // Listen for devtools telemetry posted from preview iframes via postMessage.
+  // The injected script in the preview frame uses window.parent.postMessage to
+  // bypass the preview proxy's URL rewriter (which would otherwise route
+  // /api/preview/devtools/* requests to the user's app).
+  useEffect(() => {
+    if (!projectId) return;
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object' || data.__replitPreviewDevtools !== true) return;
+      if (Number(data.projectId) !== Number(projectId)) return;
+      switch (data.kind) {
+        case 'console':
+          handleConsoleMessage(data.payload);
+          break;
+        case 'network':
+          handleNetworkRequest(data.payload);
+          break;
+        case 'element':
+          setSelectedElement(data.payload);
+          break;
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [projectId]);
+
   // Auto-scroll console to bottom
   useEffect(() => {
     if (autoScroll && consoleEndRef.current) {
