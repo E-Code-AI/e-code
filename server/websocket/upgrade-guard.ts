@@ -131,6 +131,12 @@ const WS_MANAGED_PATHS = new Set([
   '/socket.io/',            // Socket.IO with trailing slash
 ]);
 
+// Paths probed by external dev tooling (e.g. Replit __replco workspace iframe)
+// that we intentionally do NOT serve. Silently destroy without warn-level noise.
+const SILENT_UNHANDLED_PATHS = new Set([
+  '/terminal',
+]);
+
 /**
  * Check if the request is a Vite HMR connection
  * Vite HMR connects on "/" with a token parameter
@@ -170,6 +176,24 @@ export function installFinalUpgradeGuard(
   // These services use ws library's built-in upgrade handling which doesn't mark sockets
   if (WS_MANAGED_PATHS.has(pathname)) {
     logger.debug(`[Upgrade Guard] Skipping ${pathname} - managed by ws library`);
+    return;
+  }
+
+  // Silently destroy known external probes (e.g. Replit __replco workspace iframe
+  // that probes /terminal). These are not real clients and do not need warn-level noise.
+  if (SILENT_UNHANDLED_PATHS.has(pathname)) {
+    logger.debug(`[Upgrade Guard] Silent destroy for known-unhandled path: ${pathname}`);
+    try {
+      socket.write(
+        'HTTP/1.1 404 Not Found\r\n' +
+        'Connection: close\r\n' +
+        'Content-Type: text/plain\r\n' +
+        'Content-Length: 28\r\n' +
+        '\r\n' +
+        'WebSocket endpoint not found'
+      );
+    } catch {}
+    socket.destroy();
     return;
   }
   
