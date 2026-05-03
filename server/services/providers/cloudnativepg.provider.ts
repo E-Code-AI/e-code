@@ -473,31 +473,31 @@ export class CloudNativePGProvider implements IDatabaseProvider {
     }
   }
 
-  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<{
+  async executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials, params?: unknown[]): Promise<{
     rows: any[];
     rowCount: number;
     fields: Array<{ name: string; dataTypeID?: number }>;
   }> {
-    logger.info(`Executing SQL query for database ${databaseId} via CloudNativePG`);
-    
-    const { neon } = await import('@neondatabase/serverless');
-    const sql = neon(credentials.connectionUrl);
-    
+    logger.info(`Executing SQL query for database ${databaseId} via CloudNativePG`, { parameterized: !!params?.length });
+
+    const { Pool } = await import('pg');
+    const pgPool = new Pool({ connectionString: credentials.connectionUrl, ssl: { rejectUnauthorized: false }, max: 1 });
+
     try {
-      const result = await sql.transaction([
-        sql`${query}`
-      ]);
-      
-      const rows = Array.isArray(result) && result.length > 0 ? result[0] : [];
-      
+      const pgResult = params?.length
+        ? await pgPool.query(query, params as any[])
+        : await pgPool.query(query);
+
       return {
-        rows: rows as any[],
-        rowCount: (rows as any[]).length,
-        fields: []
+        rows: pgResult.rows || [],
+        rowCount: pgResult.rowCount || pgResult.rows?.length || 0,
+        fields: (pgResult.fields || []).map((f: any) => ({ name: f.name, dataTypeID: f.dataTypeID })),
       };
     } catch (error: any) {
       logger.error(`CloudNativePG SQL execution failed:`, error);
       throw new Error(error.message || 'Query execution failed');
+    } finally {
+      await pgPool.end().catch(() => {});
     }
   }
 

@@ -1,10 +1,13 @@
 import * as schema from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { projectDatabases } from '@shared/schema';
+import { eq, inArray } from 'drizzle-orm';
 import { Request,Response,Router } from 'express';
 import { z } from 'zod';
 import { db,pool } from '../db';
 import { ensureAdmin } from '../middleware/admin-auth';
 import { projectDatabaseService } from '../services/project-database-provisioning.service';
+import { PLAN_LIMITS, PlanType, neonProvider } from '../services/providers';
+import { validateSqlQuery } from '../utils/sql-safety';
 
 const databaseRouter = Router();
 
@@ -968,18 +971,13 @@ databaseRouter.post('/project/:projectId/sql/execute', async (req: Request, res:
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    // Security: Limit query length
-    if (query.length > 10000) {
-      return res.status(400).json({ error: 'Query too long (max 10000 characters)' });
-    }
-
-    // Security: Block dangerous operations in read-only mode
-    const queryLower = query.toLowerCase().trim();
-    const dangerousOps = ['drop ', 'truncate ', 'alter ', 'create database', 'drop database'];
-    for (const op of dangerousOps) {
-      if (queryLower.includes(op)) {
-        return res.status(403).json({ error: `Operation not allowed: ${op.trim().toUpperCase()}` });
-      }
+    // Security: validate against unified SQL safety policy (shared with agent run_sql)
+    const safety = validateSqlQuery(query, 'ui:sql-execute');
+    if (!safety.allowed) {
+      return res.status(403).json({
+        error: safety.reason || 'Operation not allowed',
+        blockedKeyword: safety.blockedKeyword,
+      });
     }
 
     // Check if database is provisioned and running first
@@ -1106,6 +1104,461 @@ databaseRouter.patch('/project/:projectId/settings', async (req: Request, res: R
   } catch (error: any) {
     console.error('[Database API] Update settings error:', error);
     return res.status(500).json({ error: error.message || 'Failed to update settings' });
+  }
+});
+
+// ============================================================
+// PROJECT DATABASE TABLE BROWSER ENDPOINTS
+// ============================================================
+
+/**
+ * List tables in a project's database
+ * GET /api/database/project/:projectId/tables
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/tables', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const database = await projectDatabaseService.getProjectDatabase(projectId);
+    if (!database || database.status !== 'running') {
+      return res.status(404).json({ error: 'No running database found for this project' });
+    }
+
+    // Query information_schema via the project's executeQuery (project-scoped)
+    const tablesResult = await projectDatabaseService.executeQuery(projectId, `
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = current_schema()
+        AND table_type = 'BASE TABLE'
+      ORDER BY table_name
+    `);
+
+    const tables = await Promise.all(
+      tablesResult.rows.map(async (row: any) => {
+        const tableName = row.table_name;
+        try {
+          const [countResult, columnsResult] = await Promise.all([
+            projectDatabaseService.executeQuery(projectId, `SELECT COUNT(*) as cnt FROM "${tableName.replace(/"/g, '""')}"`),
+            projectDatabaseService.executeQuery(projectId, `
+              SELECT column_name, data_type, is_nullable, column_default
+              FROM information_schema.columns
+              WHERE table_name = '${tableName.replace(/'/g, "''")}'
+                AND table_schema = current_schema()
+              ORDER BY ordinal_position
+            `)
+          ]);
+          const pkResult = await projectDatabaseService.executeQuery(projectId, `
+            SELECT kcu.column_name
+            FROM information_schema.key_column_usage kcu
+            JOIN information_schema.table_constraints tc
+              ON kcu.constraint_name = tc.constraint_name
+            WHERE tc.table_name = '${tableName.replace(/'/g, "''")}'
+              AND tc.constraint_type = 'PRIMARY KEY'
+              AND tc.table_schema = current_schema()
+          `);
+          const pkColumns = new Set(pkResult.rows.map((r: any) => r.column_name));
+          return {
+            name: tableName,
+            rowCount: parseInt(countResult.rows[0]?.cnt || '0', 10),
+            columns: columnsResult.rows.map((col: any) => ({
+              name: col.column_name,
+              type: col.data_type,
+              nullable: col.is_nullable === 'YES',
+              default: col.column_default,
+              isPrimary: pkColumns.has(col.column_name)
+            }))
+          };
+        } catch {
+          return { name: tableName, rowCount: 0, columns: [] };
+        }
+      })
+    );
+
+    return res.json({ tables });
+  } catch (error: any) {
+    console.error('[Database API] List project tables error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to list tables' });
+  }
+});
+
+/**
+ * Get paginated data for a table in a project's database
+ * GET /api/database/project/:projectId/tables/:tableName/data
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/tables/:tableName/data', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const { tableName } = req.params;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const pageSize = Math.min(Math.max(1, parseInt(req.query.pageSize as string) || 50), 500);
+    const offset = (page - 1) * pageSize;
+
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!isValidTableName(tableName)) return res.status(400).json({ error: 'Invalid table name' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const safeTable = `"${tableName.replace(/"/g, '""')}"`;
+
+    const [countResult, rowsResult] = await Promise.all([
+      projectDatabaseService.executeQuery(projectId, `SELECT COUNT(*) as total FROM ${safeTable}`),
+      projectDatabaseService.executeQuery(projectId, `SELECT * FROM ${safeTable} LIMIT ${pageSize} OFFSET ${offset}`)
+    ]);
+
+    const totalRows = parseInt(countResult.rows[0]?.total || '0', 10);
+
+    return res.json({
+      rows: rowsResult.rows,
+      totalRows,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalRows / pageSize)
+    });
+  } catch (error: any) {
+    console.error('[Database API] Get project table data error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to get table data' });
+  }
+});
+
+/**
+ * Update a row in a project's database table
+ * PATCH /api/database/project/:projectId/tables/:tableName/rows/:rowId
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.patch('/project/:projectId/tables/:tableName/rows/:rowId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const { tableName, rowId } = req.params;
+    const { updates, pkColumn } = req.body;
+
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!isValidTableName(tableName)) return res.status(400).json({ error: 'Invalid table name' });
+    if (!updates || typeof updates !== 'object' || !pkColumn) {
+      return res.status(400).json({ error: 'updates and pkColumn are required' });
+    }
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const updateEntries = Object.entries(updates);
+    if (updateEntries.length === 0) {
+      return res.status(400).json({ error: 'updates must have at least one field' });
+    }
+
+    // Identifiers (table, column names) must be validated separately; only
+    // values are parameterised.  Column names are quoted using double-quote
+    // doubling, which is the SQL-standard safe identifier quoting method.
+    const safeTable = `"${tableName.replace(/"/g, '""')}"`;
+    const safePkCol = `"${String(pkColumn).replace(/"/g, '""')}"`;
+
+    // Build parameterised SET clause: "col1" = $1, "col2" = $2, …
+    const params: unknown[] = [];
+    const setClauses = updateEntries
+      .map(([col, val]) => {
+        params.push(val);
+        return `"${col.replace(/"/g, '""')}" = $${params.length}`;
+      })
+      .join(', ');
+
+    // PK value is the last parameter
+    params.push(rowId);
+    const pkParam = `$${params.length}`;
+
+    const query = `UPDATE ${safeTable} SET ${setClauses} WHERE ${safePkCol} = ${pkParam}`;
+    await projectDatabaseService.executeQuery(projectId, query, params);
+
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('[Database API] Update row error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to update row' });
+  }
+});
+
+/**
+ * Delete a row from a project's database table
+ * DELETE /api/database/project/:projectId/tables/:tableName/rows/:rowId
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.delete('/project/:projectId/tables/:tableName/rows/:rowId', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const { tableName, rowId } = req.params;
+    const { pkColumn } = req.body;
+
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!isValidTableName(tableName)) return res.status(400).json({ error: 'Invalid table name' });
+    if (!pkColumn) return res.status(400).json({ error: 'pkColumn is required' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const safeTable = `"${tableName.replace(/"/g, '""')}"`;
+    const safePkCol = `"${String(pkColumn).replace(/"/g, '""')}"`;
+
+    // rowId is passed as a bound parameter — not interpolated into the string
+    await projectDatabaseService.executeQuery(
+      projectId,
+      `DELETE FROM ${safeTable} WHERE ${safePkCol} = $1`,
+      [rowId]
+    );
+
+    return res.json({ success: true });
+  } catch (error: any) {
+    console.error('[Database API] Delete row error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to delete row' });
+  }
+});
+
+/**
+ * Export table data as JSON
+ * GET /api/database/project/:projectId/tables/:tableName/export
+ * REQUIRES: Authentication + Project ownership
+ */
+databaseRouter.get('/project/:projectId/tables/:tableName/export', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    const { tableName } = req.params;
+
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!isValidTableName(tableName)) return res.status(400).json({ error: 'Invalid table name' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const safeTable = `"${tableName.replace(/"/g, '""')}"`;
+    const result = await projectDatabaseService.executeQuery(projectId, `SELECT * FROM ${safeTable} LIMIT 10000`);
+
+    res.setHeader('Content-Disposition', `attachment; filename="${tableName}_export.json"`);
+    res.setHeader('Content-Type', 'application/json');
+    return res.json({ table: tableName, rows: result.rows, exportedAt: new Date().toISOString() });
+  } catch (error: any) {
+    console.error('[Database API] Export table error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to export table' });
+  }
+});
+
+/**
+ * List all provisioned databases for the current user's projects
+ * GET /api/database/instances
+ * REQUIRES: Authentication
+ */
+databaseRouter.get('/instances', async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Authentication required' });
+    const userId = typeof req.user.id === 'string' ? parseInt(req.user.id) : req.user.id;
+
+    const userProjects = await db.select({ id: schema.projects.id, name: schema.projects.name })
+      .from(schema.projects)
+      .where(eq(schema.projects.ownerId, userId));
+
+    const projectIds = userProjects.map(p => p.id);
+    if (projectIds.length === 0) return res.json({ instances: [] });
+
+    const databases = await db.select().from(projectDatabases)
+      .where(inArray(projectDatabases.projectId, projectIds));
+
+    const projectMap = new Map(userProjects.map(p => [p.id, p.name]));
+
+    return res.json({
+      instances: databases.map(d => ({
+        id: d.id,
+        projectId: d.projectId,
+        projectName: projectMap.get(d.projectId) || `Project ${d.projectId}`,
+        name: d.name,
+        type: d.type,
+        status: d.status,
+        region: d.region,
+        plan: d.plan,
+        provider: d.provider,
+        storageUsedMb: d.storageUsedMb,
+        storageLimitMb: d.storageLimitMb,
+        connectionCount: d.connectionCount,
+        maxConnections: d.maxConnections,
+        createdAt: d.createdAt,
+        lastBackupAt: d.lastBackupAt
+      }))
+    });
+  } catch (error: any) {
+    console.error('[Database API] List instances error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to list instances' });
+  }
+});
+
+/**
+ * Upgrade database plan
+ * POST /api/database/project/:projectId/upgrade
+ * REQUIRES: Authentication + Project ownership
+ */
+const upgradeSchema = z.object({
+  targetPlan: z.enum(['starter', 'pro', 'enterprise'])
+});
+
+databaseRouter.post('/project/:projectId/upgrade', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const validation = upgradeSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json({ error: 'Invalid request body', details: validation.error.issues });
+    }
+
+    const { targetPlan } = validation.data;
+    const database = await projectDatabaseService.getProjectDatabase(projectId);
+    if (!database) return res.status(404).json({ error: 'No database found for this project' });
+
+    const planOrder = ['free', 'starter', 'pro', 'enterprise'];
+    const currentIdx = planOrder.indexOf(database.plan || 'free');
+    const targetIdx = planOrder.indexOf(targetPlan);
+    if (targetIdx <= currentIdx) {
+      return res.status(400).json({ error: 'Target plan must be higher than current plan' });
+    }
+
+    const newLimits = PLAN_LIMITS[targetPlan as keyof typeof PLAN_LIMITS];
+
+    await db.update(projectDatabases).set({
+      plan: targetPlan,
+      storageLimitMb: newLimits.storageMb,
+      maxConnections: newLimits.maxConnections,
+      backupRetentionDays: newLimits.backupRetentionDays,
+      updatedAt: new Date()
+    }).where(eq(projectDatabases.id, database.id));
+
+    console.log(`[Database API] Plan upgraded for project ${projectId}: ${database.plan} → ${targetPlan}`);
+    return res.json({
+      success: true,
+      message: `Database plan upgraded to ${targetPlan}`,
+      previousPlan: database.plan,
+      newPlan: targetPlan,
+      newLimits: {
+        storageLimitMb: newLimits.storageMb,
+        maxConnections: newLimits.maxConnections,
+        backupRetentionDays: newLimits.backupRetentionDays
+      }
+    });
+  } catch (error: any) {
+    console.error('[Database API] Upgrade plan error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to upgrade plan' });
+  }
+});
+
+/**
+ * Migrate shared (local) database to a dedicated Neon provider.
+ * POST /api/database/project/:projectId/migrate-to-dedicated
+ * REQUIRES: Authentication + Project ownership
+ *
+ * What this endpoint does (and does NOT do):
+ *   1. Creates a pre-migration backup record as a safety audit trail.
+ *   2. Provisions a NEW, EMPTY Neon database and hot-swaps the project_databases
+ *      row to point at the new Neon instance (provider, host, credentials).
+ *
+ * ⚠️  SCHEMA/DATA IS NOT COPIED automatically.  The caller is responsible for
+ *     running their schema migrations against the new Neon connection URL after
+ *     this endpoint returns 202.  Self-service pg_dump/pg_restore instructions
+ *     are included in the response body.
+ *
+ * When NEON_API_KEY is not configured: returns 503 with self-service instructions.
+ */
+databaseRouter.post('/project/:projectId/migrate-to-dedicated', async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.projectId);
+    if (isNaN(projectId)) return res.status(400).json({ error: 'Invalid project ID' });
+    if (!await checkProjectOwnership(req, res, projectId)) return;
+
+    const database = await projectDatabaseService.getProjectDatabase(projectId);
+    if (!database) return res.status(404).json({ error: 'No database found for this project' });
+
+    if (database.provider !== 'local') {
+      return res.status(409).json({
+        error: 'Database is already on a dedicated provider',
+        currentProvider: database.provider,
+      });
+    }
+
+    const neonApiKey = process.env.NEON_API_KEY;
+    if (!neonApiKey) {
+      // Self-service instructions when the environment is not configured
+      return res.status(503).json({
+        error: 'Dedicated database migration requires a Neon API key (NEON_API_KEY env var).',
+        selfServiceSteps: [
+          '1. Sign up at https://neon.tech and create a project',
+          '2. Set NEON_API_KEY in your environment secrets',
+          '3. Retry this endpoint — migration will be orchestrated automatically',
+          '4. For manual migration: pg_dump your local schema, create a Neon DB, pg_restore, then update DATABASE_URL',
+        ],
+        docsUrl: 'https://neon.tech/docs/import/migrate-from-postgres',
+      });
+    }
+
+    // Step 1: Create a pre-migration backup as a safety net
+    let backupId: number | null = null;
+    try {
+      const backup = await projectDatabaseService.createBackup(projectId, {
+        backupType: 'pre_migration',
+        name: `pre-migration-${new Date().toISOString().slice(0, 10)}`,
+      });
+      backupId = backup?.id ?? null;
+      console.log(`[Database API] Pre-migration backup created: ${backupId} for project ${projectId}`);
+    } catch (backupErr: any) {
+      console.warn(`[Database API] Pre-migration backup failed (continuing): ${backupErr.message}`);
+    }
+
+    // Step 2: Mark migration as provisioning in the DB so the UI can poll status
+    await db.update(projectDatabases).set({
+      status: 'provisioning',
+      providerMetadata: {
+        ...(typeof database.providerMetadata === 'object' && database.providerMetadata !== null
+          ? database.providerMetadata
+          : {}),
+        migrationToNeonStartedAt: new Date().toISOString(),
+        migrationPreBackupId: backupId,
+        migrationState: 'provisioning_neon',
+      },
+      updatedAt: new Date(),
+    }).where(eq(projectDatabases.id, database.id));
+
+    // Step 3: Provision a new Neon database via migrateToNeon() which bypasses
+    // the provisionDatabase() short-circuit and hot-swaps credentials on the
+    // existing DB row.  Fire-and-forget so the HTTP request doesn't time out.
+    setImmediate(async () => {
+      try {
+        await projectDatabaseService.migrateToNeon(projectId);
+        console.log(`[Database API] Neon migration complete for project ${projectId}`);
+      } catch (err: any) {
+        console.error(`[Database API] Neon migration failed for project ${projectId}:`, err.message);
+        // Roll back status to running so the project isn't stuck
+        await db.update(projectDatabases).set({
+          status: 'running',
+          providerMetadata: {
+            ...(typeof database.providerMetadata === 'object' && database.providerMetadata !== null
+              ? database.providerMetadata
+              : {}),
+            migrationError: err.message,
+            migrationFailedAt: new Date().toISOString(),
+          },
+          updatedAt: new Date(),
+        }).where(eq(projectDatabases.id, database.id)).catch(() => {});
+      }
+    });
+
+    return res.status(202).json({
+      accepted: true,
+      message: 'Dedicated Neon database is being provisioned. Poll the pollEndpoint to track status.',
+      warning: 'Schema and data are NOT automatically copied. After provisioning completes, run your schema migrations against the new Neon connection URL, then use pg_dump/pg_restore to migrate existing data.',
+      whatHappens: [
+        '1. A new, empty Neon database is provisioned under your account',
+        '2. project_databases credentials are hot-swapped to the new Neon instance',
+        '3. Status becomes "running" when the new DB is ready',
+      ],
+      manualSteps: [
+        'After status = running: run your schema migrations (drizzle-kit push, prisma migrate, etc.)',
+        'To copy existing data: pg_dump <old-connection-url> | psql <new-neon-connection-url>',
+        'Verify connectivity with: psql <new-neon-connection-url> -c "SELECT 1"',
+      ],
+      preBackupId: backupId,
+      pollEndpoint: `/api/database/project/${projectId}`,
+    });
+  } catch (error: any) {
+    console.error('[Database API] Migrate to dedicated error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to migrate database' });
   }
 });
 

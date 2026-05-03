@@ -93,7 +93,7 @@ export interface IDatabaseProvider {
   
   isHealthy(): Promise<boolean>;
   
-  executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials): Promise<QueryResult>;
+  executeQuery(databaseId: number, query: string, credentials: DatabaseCredentials, params?: unknown[]): Promise<QueryResult>;
   
   pointInTimeRestore(databaseId: number, timestamp: string, timezone: string): Promise<void>;
 }

@@ -508,32 +508,42 @@ export class LocalProvider implements IDatabaseProvider {
     }
   }
 
-  async executeQuery(databaseId: number, query: string, _credentials: DatabaseCredentials): Promise<{
+  async executeQuery(databaseId: number, query: string, _credentials: DatabaseCredentials, params?: unknown[]): Promise<{
     rows: any[];
     rowCount: number;
     fields: Array<{ name: string; dataTypeID?: number }>;
   }> {
     const schemaName = this.sanitizeIdentifier(`proj_${databaseId}`);
-    logger.info(`Executing SQL query for project ${databaseId}`, { schemaName });
+    logger.info(`Executing SQL query for project ${databaseId}`, { schemaName, parameterized: !!params?.length });
 
+    // Use postgres-js (the project's existing client) with a reserved connection
+    // so SET search_path and the query are guaranteed to run on the same connection.
+    const { pool } = await import('../../db');
+
+    // Reserve a dedicated connection for the duration of this query to prevent
+    // search_path leaking to other tenants via the shared connection pool.
+    const reserved = await (pool as any).reserve();
     try {
-      const setSchemaQuery = `SET search_path TO ${schemaName}, public`;
-      await db.execute(sql.raw(setSchemaQuery));
-      
-      const result = await db.execute(sql.raw(query));
-      const rows = extractRows(result);
-      
-      await db.execute(sql`SET search_path TO public`);
-      
+      await reserved`SET search_path TO ${sql.raw(schemaName)}, public`;
+
+      // postgres-js unsafe() accepts (query, params[]) for parameterized execution
+      const rows: any[] = params?.length
+        ? await reserved.unsafe(query, params as any[])
+        : await reserved.unsafe(query);
+
+      await reserved`SET search_path TO public`;
+
       return {
         rows: rows || [],
         rowCount: rows?.length || 0,
-        fields: []
+        fields: [],
       };
     } catch (error: any) {
-      await db.execute(sql`SET search_path TO public`);
+      await reserved`SET search_path TO public`.catch(() => {});
       logger.error(`SQL execution failed for project ${databaseId}:`, error);
       throw new Error(error.message || 'Query execution failed');
+    } finally {
+      reserved.release();
     }
   }
 

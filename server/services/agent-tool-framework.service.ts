@@ -379,57 +379,61 @@ export class AgentToolFrameworkService extends EventEmitter {
         query: z.string().describe('SQL query to execute'),
         database: z.string().optional().default('default')
       }),
-      execute: async (input, _context) => {
-        const { db } = await import('../db');
-        const { sql } = await import('drizzle-orm');
-        
+      execute: async (input, context) => {
         try {
-          // Security: Validate query to prevent dangerous operations
-          const queryUpper = input.query.trim().toUpperCase();
-          const dangerousPatterns = ['DROP DATABASE', 'DROP SCHEMA', 'TRUNCATE', 'ALTER SYSTEM'];
-          
-          for (const pattern of dangerousPatterns) {
-            if (queryUpper.includes(pattern)) {
-              return {
-                success: false,
-                error: `Dangerous operation blocked: ${pattern}`,
-                query: input.query.substring(0, 100)
-              };
-            }
+          if (!context.projectId) {
+            return { success: false, error: 'No project context: run_sql requires an active project' };
           }
-          
-          // Execute the query
-          const result = await db.execute(sql.raw(input.query));
-          
-          // Determine query type for response formatting
-          const isSelect = queryUpper.startsWith('SELECT');
-          const isInsert = queryUpper.startsWith('INSERT');
-          const isUpdate = queryUpper.startsWith('UPDATE');
-          const isDelete = queryUpper.startsWith('DELETE');
-          
+
+          // Security: Use the shared SQL safety policy — IDENTICAL denylist as the
+          // UI /sql/execute route so the agent can never bypass UI-level restrictions.
+          const { validateSqlQuery } = await import('../utils/sql-safety');
+          const safety = validateSqlQuery(input.query, 'agent:run_sql');
+          if (!safety.allowed) {
+            logger.warn('[ToolFramework] run_sql blocked by shared policy', {
+              projectId: context.projectId,
+              blockedKeyword: safety.blockedKeyword,
+            });
+            return {
+              success: false,
+              error: safety.reason || 'Operation blocked by SQL safety policy',
+              blockedKeyword: safety.blockedKeyword,
+              query: input.query.substring(0, 100),
+            };
+          }
+
+          // Route through projectDatabaseService — this scopes the query to the
+          // project's own schema (proj_<id>) and uses the project's credentials.
+          const { projectDatabaseService } = await import('./project-database-provisioning.service');
+          const result = await projectDatabaseService.executeQuery(context.projectId, input.query);
+
+          const queryUpper = input.query.trim().toUpperCase();
+          const isSelect = queryUpper.startsWith('SELECT') || queryUpper.startsWith('WITH') || queryUpper.startsWith('EXPLAIN');
+
           if (isSelect) {
-            const rows = Array.isArray(result) ? result : (result as any).rows || [];
             return {
               success: true,
               operation: 'select',
-              rowCount: rows.length,
-              rows: rows.slice(0, 100) // Limit to 100 rows for safety
+              rowCount: result.rowCount,
+              rows: result.rows.slice(0, 100),
             };
           }
-          
-          // For mutating queries, return affected row count
-          const rowCount = (result as any).rowCount || (result as any).affectedRows || 0;
+
+          const isInsert = queryUpper.startsWith('INSERT');
+          const isUpdate = queryUpper.startsWith('UPDATE');
+          const isDelete = queryUpper.startsWith('DELETE');
+
           return {
             success: true,
             operation: isInsert ? 'insert' : isUpdate ? 'update' : isDelete ? 'delete' : 'execute',
-            affectedRows: rowCount
+            affectedRows: result.rowCount,
           };
         } catch (error: any) {
-          logger.error('[ToolFramework] SQL execution failed:', error);
+          logger.error('[ToolFramework] run_sql execution failed:', error);
           return {
             success: false,
             error: error.message,
-            query: input.query.substring(0, 100)
+            query: input.query.substring(0, 100),
           };
         }
       }

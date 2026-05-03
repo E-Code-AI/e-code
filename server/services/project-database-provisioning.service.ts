@@ -13,6 +13,7 @@ import { db } from '../db';
 import { createLogger } from '../utils/logger';
 import {
 getProvider,
+neonProvider,
 PLAN_LIMITS,
 selectBestProvider,
 type DatabaseProvider,
@@ -641,7 +642,79 @@ class ProjectDatabaseProvisioningService {
     };
   }
 
-  async executeQuery(projectId: number, query: string): Promise<{
+  /**
+   * Migrate an existing local-provider database to Neon (dedicated provider).
+   *
+   * Unlike provisionDatabase(), this method NEVER short-circuits when a DB record
+   * already exists — it directly provisions a NEW Neon project and then hot-swaps
+   * the existing record's credentials and provider.
+   *
+   * Caller must verify NEON_API_KEY is set before calling.
+   * Caller is responsible for creating a pre-migration backup first.
+   *
+   * @returns The updated ProjectDatabase record with Neon credentials
+   */
+  async migrateToNeon(projectId: number): Promise<ProjectDatabase> {
+    const database = await this.getProjectDatabase(projectId);
+    if (!database) throw new Error(`Database not found for project ${projectId}`);
+    if (database.provider !== 'local') throw new Error('migrateToNeon: source database must be provider=local');
+
+    const plan = (database.plan || 'free') as PlanType;
+    const region = database.region || 'us-east-1';
+
+    logger.info(`[Migration] Starting local→Neon migration for project ${projectId}`, { plan, region });
+
+    // Directly call neonProvider.provision() to create a NEW Neon project.
+    // We pass database.id (the existing row's PK) as the "projectId" for provider
+    // naming — the Neon project will be named "ecode-project-<database.id>".
+    const provisioned = await neonProvider.provision(database.id, { plan, region });
+
+    const encryptedPassword = encrypt(provisioned.password);
+    const planLimits = PLAN_LIMITS[plan];
+
+    // Hot-swap credentials on the EXISTING row — no new row is created.
+    const [updated] = await db
+      .update(projectDatabases)
+      .set({
+        provider: 'neon',
+        status: 'running',
+        host: provisioned.host,
+        port: provisioned.port,
+        database: provisioned.database,
+        username: provisioned.username,
+        encryptedPassword,
+        connectionUrl: provisioned.connectionUrl,
+        providerProjectId: provisioned.projectId,
+        providerBranchId: provisioned.branchId,
+        providerEndpointId: provisioned.endpointId,
+        providerMetadata: {
+          ...(typeof database.providerMetadata === 'object' && database.providerMetadata !== null
+            ? database.providerMetadata
+            : {}),
+          ...(provisioned.metadata || {}),
+          migratedFromLocal: true,
+          migratedAt: new Date().toISOString(),
+        },
+        storageLimitMb: planLimits.storageMb,
+        maxConnections: planLimits.maxConnections,
+        backupRetentionDays: planLimits.backupRetentionDays,
+        provisionedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(projectDatabases.id, database.id))
+      .returning();
+
+    if (!updated) throw new Error('Failed to update database record after Neon provisioning');
+
+    logger.info(`[Migration] Completed local→Neon migration for project ${projectId}`, {
+      neonProjectId: provisioned.projectId,
+      host: provisioned.host,
+    });
+
+    return updated;
+  }
+
+  async executeQuery(projectId: number, query: string, params?: unknown[]): Promise<{
     rows: any[];
     rowCount: number;
     fields: Array<{ name: string; dataTypeID?: number }>;
@@ -663,7 +736,7 @@ class ProjectDatabaseProvisioningService {
     const provider = getProvider(database.provider as DatabaseProvider);
     
     try {
-      const result = await provider.executeQuery(database.id, query, credentials);
+      const result = await provider.executeQuery(database.id, query, credentials, params);
       return {
         rows: result.rows || [],
         rowCount: result.rowCount || 0,
