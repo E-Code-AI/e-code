@@ -36,14 +36,10 @@ const DANGEROUS_PATTERNS = [
   /^~/, // Home directory
   /node_modules/i,  // Protected directories
   /\.env/i,         // Environment files
-  /\.git/i,         // Git directory
-  /package\.json/i, // Package config
-  /tsconfig\.json/i, // TS config
-  /vite\.config/i,  // Build config
-  /server\//i,      // Server directory
-  /\.key/i,         // Key files
-  /\.pem/i,         // Certificate files
-  /\.cert/i,        // Certificate files
+  /\.git\b/i,       // Git directory (but not .gitignore etc.)
+  /\.key$/i,        // Key files
+  /\.pem$/i,        // Certificate files
+  /\.cert$/i,       // Certificate files
 ];
 
 // Allowed file extensions (comprehensive list for modern web development)

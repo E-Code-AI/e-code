@@ -746,6 +746,21 @@ router.get('/url', async (req, res) => {
         message: errorMessage
       });
     }
+
+    // If preview is running as "static" but project now has package.json or python,
+    // restart it with proper framework detection so the dev server spins up.
+    if (preview && preview.status === 'running' && (preview as any).frameworkType === 'static' && (hasPackageJson || hasPythonFiles)) {
+      console.log('[preview:url] Static preview outdated — project now has package.json/python, restarting with framework detection', { projectId });
+      previewService.stopPreview(projectId).catch(() => {});
+      previewService.startPreviewFromProject(projectId).catch((err: any) => {
+        console.error('[preview:url] Framework restart failed', { projectId, error: err?.message });
+      });
+      return res.json({
+        previewUrl: null,
+        status: 'starting',
+        message: 'Preview server is restarting with framework detection...'
+      });
+    }
     
     if (!preview || preview.status !== 'running') {
       // For HTML-only projects, return static preview URL

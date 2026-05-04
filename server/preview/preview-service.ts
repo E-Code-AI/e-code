@@ -567,10 +567,36 @@ export class PreviewService {
   }
 
   private startLiveWorkspaceSync() {
-    previewEvents.on('preview:file-change', (data: { projectId?: number | string }) => {
+    previewEvents.on('preview:file-change', (data: { projectId?: number | string; filePath?: string; changeType?: string }) => {
       if (data?.projectId == null) return;
-      this.scheduleWorkspaceSync(String(data.projectId));
+      const projectId = String(data.projectId);
+      const filePath = data?.filePath || '';
+
+      const isFrameworkFile = filePath === 'package.json' || filePath.endsWith('/package.json');
+      if (isFrameworkFile && data?.changeType === 'create') {
+        this.scheduleFrameworkRestart(projectId);
+      } else {
+        this.scheduleWorkspaceSync(projectId);
+      }
     });
+  }
+
+  private scheduleFrameworkRestart(projectId: string) {
+    const preview = this.previews.get(projectId);
+    if (!preview) return;
+
+    if (preview.frameworkType === 'static') {
+      logger.info(`[preview] package.json created in static preview for project ${projectId} — restarting with framework detection`);
+      this.stopPreview(projectId).then(() => {
+        this.startPreviewFromProject(projectId).catch((err: any) => {
+          logger.warn(`[preview] Framework restart failed for project ${projectId}: ${err?.message}`);
+        });
+      }).catch(() => {
+        this.startPreviewFromProject(projectId).catch(() => {});
+      });
+    } else {
+      this.scheduleWorkspaceSync(projectId);
+    }
   }
 
   private scheduleWorkspaceSync(projectId: string) {
