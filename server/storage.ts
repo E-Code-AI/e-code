@@ -5994,37 +5994,25 @@ async function initSessionStore() {
     try {
       const connectRedisModule = await import('connect-redis');
       const RedisStoreClass = connectRedisModule.default || connectRedisModule.RedisStore;
-      const ioredis = await import('ioredis');
+      const { createClient } = await import('redis');
 
       const isTls = redisUrl.startsWith('rediss://');
-      const redisOpts: any = {
-        maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        lazyConnect: true,
-      };
+      let redisClient: ReturnType<typeof createClient>;
 
-      if (isTls) {
-        redisOpts.tls = { rejectUnauthorized: false };
-      }
-
-      let redisClient: InstanceType<typeof ioredis.default>;
-      let sessionStoreErrorLogged = false;
       try {
-        redisClient = new ioredis.default(redisUrl, redisOpts);
+        redisClient = createClient({
+          url: redisUrl,
+          socket: isTls ? { tls: true, rejectUnauthorized: false } : undefined,
+        });
         redisClient.on('error', () => {});
         await redisClient.connect();
       } catch (tlsErr) {
         if (isTls) {
           console.warn('[Session Store] TLS connection failed, retrying without TLS');
-          try { redisClient.removeAllListeners(); redisClient.disconnect(); } catch (_) {}
           const plainUrl = redisUrl.replace('rediss://', 'redis://');
-          const { tls: _tls, ...plainOpts } = redisOpts;
-          redisClient = new ioredis.default(plainUrl, plainOpts);
+          redisClient = createClient({ url: plainUrl });
           redisClient.on('error', (err) => {
-            if (!sessionStoreErrorLogged) {
-              sessionStoreErrorLogged = true;
-              console.warn('[Session Store] Redis error:', err.message);
-            }
+            console.warn('[Session Store] Redis error:', err.message);
           });
           await redisClient.connect();
         } else {
@@ -6032,32 +6020,10 @@ async function initSessionStore() {
         }
       }
 
-      const adaptedClient = {
-        get: (key: string) => redisClient.get(key),
-        set: (key: string, val: string, opts?: any) => {
-          if (opts?.expiration?.type === 'EX' && opts.expiration.value) {
-            return redisClient.set(key, val, 'EX', opts.expiration.value);
-          }
-          if (opts?.EX) {
-            return redisClient.set(key, val, 'EX', opts.EX);
-          }
-          return redisClient.set(key, val);
-        },
-        del: (keys: string | string[]) => redisClient.del(...(Array.isArray(keys) ? keys : [keys])),
-        expire: (key: string, ttl: number) => redisClient.expire(key, ttl),
-        scanIterator: (opts: { MATCH: string; COUNT: number }) => {
-          const stream = redisClient.scanStream({ match: opts.MATCH, count: opts.COUNT });
-          return (async function* () {
-            for await (const keys of stream) {
-              yield keys;
-            }
-          })();
-        },
-        mGet: (keys: string[]) => redisClient.mget(...keys),
-      };
+      await redisClient.ping();
 
       sessionStore = new RedisStoreClass({
-        client: adaptedClient,
+        client: redisClient,
         prefix: 'session:',
         ttl: 7 * 24 * 60 * 60,
       });
