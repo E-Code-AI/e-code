@@ -4,7 +4,7 @@ import type { Duplex } from 'stream';
 import { WebSocket,WebSocketServer } from 'ws';
 import { WebSocketRateLimiter } from '../middleware/websocket-rate-limiter';
 import type { IStorage } from '../storage';
-import { sessionStore } from '../storage';
+import { sessionStore, sessionStoreReady } from '../storage';
 import { getClientIp } from '../utils/ip-extraction';
 import { createLogger } from '../utils/logger';
 import { isOriginAllowed } from '../utils/origin-validation';
@@ -182,6 +182,7 @@ export class RuntimeLogsService {
   }
 
   private async getAuthenticatedUserId(cookieHeader: string): Promise<number | null> {
+    await sessionStoreReady;
     const rawSessionCookie = this.parseSessionCookie(cookieHeader);
     if (!rawSessionCookie) {
       return null;
