@@ -1399,12 +1399,14 @@ export class PreviewService {
       if (targetLstat?.isSymbolicLink()) {
         const existingTarget = await fs.readlink(targetModules).catch(() => null);
         if (existingTarget === sourceModules) return true;
-        // Stale or wrong symlink — replace it with the correct one.
         await fs.unlink(targetModules).catch(() => undefined);
       } else if (targetLstat?.isDirectory()) {
-        // A real node_modules is already in place; trust it rather than
-        // risk overwriting an in-progress install.
-        return true;
+        const targetComplete = await fs
+          .stat(path.join(targetModules, '.package-lock.json'))
+          .then(() => true)
+          .catch(() => false);
+        if (targetComplete) return true;
+        await fs.rm(targetModules, { recursive: true, force: true }).catch(() => undefined);
       }
 
       await fs.mkdir(appRootPath, { recursive: true });
