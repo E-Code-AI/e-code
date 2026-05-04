@@ -225,7 +225,13 @@ export class PTYTerminalService {
       { pathMatch: 'exact', priority: 30 }
     );
 
-    logger.info('[PTY Terminal] Registered with central upgrade dispatcher at /api/terminal/ws (priority: 30)');
+    centralUpgradeDispatcher.register(
+      '/shell',
+      this.handleTerminalUpgrade.bind(this),
+      { pathMatch: 'prefix', priority: 30 }
+    );
+
+    logger.info('[PTY Terminal] Registered with central upgrade dispatcher at /api/terminal/ws + /shell (priority: 30)');
 
     this.wss.on('connection', this.handleConnection.bind(this));
   }
