@@ -114,10 +114,10 @@ export class RuntimeLogsService {
       markSocketAsHandled(request, socket);
 
       // Session-based authentication - get userId from session, not query params
-      this.getAuthenticatedUserId(request.headers.cookie || '')
+      this.getAuthenticatedUserId(request)
         .then((authorized) => {
           if (!authorized) {
-            logger.warn('[RuntimeLogs] Upgrade rejected - no session cookie found');
+            logger.warn('[RuntimeLogs] Upgrade rejected - auth failed');
             this.destroySocketWithError(socket, 401, 'Session required');
             return;
           }
@@ -181,40 +181,52 @@ export class RuntimeLogsService {
     return null;
   }
 
-  private async getAuthenticatedUserId(cookieHeader: string): Promise<number | null> {
+  private async getAuthenticatedUserId(request: IncomingMessage): Promise<number | null> {
     await sessionStoreReady;
+    const cookieHeader = request.headers.cookie || '';
     const rawSessionCookie = this.parseSessionCookie(cookieHeader);
     if (!rawSessionCookie) {
       return null;
     }
 
-    const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
+    const { sessionSecretRotation } = await import('../auth/session-rotation');
+    const secrets = sessionSecretRotation.getSecrets();
+    if (!secrets.length) secrets.push(process.env.SESSION_SECRET || 'development-secret');
+
     let sessionId: string | null = null;
 
     if (rawSessionCookie.startsWith('s:')) {
-      const unsigned = signature.unsign(rawSessionCookie.slice(2), sessionSecret);
-      if (unsigned !== false) {
-        sessionId = unsigned;
+      for (const secret of secrets) {
+        const unsigned = signature.unsign(rawSessionCookie.slice(2), secret);
+        if (unsigned !== false) {
+          sessionId = unsigned as string;
+          break;
+        }
       }
+      if (!sessionId) return null;
     } else {
       sessionId = rawSessionCookie;
     }
 
-    if (!sessionId) {
-      return null;
-    }
+    if (!sessionId) return null;
 
-    return await new Promise<number | null>((resolve) => {
+    const tryGetSession = (): Promise<number | null> => new Promise((resolve) => {
       sessionStore.get(sessionId!, (err: any, session: any) => {
         if (err || !session?.passport?.user) {
           resolve(null);
           return;
         }
-
         const userId = Number(session.passport.user);
         resolve(Number.isInteger(userId) ? userId : null);
       });
     });
+
+    let userId = await tryGetSession();
+    if (!userId) {
+      await new Promise(r => setTimeout(r, 1000));
+      userId = await tryGetSession();
+    }
+    return userId;
   }
 
   private async authenticateConnection(

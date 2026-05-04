@@ -115,10 +115,19 @@ class CentralUpgradeDispatcher {
         const parsedCookies = parseCookie(cookies);
         const rawSessionId = parsedCookies['ecode.sid'] || parsedCookies['connect.sid'];
         if (rawSessionId) {
-          const sessionSecret = process.env.SESSION_SECRET || 'development-secret';
-          const sid = rawSessionId.startsWith('s:')
-            ? signature.unsign(rawSessionId.slice(2), sessionSecret)
-            : rawSessionId;
+          const { sessionSecretRotation } = await import('../auth/session-rotation');
+          const secrets = sessionSecretRotation.getSecrets();
+          if (!secrets.length) secrets.push(process.env.SESSION_SECRET || 'development-secret');
+          
+          let sid: string | false = false;
+          if (rawSessionId.startsWith('s:')) {
+            for (const secret of secrets) {
+              sid = signature.unsign(rawSessionId.slice(2), secret);
+              if (sid !== false) break;
+            }
+          } else {
+            sid = rawSessionId;
+          }
 
           if (!sid) {
             return false;
