@@ -7,6 +7,7 @@ import express from 'express';
 import * as fs from 'fs/promises';
 import { createProxyMiddleware,responseInterceptor } from 'http-proxy-middleware';
 import jwt from 'jsonwebtoken';
+import net from 'net';
 import fetch from 'node-fetch';
 import * as path from 'path';
 import { db } from '../db';
@@ -22,6 +23,39 @@ const fileHashCache = new Map<string, Map<string, string>>();
 
 function contentHash(content: string): string {
   return createHash('sha256').update(content).digest('hex');
+}
+
+const PREVIEW_BOOTSTRAP_COOKIE = 'ecode_preview_bootstrap';
+
+function getBootstrapTokenFromRequest(req: any): string | undefined {
+  const queryToken = typeof req.query?.bootstrap === 'string' ? req.query.bootstrap : undefined;
+  const headerToken = typeof req.headers?.['x-bootstrap-token'] === 'string' ? req.headers['x-bootstrap-token'] : undefined;
+  const cookieToken = typeof req.cookies?.[PREVIEW_BOOTSTRAP_COOKIE] === 'string'
+    ? req.cookies[PREVIEW_BOOTSTRAP_COOKIE]
+    : undefined;
+
+  return queryToken || headerToken || cookieToken;
+}
+
+function stripBootstrapQueryFromUrl(url: string): string {
+  try {
+    const parsed = new URL(url, 'http://preview.local');
+    parsed.searchParams.delete('bootstrap');
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return url.replace(/([?&])bootstrap=[^&#]*&?/g, (_match, separator) => separator === '?' ? '?' : '').replace(/[?&]$/, '');
+  }
+}
+
+function isTcpPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer()
+      .once('error', () => resolve(false))
+      .once('listening', () => {
+        server.close(() => resolve(true));
+      });
+    server.listen(port, '127.0.0.1');
+  });
 }
 
 function _hasRunnableFiles(files: any[]): boolean {
@@ -48,8 +82,6 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
       (function() {
         var primaryBase = ${JSON.stringify(primaryBase)};
         var apiBase = ${JSON.stringify(apiBase)};
-        var bootstrap = new URLSearchParams(window.location.search).get('bootstrap');
-
         // The iframe is served at /preview/{id}/{port}/, but the React app
         // inside the iframe expects to live at "/". Without this, every
         // client-side router (wouter, react-router, etc.) sees the proxy
@@ -61,85 +93,17 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
         try {
           var here = new URL(window.location.href);
           var virtualPath = here.pathname.replace(primaryBase, '') || '/';
-          var bootstrapMarker = bootstrap ? '?bootstrap=' + encodeURIComponent(bootstrap) : '';
-          var virtualUrl = virtualPath + (here.search && here.search !== bootstrapMarker ? here.search : '') + here.hash;
+          here.searchParams.delete('bootstrap');
+          var virtualUrl = virtualPath + here.search + here.hash;
           history.replaceState(history.state, document.title, virtualUrl);
         } catch {}
-
-        function appendBootstrap(url) {
-          if (!bootstrap || typeof url !== 'string' || url.indexOf('bootstrap=') !== -1) return url;
-          return url + (url.indexOf('?') === -1 ? '?' : '&') + 'bootstrap=' + encodeURIComponent(bootstrap);
-        }
-
-        function preserveBootstrapInUrl(url) {
-          if (!bootstrap || typeof url !== 'string') return url;
-          if (url.startsWith('http://') || url.startsWith('https://')) {
-            try {
-              var absolute = new URL(url, window.location.href);
-              if (absolute.origin !== window.location.origin || absolute.searchParams.has('bootstrap')) {
-                return url;
-              }
-              absolute.searchParams.set('bootstrap', bootstrap);
-              return absolute.toString();
-            } catch {
-              return url;
-            }
-          }
-          if (url.startsWith('//') || url.startsWith('data:') || url.startsWith('blob:') || url.indexOf('bootstrap=') !== -1) {
-            return url;
-          }
-          return appendBootstrap(url);
-        }
-
-        var originalPushState = history.pushState;
-        history.pushState = function(state, title, url) {
-          if (typeof url === 'string') {
-            url = preserveBootstrapInUrl(url);
-          }
-          return originalPushState.call(this, state, title, url);
-        };
-
-        var originalReplaceState = history.replaceState;
-        history.replaceState = function(state, title, url) {
-          if (typeof url === 'string') {
-            url = preserveBootstrapInUrl(url);
-          }
-          return originalReplaceState.call(this, state, title, url);
-        };
-
-        document.addEventListener('click', function(event) {
-          var target = event.target;
-          if (!(target instanceof Element)) return;
-          var anchor = target.closest('a[href]');
-          if (!anchor) return;
-          var href = anchor.getAttribute('href');
-          if (!href) return;
-          anchor.setAttribute('href', preserveBootstrapInUrl(href));
-        }, true);
-
-        document.addEventListener('submit', function(event) {
-          var form = event.target;
-          if (!(form instanceof HTMLFormElement)) return;
-          var action = form.getAttribute('action');
-          if (action) {
-            form.setAttribute('action', preserveBootstrapInUrl(action));
-            return;
-          }
-          if (bootstrap && !window.location.search.includes('bootstrap=')) {
-            try {
-              var url = new URL(window.location.href);
-              url.searchParams.set('bootstrap', bootstrap);
-              history.replaceState(history.state, document.title, url.toString());
-            } catch {}
-          }
-        }, true);
 
         function rewriteUrl(url) {
           if (typeof url !== 'string') return url;
           if (url.startsWith('/preview/')) return url;
           if (url.startsWith('//') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-          if (url.startsWith('/api')) return appendBootstrap(apiBase + url);
-          if (url.startsWith('/')) return appendBootstrap(primaryBase + url);
+          if (url.startsWith('/api')) return apiBase + url;
+          if (url.startsWith('/')) return primaryBase + url;
           return url;
         }
 
@@ -179,18 +143,11 @@ function getPreviewFetchInterceptorScript(projectId: string, primaryPort: number
     </script>`;
 }
 
-function appendBootstrapQuery(url: string, bootstrapToken?: string | null): string {
-  if (!bootstrapToken) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}bootstrap=${encodeURIComponent(bootstrapToken)}`;
-}
-
 function rewritePreviewAssetPaths(
   html: string,
   projectId: string,
   primaryPort: number,
-  apiPort?: number | null,
-  bootstrapToken?: string | null
+  apiPort?: number | null
 ): string {
   const primaryBase = `/preview/${projectId}/${primaryPort}`;
   const apiBase = apiPort ? `/preview/${projectId}/${apiPort}` : primaryBase;
@@ -200,13 +157,13 @@ function rewritePreviewAssetPaths(
       return rawPath;
     }
     if (rawPath.startsWith('/preview/')) {
-      return appendBootstrapQuery(rawPath, bootstrapToken);
+      return rawPath;
     }
     if (rawPath.startsWith('/api')) {
-      return appendBootstrapQuery(`${apiBase}${rawPath}`, bootstrapToken);
+      return `${apiBase}${rawPath}`;
     }
     if (rawPath.startsWith('/')) {
-      return appendBootstrapQuery(`${primaryBase}${rawPath}`, bootstrapToken);
+      return `${primaryBase}${rawPath}`;
     }
     return rawPath;
   };
@@ -237,8 +194,8 @@ function getPreviewBaseTag(projectId: string, primaryPort: number): string {
   return `<base data-preview-base="true" href="/preview/${projectId}/${primaryPort}/">`;
 }
 
-function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null, bootstrapToken?: string | null): string {
-  const html = rewritePreviewAssetPaths(buffer.toString('utf8'), projectId, primaryPort, apiPort, bootstrapToken);
+function injectPreviewHtml(buffer: Buffer, projectId: string, primaryPort: number, apiPort?: number | null): string {
+  const html = rewritePreviewAssetPaths(buffer.toString('utf8'), projectId, primaryPort, apiPort);
   if (html.includes('data-preview-fetch-interceptor="true"') || html.includes('data-preview-base="true"')) {
     return html;
   }
@@ -736,7 +693,7 @@ export class PreviewService {
     return Math.abs(hash) % this.portRange;
   }
 
-  private allocatePort(projectId: string): number {
+  private async allocatePort(projectId: string): Promise<number> {
     // Start from hash to maintain some consistency
     const hash = this.hashProjectId(projectId);
     const originalPort = this.basePort + hash;
@@ -744,15 +701,23 @@ export class PreviewService {
     
     // Probe for next available port if collision
     let tries = 0;
-    while (this.allocatedPorts.has(port)) {
+    while (
+      this.allocatedPorts.has(port) ||
+      this.allocatedPorts.has(port + 1000) ||
+      !(await isTcpPortAvailable(port)) ||
+      !(await isTcpPortAvailable(port + 1000))
+    ) {
       port++;
       if (port >= this.basePort + this.portRange) {
         port = this.basePort; // Wrap around
       }
-      if (++tries > this.portRange) break; // No ports available
+      if (++tries > this.portRange) {
+        throw new Error('No preview ports available');
+      }
     }
     
     this.allocatedPorts.add(port);
+    this.allocatedPorts.add(port + 1000);
     
     if (port !== originalPort) {
       logger.warn(`Port ${originalPort} collision, using ${port} for project ${projectId}`);
@@ -780,7 +745,7 @@ export class PreviewService {
 
   private ensurePreviewAuth(req: any, res: any, next: any) {
     const hasSession = !!(req.isAuthenticated && req.isAuthenticated() && req.user);
-    const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
+    const bootstrapToken = getBootstrapTokenFromRequest(req);
 
     if (hasSession) {
       return next();
@@ -793,6 +758,15 @@ export class PreviewService {
     try {
       const decoded = jwt.verify(String(bootstrapToken), getJwtSecret()) as { projectId?: string | number; userId?: number };
       req.bootstrapAuth = decoded;
+      if (typeof req.query?.bootstrap === 'string' && typeof res.cookie === 'function') {
+        res.cookie(PREVIEW_BOOTSTRAP_COOKIE, req.query.bootstrap, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: req.secure,
+          path: `/preview/${req.params.projectId}`,
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+      }
       return next();
     } catch {
       return res.status(401).json({ error: 'Invalid or expired bootstrap token' });
@@ -904,7 +878,7 @@ export class PreviewService {
       // every JS/CSS load and leaving the iframe blank. Restore the upstream
       // path from req.originalUrl before handing the request to the proxy so
       // /preview/{id}/{port}/src/main.tsx reaches Vite at /src/main.tsx.
-      const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}/${port}`), '') || '/';
+      const upstreamPath = stripBootstrapQueryFromUrl(req.originalUrl.replace(new RegExp(`^/preview/${projectId}/${port}`), '') || '/');
       req.url = upstreamPath;
 
       const proxy = createProxyMiddleware({
@@ -919,8 +893,7 @@ export class PreviewService {
               return responseBuffer;
             }
 
-            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
-            return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null, bootstrapToken);
+            return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null);
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId} port ${port}:`, err);
@@ -963,7 +936,7 @@ export class PreviewService {
       // See note on the /:port/* handler above — express strips the route
       // prefix from req.url, so we restore the upstream path from
       // req.originalUrl before the proxy fires.
-      const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}`), '') || '/';
+      const upstreamPath = stripBootstrapQueryFromUrl(req.originalUrl.replace(new RegExp(`^/preview/${projectId}`), '') || '/');
       req.url = upstreamPath;
 
       const proxy = createProxyMiddleware({
@@ -978,8 +951,7 @@ export class PreviewService {
               return responseBuffer;
             }
 
-            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
-            return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null, bootstrapToken);
+            return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null);
           }),
           error: (err: any, _req: any, res: any) => {
             logger.error(`Preview proxy error for project ${projectId}:`, err);
@@ -1113,6 +1085,7 @@ export class PreviewService {
       for (const [port, proc] of existing.processes) {
         try { proc.kill('SIGKILL'); } catch {}
         this.allocatedPorts.delete(port);
+        this.allocatedPorts.delete(port + 1000);
       }
       existing.processes.clear();
       previewEvents.emit('preview:stop', { projectId, runId: existing.runId });
@@ -1177,7 +1150,7 @@ export class PreviewService {
     }
 
     // Allocate a port and create the preview instance
-    const port = this.allocatePort(projectId);
+    const port = await this.allocatePort(projectId);
     const previewPath = path.join('/tmp', `preview-${projectId}`);
 
     const preview: PreviewInstance = {
@@ -1258,6 +1231,7 @@ export class PreviewService {
           proc.kill('SIGKILL');
         } catch {}
         this.allocatedPorts.delete(port);
+        this.allocatedPorts.delete(port + 1000);
       }
       preview.processes.clear();
       logger.info(`Preview stopped for project ${projectId}`);
