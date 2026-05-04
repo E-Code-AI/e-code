@@ -133,8 +133,7 @@ const WS_MANAGED_PATHS = new Set([
 
 // Paths probed by external dev tooling (e.g. Replit __replco workspace iframe)
 // that we intentionally do NOT serve. Silently destroy without warn-level noise.
-const SILENT_UNHANDLED_PATHS = new Set([
-  '/terminal',
+const SILENT_UNHANDLED_PATHS = new Set<string>([
 ]);
 
 /**
