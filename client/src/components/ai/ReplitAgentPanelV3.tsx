@@ -804,39 +804,14 @@ export function ReplitAgentPanelV3({
     };
   }, [projectId, toast, migrateMessages, onBootstrapFailure, startBootstrapTimer, setBootstrapTimedOut]);
 
-  // ✅ FIX (Jan 2026): React to bootstrap timeout and seed fallback message
-  // When the global timer fires, we need to:
-  // 1. Notify parent to clear isBootstrapping state
-  // 2. Unlock preview/deploy gate so user isn't stuck behind schema gate forever
-  // 3. Seed a system message so the chat is never empty (Replit-style UX)
+  // React to bootstrap timeout without fabricating a ready workspace.
   useEffect(() => {
     if (bootstrapTimedOut && !conversationId) {
-      devLog('[ReplitAgentPanelV3] Bootstrap timeout detected - seeding fallback message');
+      devLog('[ReplitAgentPanelV3] Bootstrap timeout detected - keeping schema gate closed');
 
-      // Notify parent to clear bootstrap token and isBootstrapping state
       onBootstrapFailure?.();
-
-      // ✅ FIX (Mar 2026): Also call markReady so preview/deploy tabs unlock even on timeout
-      // The build may still be running in the background; don't block the user forever
-      useSchemaWarmingStore.getState().markReady();
-
-      // Seed a system message so the chat isn't empty
-      // Use the temp conversationId (negative projectId) for offline/degraded mode
-      const tempConvId = -projectIdNum;
-      const fallbackMessage: Message = {
-        id: `system-bootstrap-timeout-${Date.now()}`,
-        role: 'assistant',
-        content: "Je suis prêt à vous aider ! La connexion a pris un instant, mais vous pouvez commencer à discuter. Saisissez votre demande ci-dessous.",
-        timestamp: new Date(),
-      };
-
-      // Only add if we don't already have messages
-      const existingMessages = useAgentConversationStore.getState().getMessages(tempConvId);
-      if (existingMessages.length === 0) {
-        addStoreMessage(tempConvId, fallbackMessage);
-      }
     }
-  }, [bootstrapTimedOut, conversationId, projectIdNum, onBootstrapFailure, addStoreMessage]);
+  }, [bootstrapTimedOut, conversationId, onBootstrapFailure]);
 
   // Track if initial sync from backend has been completed for this conversation
   const initialSyncDoneRef = useRef<number | null>(null);
@@ -1501,8 +1476,7 @@ export function ReplitAgentPanelV3({
         setStreamingContent('');
 
         if (extendedThinkingEnabled) {
-          const thinkingSteps = simulateThinkingSteps(userMessage.content);
-          setActiveThinking(thinkingSteps);
+          setActiveThinking([]);
         }
 
         // Track assistant message ID for error handling
@@ -1862,51 +1836,6 @@ export function ReplitAgentPanelV3({
     window.history.replaceState({}, '', newUrl);
   }, [projectId, conversationId, autoStart, isWorking, initialPrompt, wsIsConnected, pendingAutoStart]); // ✅ FORTUNE 500 FIX: Added wsIsConnected + pendingAutoStart for WS readiness
 
-  const simulateThinkingSteps = useCallback((message: string): ThinkingStep[] => {
-    const baseTimestamp = new Date();
-    return [
-      {
-        id: '1',
-        type: 'reasoning',
-        title: 'Compréhension de la demande',
-        content: `Analyse : « ${message.substring(0, 50)}… »`,
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime()),
-        details: [
-          'Identification des exigences clés',
-          'Recherche d’ambiguïtés',
-          'Détermination de la portée et de la complexité'
-        ]
-      },
-      {
-        id: '2',
-        type: 'analysis',
-        title: 'Analyse des exigences techniques',
-        content: 'Décomposition de la tâche en composants implémentables',
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime() + 1000),
-        details: [
-          'Identification des technologies requises',
-          'Évaluation du niveau de complexité',
-          'Détermination de la meilleure approche'
-        ]
-      },
-      {
-        id: '3',
-        type: 'planning',
-        title: 'Planification de l’implémentation',
-        content: 'Création d’un plan d’exécution étape par étape',
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime() + 2000),
-        details: [
-          'Définition de la structure des composants',
-          'Organisation des fichiers',
-          'Identification des dépendances'
-        ]
-      }
-    ];
-  }, []);
-
   // Fire-and-forget message persistence to backend
   // Does not block streaming - errors are logged but don't affect UI
   const persistMessageToBackend = useCallback((message: {
@@ -1986,8 +1915,7 @@ export function ReplitAgentPanelV3({
     setStreamingContent('');
 
     if (extendedThinkingEnabled) {
-      const thinkingSteps = simulateThinkingSteps(userContent);
-      setActiveThinking(thinkingSteps);
+      setActiveThinking([]);
     }
 
     // Track assistant message ID for error handling

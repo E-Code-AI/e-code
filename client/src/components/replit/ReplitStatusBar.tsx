@@ -2,9 +2,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
 Activity,
-Cpu,
 GitBranch,
-MemoryStick,
 Settings,
 Users,
 Volume2,
@@ -12,7 +10,7 @@ VolumeX,
 Wifi,
 WifiOff
 } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useState } from 'react';
 
 interface StatusBarItem {
   id: string;
@@ -48,29 +46,7 @@ export function ReplitStatusBar({
   encoding = 'UTF-8',
   className
 }: ReplitStatusBarProps) {
-  const [cpuUsage, setCpuUsage] = useState(0);
-  const [memoryUsage, setMemoryUsage] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
-
-  // Simulate real-time metrics
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Get real system metrics - would connect to actual system monitoring
-      setCpuUsage(_prev => {
-        // Oscillate between 20-80% for realistic demo
-        const time = Date.now() / 1000;
-        const value = 50 + 30 * Math.sin(time / 10);
-        return Math.max(20, Math.min(80, value));
-      });
-      setMemoryUsage(prev => {
-        // Slowly increase memory usage over time, reset at 80%
-        const newValue = prev + 0.5;
-        return newValue > 80 ? 30 : newValue;
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const leftItems: StatusBarItem[] = [
     {
@@ -121,20 +97,6 @@ export function ReplitStatusBar({
       icon: <></>,
       text: encoding,
       tooltip: `File encoding: ${encoding}`
-    },
-    {
-      id: 'cpu',
-      icon: <Cpu className="h-3 w-3" />,
-      text: `${cpuUsage.toFixed(0)}%`,
-      status: cpuUsage > 80 ? 'error' : cpuUsage > 60 ? 'running' : 'success',
-      tooltip: `CPU usage: ${cpuUsage.toFixed(1)}%`
-    },
-    {
-      id: 'memory',
-      icon: <MemoryStick className="h-3 w-3" />,
-      text: `${memoryUsage.toFixed(0)}%`,
-      status: memoryUsage > 85 ? 'error' : memoryUsage > 70 ? 'running' : 'success',
-      tooltip: `Memory usage: ${memoryUsage.toFixed(1)}%`
     },
     {
       id: 'sound',

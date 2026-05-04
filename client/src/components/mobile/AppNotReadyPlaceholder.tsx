@@ -73,10 +73,9 @@ export const AppNotReadyPlaceholder = memo(function AppNotReadyPlaceholder({
       console.error('[AppNotReady] Failed to start preview:', err);
       toast({
         title: 'Preview failed to start',
-        description: 'There was an issue starting the preview. Unlocking the panel so you can retry.',
+        description: 'There was an issue starting the preview. The panel will stay gated until the preview is actually ready.',
         variant: 'destructive',
       });
-      useSchemaWarmingStore.getState().markReady();
     }
   }, [projectId, toast]);
 

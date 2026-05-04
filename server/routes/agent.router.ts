@@ -23,13 +23,67 @@ import { getProjectWorkspacePath } from '../utils/project-fs-sync';
 import { getJwtSecret } from '../utils/secrets-manager';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
 import { redactErrorForLog } from '../utils/error-redaction';
-import { ChatRequestSchema } from '@shared/agent-types';
+import { ChatRequestSchema,type ChatMessage } from '@shared/agent-types';
+import type { UnifiedMessage,UnifiedProvider } from '../ai/unified-model-proxy';
+import { unifiedModelProxy } from '../ai/unified-model-proxy';
 
 // SSE heartbeat interval (ms) — keeps proxy connections alive during long generations
 const SSE_HEARTBEAT_INTERVAL_MS = 15_000;
 
 const logger = createLogger('agent-router');
 const router = Router();
+
+function resolveStreamProvider(provider?: unknown, model?: unknown): UnifiedProvider | undefined {
+  if (provider === 'openai' || provider === 'anthropic' || provider === 'gemini' || provider === 'moonshot') {
+    return provider;
+  }
+
+  const modelName = typeof model === 'string' ? model.toLowerCase() : '';
+  if (modelName.includes('claude')) return 'anthropic';
+  if (modelName.includes('gemini')) return 'gemini';
+  if (modelName.includes('moonshot') || modelName.includes('kimi')) return 'moonshot';
+  if (modelName.includes('gpt') || modelName.includes('openai')) return 'openai';
+  return undefined;
+}
+
+function contextToMessages(context?: Array<Record<string, unknown>>): ChatMessage[] {
+  return (context || [])
+    .filter((message: any) => (
+      (message.role === 'user' || message.role === 'assistant' || message.role === 'system') &&
+      typeof message.content === 'string' &&
+      message.content.trim().length > 0
+    ))
+    .map((message: any) => ({
+      role: message.role,
+      content: message.content,
+    }));
+}
+
+function buildUnifiedStreamMessages(params: {
+  projectId?: string;
+  message: string;
+  context?: Array<Record<string, unknown>>;
+  conversationHistory?: ChatMessage[];
+  systemPrompt?: string;
+}): UnifiedMessage[] {
+  const systemPrompt = [
+    `You are an expert AI coding assistant embedded in E-Code IDE, helping with project ${params.projectId || 'unknown'}.`,
+    params.systemPrompt || 'Provide clear, concise, and actionable answers.',
+  ].join(' ');
+  const history = [
+    ...(params.conversationHistory || []),
+    ...contextToMessages(params.context),
+  ].slice(-20);
+
+  return [
+    { role: 'system', content: systemPrompt },
+    ...history.map((message) => ({
+      role: message.role === 'system' ? 'user' as const : message.role,
+      content: message.role === 'system' ? `System context: ${message.content}` : message.content,
+    })),
+    { role: 'user', content: params.message },
+  ];
+}
 
 async function agentAuthOrBootstrap(req: any, res: any, next: any) {
   const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
@@ -303,6 +357,14 @@ router.post('/chat/stream', async (req, res) => {
       return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
     }
     const { projectId, message, context, systemPrompt: extraSystemPrompt, maxTokens, temperature } = parsed.data;
+    const requestedModel = typeof req.body?.modelId === 'string'
+      ? req.body.modelId
+      : typeof req.body?.model === 'string'
+        ? req.body.model
+        : undefined;
+    const requestedProvider = typeof req.body?.provider === 'string'
+      ? req.body.provider
+      : undefined;
 
     if (!validateAndSetSSEHeaders(res, req)) return;
 
@@ -316,16 +378,9 @@ router.post('/chat/stream', async (req, res) => {
     // Clean up heartbeat whenever the client disconnects
     res.on('close', () => { if (heartbeat) clearInterval(heartbeat); });
 
-    const { aiProviderManager } = await import('../ai/ai-provider-manager');
-    const provider = aiProviderManager.getDefaultProvider();
-    if (!provider) {
-      res.write(`data: ${JSON.stringify({ error: 'No AI provider available' })}\n\n`);
-      res.end();
-      return;
-    }
-
     const systemPrompt = [
       `You are an expert AI coding assistant embedded in E-Code IDE, helping with project ${projectId || 'unknown'}.`,
+      'Stream useful, production-grade progress. Be specific, concise, and actionable.',
       extraSystemPrompt || 'Provide clear, concise, and actionable answers.'
     ].join(' ');
 
@@ -334,19 +389,59 @@ router.post('/chat/stream', async (req, res) => {
       .filter((m: any) => m.role && m.content)
       .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content) }));
 
-    const fullPrompt = history.length > 0
-      ? history.map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') + `\nUser: ${message}`
-      : message;
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...history.map((m: any) => ({ role: m.role === 'assistant' ? 'assistant' as const : 'user' as const, content: m.content })),
+      { role: 'user' as const, content: message },
+    ];
 
-    const responseText = await provider.generateCompletion(fullPrompt, systemPrompt, maxTokens || 4096, temperature || 0.7);
+    for await (const chunk of unifiedModelProxy.stream({
+      model: requestedModel,
+      provider: ['openai', 'anthropic', 'gemini', 'moonshot'].includes(requestedProvider || '')
+        ? requestedProvider as any
+        : undefined,
+      messages,
+      maxTokens: maxTokens || (req.body?.capabilities?.highPower ? 8192 : 4096),
+      temperature: temperature ?? 0.7,
+      userId: req.user?.id,
+      metadata: {
+        projectId,
+        conversationId: req.body?.conversationId,
+        source: 'agent-router',
+      },
+    })) {
+      if (res.writableEnded) return;
 
-    // Stream in chunks to simulate streaming (provider doesn't support native streaming)
-    const chunkSize = 20;
-    for (let i = 0; i < responseText.length; i += chunkSize) {
-      const chunk = responseText.slice(i, i + chunkSize);
-      res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+      if (chunk.type === 'delta') {
+        res.write(`data: ${JSON.stringify({ content: chunk.content })}\n\n`);
+      } else if (chunk.type === 'start') {
+        res.write(`data: ${JSON.stringify({ type: 'metadata', provider: chunk.provider, model: chunk.model })}\n\n`);
+      } else if (chunk.type === 'tool_call') {
+        res.write(`data: ${JSON.stringify({ toolCallId: chunk.id, tool: chunk.name, parameters: chunk.arguments })}\n\n`);
+      } else if (chunk.type === 'usage') {
+        res.write(`data: ${JSON.stringify({
+          type: 'metadata',
+          totalTokens: chunk.usage.totalTokens,
+          cost: chunk.usage.costUsd.toFixed(6),
+        })}\n\n`);
+      } else if (chunk.type === 'error') {
+        res.write(`data: ${JSON.stringify({
+          type: 'provider_error',
+          message: `${chunk.model}: ${chunk.error}`,
+          provider: chunk.provider,
+          model: chunk.model,
+        })}\n\n`);
+      } else if (chunk.type === 'done') {
+        res.write(`data: ${JSON.stringify({
+          type: 'metadata',
+          provider: chunk.response.provider,
+          model: chunk.response.model,
+          totalTokens: chunk.response.usage.totalTokens,
+          cost: chunk.response.usage.costUsd.toFixed(6),
+        })}\n\n`);
+      }
     }
-    res.write(`data: ${JSON.stringify({ type: 'metadata', totalTokens: Math.ceil(responseText.length / 4) })}\n\n`);
+
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {

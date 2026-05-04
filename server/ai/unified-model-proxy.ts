@@ -61,7 +61,7 @@ export type UnifiedStreamChunk =
   | { type: 'tool_call'; id: string; name: string; arguments: Record<string, any> }
   | { type: 'usage'; usage: UnifiedUsage }
   | { type: 'error'; error: string; provider: UnifiedProvider; model: string }
-  | { type: 'done'; response: Omit<UnifiedModelResponse, 'content'> & { content?: string } };
+  | { type: 'done'; response: Omit<UnifiedModelResponse, 'content' | 'fallbackTrail'> & { content?: string } };
 
 export interface UnifiedModelInfo {
   id: string;
@@ -227,6 +227,15 @@ function textFromContent(content: UnifiedMessage['content']): string {
   return content.map((part) => part.type === 'text' ? part.text || '' : `[image:${part.image_url?.url || 'inline'}]`).join('\n');
 }
 
+function parseToolArguments(value: string): Record<string, any> {
+  if (!value.trim()) return {};
+  try {
+    return JSON.parse(value);
+  } catch {
+    return { raw: value };
+  }
+}
+
 function usageFor(model: string, prompt: unknown, completion: unknown): UnifiedUsage {
   const promptTokens = estimateTokens(prompt);
   const completionTokens = estimateTokens(completion);
@@ -264,11 +273,18 @@ export class UnifiedModelProxy {
     for (const modelInfo of buildFallbackChain(request)) {
       try {
         yield { type: 'start', provider: modelInfo.provider, model: modelInfo.id };
-        const response = await this.completeWithProvider(request, modelInfo);
-        if (response.content) yield { type: 'delta', content: response.content };
-        for (const toolCall of response.toolCalls) yield { type: 'tool_call', ...toolCall };
-        yield { type: 'usage', usage: response.usage };
-        yield { type: 'done', response: { ...response, content: undefined, fallbackTrail } };
+        let finalResponse: Omit<UnifiedModelResponse, 'fallbackTrail'> | null = null;
+        for await (const chunk of this.streamWithProvider(request, modelInfo)) {
+          if (chunk.type === 'done') {
+            finalResponse = chunk.response as Omit<UnifiedModelResponse, 'fallbackTrail'>;
+            continue;
+          }
+          yield chunk;
+        }
+        if (!finalResponse) {
+          throw new Error(`Provider ${modelInfo.provider} ended without a final response`);
+        }
+        yield { type: 'done', response: { ...finalResponse, content: undefined } };
         return;
       } catch (error: any) {
         fallbackTrail.push({ provider: modelInfo.provider, model: modelInfo.id, error: error.message });
@@ -284,6 +300,24 @@ export class UnifiedModelProxy {
     if (modelInfo.provider === 'anthropic') return await this.completeAnthropic(request, modelInfo, key);
     if (modelInfo.provider === 'gemini') return await this.completeGemini(request, modelInfo, key);
     return await this.completeOpenAiCompatible(request, modelInfo, key);
+  }
+
+  private async *streamWithProvider(
+    request: UnifiedModelRequest,
+    modelInfo: UnifiedModelInfo
+  ): AsyncGenerator<UnifiedStreamChunk> {
+    const key = getApiKey(modelInfo.provider, request);
+    if (!key) throw new Error(`Missing API key for ${modelInfo.provider}`);
+
+    if (modelInfo.provider === 'anthropic') {
+      yield* this.streamAnthropic(request, modelInfo, key);
+      return;
+    }
+    if (modelInfo.provider === 'gemini') {
+      yield* this.streamGemini(request, modelInfo, key);
+      return;
+    }
+    yield* this.streamOpenAiCompatible(request, modelInfo, key);
   }
 
   private async completeOpenAiCompatible(
@@ -307,7 +341,7 @@ export class UnifiedModelProxy {
     const toolCalls = (choice?.tool_calls || []).map((call: any) => ({
       id: call.id,
       name: call.function?.name,
-      arguments: JSON.parse(call.function?.arguments || '{}'),
+      arguments: parseToolArguments(call.function?.arguments || '{}'),
     }));
     const usage = completion.usage ? {
       promptTokens: completion.usage.prompt_tokens || 0,
@@ -317,6 +351,69 @@ export class UnifiedModelProxy {
     } : usageFor(modelInfo.id, request.messages, content);
 
     return { id: completion.id, provider: modelInfo.provider, model: modelInfo.id, content, toolCalls, usage };
+  }
+
+  private async *streamOpenAiCompatible(
+    request: UnifiedModelRequest,
+    modelInfo: UnifiedModelInfo,
+    key: string
+  ): AsyncGenerator<UnifiedStreamChunk> {
+    const client = new OpenAI({
+      apiKey: key,
+      baseURL: modelInfo.provider === 'moonshot' ? 'https://api.moonshot.ai/v1' : process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
+    const stream = await client.chat.completions.create({
+      model: modelInfo.id,
+      messages: openAiMessages(request.messages),
+      tools: openAiTools(request.tools),
+      temperature: request.temperature,
+      max_tokens: request.maxTokens,
+      stream: true,
+    } as any);
+
+    let id = `stream-${Date.now()}`;
+    let content = '';
+    const toolParts = new Map<number, { id: string; name: string; argumentsText: string }>();
+    let usage: UnifiedUsage | null = null;
+
+    for await (const part of stream as any) {
+      if (part?.id) id = part.id;
+      const delta = part?.choices?.[0]?.delta;
+      if (delta?.content) {
+        content += delta.content;
+        yield { type: 'delta', content: delta.content };
+      }
+
+      for (const toolCall of delta?.tool_calls || []) {
+        const index = toolCall.index ?? toolParts.size;
+        const existing = toolParts.get(index) || { id: toolCall.id || `tool-${index}`, name: '', argumentsText: '' };
+        toolParts.set(index, {
+          id: toolCall.id || existing.id,
+          name: toolCall.function?.name || existing.name,
+          argumentsText: existing.argumentsText + (toolCall.function?.arguments || ''),
+        });
+      }
+
+      if (part?.usage) {
+        usage = {
+          promptTokens: part.usage.prompt_tokens || 0,
+          completionTokens: part.usage.completion_tokens || 0,
+          totalTokens: part.usage.total_tokens || 0,
+          costUsd: calculateRequestCost(modelInfo.id, part.usage.prompt_tokens || 0, part.usage.completion_tokens || 0),
+        };
+      }
+    }
+
+    const toolCalls = Array.from(toolParts.values()).map((call) => ({
+      id: call.id,
+      name: call.name,
+      arguments: parseToolArguments(call.argumentsText),
+    }));
+    for (const toolCall of toolCalls) yield { type: 'tool_call', ...toolCall };
+
+    const finalUsage = usage || usageFor(modelInfo.id, request.messages, content);
+    yield { type: 'usage', usage: finalUsage };
+    yield { type: 'done', response: { id, provider: modelInfo.provider, model: modelInfo.id, content, toolCalls, usage: finalUsage } };
   }
 
   private async completeAnthropic(
@@ -357,6 +454,67 @@ export class UnifiedModelProxy {
     return { id: completion.id, provider: modelInfo.provider, model: modelInfo.id, content, toolCalls, usage };
   }
 
+  private async *streamAnthropic(
+    request: UnifiedModelRequest,
+    modelInfo: UnifiedModelInfo,
+    key: string
+  ): AsyncGenerator<UnifiedStreamChunk> {
+    const client = new Anthropic({ apiKey: key });
+    const system = request.messages.find((message) => message.role === 'system')?.content;
+    const messages = request.messages
+      .filter((message) => message.role !== 'system')
+      .map((message) => ({
+        role: message.role === 'assistant' ? 'assistant' : 'user',
+        content: textFromContent(message.content),
+      }));
+    const stream = await client.messages.create({
+      model: modelInfo.id,
+      max_tokens: request.maxTokens || 4096,
+      temperature: request.temperature,
+      system: system ? textFromContent(system) : undefined,
+      messages: messages as any,
+      tools: anthropicTools(request.tools),
+      stream: true,
+    });
+
+    let id = `anthropic-${Date.now()}`;
+    let content = '';
+    const toolCalls: Array<{ id: string; name: string; arguments: Record<string, any> }> = [];
+    let inputTokens = estimateTokens(request.messages);
+    let outputTokens = 0;
+
+    for await (const event of stream as any) {
+      if (event.type === 'message_start') {
+        id = event.message?.id || id;
+        inputTokens = event.message?.usage?.input_tokens ?? inputTokens;
+      }
+      if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+        content += event.delta.text;
+        yield { type: 'delta', content: event.delta.text };
+      }
+      if (event.type === 'content_block_start' && event.content_block?.type === 'tool_use') {
+        toolCalls.push({
+          id: event.content_block.id,
+          name: event.content_block.name,
+          arguments: event.content_block.input || {},
+        });
+      }
+      if (event.type === 'message_delta') {
+        outputTokens = event.usage?.output_tokens ?? outputTokens;
+      }
+    }
+
+    for (const toolCall of toolCalls) yield { type: 'tool_call', ...toolCall };
+    const usage = {
+      promptTokens: inputTokens,
+      completionTokens: outputTokens || estimateTokens(content),
+      totalTokens: inputTokens + (outputTokens || estimateTokens(content)),
+      costUsd: calculateRequestCost(modelInfo.id, inputTokens, outputTokens || estimateTokens(content)),
+    };
+    yield { type: 'usage', usage };
+    yield { type: 'done', response: { id, provider: modelInfo.provider, model: modelInfo.id, content, toolCalls, usage } };
+  }
+
   private async completeGemini(
     request: UnifiedModelRequest,
     modelInfo: UnifiedModelInfo,
@@ -387,6 +545,39 @@ export class UnifiedModelProxy {
       toolCalls: [],
       usage,
     };
+  }
+
+  private async *streamGemini(
+    request: UnifiedModelRequest,
+    modelInfo: UnifiedModelInfo,
+    key: string
+  ): AsyncGenerator<UnifiedStreamChunk> {
+    const client = new GoogleGenerativeAI(key);
+    const model = client.getGenerativeModel({
+      model: modelInfo.id,
+      tools: request.tools?.length ? [{
+        functionDeclarations: request.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description || '',
+          parameters: tool.parameters,
+        })),
+      }] : undefined,
+    } as any);
+    const prompt = request.messages.map((message) => `${message.role}: ${textFromContent(message.content)}`).join('\n\n');
+    const result = await model.generateContentStream(prompt);
+    let content = '';
+
+    for await (const chunk of result.stream) {
+      const text = chunk.text();
+      if (text) {
+        content += text;
+        yield { type: 'delta', content: text };
+      }
+    }
+
+    const usage = usageFor(modelInfo.id, prompt, content);
+    yield { type: 'usage', usage };
+    yield { type: 'done', response: { id: `gemini-${Date.now()}`, provider: 'gemini', model: modelInfo.id, content, toolCalls: [], usage } };
   }
 }
 

@@ -45,53 +45,7 @@ const notificationColors: Record<NotificationType, string> = {
 
 export function MobileNotifications() {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'follow',
-      title: 'New follower',
-      description: 'Sarah Chen started following you',
-      timestamp: new Date(Date.now() - 60000),
-      read: false,
-      user: { name: 'Sarah Chen', avatar: '/api/avatar/Sarah%20Chen/40' },
-    },
-    {
-      id: '2',
-      type: 'like',
-      title: 'Project liked',
-      description: 'Your project "React Dashboard" received 5 new likes',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-      projectName: 'React Dashboard',
-    },
-    {
-      id: '3',
-      type: 'mention',
-      title: 'You were mentioned',
-      description: 'Alex mentioned you in "Building a REST API"',
-      timestamp: new Date(Date.now() - 7200000),
-      read: true,
-      user: { name: 'Alex', avatar: '/api/avatar/Alex/40' },
-      projectName: 'Building a REST API',
-    },
-    {
-      id: '4',
-      type: 'deploy',
-      title: 'Deployment successful',
-      description: 'Your project "Portfolio Site" was successfully deployed',
-      timestamp: new Date(Date.now() - 86400000),
-      read: true,
-      projectName: 'Portfolio Site',
-    },
-    {
-      id: '5',
-      type: 'system',
-      title: 'System update',
-      description: 'New features available in the editor',
-      timestamp: new Date(Date.now() - 172800000),
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [swipedItem, setSwipedItem] = useState<string | null>(null);
@@ -165,21 +119,7 @@ export function MobileNotifications() {
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate(10);
     
-    // Simulate refresh
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Add new notification for demo
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      type: 'comment',
-      title: 'New comment',
-      description: 'Someone commented on your project',
-      timestamp: new Date(),
-      read: false,
-      user: { name: 'New User' },
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
+    await new Promise(resolve => setTimeout(resolve, 300));
     setIsRefreshing(false);
   };
 
