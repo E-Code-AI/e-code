@@ -316,14 +316,24 @@ router.post('/build', async (req, res) => {
           continue;
         }
         
-        // Risk approved - create file via storage (inserts into files table)
-        const file = await storage.createFile({
-          projectId,
-          name: action.path.split('/').pop() || action.path,
-          path: action.path,
-          content: action.content,
-          isDirectory: false,
-        });
+        // Risk approved - upsert file via storage (update if exists, create if new)
+        const existingFile = await storage.getFileByPath(projectId, action.path).catch(() => null);
+        let file;
+        if (existingFile) {
+          file = await storage.updateFile(existingFile.id, {
+            content: action.content || '',
+            name: action.path.split('/').pop() || action.path,
+          });
+          if (!file) file = existingFile;
+        } else {
+          file = await storage.createFile({
+            projectId,
+            name: action.path.split('/').pop() || action.path,
+            path: action.path,
+            content: action.content,
+            isDirectory: false,
+          });
+        }
 
         // Sync file to disk so preview server can serve it
         try {

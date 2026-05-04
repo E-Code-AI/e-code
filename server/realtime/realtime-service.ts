@@ -15,20 +15,44 @@ export interface RealtimeEvent {
   userId?: number;
 }
 
+async function setupRedisAdapter(io: SocketServer) {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl || process.env.REDIS_ENABLED !== 'true') {
+    logger.info('[Realtime] No Redis configured — running single-instance mode');
+    return;
+  }
+  try {
+    const { createAdapter } = await import('@socket.io/redis-adapter');
+    const { createClient } = await import('redis');
+    const pubClient = createClient({ url: redisUrl });
+    const subClient = pubClient.duplicate();
+    await Promise.all([pubClient.connect(), subClient.connect()]);
+    io.adapter(createAdapter(pubClient, subClient));
+    logger.info('[Realtime] ✅ Redis adapter attached — multi-instance broadcasts enabled');
+  } catch (err: any) {
+    logger.warn(`[Realtime] Redis adapter unavailable (${err.message}) — falling back to single-instance`);
+  }
+}
+
 export class RealtimeService {
   private io: SocketServer;
   private projectRooms = new Map<string, Set<string>>(); // projectId -> Set of socket IDs
   private userSockets = new Map<number, Set<string>>(); // userId -> Set of socket IDs
   
   constructor(server: HttpServer) {
+    const allowedOrigins = process.env.NODE_ENV === 'production'
+      ? (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || '').split(',').map(s => s.trim()).filter(Boolean)
+      : '*';
+
     this.io = new SocketServer(server, {
       cors: {
-        origin: process.env.NODE_ENV === 'production' ? process.env.FRONTEND_URL : '*',
+        origin: allowedOrigins,
         credentials: true
       },
       path: '/ws/realtime'
     });
     
+    setupRedisAdapter(this.io);
     this.setupSocketHandlers();
     logger.info('Realtime service initialized');
   }

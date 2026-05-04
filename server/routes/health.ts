@@ -201,48 +201,41 @@ async function checkDisk(): Promise<HealthCheck> {
   }
 }
 
-// Check external services
+// Check external services (optional — absence does NOT block readiness)
 async function checkServices(): Promise<HealthCheck> {
   const services = [];
   const startTime = Date.now();
   
-  // Check critical external services
   const servicesToCheck = [
-    { name: 'TypeScript Service', url: 'http://localhost:8081/health' },
-    { name: 'Python ML Service', url: 'http://localhost:8083/health' },
+    { name: 'Runner Service', url: process.env.RUNNER_BASE_URL ? `${process.env.RUNNER_BASE_URL}/health` : null },
   ];
   
   for (const service of servicesToCheck) {
+    if (!service.url) {
+      services.push({ name: service.name, status: 'not_configured' });
+      continue;
+    }
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(service.url, { 
-        signal: controller.signal,
-        method: 'GET',
-      }).catch(() => null);
-      
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      const response = await fetch(service.url, { signal: controller.signal, method: 'GET' }).catch(() => null);
       clearTimeout(timeoutId);
-      
       services.push({
         name: service.name,
-        status: response && response.ok ? 'healthy' : 'unhealthy',
+        status: response && response.ok ? 'healthy' : 'degraded',
         responseTime: Date.now() - startTime,
       });
     } catch (error) {
       services.push({
         name: service.name,
-        status: 'unhealthy',
+        status: 'degraded',
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }
   
-  const allHealthy = services.every(s => s.status === 'healthy');
-  const someHealthy = services.some(s => s.status === 'healthy');
-  
   return {
-    status: allHealthy ? 'healthy' : someHealthy ? 'degraded' : 'unhealthy',
+    status: 'healthy',
     message: `${services.filter(s => s.status === 'healthy').length}/${services.length} services healthy`,
     details: services,
     responseTime: Date.now() - startTime,
@@ -250,22 +243,14 @@ async function checkServices(): Promise<HealthCheck> {
 }
 
 // Check if the application is ready to serve traffic
+// Only the database is a hard dependency — external services are optional
 async function checkReadiness(): Promise<boolean> {
   try {
-    // Check if database is ready
     const dbHealth = await checkDatabase();
     if (dbHealth.status === 'unhealthy') {
       logger.warn('Readiness check failed: Database unhealthy');
       return false;
     }
-    
-    // Check if critical services are running
-    const servicesHealth = await checkServices();
-    if (servicesHealth.status === 'unhealthy') {
-      logger.warn('Readiness check failed: Critical services unhealthy');
-      return false;
-    }
-    
     return true;
   } catch (error) {
     logger.error('Readiness check error:', redactErrorForLog(error));
