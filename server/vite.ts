@@ -42,7 +42,13 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
-  app.use(vite.middlewares);
+  app.use((req, res, next) => {
+    const url = req.url || req.originalUrl || '';
+    if (url.startsWith('/preview/') || url.startsWith('/api/') || url.startsWith('/shell')) {
+      return next();
+    }
+    vite.middlewares(req, res, next);
+  });
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
