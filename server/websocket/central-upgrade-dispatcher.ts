@@ -25,7 +25,7 @@ import { parse as parseCookie } from 'cookie';
 import * as signature from 'cookie-signature';
 import { markSocketAsHandled, isSocketHandled } from './upgrade-guard';
 import { createCentralizedLogger } from '../logging/centralized-logger';
-import { sessionStore } from '../storage';
+import { sessionStore, sessionStoreReady } from '../storage';
 
 const logger = createCentralizedLogger('central-upgrade-dispatcher');
 
@@ -107,6 +107,8 @@ class CentralUpgradeDispatcher {
    */
   private async validateWebSocketConnection(request: IncomingMessage): Promise<boolean> {
     try {
+      await sessionStoreReady;
+
       // Method 1: Check session cookie (standard authentication)
       const cookies = request.headers.cookie;
       if (cookies) {
