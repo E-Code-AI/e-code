@@ -1378,11 +1378,21 @@ export class PreviewService {
     try {
       const workspaceRoot = getProjectWorkspacePath(projectId);
       const workspaceAppRoot = path.join(workspaceRoot, appRoot === '.' ? '' : appRoot);
-      const sourceModules = path.join(workspaceAppRoot, 'node_modules');
+      let sourceModules = path.join(workspaceAppRoot, 'node_modules');
       const targetModules = path.join(appRootPath, 'node_modules');
 
-      const sourceStat = await fs.stat(sourceModules).catch(() => null);
-      if (!sourceStat || !sourceStat.isDirectory()) return false;
+      let sourceStat = await fs.stat(sourceModules).catch(() => null);
+      if (!sourceStat || !sourceStat.isDirectory()) {
+        // Fallback: check root-level node_modules (monorepo/fullstack pattern)
+        const rootModules = path.join(workspaceRoot, 'node_modules');
+        const rootStat = await fs.stat(rootModules).catch(() => null);
+        if (rootStat?.isDirectory()) {
+          sourceModules = rootModules;
+          sourceStat = rootStat;
+        } else {
+          return false;
+        }
+      }
 
       // Bootstrap's `npm install` runs in the background — if it hasn't
       // finished yet, node_modules can exist but be missing critical deps.
