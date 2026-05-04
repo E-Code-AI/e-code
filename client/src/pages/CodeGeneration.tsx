@@ -6,84 +6,69 @@ import { Tabs,TabsContent,TabsList,TabsTrigger } from '@/components/ui/tabs';
 import { LazyMotionDiv } from '@/lib/motion';
 import {
 ArrowRight,
-Clock,
-Code2,
 Sparkles,
 Star,
-TrendingUp,
-Users,
 Wand2,
 Zap
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 
-const FEATURED_EXAMPLES = [
+// Curated starter prompts. These are PROMPTS, not fake usage statistics —
+// they are wired into the generator via the `seedPrompt` prop below so the
+// Examples tab is interactive rather than decorative.
+const FEATURED_EXAMPLES: Array<{ title: string; description: string; image: string; tags: string[]; prompt: string }> = [
   {
-    title: 'Modern Dashboard',
-    description: 'Complete admin dashboard with charts, tables, and user management',
+    title: 'Modern Admin Dashboard',
+    description: 'Complete admin dashboard with KPIs, area chart, donut chart, and a sortable users table.',
     image: '📊',
-    tags: ['React', 'Charts', 'Complex'],
-    time: '5 min',
-    popularity: 95
+    tags: ['React', 'Charts', 'Tables'],
+    prompt: 'Build a modern admin dashboard SPA with: 4 KPI cards, an area chart of monthly revenue, a donut of user segments, a paginated/sortable users table, sidebar nav, dark/light toggle, glassmorphism, Framer Motion. Stack: React + TS + Vite + Tailwind + shadcn/ui + recharts.'
   },
   {
     title: 'E-commerce Product Page',
-    description: 'Product showcase with image gallery, reviews, and cart functionality',
+    description: 'Product showcase with image gallery, variants, reviews, and add-to-cart.',
     image: '🛒',
     tags: ['E-commerce', 'Interactive'],
-    time: '3 min',
-    popularity: 88
+    prompt: 'Build a product detail page with image gallery + zoom, size/color variants, sticky add-to-cart, reviews list with ratings, related products carousel. Stack: React + TS + Tailwind + shadcn/ui.'
   },
   {
-    title: 'Social Media Feed',
-    description: 'Instagram-like feed with posts, likes, comments, and infinite scroll',
+    title: 'Social Feed',
+    description: 'Instagram-like feed with posts, likes, comments, and optimistic updates.',
     image: '📱',
-    tags: ['Social', 'Real-time'],
-    time: '4 min',
-    popularity: 92
+    tags: ['Social', 'Realtime'],
+    prompt: 'Build a social feed: composer, post card with like/comment/share, optimistic likes, comment thread, infinite scroll. Stack: React + TS + Tailwind + shadcn/ui + framer-motion.'
   },
   {
-    title: 'Landing Page',
-    description: 'Beautiful marketing page with hero section, features, and contact form',
+    title: 'SaaS Landing Page',
+    description: 'Marketing site with hero, features grid, pricing, FAQ, and a contact form.',
     image: '🌟',
     tags: ['Marketing', 'Responsive'],
-    time: '2 min',
-    popularity: 85
+    prompt: 'Build a SaaS landing page with animated hero, 6-feature grid, 3-tier pricing, FAQ accordion, testimonials, and contact form (controlled). Stack: React + TS + Tailwind + shadcn/ui + framer-motion.'
   },
   {
     title: 'Chat Application',
-    description: 'Real-time messaging with emoji, file sharing, and typing indicators',
+    description: 'Real-time messaging UI with channels, mentions, file uploads, and typing indicators.',
     image: '💬',
-    tags: ['Real-time', 'WebSocket'],
-    time: '6 min',
-    popularity: 90
+    tags: ['Realtime', 'WebSocket'],
+    prompt: 'Build a chat app UI: channel list, message thread, composer with @mentions and file upload, typing indicator, emoji picker, dark mode. Stack: React + TS + Tailwind + shadcn/ui.'
   },
   {
-    title: 'Task Management',
-    description: 'Kanban board with drag-and-drop, due dates, and team collaboration',
+    title: 'CRM Pipeline',
+    description: 'Salesforce-style kanban with drag-and-drop opportunities, stage totals, and detail drawer.',
     image: '📋',
-    tags: ['Productivity', 'Drag-Drop'],
-    time: '4 min',
-    popularity: 87
+    tags: ['Productivity', 'DnD'],
+    prompt: 'Build a CRM kanban board: 6 stages (Prospecting → Closed Lost), draggable opportunity cards (dnd-kit) with deal value, stage totals, opportunity detail side drawer. Stack: React + TS + Tailwind + shadcn/ui + dnd-kit.'
   }
-];
-
-const STATS = [
-  { label: 'Code Generated', value: '2.5M+', icon: Code2 },
-  { label: 'Active Users', value: '50K+', icon: Users },
-  { label: 'Success Rate', value: '98%', icon: TrendingUp },
-  { label: 'Avg. Time Saved', value: '4.2h', icon: Clock }
 ];
 
 export default function CodeGeneration() {
   const [, _setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState('generator');
-  const [_selectedExample, setSelectedExample] = useState<string | null>(null);
+  const [seedPrompt, setSeedPrompt] = useState<string | undefined>(undefined);
 
   const handleExampleSelect = (example: typeof FEATURED_EXAMPLES[0]) => {
-    // Set the example prompt and switch to generator
-    setSelectedExample(example.description);
+    setSeedPrompt(example.prompt);
     setActiveTab('generator');
   };
 
@@ -107,26 +92,6 @@ export default function CodeGeneration() {
               Transform your ideas into production-ready code in seconds. 
               Just describe what you want, and watch AI build it for you.
             </p>
-            
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mb-8">
-              {STATS.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div
-                    key={stat.label}
-                    className="text-center animate-slide-in-up opacity-0"
-                    style={{ animationDelay: `${100 * index}ms`, animationFillMode: 'forwards' }}
-                  >
-                    <div className="flex items-center justify-center mb-2">
-                      <Icon className="h-5 w-5 text-primary mr-2" />
-                      <span className="text-2xl font-bold">{stat.value}</span>
-                    </div>
-                    <p className="text-[13px] text-muted-foreground">{stat.label}</p>
-                  </div>
-                );
-              })}
-            </div>
 
             <div className="flex items-center justify-center gap-4">
               <Button 
@@ -164,8 +129,8 @@ export default function CodeGeneration() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="generator" className="h-[calc(100vh-400px)]">
-              <CodeGenerationPanel />
+            <TabsContent value="generator" className="h-[calc(100vh-300px)]">
+              <CodeGenerationPanel seedPrompt={seedPrompt} />
             </TabsContent>
 
             <TabsContent value="examples">
@@ -185,20 +150,13 @@ export default function CodeGeneration() {
                       className="animate-slide-in-up opacity-0"
                       style={{ animationDelay: `${100 * index}ms`, animationFillMode: 'forwards' }}
                     >
-                      <Card 
+                      <Card
                         className="h-full cursor-pointer hover:shadow-lg transition-all group"
                         onClick={() => handleExampleSelect(example)}
+                        data-testid={`example-card-${example.title.replace(/\s+/g, '-').toLowerCase()}`}
                       >
                         <CardHeader>
-                          <div className="flex items-start justify-between mb-2">
-                            <div className="text-3xl">{example.image}</div>
-                            <div className="flex items-center gap-1">
-                              <TrendingUp className="h-3 w-3 text-green-500" />
-                              <span className="text-[11px] text-green-500 font-medium">
-                                {example.popularity}%
-                              </span>
-                            </div>
-                          </div>
+                          <div className="text-3xl mb-2">{example.image}</div>
                           <CardTitle className="group-hover:text-primary transition-colors">
                             {example.title}
                           </CardTitle>
@@ -207,15 +165,6 @@ export default function CodeGeneration() {
                           <p className="text-[13px] text-muted-foreground mb-4">
                             {example.description}
                           </p>
-                          
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-[11px] text-muted-foreground">
-                                {example.time}
-                              </span>
-                            </div>
-                          </div>
 
                           <div className="flex flex-wrap gap-1 mb-4">
                             {example.tags.map((tag) => (
@@ -225,7 +174,7 @@ export default function CodeGeneration() {
                             ))}
                           </div>
 
-                          <Button 
+                          <Button
                             className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
                             variant="outline"
                           >

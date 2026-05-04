@@ -106,6 +106,7 @@ export const protectedRoutes: RouteConfig[] = [
   { path: "/editor/new", component: Pages.Dashboard, layout: "replit" },
   { path: "/projects/new", component: Pages.Dashboard, layout: "replit" },
   { path: "/dashboard", component: Pages.Dashboard, layout: "replit" },
+  { path: "/code-generator", component: Pages.CodeGeneration, layout: "replit" },
   { path: "/agent-activity", component: Pages.AgentActivity, layout: "replit" },
   { path: "/apps", component: Pages.Apps, layout: "replit" },
   { path: "/teams", component: Pages.Teams, layout: "replit" },

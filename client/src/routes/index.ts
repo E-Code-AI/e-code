@@ -19,6 +19,7 @@ export const RuntimeDiagnosticsPage = instrumentedLazy(() => import("@/pages/Run
 export const RuntimePublicPage = instrumentedLazy(() => import("@/pages/RuntimePublicPage"), "RuntimePublicPage");
 
 export const Dashboard = instrumentedLazy(() => import("@/pages/Dashboard"), "Dashboard");
+export const CodeGeneration = instrumentedLazy(() => import("@/pages/CodeGeneration"), "CodeGeneration");
 export const Explore = instrumentedLazy(() => import("@/pages/Explore"), "Explore");
 export const Teams = instrumentedLazy(() => import("@/pages/Teams"), "Teams");
 export const Notifications = instrumentedLazy(() => import("@/pages/Notifications"), "Notifications");

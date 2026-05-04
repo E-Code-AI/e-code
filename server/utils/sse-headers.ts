@@ -29,26 +29,47 @@ const REPLIT_ORIGIN_PATTERNS = [
  * Get validated allowed origins list
  */
 function getAllowedOrigins(): string[] {
-  const origins = [
+  // Production / shared origins — always allowed
+  const origins = new Set<string>([
     'https://e-code.ai',
     'https://www.e-code.ai',
     'http://localhost:5000',
     'http://localhost:3000',
-  ];
-  
+    'http://127.0.0.1:5000',
+    'http://127.0.0.1:3000',
+  ]);
+
   if (process.env.APP_URL) {
-    origins.push(process.env.APP_URL);
+    origins.add(process.env.APP_URL);
   }
-  
+
   if (process.env.REPLIT_DEV_DOMAIN) {
-    origins.push(`https://${process.env.REPLIT_DEV_DOMAIN}`);
+    origins.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
   }
-  
+
   if (process.env.REPLIT_DEV_URL) {
-    origins.push(process.env.REPLIT_DEV_URL);
+    origins.add(process.env.REPLIT_DEV_URL);
   }
-  
-  return origins;
+
+  // Honour the operator-configured ALLOWED_ORIGINS list — the CSRF middleware
+  // and CORS layer both read this env, so SSE-only paths must too. Without
+  // this, dev servers bound to non-default ports (e.g. 5057) reject every
+  // SSE handshake with 403 even though the rest of the stack accepts them.
+  const envOrigins = process.env.ALLOWED_ORIGINS;
+  if (envOrigins) {
+    for (const o of envOrigins.split(',')) {
+      const trimmed = o.trim();
+      if (trimmed) origins.add(trimmed);
+    }
+  }
+
+  // In development we accept any localhost / 127.0.0.1 origin regardless of
+  // port so a dev server on a non-standard port is usable without env tweaks.
+  if (process.env.NODE_ENV !== 'production') {
+    origins.add('__DEV_LOCALHOST__'); // sentinel handled in validateSSEOrigin
+  }
+
+  return Array.from(origins);
 }
 
 /**
@@ -64,16 +85,31 @@ export function validateSSEOrigin(req?: Request): string | null {
   }
   
   const allowedOrigins = getAllowedOrigins();
-  
+
   if (allowedOrigins.includes(origin)) {
     return origin;
   }
-  
+
   // Always allow Replit platform origins (not restricted to dev mode)
   if (REPLIT_ORIGIN_PATTERNS.some(pattern => pattern.test(origin))) {
     return origin;
   }
-  
+
+  // Dev convenience: any localhost / 127.0.0.1 / [::1] origin is allowed when
+  // NODE_ENV !== 'production'. This avoids hostile-feeling 403s when the dev
+  // server is running on a non-default port.
+  if (allowedOrigins.includes('__DEV_LOCALHOST__')) {
+    try {
+      const u = new URL(origin);
+      const h = u.hostname;
+      if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]') {
+        return origin;
+      }
+    } catch {
+      // not a URL — fall through to reject
+    }
+  }
+
   logger.warn('[SSE] Rejected invalid origin', { origin, allowedOrigins });
   return null;
 }

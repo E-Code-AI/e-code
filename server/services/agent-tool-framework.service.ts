@@ -60,15 +60,28 @@ export interface ToolContext {
 export class AgentToolFrameworkService extends EventEmitter {
   private tools: Map<string, ToolDefinition> = new Map();
   private rateLimits: Map<string, { count: number; resetTime: number }> = new Map();
-  private openai: OpenAI;
+  private _openai: OpenAI | null = null;
   private toolsRegistered = false;
   private toolsRegistering = false;
 
   constructor() {
     super();
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+    // Lazy-init OpenAI client so the singleton can be imported safely even when
+    // OPENAI_API_KEY is missing (the AI provider manager has its own fallback
+    // chain). Throwing in the constructor used to crash any route that
+    // transitively imports this module.
+  }
+
+  private get openai(): OpenAI {
+    if (this._openai) return this._openai;
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        'OPENAI_API_KEY is required for code-analysis tools but is not configured.',
+      );
+    }
+    this._openai = new OpenAI({ apiKey });
+    return this._openai;
   }
 
   private async ensureToolsRegistered(): Promise<void> {

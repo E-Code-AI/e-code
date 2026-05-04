@@ -102,31 +102,53 @@ Generate the project now.`;
     logger.info('[Code Generation] Using model:', model);
     
     const usesMaxCompletionTokens = /^o[1-9]/.test(model) || /^gpt-4.1/.test(model);
+    const isClaude4x = /^claude-(?:opus|sonnet|haiku)-[4-9]/.test(model);
 
     const streamOptions: any = {};
 
-    // Multi-file project generation needs significantly more headroom than a
-    // single-snippet response. 16k completion tokens is comfortable for the
-    // largest target models (Claude 4.x, GPT-4.1) and avoids truncation of
-    // the final file in a multi-file emission.
-    const COMPLETION_BUDGET = 16000;
+    // Multi-file project generation budget. Claude 4.x can stream up to 64k
+    // output tokens, OpenAI / GPT-4.1 are reliable at 32k. We pick the largest
+    // safe budget per family so a full app (CRM dashboard, kanban, contacts,
+    // ~25-40 files) fits in a single emission rather than getting cut off
+    // halfway through `TopBar.tsx`.
+    const COMPLETION_BUDGET = isClaude4x ? 64_000 : 32_000;
+    streamOptions.max_tokens = COMPLETION_BUDGET;
     if (usesMaxCompletionTokens) {
       streamOptions.max_completion_tokens = COMPLETION_BUDGET;
-    } else {
-      streamOptions.max_tokens = COMPLETION_BUDGET;
     }
 
-    // The default streamLimiter timeout is 60s total — fine for short snippets
-    // but far too aggressive for a 16k-token multi-file emission, which routinely
-    // takes 90-300s on Claude 4.x. Allow up to 5 minutes for the full stream to
-    // complete; the per-chunk size limit still protects against runaway output.
-    streamOptions.timeoutMs = 300_000;
-    
+    // 64k tokens at ~10 t/s (worst-case Claude streaming) = ~107s, but real
+    // measured rates run 50-150 t/s, so 8 minutes is a comfortable upper bound
+    // that still triggers a graceful timeout instead of hanging forever.
+    streamOptions.timeoutMs = 8 * 60_000;
+
     // Only add temperature for models that support it (GPT-4, Claude, Gemini, etc.)
-    // GPT-4.1 family and o-series models don't support custom temperature
+    // GPT-4.1 family and o-series models don't support custom temperature.
     if (!usesMaxCompletionTokens) {
       streamOptions.temperature = 0.3; // Lower temperature for more consistent code
     }
+
+    // Surface provider-side truncation (max_tokens stop_reason) to the client
+    // as a dedicated SSE event so the UI can show "response was cut off" and
+    // offer a continuation, instead of silently flagging it complete.
+    let truncated = false;
+    let truncationDetail: { provider?: string; model?: string; stopReason?: string; bytes?: number } | null = null;
+    streamOptions.onTruncated = (info: { provider: string; model: string; stopReason: string; bytes: number }) => {
+      truncated = true;
+      truncationDetail = info;
+      try {
+        res.write(`data: ${JSON.stringify({
+          type: 'truncated',
+          provider: info.provider,
+          model: info.model,
+          reason: info.stopReason,
+          bytes: info.bytes,
+          message: 'AI provider stopped at the maximum output budget. The last file may be incomplete — try a narrower scope or click Continue.',
+        })}\n\n`);
+      } catch {
+        // best-effort
+      }
+    };
     
     // Wrap the provider call in retry-with-backoff. Retries only fire on
     // PROVIDER_RATE_LIMIT / PROVIDER_TIMEOUT / PROVIDER_UNAVAILABLE *before*
@@ -191,13 +213,16 @@ Generate the project now.`;
       totalLength: generatedCode.length,
       totalChunks: chunkCount,
       filePaths: guard.paths(),
+      truncated,
+      truncation: truncationDetail,
     })}\n\n`);
 
     logger.info('[Code Generation] Stream completed', {
       totalLength: generatedCode.length,
       totalChunks: chunkCount,
       fileCount: guard.paths().length,
-      model
+      truncated,
+      model,
     });
 
     res.end();

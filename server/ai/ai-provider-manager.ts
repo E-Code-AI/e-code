@@ -869,11 +869,18 @@ export class AIProviderManager {
     // Only send it for older Claude families that still accept it.
     const claude4xRe = /^claude-(?:opus|sonnet|haiku)-[4-9]/;
     const sendTemperature = !claude4xRe.test(modelId);
+
+    // Claude 4.x models accept up to 64k output tokens. Older Claude 3.x models
+    // are capped at 8k (without the extended-output beta) so we clamp there.
+    const HARD_CAP = claude4xRe.test(modelId) ? 64000 : 8192;
+    const requestedMax = options?.max_tokens || 4000;
+    const maxTokens = Math.min(requestedMax, HARD_CAP);
+
     const requestParams: any = {
       model: modelId,
       messages: cachedMessages as any,
       system: cachedSystem as any,
-      max_tokens: options?.max_tokens || 4000,
+      max_tokens: maxTokens,
       stream: true,
     };
     if (sendTemperature) {
@@ -881,28 +888,46 @@ export class AIProviderManager {
     }
     try {
       const stream = await this.anthropicClient.messages.create(requestParams) as unknown as AsyncIterable<any>;
-      
+
       let buffer = '';
+      let stopReason: string | null = null;
       for await (const chunk of stream) {
         try {
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
             const text = chunk.delta.text;
             if (text) {
               buffer += text;
               tokensGenerated += Math.ceil(text.length / 4);
               yield text;
             }
+          } else if (chunk.type === 'message_delta' && chunk.delta?.stop_reason) {
+            stopReason = chunk.delta.stop_reason as string;
+          } else if (chunk.type === 'message_stop' && (chunk as any).stop_reason) {
+            stopReason = (chunk as any).stop_reason as string;
           }
         } catch (chunkError: any) {
           logger.warn(`Anthropic chunk parsing error: ${chunkError.message}`);
           continue;
         }
       }
-      
+
       if (!buffer) {
         throw new Error('Anthropic stream produced no content');
       }
-      
+
+      if (stopReason === 'max_tokens' && typeof options?.onTruncated === 'function') {
+        try {
+          options.onTruncated({
+            provider: 'anthropic',
+            model: modelId,
+            stopReason,
+            bytes: buffer.length,
+          });
+        } catch (cbErr: any) {
+          logger.warn(`onTruncated callback error: ${cbErr?.message}`);
+        }
+      }
+
       success = true;
     } catch (error: any) {
       logger.error(`Anthropic stream error: ${error.message}`);
@@ -969,8 +994,9 @@ export class AIProviderManager {
 
     try {
       const stream = await this.openaiClient.chat.completions.create(completionParams) as unknown as AsyncIterable<any>;
-      
+
       let buffer = '';
+      let finishReason: string | null = null;
       for await (const chunk of stream) {
         try {
           const content = chunk.choices?.[0]?.delta?.content;
@@ -979,16 +1005,31 @@ export class AIProviderManager {
             tokensGenerated += Math.ceil(content.length / 4);
             yield content;
           }
+          const fr = chunk.choices?.[0]?.finish_reason;
+          if (fr) finishReason = fr;
         } catch (chunkError: any) {
           logger.warn(`OpenAI chunk parsing error: ${chunkError.message}`);
           continue;
         }
       }
-      
+
       if (!buffer) {
         throw new Error('OpenAI stream produced no content');
       }
-      
+
+      if (finishReason === 'length' && typeof options?.onTruncated === 'function') {
+        try {
+          options.onTruncated({
+            provider: 'openai',
+            model: modelId,
+            stopReason: finishReason,
+            bytes: buffer.length,
+          });
+        } catch (cbErr: any) {
+          logger.warn(`onTruncated callback error: ${cbErr?.message}`);
+        }
+      }
+
       success = true;
     } catch (error: any) {
       logger.error(`OpenAI stream error: ${error.message}`);

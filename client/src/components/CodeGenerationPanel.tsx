@@ -26,24 +26,40 @@ interface Language {
 }
 
 interface StreamEvent {
-  type: 'chunk' | 'complete' | 'error';
+  type: 'chunk' | 'complete' | 'error' | 'retry' | 'truncated';
   content?: string;
   totalLength?: number;
   chunkNumber?: number;
   totalChunks?: number;
   message?: string;
+  truncated?: boolean;
+  attempt?: number;
+  delayMs?: number;
+  code?: string;
+  reason?: string;
+  provider?: string;
+  filePaths?: string[];
 }
 
-export function CodeGenerationPanel() {
+export interface CodeGenerationPanelProps {
+  /** When set, the prompt textarea is seeded with this value (e.g. when the
+   *  user clicks an example card). Updates trigger a re-seed on change. */
+  seedPrompt?: string;
+}
+
+export function CodeGenerationPanel({ seedPrompt }: CodeGenerationPanelProps = {}) {
   // State
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(seedPrompt ?? '');
   const [language, setLanguage] = useState('typescript');
-  const [selectedModel, setSelectedModel] = useState('gpt-4.1');
+  const [selectedModel, setSelectedModel] = useState('claude-opus-4-7');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState({ chunks: 0, length: 0 });
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [truncated, setTruncated] = useState<{ reason?: string; provider?: string } | null>(null);
+  const [retryStatus, setRetryStatus] = useState<{ attempt: number; delayMs: number; code?: string } | null>(null);
+  const [filePaths, setFilePaths] = useState<string[]>([]);
   
   // Refs
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -64,6 +80,13 @@ export function CodeGenerationPanel() {
       setSelectedModel(modelsData.defaultModel);
     }
   }, [modelsData, selectedModel]);
+
+  // Re-seed the prompt when an example is selected from the parent.
+  useEffect(() => {
+    if (seedPrompt && seedPrompt !== prompt) {
+      setPrompt(seedPrompt);
+    }
+  }, [seedPrompt, prompt]);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -95,6 +118,9 @@ export function CodeGenerationPanel() {
     setError(null);
     setGeneratedCode('');
     setProgress({ chunks: 0, length: 0 });
+    setTruncated(null);
+    setRetryStatus(null);
+    setFilePaths([]);
     
     // Build SSE URL with query params (EventSource only supports GET)
     const _params = new URLSearchParams({
@@ -178,15 +204,35 @@ export function CodeGenerationPanel() {
                         chunks: event.chunkNumber || 0,
                         length: event.totalLength || 0,
                       });
+                    } else if (event.type === 'retry') {
+                      setRetryStatus({
+                        attempt: event.attempt ?? 0,
+                        delayMs: event.delayMs ?? 0,
+                        code: event.code,
+                      });
+                    } else if (event.type === 'truncated') {
+                      setTruncated({ reason: event.reason, provider: event.provider });
                     } else if (event.type === 'complete') {
                       setIsGenerating(false);
-                      toast({
-                        title: 'Code Generated',
-                        description: `Generated ${event.totalLength} characters in ${event.totalChunks} chunks.`,
-                      });
+                      setRetryStatus(null);
+                      if (event.filePaths) setFilePaths(event.filePaths);
+                      const wasTruncated = event.truncated === true;
+                      if (wasTruncated) {
+                        toast({
+                          title: 'Generated (truncated)',
+                          description: `Provider stopped at the max output budget. ${event.totalLength} chars across ${event.filePaths?.length ?? 0} files. The last file may be incomplete.`,
+                          variant: 'destructive',
+                        });
+                      } else {
+                        toast({
+                          title: 'Code Generated',
+                          description: `${event.totalLength} chars across ${event.filePaths?.length ?? 0} files in ${event.totalChunks} chunks.`,
+                        });
+                      }
                     } else if (event.type === 'error') {
                       setError(event.message || 'Code generation failed');
                       setIsGenerating(false);
+                      setRetryStatus(null);
                     }
                   } catch {
                     // Ignore SSE parse errors
@@ -332,9 +378,51 @@ export function CodeGenerationPanel() {
           
           {/* Error Display */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md">
+            <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md" role="alert">
               <XCircle className="h-4 w-4 flex-shrink-0" />
               <p className="text-[13px]">{error}</p>
+            </div>
+          )}
+
+          {/* Retry Status */}
+          {retryStatus && isGenerating && (
+            <div
+              className="flex items-center gap-2 p-3 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-md border border-amber-500/20"
+              role="status"
+              data-testid="retry-banner"
+            >
+              <Loader2 className="h-4 w-4 flex-shrink-0 animate-spin" />
+              <p className="text-[13px]">
+                Provider {retryStatus.code ? <span className="font-mono">[{retryStatus.code}]</span> : null} hiccupped — retrying (attempt {retryStatus.attempt}, backoff {Math.round(retryStatus.delayMs / 100) / 10}s)…
+              </p>
+            </div>
+          )}
+
+          {/* Truncation Warning */}
+          {truncated && (
+            <div
+              className="flex items-center gap-2 p-3 bg-amber-500/10 text-amber-700 dark:text-amber-400 rounded-md border border-amber-500/20"
+              role="status"
+              data-testid="truncated-banner"
+            >
+              <XCircle className="h-4 w-4 flex-shrink-0" />
+              <p className="text-[13px]">
+                {truncated.provider ? `${truncated.provider} ` : ''}stopped at the max output budget ({truncated.reason ?? 'max_tokens'}). The last file may be incomplete — narrow the scope or split the request.
+              </p>
+            </div>
+          )}
+
+          {/* File index */}
+          {filePaths.length > 0 && (
+            <div className="rounded-md border border-border/60 bg-muted/30 p-3" data-testid="file-index">
+              <p className="text-xs font-medium mb-1.5 text-muted-foreground">Generated files ({filePaths.length})</p>
+              <div className="flex flex-wrap gap-1.5">
+                {filePaths.map((p) => (
+                  <span key={p} className="text-[11px] font-mono bg-background border border-border/60 rounded px-1.5 py-0.5">
+                    {p}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
