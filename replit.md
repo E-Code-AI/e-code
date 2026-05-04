@@ -97,16 +97,6 @@ E-Code employs a two-service architecture: a React, TypeScript, and Vite-based f
 - **Project State Management**: Bootstrap responses return project ID at the top-level. Bootstrap token decoding handles non-JWT values silently. Autonomous build sessions are reset on server startup if stuck.
 - **Git Integration**: A per-project Git router handles operations by syncing project files from DB to a local directory before executing git commands.
 
-## Agent Parity & Production Certification (Task #61)
-- **Shared Types**: `shared/agent-types.ts` — single source of truth for all agent API Zod schemas (chat, orchestration, checkpoints, message queue, image generation, replit.md, cross-surface session). Import in both client and server to catch drift at compile time.
-- **SSE Heartbeat**: `POST /api/agent/chat/stream` now emits `{ type: 'heartbeat' }` every 15 s (same pattern as plan/build routers). Prevents proxy timeouts on long-running generations. `clearInterval` in `finally{}` and `res.on('close')` prevent leaks.
-- **Zod Validation on `/chat/stream`**: `ChatRequestSchema.safeParse` applied before any AI call. Returns `400 { error, details }` on malformed payloads.
-- **Image Generation Route**: `POST /api/agent/tools/image-generation` — validates with `ImageGenerationRequestSchema`, falls back to 501 if no image-capable provider configured.
-- **replit.md Read/Write Routes**: `POST /api/agent/tools/replit-md` (write) and `GET /api/agent/tools/replit-md/:projectId` (read) — agent uses these to persist learned project context across sessions.
-- **E2E Tests**: `tests/e2e/agent-api.test.ts` — 11 real HTTP round-trip tests (no external test framework). Run: `npx tsx tests/e2e/agent-api.test.ts`
-- **Parity Matrix**: `docs/agent-parity-matrix.md` — full feature-by-feature comparison across Web IDE, Mobile IDE, VS Code Extension.
-- **Certification Report**: `docs/agent-certification-report.md` — P0/P1/P2 findings, remediation status, wire-through verification table.
-
 ## External Dependencies
 - OpenAI
 - Anthropic
