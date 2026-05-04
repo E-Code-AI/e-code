@@ -178,7 +178,11 @@ export function useRealTimeCollaboration({ projectId, autoConnect = true }: UseR
       }
     });
 
-    socket.on('file:changed', (_data: FileChangeNotification) => {
+    socket.on('file:changed', (data: FileChangeNotification) => {
+      if (data?.projectId) {
+        const { queryClient } = require('@/lib/queryClient');
+        queryClient.invalidateQueries({ queryKey: [`/api/projects/${data.projectId}/files`] });
+      }
     });
 
     socket.on('follow:requested', (_data: { followerId: string; followerName: string; targetUserId: string }) => {

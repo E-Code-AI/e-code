@@ -38,6 +38,7 @@ const ReplitPackagesPanel = instrumentedLazy(() => import('../editor/ReplitPacka
 const ReplitHistoryPanel = instrumentedLazy(() => import('../editor/ReplitHistoryPanel').then((module) => ({ default: module.ReplitHistoryPanel })), 'ReplitHistoryPanel');
 const ReplitSecretsPanel = instrumentedLazy(() => import('../editor/ReplitSecretsPanel').then((module) => ({ default: module.ReplitSecretsPanel })), 'ReplitSecretsPanel');
 const ReplitSettingsPanel = instrumentedLazy(() => import('../editor/ReplitSettingsPanel').then((module) => ({ default: module.ReplitSettingsPanel })), 'ReplitSettingsPanel');
+const ReplitConsolePanel = instrumentedLazy(() => import('../ide/ReplitConsolePanel').then((module) => ({ default: module.default })), 'ReplitConsolePanel');
 const ReplitProblemsPanel = instrumentedLazy(() => import('../editor/ReplitProblemsPanel').then((module) => ({ default: module.ReplitProblemsPanel })), 'ReplitProblemsPanel');
 const ReplitOutputPanel = instrumentedLazy(() => import('../editor/ReplitOutputPanel').then((module) => ({ default: module.ReplitOutputPanel })), 'ReplitOutputPanel');
 const ReplitTerminalPanel = instrumentedLazy(() => import('../editor/ReplitTerminalPanel').then((module) => ({ default: module.ReplitTerminalPanel })), 'ReplitTerminalPanel');
@@ -296,20 +297,12 @@ export function SplitsEditorLayoutV2({
         ),
         console: (
           <PanelShell title="Console">
-            <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-              <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
-                Console output will appear here...
-              </p>
-            </div>
+            <ReplitConsolePanel projectId={effectiveProjectId} />
           </PanelShell>
         ),
         debugConsole: (
           <PanelShell title="Debug Console">
-            <div className="h-full bg-[var(--ecode-terminal-bg)] p-4">
-              <p className="text-[var(--ecode-terminal-text)] text-[11px] font-[family-name:var(--ecode-font-mono)]">
-                Debug console ready. Start debugging to see output here.
-              </p>
-            </div>
+            <ReplitConsolePanel projectId={effectiveProjectId} />
           </PanelShell>
         ),
         preview: <ProjectPreviewPane projectId={effectiveProjectId} />,
