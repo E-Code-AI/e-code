@@ -1224,6 +1224,9 @@ export class PreviewService {
 
     const projectEnvVars = await fetchProjectEnvVars(projectId);
 
+    // Fix common ESM/CJS mismatch: postcss.config.js with module.exports in "type":"module" packages
+    await this.fixPostCSSConfig(previewPath).catch(() => {});
+
     const frameworkInfo = await this.detectFramework(files, previewPath);
     preview.frameworkType = frameworkInfo.type as any;
     preview.logs.push(`Detected framework: ${frameworkInfo.type}`);
@@ -1313,6 +1316,28 @@ export class PreviewService {
       return true;
     }
     return false;
+  }
+
+  private async fixPostCSSConfig(previewPath: string): Promise<void> {
+    const pkgPath = path.join(previewPath, 'package.json');
+    const pkgContent = await fs.readFile(pkgPath, 'utf-8').catch(() => '');
+    if (!pkgContent.includes('"type": "module"') && !pkgContent.includes('"type":"module"')) return;
+
+    const configPaths = [
+      path.join(previewPath, 'postcss.config.js'),
+      path.join(previewPath, 'client', 'postcss.config.js'),
+    ];
+
+    for (const configPath of configPaths) {
+      const content = await fs.readFile(configPath, 'utf-8').catch(() => '');
+      if (content.includes('module.exports')) {
+        const fixed = content
+          .replace(/module\.exports\s*=\s*/, 'export default ')
+          .replace(/require\(['"]([^'"]+)['"]\)/g, '$1');
+        await fs.writeFile(configPath, fixed);
+        logger.info(`[preview] Fixed postcss.config.js CJS→ESM at ${configPath}`);
+      }
+    }
   }
 
   private async detectFramework(files: any[], _previewPath: string) {
