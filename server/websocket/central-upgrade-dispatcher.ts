@@ -240,11 +240,12 @@ class CentralUpgradeDispatcher {
       '/api/server/logs/ws',   // ServerLogsService handles its own session auth
       '/ws/collaboration',     // Unified collaboration service validates project access itself
       '/ws/yjs',               // Yjs collaboration handler validates project access itself
+      '/shell',                // Shell handler validates session cookie + project access itself
+      '/api/terminal/ws',      // PTY terminal validates auth internally
     ];
     const publicPaths = [
       '/health', '/api/health',
       ...selfAuthPaths,
-      ...(process.env.NODE_ENV !== 'production' ? ['/api/terminal/ws'] : []),
     ];
     
     // Only validate auth for non-public paths with registered handlers
