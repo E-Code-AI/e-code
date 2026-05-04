@@ -105,8 +105,14 @@ export default defineConfig({
   },
   server: {
     headers: {
-      // Prevent stale browser chunks from mixing React versions after restarts.
       'Cache-Control': 'no-store, no-cache, must-revalidate',
+    },
+    fs: {
+      allow: [
+        path.resolve(import.meta.dirname),
+        '/tmp',
+      ],
+      strict: false,
     },
   },
   optimizeDeps: {
