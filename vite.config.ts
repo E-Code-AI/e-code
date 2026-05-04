@@ -107,6 +107,9 @@ export default defineConfig({
     headers: {
       'Cache-Control': 'no-store, no-cache, must-revalidate',
     },
+    fs: {
+      allow: ['.', '/tmp'],
+    },
   },
   optimizeDeps: {
     include: ["react", "react-dom", "react/jsx-runtime", "scheduler", "wouter"],
