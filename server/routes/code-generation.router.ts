@@ -60,9 +60,17 @@ ${files && files.length > 0 ? `Referenced Files:\n${files.map(f => `\n--- ${f.pa
 
 Hard requirements:
 1. Output a multi-file project. Each file MUST be a fenced code block whose path
-   appears as a heading line on its own immediately ABOVE the fence
-   (example heading: "src/App.tsx"; example heading: "tailwind.config.ts").
-   No prose between the heading and the opening fence.
+   appears on a line by itself in the EXACT format: --- path ---
+   Example:
+   --- src/App.tsx ---
+   \`\`\`tsx
+   // code here
+   \`\`\`
+   --- tailwind.config.ts ---
+   \`\`\`ts
+   // code here
+   \`\`\`
+   No prose between the path heading and the opening fence.
 2. React/TS UI MUST follow this exact contract:
    - shadcn/ui component imports use the alias path: from "@/components/ui/<name>".
    - Re-usable helpers live at "@/lib/utils" and the cn() helper is imported from there.

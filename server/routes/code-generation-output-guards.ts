@@ -20,7 +20,7 @@ import type { GenerationErrorCode } from './code-generation-errors';
 
 export const MAX_OUTPUT_BYTES = 5_000_000; // 5 MB
 export const MAX_PATH_LENGTH = 256;
-const PATH_MARKER = /^---\s+(.+?)\s+---$/gm;
+const PATH_MARKER = /^(?:---\s+(.+?)\s+---|#{1,4}\s+`?([^\n`]+?)`?\s*$|^\*\*([^\n*]+?)\*\*\s*$)/gm;
 
 // Trailing window we keep so a path marker split across two chunks is still
 // detected. Two full marker lines is a safe cushion.
@@ -97,11 +97,16 @@ export class OutputGuard {
     PATH_MARKER.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = PATH_MARKER.exec(window)) !== null) {
-      const candidate = m[1].trim();
-      if (this.seenPaths.has(candidate)) continue;
-      const v = validateGeneratedPath(candidate);
+      const raw = (m[1] || m[2] || m[3] || '').trim();
+      if (!raw || raw.length === 0) continue;
+      // For non-dashed formats (## heading, **bold**), require a file extension
+      // to avoid false positives on normal markdown headings
+      const isDashedFormat = m[1] !== undefined;
+      if (!isDashedFormat && !/\.[a-zA-Z]{1,10}$/.test(raw)) continue;
+      if (this.seenPaths.has(raw)) continue;
+      const v = validateGeneratedPath(raw);
       if (!v.ok) return v;
-      this.seenPaths.add(candidate);
+      this.seenPaths.add(raw);
     }
     this.tail = window.length > TAIL_KEEP ? window.slice(window.length - TAIL_KEEP) : window;
 
