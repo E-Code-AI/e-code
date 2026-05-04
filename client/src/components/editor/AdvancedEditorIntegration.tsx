@@ -72,11 +72,6 @@ export function AdvancedEditorIntegration({
   const handleRunCode = () => {
     setIsRunning(true);
     setShowTerminal(true);
-    
-    // Simulate execution
-    setTimeout(() => {
-      setIsRunning(false);
-    }, 3000);
   };
 
   const handleStopCode = () => {

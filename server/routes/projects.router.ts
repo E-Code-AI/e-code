@@ -16,6 +16,8 @@ import { type IStorage } from "../storage";
 import { createLogger } from '../utils/logger';
 import { redactErrorForLog } from '../utils/error-redaction';
 import { validateAndSetSSEHeaders } from '../utils/sse-headers';
+import { getJwtSecret } from '../utils/secrets-manager';
+import { getJwtSecret } from '../utils/secrets-manager';
 
 const projectLogger = createLogger('projects-router');
 
@@ -626,11 +628,15 @@ export class ProjectsRouter {
           },
         });
 
+        const previewUrl = scaffold.framework === 'react-vite-fullstack'
+          ? `/api/preview/url?projectId=${project.id}`
+          : `/api/preview/projects/${project.id}/preview/`;
+
         res.status(201).json({
           projectId: String(project.id),
           workspaceUrl: `/ide/${project.id}?bootstrap=${encodeURIComponent(sessionId)}`,
           bootSessionId: sessionId,
-          previewUrl: `/api/preview/${project.id}`,
+          previewUrl,
           scaffold,
         });
       } catch (error: any) {

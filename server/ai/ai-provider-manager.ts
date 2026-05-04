@@ -1333,7 +1333,7 @@ export class AIProviderManager {
 class LegacyProviderAdapter {
   name: string;
   private manager: AIProviderManager;
-  private modelId: string;
+  readonly modelId: string;
   
   constructor(manager: AIProviderManager, modelId: string, name: string) {
     this.manager = manager;

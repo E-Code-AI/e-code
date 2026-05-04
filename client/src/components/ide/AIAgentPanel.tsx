@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { getCSRFToken, withBootstrapHeaders } from '@/lib/queryClient';
+import { drainSSEEvents, extractSSEDataLines, normalizeSSEChunk, parseSSEDataLine } from '@/lib/sse-client-parser';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,6 +20,15 @@ interface Message {
     tokens?: number;
     latency?: number;
   };
+}
+
+interface AgentSSEData {
+  content?: string;
+  error?: string;
+  type?: string;
+  totalTokens?: number;
+  model?: string;
+  provider?: string;
 }
 
 interface AIAgentPanelProps {
@@ -107,38 +117,92 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
         timestamp: new Date()
       };
       setMessages(prev => [...prev, userMessage]);
-      
-      // Call AI endpoint
-      const data = await apiRequest('POST', '/api/agent/chat', {
-        projectId,
-        message,
-        conversationHistory: messages
-      });
-      
-      // Add assistant response
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
+
+      const assistantId = `assistant-${Date.now()}`;
+      setMessages(prev => [...prev, {
+        id: assistantId,
         role: 'assistant',
-        content: data.response || 'Sorry, I couldn\'t process that request.',
+        content: '',
         timestamp: new Date(),
-        metadata: data.metadata
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      // Handle file creation if AI wants to create files
-      if (data.fileCreated && onFileCreate) {
-        onFileCreate(data.filePath, data.fileContent);
-        toast({
-          title: 'File created',
-          description: `Created ${data.filePath}`
-        });
-        
-        // Invalidate files cache
-        queryClient.invalidateQueries({ queryKey: [`/api/projects/${projectId}/files`] });
+        isStreaming: true,
+      }]);
+
+      const csrfToken = await getCSRFToken();
+      const response = await fetch('/api/agent/chat/stream', {
+        method: 'POST',
+        credentials: 'include',
+        headers: withBootstrapHeaders('/api/agent/chat/stream', {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        }),
+        body: JSON.stringify({
+          projectId,
+          message,
+          conversationHistory: messages
+            .filter((m) => m.role === 'user' || m.role === 'assistant')
+            .slice(-20)
+            .map((m) => ({ role: m.role, content: m.content })),
+          capabilities: {
+            appTesting: true,
+            maxAutonomy: true,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => '');
+        throw new Error(errorText || `Agent stream failed with ${response.status}`);
       }
-      
-      return data;
+
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('Agent stream did not return a readable body');
+
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
+      let content = '';
+      let metadata: Message['metadata'] = {};
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        sseBuffer += normalizeSSEChunk(decoder.decode(value, { stream: true }));
+        const drained = drainSSEEvents(sseBuffer);
+        sseBuffer = drained.remaining;
+
+        for (const eventText of drained.events) {
+          for (const line of extractSSEDataLines(eventText)) {
+            const data = parseSSEDataLine<AgentSSEData>(line);
+            if (!data) continue;
+            if (data.error) throw new Error(data.error);
+            if (data.content) {
+              content += data.content;
+              setMessages(prev => prev.map((m) =>
+                m.id === assistantId ? { ...m, content, isStreaming: true } : m
+              ));
+            }
+            if (data.totalTokens !== undefined || data.model) {
+              metadata = {
+                tokens: data.totalTokens,
+                model: data.model,
+              };
+            }
+          }
+        }
+      }
+
+      setMessages(prev => prev.map((m) =>
+        m.id === assistantId
+          ? {
+              ...m,
+              content: content || 'No response content was returned.',
+              isStreaming: false,
+              metadata,
+            }
+          : m
+      ));
+
+      return { response: content, metadata };
     },
     onSuccess: () => {
       setIsStreaming(false);
@@ -146,6 +210,11 @@ export function AIAgentPanel({ projectId, onFileCreate }: AIAgentPanelProps) {
     },
     onError: (error: any) => {
       setIsStreaming(false);
+      setMessages(prev => prev.map((m) =>
+        m.isStreaming
+          ? { ...m, content: error.message || 'Failed to send message', isStreaming: false }
+          : m
+      ));
       toast({
         title: 'Error',
         description: error.message || 'Failed to send message',

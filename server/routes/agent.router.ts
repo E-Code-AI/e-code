@@ -236,6 +236,45 @@ async function removePendingAction(actionId: string): Promise<boolean> {
 // must persist in Redis so approvals work across multiple API instances.
 const pendingActionsStore = new Map<string, any[]>();
 
+function resolveAgentModelId(requestedModelId?: string, requestedProvider?: string, highPower?: boolean): string {
+  if (requestedModelId) {
+    return requestedModelId;
+  }
+
+  const provider = requestedProvider?.toLowerCase();
+  if (provider?.includes('anthropic') || provider?.includes('claude')) {
+    return highPower ? 'claude-opus-4-7' : 'claude-sonnet-4-6';
+  }
+  if (provider?.includes('openai') || provider?.includes('gpt')) {
+    return highPower ? 'gpt-5-codex' : 'gpt-4.1';
+  }
+  if (provider?.includes('gemini') || provider?.includes('google')) {
+    return highPower ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+  }
+  if (provider?.includes('moonshot') || provider?.includes('kimi')) {
+    return highPower ? 'moonshot-v1-128k' : 'moonshot-v1-32k';
+  }
+  if (provider?.includes('xai') || provider?.includes('grok')) {
+    return highPower ? 'grok-3' : 'grok-3-fast';
+  }
+
+  return highPower ? 'claude-opus-4-7' : 'claude-sonnet-4-6';
+}
+
+function getChatHistory(...sources: any[][]): Array<{ role: 'user' | 'assistant' | 'system'; content: string }> {
+  return sources
+    .flat()
+    .filter((m: any) => ['user', 'assistant', 'system'].includes(m?.role) && typeof m?.content === 'string' && m.content.trim())
+    .slice(-20)
+    .map((m: any) => ({ role: m.role, content: String(m.content) }));
+}
+
+function writeAgentSSE(res: any, payload: Record<string, unknown>) {
+  if (!res.writableEnded) {
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  }
+}
+
 // GET /api/agent/actions/:projectId — list pending AI actions for AgentActionsPanel
 router.get('/actions/:projectId', async (req, res) => {
   try {
@@ -302,7 +341,18 @@ router.post('/chat/stream', async (req, res) => {
     if (!parsed.success) {
       return res.status(400).json({ error: 'Invalid request', details: parsed.error.flatten() });
     }
-    const { projectId, message, context, systemPrompt: extraSystemPrompt, maxTokens, temperature } = parsed.data;
+    const {
+      projectId,
+      message,
+      context,
+      conversationHistory,
+      systemPrompt: extraSystemPrompt,
+      maxTokens,
+      temperature,
+      modelId,
+      capabilities,
+      fastMode,
+    } = parsed.data;
 
     if (!validateAndSetSSEHeaders(res, req)) return;
 
@@ -319,34 +369,66 @@ router.post('/chat/stream', async (req, res) => {
     const { aiProviderManager } = await import('../ai/ai-provider-manager');
     const provider = aiProviderManager.getDefaultProvider();
     if (!provider) {
-      res.write(`data: ${JSON.stringify({ error: 'No AI provider available' })}\n\n`);
+      writeAgentSSE(res, { type: 'error', error: 'No AI provider available' });
       res.end();
       return;
     }
 
+    const selectedModelId = modelId && aiProviderManager.getModel(modelId)
+      ? modelId
+      : provider.modelId;
     const systemPrompt = [
       `You are an expert AI coding assistant embedded in E-Code IDE, helping with project ${projectId || 'unknown'}.`,
-      extraSystemPrompt || 'Provide clear, concise, and actionable answers.'
+      'Operate at Fortune 500 production quality: give concrete implementation steps, surface blockers clearly, never claim fake tool output, and prefer real project state over placeholders.',
+      capabilities?.appTesting ? 'Include test and verification guidance when you change or propose code.' : '',
+      capabilities?.maxAutonomy ? 'When appropriate, break work into autonomous phases with explicit verification gates.' : '',
+      extraSystemPrompt || 'Provide clear, concise, and actionable answers.',
     ].join(' ');
 
-    const history = (Array.isArray(context) ? context : [])
+    const historySource = Array.isArray(context) && context.length > 0 ? context : conversationHistory;
+    const history = (Array.isArray(historySource) ? historySource : [])
       .slice(-20)
       .filter((m: any) => m.role && m.content)
       .map((m: any) => ({ role: m.role as 'user' | 'assistant', content: String(m.content) }));
 
-    const fullPrompt = history.length > 0
-      ? history.map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`).join('\n') + `\nUser: ${message}`
-      : message;
-
-    const responseText = await provider.generateCompletion(fullPrompt, systemPrompt, maxTokens || 4096, temperature || 0.7);
-
-    // Stream in chunks to simulate streaming (provider doesn't support native streaming)
-    const chunkSize = 20;
-    for (let i = 0; i < responseText.length; i += chunkSize) {
-      const chunk = responseText.slice(i, i + chunkSize);
-      res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
+    if (capabilities?.extendedThinking) {
+      writeAgentSSE(res, {
+        type: 'thinking',
+        step: {
+          id: 'request-analysis',
+          type: 'analysis',
+          title: 'Request received',
+          content: 'Preparing model stream with project and conversation context.',
+          status: 'complete',
+          timestamp: new Date().toISOString(),
+        },
+      });
     }
-    res.write(`data: ${JSON.stringify({ type: 'metadata', totalTokens: Math.ceil(responseText.length / 4) })}\n\n`);
+
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      ...history,
+      { role: 'user' as const, content: message },
+    ];
+
+    let fullContent = '';
+    for await (const chunk of aiProviderManager.streamChat(selectedModelId, messages, {
+      max_tokens: maxTokens || (fastMode ? 2048 : 4096),
+      temperature: temperature ?? 0.7,
+      context: 'coding',
+      timeoutMs: 300_000,
+    })) {
+      if (res.writableEnded) return;
+      fullContent += chunk;
+      writeAgentSSE(res, { type: 'content', content: chunk });
+    }
+
+    writeAgentSSE(res, {
+      type: 'metadata',
+      totalTokens: Math.ceil(fullContent.length / 4),
+      model: selectedModelId,
+      provider: aiProviderManager.getModel(selectedModelId)?.provider,
+    });
     res.write('data: [DONE]\n\n');
     res.end();
   } catch (error: any) {

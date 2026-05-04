@@ -12,7 +12,7 @@ VolumeX,
 Wifi,
 WifiOff
 } from 'lucide-react';
-import { useEffect,useState } from 'react';
+import { useEffect,useMemo,useState } from 'react';
 
 interface StatusBarItem {
   id: string;
@@ -48,29 +48,43 @@ export function ReplitStatusBar({
   encoding = 'UTF-8',
   className
 }: ReplitStatusBarProps) {
-  const [cpuUsage, setCpuUsage] = useState(0);
-  const [memoryUsage, setMemoryUsage] = useState(0);
+  const [metrics, setMetrics] = useState<{
+    capacity?: { utilizationPercent?: number; current?: number; maximum?: number };
+    health?: { status?: string; message?: string };
+  } | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Simulate real-time metrics
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Get real system metrics - would connect to actual system monitoring
-      setCpuUsage(_prev => {
-        // Oscillate between 20-80% for realistic demo
-        const time = Date.now() / 1000;
-        const value = 50 + 30 * Math.sin(time / 10);
-        return Math.max(20, Math.min(80, value));
-      });
-      setMemoryUsage(prev => {
-        // Slowly increase memory usage over time, reset at 80%
-        const newValue = prev + 0.5;
-        return newValue > 80 ? 30 : newValue;
-      });
-    }, 2000);
+    let cancelled = false;
 
-    return () => clearInterval(interval);
+    const loadMetrics = async () => {
+      try {
+        const response = await fetch('/api/terminal/metrics?limit=1', { credentials: 'include' });
+        if (!response.ok) throw new Error(`metrics ${response.status}`);
+        const payload = await response.json();
+        if (!cancelled) setMetrics(payload.metrics ?? null);
+      } catch {
+        if (!cancelled) setMetrics(null);
+      }
+    };
+
+    loadMetrics();
+    const interval = setInterval(loadMetrics, 10_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, []);
+
+  const terminalUtilization = metrics?.capacity?.utilizationPercent;
+  const terminalSessions = useMemo(() => {
+    const current = metrics?.capacity?.current;
+    const maximum = metrics?.capacity?.maximum;
+    return typeof current === 'number' && typeof maximum === 'number'
+      ? `${current}/${maximum}`
+      : 'Unavailable';
+  }, [metrics]);
 
   const leftItems: StatusBarItem[] = [
     {
@@ -125,16 +139,20 @@ export function ReplitStatusBar({
     {
       id: 'cpu',
       icon: <Cpu className="h-3 w-3" />,
-      text: `${cpuUsage.toFixed(0)}%`,
-      status: cpuUsage > 80 ? 'error' : cpuUsage > 60 ? 'running' : 'success',
-      tooltip: `CPU usage: ${cpuUsage.toFixed(1)}%`
+      text: typeof terminalUtilization === 'number' ? `${terminalUtilization.toFixed(0)}%` : 'N/A',
+      status: typeof terminalUtilization === 'number'
+        ? terminalUtilization > 85 ? 'error' : terminalUtilization > 70 ? 'running' : 'success'
+        : 'idle',
+      tooltip: metrics?.health?.message || 'Terminal capacity metrics unavailable'
     },
     {
       id: 'memory',
       icon: <MemoryStick className="h-3 w-3" />,
-      text: `${memoryUsage.toFixed(0)}%`,
-      status: memoryUsage > 85 ? 'error' : memoryUsage > 70 ? 'running' : 'success',
-      tooltip: `Memory usage: ${memoryUsage.toFixed(1)}%`
+      text: terminalSessions,
+      status: metrics?.health?.status === 'warning' ? 'running' : metrics ? 'success' : 'idle',
+      tooltip: metrics
+        ? `Terminal sessions: ${terminalSessions}`
+        : 'Terminal session metrics unavailable'
     },
     {
       id: 'sound',

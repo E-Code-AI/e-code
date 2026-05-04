@@ -185,6 +185,16 @@ function appendBootstrapQuery(url: string, bootstrapToken?: string | null): stri
   return `${url}${separator}bootstrap=${encodeURIComponent(bootstrapToken)}`;
 }
 
+function stripPreviewAuthQuery(upstreamPath: string): string {
+  const [pathname, query = ''] = upstreamPath.split('?');
+  if (!query) return upstreamPath;
+
+  const params = new URLSearchParams(query);
+  params.delete('bootstrap');
+  const nextQuery = params.toString();
+  return nextQuery ? `${pathname}?${nextQuery}` : pathname;
+}
+
 function rewritePreviewAssetPaths(
   html: string,
   projectId: string,
@@ -905,7 +915,7 @@ export class PreviewService {
       // path from req.originalUrl before handing the request to the proxy so
       // /preview/{id}/{port}/src/main.tsx reaches Vite at /src/main.tsx.
       const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}/${port}`), '') || '/';
-      req.url = upstreamPath;
+      req.url = stripPreviewAuthQuery(upstreamPath);
 
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${port}`,
@@ -914,12 +924,16 @@ export class PreviewService {
         selfHandleResponse: true,
         on: {
           proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
+            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
+            if (bootstrapToken && typeof proxyRes.headers.location === 'string') {
+              proxyRes.headers.location = appendBootstrapQuery(proxyRes.headers.location, bootstrapToken);
+            }
+
             const contentType = String(proxyRes.headers['content-type'] || '');
             if (!contentType.includes('text/html')) {
               return responseBuffer;
             }
 
-            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
             return injectPreviewHtml(responseBuffer, projectId, port, apiService?.port ?? null, bootstrapToken);
           }),
           error: (err: any, _req: any, res: any) => {
@@ -964,7 +978,7 @@ export class PreviewService {
       // prefix from req.url, so we restore the upstream path from
       // req.originalUrl before the proxy fires.
       const upstreamPath = req.originalUrl.replace(new RegExp(`^/preview/${projectId}`), '') || '/';
-      req.url = upstreamPath;
+      req.url = stripPreviewAuthQuery(upstreamPath);
 
       const proxy = createProxyMiddleware({
         target: `http://127.0.0.1:${preview.primaryPort}`,
@@ -973,12 +987,16 @@ export class PreviewService {
         selfHandleResponse: true,
         on: {
           proxyRes: responseInterceptor(async (responseBuffer, proxyRes, _req, _res) => {
+            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
+            if (bootstrapToken && typeof proxyRes.headers.location === 'string') {
+              proxyRes.headers.location = appendBootstrapQuery(proxyRes.headers.location, bootstrapToken);
+            }
+
             const contentType = String(proxyRes.headers['content-type'] || '');
             if (!contentType.includes('text/html')) {
               return responseBuffer;
             }
 
-            const bootstrapToken = typeof req.query.bootstrap === 'string' ? req.query.bootstrap : null;
             return injectPreviewHtml(responseBuffer, projectId, preview.primaryPort, apiService?.port ?? null, bootstrapToken);
           }),
           error: (err: any, _req: any, res: any) => {
@@ -1532,9 +1550,10 @@ export class PreviewService {
 
     let startCommand: string[] = [];
     if (frameworkInfo.hasVite) {
-      // Keep Vite on its native root so direct preview domains do not get trapped
-      // behind a proxy-specific base path. The proxy HTML layer injects its own
-      // <base href="/preview/:projectId/:port/"> when serving proxied preview routes.
+      // Vite rewrites module graph imports at transform time, so a plain HTML
+      // <base> tag is not enough: transformed JS would still import /@fs and
+      // /src from the host root. Give Vite the proxy base and keep the injected
+      // history shim below for client routers that expect location.pathname === '/'.
       // --clearScreen false prevents Vite from clearing stdout (keeps logs visible).
       // --strictPort prevents port auto-increment which would break the proxy.
       const localViteBin = path.join(appRootPath, 'node_modules', '.bin', process.platform === 'win32' ? 'vite.cmd' : 'vite');

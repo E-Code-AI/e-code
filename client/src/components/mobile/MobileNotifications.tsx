@@ -1,6 +1,7 @@
 import { Avatar,AvatarFallback,AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { LazyAnimatePresence,LazyMotionDiv } from '@/lib/motion';
 import { cn } from "@/lib/utils";
@@ -45,57 +46,39 @@ const notificationColors: Record<NotificationType, string> = {
 
 export function MobileNotifications() {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: '1',
-      type: 'follow',
-      title: 'New follower',
-      description: 'Sarah Chen started following you',
-      timestamp: new Date(Date.now() - 60000),
-      read: false,
-      user: { name: 'Sarah Chen', avatar: '/api/avatar/Sarah%20Chen/40' },
-    },
-    {
-      id: '2',
-      type: 'like',
-      title: 'Project liked',
-      description: 'Your project "React Dashboard" received 5 new likes',
-      timestamp: new Date(Date.now() - 3600000),
-      read: false,
-      projectName: 'React Dashboard',
-    },
-    {
-      id: '3',
-      type: 'mention',
-      title: 'You were mentioned',
-      description: 'Alex mentioned you in "Building a REST API"',
-      timestamp: new Date(Date.now() - 7200000),
-      read: true,
-      user: { name: 'Alex', avatar: '/api/avatar/Alex/40' },
-      projectName: 'Building a REST API',
-    },
-    {
-      id: '4',
-      type: 'deploy',
-      title: 'Deployment successful',
-      description: 'Your project "Portfolio Site" was successfully deployed',
-      timestamp: new Date(Date.now() - 86400000),
-      read: true,
-      projectName: 'Portfolio Site',
-    },
-    {
-      id: '5',
-      type: 'system',
-      title: 'System update',
-      description: 'New features available in the editor',
-      timestamp: new Date(Date.now() - 172800000),
-      read: true,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [swipedItem, setSwipedItem] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const normalizeNotifications = (items: any[]): Notification[] =>
+    items.map((item) => ({
+      id: String(item.id),
+      type: notificationIcons[item.type as NotificationType] ? item.type : 'system',
+      title: item.title || item.subject || 'Notification',
+      description: item.description || item.body || item.message || '',
+      timestamp: new Date(item.createdAt || item.timestamp || Date.now()),
+      read: Boolean(item.read ?? item.isRead),
+      user: item.user,
+      projectName: item.projectName,
+      actionUrl: item.actionUrl,
+    }));
+
+  const fetchNotifications = async () => {
+    const data = await apiRequest<any[]>('GET', '/api/notifications');
+    setNotifications(normalizeNotifications(Array.isArray(data) ? data : []));
+  };
+
+  useEffect(() => {
+    fetchNotifications().catch((error) => {
+      toast({
+        title: "Notifications unavailable",
+        description: error.message || "Unable to load notifications",
+        variant: "destructive",
+      });
+    });
+  }, []);
 
   // Group notifications by date
   const groupedNotifications = notifications.reduce((groups, notification) => {
@@ -120,42 +103,53 @@ export function MobileNotifications() {
   }, {} as Record<string, Notification[]>);
 
   const handleMarkAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    const previous = notifications;
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
     
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate(5);
     
-    toast({
-      title: "Marked as read",
-      description: "Notification marked as read",
+    apiRequest('PATCH', `/api/notifications/${id}/read`).catch((error) => {
+      setNotifications(previous);
+      toast({
+        title: "Update failed",
+        description: error.message || "Notification was not marked as read",
+        variant: "destructive",
+      });
     });
   };
 
   const handleMarkAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(n => ({ ...n, read: true }))
-    );
+    const previous = notifications;
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
     
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate(10);
     
-    toast({
-      title: "All read",
-      description: "All notifications marked as read",
+    apiRequest('PATCH', '/api/notifications/read-all').catch((error) => {
+      setNotifications(previous);
+      toast({
+        title: "Update failed",
+        description: error.message || "Notifications were not marked as read",
+        variant: "destructive",
+      });
     });
   };
 
   const handleDelete = (id: string) => {
+    const previous = notifications;
     setNotifications(prev => prev.filter(n => n.id !== id));
     
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate([10, 10]);
     
-    toast({
-      title: "Deleted",
-      description: "Notification removed",
+    apiRequest('DELETE', `/api/notifications/${id}`).catch((error) => {
+      setNotifications(previous);
+      toast({
+        title: "Delete failed",
+        description: error.message || "Notification was not removed",
+        variant: "destructive",
+      });
     });
   };
 
@@ -165,22 +159,17 @@ export function MobileNotifications() {
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate(10);
     
-    // Simulate refresh
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Add new notification for demo
-    const newNotification: Notification = {
-      id: Date.now().toString(),
-      type: 'comment',
-      title: 'New comment',
-      description: 'Someone commented on your project',
-      timestamp: new Date(),
-      read: false,
-      user: { name: 'New User' },
-    };
-    
-    setNotifications(prev => [newNotification, ...prev]);
-    setIsRefreshing(false);
+    try {
+      await fetchNotifications();
+    } catch (error: any) {
+      toast({
+        title: "Refresh failed",
+        description: error.message || "Unable to refresh notifications",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Pull to refresh

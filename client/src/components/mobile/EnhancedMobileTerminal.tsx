@@ -44,10 +44,6 @@ export function EnhancedMobileTerminal(props: EnhancedMobileTerminalProps) {
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
 
-    // Simulate clearing terminal
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Emit clear event
     window.dispatchEvent(new CustomEvent('terminal:clear'));
 
     // toast({ title: 'Terminal cleared' }); // This line is removed as toast hook is removed

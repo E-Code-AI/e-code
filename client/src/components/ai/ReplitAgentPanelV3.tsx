@@ -1501,8 +1501,15 @@ export function ReplitAgentPanelV3({
         setStreamingContent('');
 
         if (extendedThinkingEnabled) {
-          const thinkingSteps = simulateThinkingSteps(userMessage.content);
-          setActiveThinking(thinkingSteps);
+          setActiveThinking([{
+            id: `pending-${Date.now()}`,
+            type: 'analysis',
+            title: 'Waiting for model trace',
+            content: 'The backend stream is preparing live reasoning and tool events.',
+            status: 'active',
+            timestamp: new Date(),
+            isStreaming: true,
+          }]);
         }
 
         // Track assistant message ID for error handling
@@ -1862,51 +1869,6 @@ export function ReplitAgentPanelV3({
     window.history.replaceState({}, '', newUrl);
   }, [projectId, conversationId, autoStart, isWorking, initialPrompt, wsIsConnected, pendingAutoStart]); // ✅ FORTUNE 500 FIX: Added wsIsConnected + pendingAutoStart for WS readiness
 
-  const simulateThinkingSteps = useCallback((message: string): ThinkingStep[] => {
-    const baseTimestamp = new Date();
-    return [
-      {
-        id: '1',
-        type: 'reasoning',
-        title: 'Compréhension de la demande',
-        content: `Analyse : « ${message.substring(0, 50)}… »`,
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime()),
-        details: [
-          'Identification des exigences clés',
-          'Recherche d’ambiguïtés',
-          'Détermination de la portée et de la complexité'
-        ]
-      },
-      {
-        id: '2',
-        type: 'analysis',
-        title: 'Analyse des exigences techniques',
-        content: 'Décomposition de la tâche en composants implémentables',
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime() + 1000),
-        details: [
-          'Identification des technologies requises',
-          'Évaluation du niveau de complexité',
-          'Détermination de la meilleure approche'
-        ]
-      },
-      {
-        id: '3',
-        type: 'planning',
-        title: 'Planification de l’implémentation',
-        content: 'Création d’un plan d’exécution étape par étape',
-        status: 'complete',
-        timestamp: new Date(baseTimestamp.getTime() + 2000),
-        details: [
-          'Définition de la structure des composants',
-          'Organisation des fichiers',
-          'Identification des dépendances'
-        ]
-      }
-    ];
-  }, []);
-
   // Fire-and-forget message persistence to backend
   // Does not block streaming - errors are logged but don't affect UI
   const persistMessageToBackend = useCallback((message: {
@@ -1986,8 +1948,15 @@ export function ReplitAgentPanelV3({
     setStreamingContent('');
 
     if (extendedThinkingEnabled) {
-      const thinkingSteps = simulateThinkingSteps(userContent);
-      setActiveThinking(thinkingSteps);
+      setActiveThinking([{
+        id: `pending-${Date.now()}`,
+        type: 'analysis',
+        title: 'Waiting for model trace',
+        content: 'The backend will stream reasoning and tool events as they are produced.',
+        status: 'active',
+        timestamp: new Date(),
+        isStreaming: true,
+      }]);
     }
 
     // Track assistant message ID for error handling

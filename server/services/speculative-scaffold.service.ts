@@ -771,9 +771,255 @@ export class SpeculativeScaffoldService {
     return JSON.stringify(parsed, null, 2);
   }
 
+  private buildCrmHomePage(appIdentity: AppIdentity, prompt?: string): string {
+    const productSummary = (prompt?.trim() || appIdentity.description).replace(/`/g, "'");
+
+    return `import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
+
+type Stage = 'Prospecting' | 'Qualified' | 'Proposal' | 'Negotiation' | 'Closed Won';
+
+interface Account {
+  id: string;
+  company: string;
+  owner: string;
+  value: number;
+  stage: Stage;
+  health: 'Strong' | 'Watch' | 'Risk';
+  nextStep: string;
+}
+
+const stageOrder: Stage[] = ['Prospecting', 'Qualified', 'Proposal', 'Negotiation', 'Closed Won'];
+
+export default function HomePage() {
+  const [dark, setDark] = useState(true);
+  const [accounts, setAccounts] = useState<Account[]>([
+    {
+      id: 'acme-cloud',
+      company: 'Acme Cloud',
+      owner: 'Maya Laurent',
+      value: 186000,
+      stage: 'Proposal',
+      health: 'Strong',
+      nextStep: 'Send security review package',
+    },
+    {
+      id: 'northstar-retail',
+      company: 'Northstar Retail',
+      owner: 'Ibrahim Diallo',
+      value: 92000,
+      stage: 'Qualified',
+      health: 'Watch',
+      nextStep: 'Schedule VP discovery call',
+    },
+    {
+      id: 'atlas-energy',
+      company: 'Atlas Energy',
+      owner: 'Sofia Park',
+      value: 274000,
+      stage: 'Negotiation',
+      health: 'Strong',
+      nextStep: 'Finalize procurement terms',
+    },
+  ]);
+  const [company, setCompany] = useState('');
+  const [value, setValue] = useState('');
+
+  const pipelineValue = useMemo(
+    () => accounts.reduce((total, account) => total + account.value, 0),
+    [accounts]
+  );
+  const weightedForecast = useMemo(
+    () =>
+      accounts.reduce((total, account) => {
+        const weight = (stageOrder.indexOf(account.stage) + 1) / stageOrder.length;
+        return total + account.value * weight;
+      }, 0),
+    [accounts]
+  );
+  const activeAccounts = accounts.filter((account) => account.stage !== 'Closed Won').length;
+
+  const advanceAccount = (id: string) => {
+    setAccounts((items) =>
+      items.map((account) => {
+        if (account.id !== id) return account;
+        const nextIndex = Math.min(stageOrder.indexOf(account.stage) + 1, stageOrder.length - 1);
+        return { ...account, stage: stageOrder[nextIndex] };
+      })
+    );
+  };
+
+  return (
+    <main className={cn(dark && 'dark')}>
+      <div className="min-h-screen bg-background text-foreground transition-colors">
+        <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 md:px-6 lg:px-8">
+          <motion.header
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="overflow-hidden rounded-[32px] border border-border/60 bg-gradient-to-br from-primary/18 via-card to-background p-6 shadow-[0_24px_120px_hsl(var(--foreground)/0.10)] md:p-8"
+          >
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="text-xs uppercase tracking-[0.28em] text-primary">CRM command center</p>
+                <h1 className="mt-4 text-4xl font-semibold tracking-tight md:text-6xl">${appIdentity.title}</h1>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-muted-foreground md:text-base">
+                  ${productSummary}
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => setDark((value) => !value)}>
+                {dark ? 'Light mode' : 'Dark mode'}
+              </Button>
+            </div>
+          </motion.header>
+
+          <section className="grid gap-3 md:grid-cols-3">
+            {[
+              ['Pipeline', pipelineValue.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })],
+              ['Weighted forecast', weightedForecast.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })],
+              ['Active accounts', String(activeAccounts)],
+            ].map(([label, value]) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-border/60 bg-card/80 p-5"
+              >
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
+                <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
+              </motion.div>
+            ))}
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="rounded-[28px] border border-border/60 bg-card/85 p-5 backdrop-blur">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Revenue pipeline</p>
+                  <h2 className="mt-2 text-2xl font-semibold">Opportunities by stage</h2>
+                </div>
+                <form
+                  className="flex flex-col gap-2 sm:flex-row"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!company.trim() || !value.trim()) return;
+                    setAccounts((items) => [
+                      {
+                        id: company.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                        company: company.trim(),
+                        owner: 'Revenue Desk',
+                        value: Number(value),
+                        stage: 'Prospecting',
+                        health: 'Watch',
+                        nextStep: 'Qualify buying committee',
+                      },
+                      ...items,
+                    ]);
+                    setCompany('');
+                    setValue('');
+                  }}
+                >
+                  <input
+                    value={company}
+                    onChange={(event) => setCompany(event.target.value)}
+                    placeholder="Account name"
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    data-testid="input-crm-account"
+                  />
+                  <input
+                    value={value}
+                    onChange={(event) => setValue(event.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="Deal value"
+                    className="h-10 rounded-xl border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    data-testid="input-crm-value"
+                  />
+                  <Button type="submit" data-testid="button-crm-add-account">Add</Button>
+                </form>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {accounts.map((account) => (
+                  <motion.article
+                    key={account.id}
+                    layout
+                    className="grid gap-4 rounded-2xl border border-border/60 bg-background/70 p-4 md:grid-cols-[1fr_auto]"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-semibold">{account.company}</h3>
+                        <span className={cn(
+                          'rounded-full px-2.5 py-1 text-xs',
+                          account.health === 'Strong' && 'bg-emerald-500/15 text-emerald-500',
+                          account.health === 'Watch' && 'bg-amber-500/15 text-amber-500',
+                          account.health === 'Risk' && 'bg-red-500/15 text-red-500'
+                        )}>
+                          {account.health}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {account.owner} owns the next step: {account.nextStep}
+                      </p>
+                      <div className="mt-4 grid gap-2 sm:grid-cols-5">
+                        {stageOrder.map((stage) => (
+                          <div
+                            key={stage}
+                            className={cn(
+                              'rounded-full px-3 py-1 text-center text-[11px]',
+                              stageOrder.indexOf(stage) <= stageOrder.indexOf(account.stage)
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-muted-foreground'
+                            )}
+                          >
+                            {stage}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-start gap-3 md:items-end">
+                      <p className="text-2xl font-semibold">
+                        {account.value.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })}
+                      </p>
+                      <Button type="button" variant="outline" onClick={() => advanceAccount(account.id)}>
+                        Advance stage
+                      </Button>
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            </div>
+
+            <aside className="rounded-[28px] border border-border/60 bg-card/85 p-5">
+              <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Executive workflow</p>
+              <h2 className="mt-2 text-2xl font-semibold">Salesforce-style operating rhythm</h2>
+              <div className="mt-5 space-y-3">
+                {[
+                  'Unified account view with owner, health, next step, and forecast.',
+                  'Keyboard-fast opportunity entry for revenue teams.',
+                  'Stage progression that updates forecast math instantly.',
+                  'Dark-mode enterprise UI with accessible contrast and clear hierarchy.',
+                ].map((item) => (
+                  <div key={item} className="rounded-2xl border border-border/60 bg-background/70 p-4 text-sm text-muted-foreground">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}`;
+  }
+
   private buildPromptAwareHomePage(appIdentity: AppIdentity, prompt?: string): string {
     const intent = (prompt || '').toLowerCase();
     const looksLikeTodo = intent.includes('todo') || intent.includes('task') || intent.includes('kanban') || intent.includes('productivity');
+    const looksLikeCrm = intent.includes('crm') || intent.includes('salesforce') || intent.includes('pipeline') || intent.includes('sales');
+    if (looksLikeCrm) {
+      return this.buildCrmHomePage(appIdentity, prompt);
+    }
     const productSummary = appIdentity.description.replace(/`/g, "'");
 
     const featureCards = looksLikeTodo
@@ -1264,6 +1510,8 @@ export { Button, buttonVariants };`,
     // Common fullstack app types
     if (promptLower.includes('full-stack') || promptLower.includes('fullstack') ||
         promptLower.includes('crud') || promptLower.includes('todo') ||
+        promptLower.includes('crm') || promptLower.includes('salesforce') ||
+        promptLower.includes('pipeline') || promptLower.includes('sales') ||
         promptLower.includes('blog') || promptLower.includes('e-commerce') ||
         promptLower.includes('ecommerce') || promptLower.includes('store') ||
         promptLower.includes('marketplace') || promptLower.includes('saas') ||

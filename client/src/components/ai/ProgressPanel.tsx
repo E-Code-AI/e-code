@@ -330,37 +330,9 @@ export function ProgressPanel({
     }));
   }, [toolExecutions]);
 
-  // Demo events if no real data
   useEffect(() => {
     if (!actionsData?.rows?.length && !isLoading && !streamEvents?.length) {
-      setEvents([
-        {
-          id: 'demo-1',
-          type: 'file_create',
-          description: 'Created Button component',
-          filePath: 'src/components/Button.tsx',
-          status: 'completed',
-          timestamp: new Date(Date.now() - 60000),
-          duration: 234,
-        },
-        {
-          id: 'demo-2',
-          type: 'command',
-          description: 'Installing dependencies',
-          details: 'npm install react-router-dom @tanstack/react-query',
-          status: 'completed',
-          timestamp: new Date(Date.now() - 45000),
-          duration: 3420,
-        },
-        {
-          id: 'demo-3',
-          type: 'file_update',
-          description: 'Updated App routing',
-          filePath: 'src/App.tsx',
-          status: 'running',
-          timestamp: new Date(Date.now() - 10000),
-        },
-      ]);
+      setEvents([]);
     }
   }, [actionsData, isLoading, streamEvents]);
 

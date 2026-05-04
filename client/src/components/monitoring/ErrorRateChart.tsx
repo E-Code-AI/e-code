@@ -10,6 +10,11 @@ interface ErrorRateChartProps {
   detailed?: boolean;
 }
 
+function readNumber(value: unknown): number | undefined {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export function ErrorRateChart({ data, realTime, detailed }: ErrorRateChartProps) {
   const chartData = useMemo(() => {
     if (!data) return [];
@@ -28,11 +33,10 @@ export function ErrorRateChart({ data, realTime, detailed }: ErrorRateChartProps
           };
         }
         
-        // Simulate error breakdown
         const errorRate = parseFloat(item.metric_value);
         grouped[time].total = errorRate;
-        grouped[time].error4xx = errorRate * 0.7; // 70% are 4xx errors
-        grouped[time].error5xx = errorRate * 0.3; // 30% are 5xx errors
+        grouped[time].error4xx = readNumber(item.error4xx ?? item.error_4xx ?? item.client_error_rate) ?? 0;
+        grouped[time].error5xx = readNumber(item.error5xx ?? item.error_5xx ?? item.server_error_rate) ?? 0;
       }
     });
     
@@ -92,22 +96,16 @@ export function ErrorRateChart({ data, realTime, detailed }: ErrorRateChartProps
           </BarChart>
         </ResponsiveContainer>
         
-        {detailed && currentErrorRate > 0 && (
+        {detailed && currentErrorRate > 0 && realTime?.application?.recentErrors && (
           <div className="mt-4 space-y-2">
             <p className="text-[13px] font-semibold">Recent Errors</p>
             <div className="space-y-1">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-muted-foreground">404 Not Found</span>
-                <span>23%</span>
-              </div>
-              <div className="flex justify-between text-[11px]">
-                <span className="text-muted-foreground">500 Internal Server</span>
-                <span>15%</span>
-              </div>
-              <div className="flex justify-between text-[11px]">
-                <span className="text-muted-foreground">401 Unauthorized</span>
-                <span>8%</span>
-              </div>
+              {realTime.application.recentErrors.map((error: any) => (
+                <div key={`${error.statusCode}-${error.message}`} className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">{error.statusCode} {error.message}</span>
+                  <span>{readNumber(error.rate ?? error.percentage)?.toFixed(2) ?? '0.00'}%</span>
+                </div>
+              ))}
             </div>
           </div>
         )}

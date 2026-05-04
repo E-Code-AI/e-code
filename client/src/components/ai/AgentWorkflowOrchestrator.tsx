@@ -38,6 +38,7 @@ export function AgentWorkflowOrchestrator({
   const [_buildChoice, setBuildChoice] = useState<'full' | 'design' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [buildProgress, setBuildProgress] = useState(0);
+  const [extendedBuildId, setExtendedBuildId] = useState<string | null>(null);
   const [_conversationId, setConversationId] = useState<number | null>(null);
   const [_planId, setPlanId] = useState<string | null>(null);
 
@@ -277,14 +278,13 @@ export function AgentWorkflowOrchestrator({
     try {
       if (choice === 'design') {
         setPhase('building_design');
-        
-        // Simulate design build (3-10 mins)
-        setTimeout(async () => {
-          const resolvedPreviewUrl = await resolveDesignPreviewUrl();
-          setDesignPreviewUrl(resolvedPreviewUrl);
-          setPhase('design_preview');
-          setIsProcessing(false);
-        }, 2000);
+        const resolvedPreviewUrl = await resolveDesignPreviewUrl();
+        if (!resolvedPreviewUrl) {
+          throw new Error('Design preview is not available for this project yet');
+        }
+        setDesignPreviewUrl(resolvedPreviewUrl);
+        setPhase('design_preview');
+        setIsProcessing(false);
       } else {
         setPhase('building_full');
         
@@ -372,30 +372,23 @@ export function AgentWorkflowOrchestrator({
     setPhase('extended_build');
 
     try {
-      // Start extended build (up to 200 minutes)
-      await apiRequest('POST', '/api/agent/build/extended', {
+      // Start extended build and report the backend execution state.
+      const response = await apiRequest<{ buildId?: string; progress?: number; status?: string }>('POST', '/api/agent/build/extended', {
         projectId,
         taskList
       });
+      if (response.buildId) setExtendedBuildId(response.buildId);
+      if (typeof response.progress === 'number') setBuildProgress(response.progress);
 
       toast({
         title: "Extended Build Started",
         description: "Agent will continue building for up to 200 minutes",
       });
-
-      // Simulate progress
-      const interval = setInterval(() => {
-        setBuildProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setPhase('complete');
-            setIsProcessing(false);
-            onComplete?.();
-            return 100;
-          }
-          return prev + 5;
-        });
-      }, 3000);
+      if (response.status === 'completed') {
+        setBuildProgress(100);
+        setPhase('complete');
+        onComplete?.();
+      }
     } catch (error) {
       console.error('Extended build failed:', error);
       toast({

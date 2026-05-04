@@ -60,4 +60,30 @@ describe('SpeculativeScaffoldService modern generation', () => {
     expect(css).toContain('--primary:');
     expect(css).toContain('.dark');
   });
+
+  it('generates a Salesforce-style CRM surface with real interactive pipeline state', async () => {
+    const crmProjectId = `${projectId}-crm`;
+    const crmRoot = path.join('/tmp/projects', crmProjectId);
+
+    const result = await speculativeScaffold.createScaffold({
+      projectId: crmProjectId,
+      framework: 'react',
+      language: 'typescript',
+      prompt: 'Create a Salesforce clone CRM website with account pipeline, opportunity forecast, executive UI, and no mock panels.',
+      projectName: 'Enterprise CRM',
+    });
+
+    expect(result.success).toBe(true);
+
+    const homePage = await fs.readFile(path.join(crmRoot, 'client/src/pages/HomePage.tsx'), 'utf8');
+
+    expect(homePage).toContain('CRM command center');
+    expect(homePage).toContain('Salesforce-style operating rhythm');
+    expect(homePage).toContain("data-testid=\"input-crm-account\"");
+    expect(homePage).toContain("data-testid=\"button-crm-add-account\"");
+    expect(homePage).toContain('advanceAccount');
+    expect(homePage).not.toContain('Connect real data source');
+
+    await fs.rm(crmRoot, { recursive: true, force: true });
+  });
 });

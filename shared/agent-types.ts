@@ -62,6 +62,10 @@ export type ChatMessage = z.infer<typeof ChatMessageSchema>;
 export const ChatRequestSchema = z.object({
   projectId: ProjectIdSchema.optional(),
   message: z.string().min(1).max(50_000),
+  conversationId: z.union([z.string(), z.number()]).optional(),
+  provider: z.string().max(80).optional(),
+  modelId: z.string().max(120).optional(),
+  fastMode: z.boolean().optional(),
   conversationHistory: z.array(ChatMessageSchema).max(100).optional(),
   // context accepts any object array — callers send code-context objects ({type,content,file})
   // as well as chat-history objects ({role,content}); kept loose to avoid breaking existing clients.
@@ -79,6 +83,19 @@ export const ChatRequestSchema = z.object({
     content: z.string().optional(),
     base64: z.string().optional(),
   })).max(20).optional(),
+  images: z.array(z.object({
+    type: z.literal('image'),
+    mimeType: z.string(),
+    base64: z.string(),
+    name: z.string().optional(),
+  })).max(10).optional(),
+  capabilities: z.object({
+    extendedThinking: z.boolean().optional(),
+    webSearch: z.boolean().optional(),
+    highPower: z.boolean().optional(),
+    appTesting: z.boolean().optional(),
+    maxAutonomy: z.boolean().optional(),
+  }).optional(),
 });
 export type ChatRequest = z.infer<typeof ChatRequestSchema>;
 
