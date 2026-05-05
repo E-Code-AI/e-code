@@ -3,7 +3,6 @@ import * as ReactModule from "react";
 declare global {
   interface Window {
     __REACT_INSTANCE__?: typeof ReactModule;
-    requestIdleCallback?: (cb: IdleRequestCallback, opts?: IdleRequestOptions) => number;
   }
 }
 

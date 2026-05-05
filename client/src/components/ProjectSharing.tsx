@@ -48,13 +48,90 @@ interface Collaborator {
 
 type SharePermission = 'private' | 'unlisted' | 'public';
 
-export function ProjectSharing({ projectId, projectName, className }: ProjectSharingProps) {
+interface ShareTokenRow {
+  id: string;
+  token: string;
+  permission: 'view' | 'edit';
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export function ProjectSharing({ projectId, projectName: _projectName, className }: ProjectSharingProps) {
   const [, navigate] = useLocation();
-  const [sharePermission, setSharePermission] = useState<SharePermission>('private');
-  const [shareLink, _setShareLink] = useState(`https://e-code.ai/u/user/${projectName}`);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const { toast } = useToast();
+
+  // Pull live project visibility + owner from server.
+  const { data: project } = useQuery<{
+    id: number;
+    visibility: SharePermission;
+    slug: string | null;
+    ownerId: number;
+  }>({
+    queryKey: ['/api/projects', projectId],
+  });
+
+  // Active share tokens for this project (owner-only — backend returns 403
+  // for non-owners, which react-query treats as a no-data state).
+  const { data: tokensData } = useQuery<{ tokens: ShareTokenRow[] }>({
+    queryKey: ['/api/projects', projectId, 'share-link'],
+  });
+  const activeToken = tokensData?.tokens?.[0] ?? null;
+
+  const sharePermission: SharePermission = project?.visibility ?? 'private';
+
+  const shareLink = (() => {
+    if (sharePermission === 'public' && project?.slug) {
+      // Public projects use the canonical username/slug URL.
+      return `${window.location.origin}/u/me/${project.slug}`;
+    }
+    if (sharePermission === 'unlisted' && activeToken) {
+      // Unlisted: opaque token in the URL fragment so it isn't logged by proxies.
+      return `${window.location.origin}/share/${activeToken.token}`;
+    }
+    return '';
+  })();
+
+  const visibilityMutation = useMutation({
+    mutationFn: async (next: SharePermission) =>
+      apiRequest('PUT', `/api/projects/${projectId}`, { visibility: next }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId] });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Update failed', description: err?.message || 'Could not change visibility', variant: 'destructive' });
+    },
+  });
+
+  const mintTokenMutation = useMutation({
+    mutationFn: async () =>
+      apiRequest('POST', `/api/projects/${projectId}/share-link`, { permission: 'view' }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'share-link'] });
+    },
+  });
+
+  const revokeTokenMutation = useMutation({
+    mutationFn: async (tokenId: string) =>
+      apiRequest('DELETE', `/api/projects/${projectId}/share-link/${tokenId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects', projectId, 'share-link'] });
+    },
+  });
+
+  const setSharePermission = async (next: SharePermission) => {
+    await visibilityMutation.mutateAsync(next);
+    // Unlisted requires at least one active token; mint one on first switch.
+    if (next === 'unlisted' && !activeToken) {
+      await mintTokenMutation.mutateAsync();
+    }
+    // Switching back to private revokes any outstanding share tokens so the
+    // old URL stops working immediately.
+    if (next === 'private' && tokensData?.tokens?.length) {
+      await Promise.all(tokensData.tokens.map((t) => revokeTokenMutation.mutateAsync(t.id)));
+    }
+  };
 
   const { data: collaboratorsData, isLoading: isLoadingCollaborators } = useQuery<{ collaborators: Collaborator[] }>({
     queryKey: ['/api/projects', projectId, 'collaborators'],

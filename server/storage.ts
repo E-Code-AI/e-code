@@ -75,6 +75,7 @@ Project,
 ProjectAiRule,
 ProjectAuthConfig,
 ProjectAuthUser,
+ProjectShareToken,
 PromptTemplate,
 PromptTemplateRating,
 PromptUsageHistory,
@@ -152,6 +153,7 @@ objectStorageBuckets,objectStorageFiles,
 paneConfigurations,
 passwordResetTokens,
 projectAiRules, // Added imports for projectImports and auditLogs
+projectShareTokens,
 projectAuthConfig,projectAuthUsers,
 projectImports,
 projectScreenshots,
@@ -789,6 +791,18 @@ export interface IStorage {
   deletePasswordResetToken(token: string): Promise<boolean>;
   markPasswordResetTokenUsed(token: string): Promise<void>;
 
+  // Project share-token operations
+  createProjectShareToken(data: {
+    projectId: number;
+    token: string;
+    permission: 'view' | 'edit';
+    createdBy: number | null;
+    expiresAt?: Date | null;
+  }): Promise<ProjectShareToken>;
+  getProjectShareTokenByToken(token: string): Promise<ProjectShareToken | null>;
+  listProjectShareTokens(projectId: number): Promise<ProjectShareToken[]>;
+  revokeProjectShareToken(id: string): Promise<boolean>;
+
   // LSP Diagnostics operations - For Problems Panel
   createLspDiagnostic(diagnostic: InsertLspDiagnostic): Promise<LspDiagnostic>;
   getLspDiagnostic(id: string | number): Promise<LspDiagnostic | undefined>;
@@ -1119,6 +1133,51 @@ export class DatabaseStorage implements IStorage {
       .update(passwordResetTokens)
       .set({ usedAt: new Date() })
       .where(eq(passwordResetTokens.token, token));
+  }
+
+  // Project share-token operations
+  async createProjectShareToken(data: {
+    projectId: number;
+    token: string;
+    permission: 'view' | 'edit';
+    createdBy: number | null;
+    expiresAt?: Date | null;
+  }): Promise<ProjectShareToken> {
+    const [row] = await this.db
+      .insert(projectShareTokens)
+      .values({
+        projectId: data.projectId,
+        token: data.token,
+        permission: data.permission,
+        createdBy: data.createdBy ?? null,
+        expiresAt: data.expiresAt ?? null,
+      })
+      .returning();
+    return row;
+  }
+
+  async getProjectShareTokenByToken(token: string): Promise<ProjectShareToken | null> {
+    const [row] = await this.db
+      .select()
+      .from(projectShareTokens)
+      .where(eq(projectShareTokens.token, token));
+    return row ?? null;
+  }
+
+  async listProjectShareTokens(projectId: number): Promise<ProjectShareToken[]> {
+    return await this.db
+      .select()
+      .from(projectShareTokens)
+      .where(eq(projectShareTokens.projectId, projectId));
+  }
+
+  async revokeProjectShareToken(id: string): Promise<boolean> {
+    const result = await this.db
+      .update(projectShareTokens)
+      .set({ revokedAt: new Date() })
+      .where(eq(projectShareTokens.id, id))
+      .returning();
+    return result.length > 0;
   }
 
   // Newsletter operations

@@ -9,7 +9,12 @@ import { logAggregator } from '../monitoring/log-aggregator';
 import { config } from '../config/environment';
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-type LogArguments = [message: string, ...details: unknown[]];
+// Accept both call shapes:
+//   logger.info('message', ...details)           — our convention
+//   logger.info({ meta }, ...details)            — Pino-style legacy callers
+type LogArguments =
+  | [message: string, ...details: unknown[]]
+  | [meta: Record<string, unknown>, ...details: unknown[]];
 
 export interface Logger {
   info: (...args: LogArguments) => void;
@@ -206,17 +211,38 @@ function patchConsoleForProduction() {
 
 patchConsoleForProduction();
 
+// Normalize either calling convention into (message, details[]) for `emit`.
+function normalizeArgs(args: unknown[]): { message: string; details: unknown[] } {
+  if (args.length > 0 && typeof args[0] === 'object' && args[0] !== null && !Array.isArray(args[0])) {
+    const meta = args[0] as Record<string, unknown>;
+    const message = typeof args[1] === 'string' ? args[1] : '';
+    return { message, details: [meta, ...args.slice(2)] };
+  }
+  const [maybeMessage, ...rest] = args;
+  return { message: typeof maybeMessage === 'string' ? maybeMessage : String(maybeMessage ?? ''), details: rest };
+}
+
 export function createLogger(service: string): Logger {
   return {
-    info: (message: string, ...details: unknown[]) => emit('info', service, message, details),
-    warn: (message: string, ...details: unknown[]) => emit('warn', service, message, details),
-    error: (message: string, ...details: unknown[]) => emit('error', service, message, details),
-    debug: (message: string, ...details: unknown[]) => {
+    info: (...args: unknown[]) => {
+      const { message, details } = normalizeArgs(args);
+      emit('info', service, message, details);
+    },
+    warn: (...args: unknown[]) => {
+      const { message, details } = normalizeArgs(args);
+      emit('warn', service, message, details);
+    },
+    error: (...args: unknown[]) => {
+      const { message, details } = normalizeArgs(args);
+      emit('error', service, message, details);
+    },
+    debug: (...args: unknown[]) => {
       if (process.env.DEBUG || rootLogger.level === 'debug') {
+        const { message, details } = normalizeArgs(args);
         emit('debug', service, message, details);
       }
     },
-  };
+  } as Logger;
 }
 
 export const logger = createLogger('server');

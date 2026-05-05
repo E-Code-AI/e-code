@@ -243,6 +243,22 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Project Share Tokens — opaque unguessable tokens for unlisted-link sharing.
+// `permission` decides whether the token grants read-only or full collab access
+// to a project that is otherwise private.
+export const projectShareTokens = pgTable("project_share_tokens", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  projectId: integer("project_id").notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  token: varchar("token").notNull().unique(),
+  permission: varchar("permission", { length: 20 }).notNull().default('view'), // 'view' | 'edit'
+  createdBy: integer("created_by").references(() => users.id, { onDelete: 'set null' }),
+  expiresAt: timestamp("expires_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("project_share_tokens_project_id_idx").on(table.projectId),
+]);
+
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(), // ✅ DB uses serial integer
   name: text("name").notNull(),
@@ -2000,6 +2016,10 @@ export type InsertEmailVerificationToken = z.infer<typeof insertEmailVerificatio
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSchema>;
+
+export type ProjectShareToken = typeof projectShareTokens.$inferSelect;
+export const insertProjectShareTokenSchema = createInsertSchema(projectShareTokens).omit({ id: true, createdAt: true, revokedAt: true });
+export type InsertProjectShareToken = z.infer<typeof insertProjectShareTokenSchema>;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;

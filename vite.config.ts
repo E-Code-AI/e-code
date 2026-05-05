@@ -24,7 +24,7 @@ function assertSingleReactChunkPlugin() {
     name: "assert-single-react-chunk",
     apply: "build" as const,
     enforce: "post" as const,
-    generateBundle(_options: unknown, bundle: Record<string, any>) {
+    generateBundle(this: { error(message: string): void }, _options: unknown, bundle: Record<string, any>) {
       const offenders: Array<{ chunk: string; modules: string[] }> = [];
 
       for (const [fileName, asset] of Object.entries(bundle)) {

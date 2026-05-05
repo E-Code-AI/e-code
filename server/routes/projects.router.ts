@@ -54,12 +54,13 @@ export class ProjectsRouter {
     // ✅ FIX (Nov 24, 2025): Allow anonymous access with bootstrap token for autonomous workspace creation
     const hasSession = this.hasValidSession(req);
     const bootstrapToken = req.query.bootstrap || req.headers['x-bootstrap-token'];
-    
-    // Require either session OR bootstrap token
-    if (!hasSession && !bootstrapToken) {
-      return res.status(401).json({ 
+    const shareTokenRaw = (req.query.shareToken || req.headers['x-share-token']) as string | undefined;
+
+    // Require session OR bootstrap token OR share token
+    if (!hasSession && !bootstrapToken && !shareTokenRaw) {
+      return res.status(401).json({
         message: "Unauthorized - authentication or bootstrap token required",
-        code: "AUTH_REQUIRED" 
+        code: "AUTH_REQUIRED"
       });
     }
     
@@ -150,6 +151,42 @@ export class ProjectsRouter {
       }
     }
     
+    // Share-token access: opaque unguessable token grants view (or edit) access
+    // to a project that is otherwise private. Read-only routes are always
+    // permitted; write methods require a token whose permission is "edit".
+    if (shareTokenRaw) {
+      try {
+        const tokenRow = await this.storage.getProjectShareTokenByToken(shareTokenRaw);
+        const valid =
+          tokenRow &&
+          tokenRow.projectId === project.id &&
+          !tokenRow.revokedAt &&
+          (!tokenRow.expiresAt || tokenRow.expiresAt.getTime() > Date.now());
+
+        if (valid) {
+          const isWrite = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS';
+          if (!isWrite || tokenRow!.permission === 'edit') {
+            (req as any).shareTokenAccess = { permission: tokenRow!.permission };
+            return next();
+          }
+          return res.status(403).json({
+            message: "Share token grants view-only access",
+            code: "SHARE_TOKEN_VIEW_ONLY"
+          });
+        }
+        return res.status(403).json({
+          message: "Invalid, expired or revoked share token",
+          code: "SHARE_TOKEN_INVALID"
+        });
+      } catch (error) {
+        projectLogger.error('[ensureProjectAccess] Share token validation failed:', redactErrorForLog(error));
+        return res.status(500).json({
+          message: "Share token validation error",
+          code: "SHARE_TOKEN_ERROR"
+        });
+      }
+    }
+
     // For authenticated users, check ownership/collaboration/visibility
     if (!userId) {
       // Should not reach here (would have failed earlier auth check)
@@ -158,20 +195,20 @@ export class ProjectsRouter {
         code: "AUTH_REQUIRED"
       });
     }
-    
+
     // Check if user is owner
     if (project.ownerId === userId) {
       return next();
     }
-    
+
     // Check if user is collaborator
     const collaborators = await this.storage.getProjectCollaborators(projectId);
     const isCollaborator = collaborators.some(c => c.userId === userId);
-    
+
     if (isCollaborator) {
       return next();
     }
-    
+
     // Check if project is public
     if (project.visibility === 'public') {
       return next();
@@ -800,6 +837,138 @@ export class ProjectsRouter {
           error: 'Failed to access project',
           code: 'SERVER_ERROR' 
         });
+      }
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Share-link endpoints — opaque tokens for unlisted project sharing.
+    // Owners can mint, list, and revoke tokens; lookup-by-token is public.
+    // ─────────────────────────────────────────────────────────────────────
+
+    // Public: resolve a share token to a sanitized project. Used by the
+    // shared-link landing page when a non-owner opens the URL.
+    this.router.get('/share-link/:token', async (req: Request, res: Response) => {
+      try {
+        const token = req.params.token;
+        if (!token || token.length < 16) {
+          return res.status(400).json({ message: "Invalid token format", code: "INVALID_TOKEN" });
+        }
+        const row = await this.storage.getProjectShareTokenByToken(token);
+        if (!row || row.revokedAt || (row.expiresAt && row.expiresAt.getTime() <= Date.now())) {
+          return res.status(404).json({ message: "Share link not found or expired", code: "TOKEN_NOT_FOUND" });
+        }
+        const project = await this.storage.getProject(String(row.projectId));
+        if (!project) {
+          return res.status(404).json({ message: "Project not found", code: "PROJECT_NOT_FOUND" });
+        }
+        const owner = await this.storage.getUser(String(project.ownerId));
+        res.json({
+          project: {
+            id: project.id,
+            name: project.name,
+            description: project.description,
+            language: project.language,
+            slug: project.slug,
+            coverImage: project.coverImage,
+            updatedAt: project.updatedAt,
+          },
+          owner: sanitizeOwner(owner),
+          permission: row.permission,
+        });
+      } catch (error) {
+        projectLogger.error('[share-link/:token] resolve failed:', redactErrorForLog(error));
+        res.status(500).json({ message: "Failed to resolve share link", code: "SERVER_ERROR" });
+      }
+    });
+
+    // Owner: mint a new share token. Body: { permission: 'view'|'edit', expiresInDays?: number }.
+    this.router.post('/:projectId/share-link', this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.projectId;
+        const project = await this.storage.getProject(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found", code: "PROJECT_NOT_FOUND" });
+
+        const userId = (req.user as User).id;
+        if (project.ownerId !== userId) {
+          return res.status(403).json({ message: "Only the owner can mint share links", code: "OWNER_ONLY" });
+        }
+
+        const permission = req.body?.permission === 'edit' ? 'edit' : 'view';
+        const expiresInDays = Number.isFinite(Number(req.body?.expiresInDays))
+          ? Math.max(1, Math.min(365, Number(req.body.expiresInDays)))
+          : null;
+        const expiresAt = expiresInDays ? new Date(Date.now() + expiresInDays * 86400 * 1000) : null;
+
+        const token = crypto.randomBytes(24).toString('base64url');
+        const row = await this.storage.createProjectShareToken({
+          projectId: project.id,
+          token,
+          permission,
+          createdBy: userId,
+          expiresAt,
+        });
+
+        res.json({
+          id: row.id,
+          token: row.token,
+          permission: row.permission,
+          expiresAt: row.expiresAt,
+          createdAt: row.createdAt,
+        });
+      } catch (error) {
+        projectLogger.error('[share-link POST] mint failed:', redactErrorForLog(error));
+        res.status(500).json({ message: "Failed to create share link", code: "SERVER_ERROR" });
+      }
+    });
+
+    // Owner: list active share tokens for a project.
+    this.router.get('/:projectId/share-link', this.ensureAuthenticated, this.ensureProjectAccess, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.projectId;
+        const project = await this.storage.getProject(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found", code: "PROJECT_NOT_FOUND" });
+
+        const userId = (req.user as User).id;
+        if (project.ownerId !== userId) {
+          return res.status(403).json({ message: "Only the owner can list share links", code: "OWNER_ONLY" });
+        }
+
+        const rows = await this.storage.listProjectShareTokens(project.id);
+        const now = Date.now();
+        const active = rows
+          .filter(r => !r.revokedAt && (!r.expiresAt || r.expiresAt.getTime() > now))
+          .map(r => ({
+            id: r.id,
+            token: r.token,
+            permission: r.permission,
+            expiresAt: r.expiresAt,
+            createdAt: r.createdAt,
+          }));
+        res.json({ tokens: active });
+      } catch (error) {
+        projectLogger.error('[share-link GET] list failed:', redactErrorForLog(error));
+        res.status(500).json({ message: "Failed to list share links", code: "SERVER_ERROR" });
+      }
+    });
+
+    // Owner: revoke a specific share token.
+    this.router.delete('/:projectId/share-link/:tokenId', this.ensureAuthenticated, this.ensureProjectAccess, csrfProtection, async (req: Request, res: Response) => {
+      try {
+        const projectId = req.params.projectId;
+        const project = await this.storage.getProject(projectId);
+        if (!project) return res.status(404).json({ message: "Project not found", code: "PROJECT_NOT_FOUND" });
+
+        const userId = (req.user as User).id;
+        if (project.ownerId !== userId) {
+          return res.status(403).json({ message: "Only the owner can revoke share links", code: "OWNER_ONLY" });
+        }
+
+        const ok = await this.storage.revokeProjectShareToken(req.params.tokenId);
+        if (!ok) return res.status(404).json({ message: "Token not found", code: "TOKEN_NOT_FOUND" });
+        res.json({ revoked: true });
+      } catch (error) {
+        projectLogger.error('[share-link DELETE] revoke failed:', redactErrorForLog(error));
+        res.status(500).json({ message: "Failed to revoke share link", code: "SERVER_ERROR" });
       }
     });
 

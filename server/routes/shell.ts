@@ -191,8 +191,10 @@ function applyResourceLimits(sessionId: string, pid: number | undefined): void {
 
   // ── CPU priority ──────────────────────────────────────────────────────────
   try {
-    // nice value 10 = lower-than-default scheduling priority
-    process.setPriority(pid, 10);
+    // nice value 10 = lower-than-default scheduling priority.
+    // os.setPriority is the canonical Node API; process.setPriority isn't
+    // declared on @types/node.
+    os.setPriority(pid, 10);
     logger.debug(`[Shell] Set nice=10 for PID ${pid} (session ${sessionId})`);
   } catch {
     // Not all platforms / privilege levels support this — ignore

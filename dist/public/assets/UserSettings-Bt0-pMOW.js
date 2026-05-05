@@ -1,0 +1,1 @@
+import{u as e,a as r}from"./vendor-react-BiZTh89O.js";import"./vendor-use-sync-external-store-BoFraX66.js";import"./vendor-regexparam-CPXopyEH.js";function n(){const[,t]=e();return r.useEffect(()=>{t("/settings",{replace:!0})},[t]),null}export{n as default};

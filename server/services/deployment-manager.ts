@@ -8,6 +8,19 @@ import { billingService } from './billing-service';
 import { deploymentRollbackService } from './deployment-rollback';
 import { DeploymentStatusType,deploymentWebSocketService } from './deployment-websocket-service';
 import { sslRenewalService } from './ssl-renewal.service';
+import { deploymentRuntime } from '../deployment/deployment-runtime';
+
+// Public base URL of this server. The deployment proxy mounts at /d/:id, so
+// the URL we hand back to users is `${APP_BASE_URL}/d/${deploymentId}/`.
+const APP_BASE_URL = (
+  process.env.APP_URL ||
+  (process.env.REPLIT_DOMAINS ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : '') ||
+  `http://localhost:${process.env.PORT || 5000}`
+).replace(/\/$/, '');
+
+function buildProxyUrl(deploymentId: string): string {
+  return `${APP_BASE_URL}/d/${deploymentId}/`;
+}
 
 export interface DeploymentConfig {
   id: string;
@@ -138,12 +151,12 @@ export class DeploymentManager {
       createdAt: new Date()
     };
 
-    // Generate deployment URL
+    // Generate deployment URL. The runtime serves traffic through the
+    // /d/:deploymentId proxy, so the URL we record points at the proxy mount.
+    // Custom domains still get the friendly URL (DNS handled separately).
+    deployment.url = buildProxyUrl(deploymentId);
     if (config.customDomain) {
       deployment.customUrl = `https://${config.customDomain}`;
-    } else {
-      const subdomain = `${config.projectId}-${deploymentId.slice(0, 8)}`;
-      deployment.url = `https://${subdomain}.e-code.ai`;
     }
 
     // Setup SSL certificate if enabled
@@ -625,6 +638,11 @@ export class DeploymentManager {
         pushAndBroadcast(`✅ Successfully deployed to ${region}`);
       }
 
+      // Actually launch the deployment so the URL we expose serves traffic.
+      // For 'static' deployments we expose the build output dir; everything
+      // else gets the user's startCommand spawned in the project workspace.
+      await this.launchRuntime(deploymentId, config, pushAndBroadcast);
+
       // Configure health checks
       if (config.healthCheck) {
         pushAndBroadcast('🔍 Setting up health checks...');
@@ -641,6 +659,66 @@ export class DeploymentManager {
     pushAndBroadcast('📊 Setting up monitoring and alerts...');
     await this.setupMonitoring(deploymentId, config);
     pushAndBroadcast('✅ Monitoring configured');
+  }
+
+  /**
+   * Launch the deployment runtime. Resolves once the upstream is reachable
+   * (or throws if the start command never binds its port).
+   */
+  private async launchRuntime(
+    deploymentId: string,
+    config: DeploymentConfig,
+    pushAndBroadcast: (line: string) => void
+  ): Promise<void> {
+    const projectPath = getProjectWorkspacePath(config.projectId);
+
+    if (config.type === 'static') {
+      // Default to ./dist if buildCommand wasn't set or didn't say otherwise.
+      const staticDir = path.resolve(
+        projectPath,
+        (config as any).outputDirectory || 'dist'
+      );
+      try {
+        await fs.access(staticDir);
+      } catch {
+        throw new Error(`Static output directory not found: ${staticDir}`);
+      }
+      deploymentRuntime.startStatic({ deploymentId, rootPath: staticDir });
+      pushAndBroadcast(`📂 Serving static deployment from ${staticDir}`);
+      return;
+    }
+
+    const startCommand = config.startCommand?.trim() || this.defaultStartCommand(config);
+    if (!startCommand) {
+      throw new Error('startCommand is required for non-static deployments');
+    }
+
+    pushAndBroadcast(`▶️  Launching runtime: ${startCommand}`);
+    const { port } = await deploymentRuntime.startProcess({
+      deploymentId,
+      projectPath,
+      startCommand,
+      envVars: config.environmentVars || {},
+      bootTimeoutMs: 60_000,
+      onLog: (line) => {
+        const trimmed = line.toString().replace(/\s+$/, '');
+        if (trimmed) pushAndBroadcast(`   ${trimmed}`);
+      },
+    });
+    pushAndBroadcast(`🟢 Runtime listening on 127.0.0.1:${port}`);
+  }
+
+  private defaultStartCommand(config: DeploymentConfig): string {
+    switch (config.type) {
+      case 'autoscale':
+      case 'reserved-vm':
+      case 'serverless':
+        return 'npm start';
+      case 'scheduled':
+        return 'node index.js';
+      default:
+        return 'npm start';
+    }
   }
 
   private async deployToRegion(deploymentId: string, region: string, _config: DeploymentConfig): Promise<void> {
@@ -757,6 +835,93 @@ export class DeploymentManager {
     });
   }
 
+  /**
+   * Boot-time recovery: walk the deployments table for rows last persisted as
+   * `active` and relaunch their runtimes. Each failure is isolated — one
+   * stuck deployment must not prevent the rest from coming back.
+   *
+   * Called once from server/index.ts after the listener is up. Safe to no-op
+   * if storage is unavailable (returns count 0).
+   */
+  async restoreActiveDeployments(): Promise<{ restored: number; failed: number }> {
+    let restored = 0;
+    let failed = 0;
+    try {
+      const rows = await storage.listDeployments();
+      const active = rows.filter((d) => d.status === 'active');
+      for (const row of active) {
+        const deploymentId = row.deploymentId;
+        if (!deploymentId) continue;
+
+        try {
+          const meta = (row.metadata as Record<string, unknown> | undefined) || {};
+          const projectId = row.projectId;
+          if (projectId == null) {
+            throw new Error('deployment row missing projectId');
+          }
+
+          // Hydrate the in-memory status object the rest of the manager expects.
+          const inMemory: DeploymentStatus = {
+            id: deploymentId,
+            projectId,
+            status: 'deploying',
+            buildLog: [],
+            deploymentLog: [`🔁 Restoring deployment after server restart...`],
+            createdAt: row.createdAt ? new Date(row.createdAt) : new Date(),
+            url: row.url || buildProxyUrl(deploymentId),
+            customUrl: row.customDomain ? `https://${row.customDomain}` : undefined,
+          };
+          this.deployments.set(deploymentId, inMemory);
+
+          await ensureProjectDirectory(projectId);
+          const restoreConfig: DeploymentConfig = {
+            id: deploymentId,
+            projectId,
+            type: (row.type as DeploymentConfig['type']) || 'autoscale',
+            environment: (row.environment as DeploymentConfig['environment']) || 'production',
+            regions: (meta.regions as string[]) || ['us-east-1'],
+            sslEnabled: Boolean(meta.sslEnabled),
+            buildCommand: meta.buildCommand as string | undefined,
+            startCommand: meta.startCommand as string | undefined,
+            environmentVars: (meta.environmentVars as Record<string, string>) || {},
+          };
+
+          await this.launchRuntime(deploymentId, restoreConfig, (line) =>
+            this.broadcastDeployLog(deploymentId, line)
+          );
+
+          inMemory.status = 'active';
+          inMemory.lastDeployedAt = new Date();
+          await this.persistDeploymentState(deploymentId, inMemory, { lastError: null });
+          restored++;
+        } catch (err: any) {
+          failed++;
+          console.error(
+            `[DeploymentManager] restore failed for ${deploymentId}:`,
+            err?.message || err
+          );
+          // Mark as failed so the user is prompted to re-deploy rather than
+          // believing the URL still serves traffic.
+          try {
+            await storage.updateDeployment(row.id, {
+              status: 'failed',
+              metadata: {
+                ...((row.metadata as Record<string, unknown>) || {}),
+                lastError: `Restore failed: ${err?.message || err}`,
+              },
+            });
+          } catch (persistErr) {
+            console.error(`[DeploymentManager] failed to mark restore failure:`, persistErr);
+          }
+          this.deployments.delete(deploymentId);
+        }
+      }
+    } catch (err) {
+      console.error('[DeploymentManager] restoreActiveDeployments fatal:', err);
+    }
+    return { restored, failed };
+  }
+
   async listDeployments(projectId: string | number): Promise<DeploymentStatus[]> {
     // CRITICAL FIX: Filter by deployment.projectId, not by checking if UUID includes projectId
     const projectIdStr = typeof projectId === 'number' ? projectId.toString() : projectId;
@@ -789,6 +954,11 @@ export class DeploymentManager {
     if (!deployment && !dbDeployment) {
       throw new Error('Deployment not found');
     }
+
+    // Kill the runtime first so the process is gone before we mark stopped.
+    await deploymentRuntime.stop(deploymentId).catch((err) => {
+      console.error(`[DeploymentManager] runtime.stop(${deploymentId}) failed:`, err);
+    });
 
     if (deployment) {
       deployment.status = 'stopped';
@@ -844,8 +1014,30 @@ export class DeploymentManager {
     this.broadcastStatusChange(deploymentId, 'deploying', previousStatus);
     this.broadcastDeployLog(deploymentId, '🔄 Restart requested, recycling deployment runtime...');
 
-    setTimeout(async () => {
+    // Recycle the runtime: stop the existing process (if any), then relaunch
+    // from the persisted config so the URL keeps serving traffic.
+    (async () => {
       try {
+        await deploymentRuntime.stop(deploymentId).catch(() => {});
+
+        const persisted = await storage.getDeploymentByExternalId(deploymentId);
+        const meta = (persisted?.metadata as Record<string, unknown> | undefined) || {};
+        const restartConfig: DeploymentConfig = {
+          id: deploymentId,
+          projectId: persisted?.projectId ?? 0,
+          type: (persisted?.type as DeploymentConfig['type']) || 'autoscale',
+          environment: (persisted?.environment as DeploymentConfig['environment']) || 'production',
+          regions: (meta.regions as string[]) || ['us-east-1'],
+          sslEnabled: Boolean(meta.sslEnabled),
+          buildCommand: meta.buildCommand as string | undefined,
+          startCommand: meta.startCommand as string | undefined,
+          environmentVars: (meta.environmentVars as Record<string, string>) || {},
+        };
+
+        await this.launchRuntime(deploymentId, restartConfig, (line) =>
+          this.broadcastDeployLog(deploymentId, line)
+        );
+
         const liveDeployment = this.deployments.get(deploymentId);
         if (liveDeployment) {
           liveDeployment.status = 'active';
@@ -854,9 +1046,8 @@ export class DeploymentManager {
           await this.persistDeploymentState(deploymentId, liveDeployment, { lastError: null });
         }
 
-        const persistedDeployment = await storage.getDeploymentByExternalId(deploymentId);
-        if (persistedDeployment) {
-          await storage.updateDeployment(persistedDeployment.id, { status: 'active' });
+        if (persisted) {
+          await storage.updateDeployment(persisted.id, { status: 'active' });
         }
 
         this.broadcastStatusChange(deploymentId, 'active', 'deploying');
@@ -864,8 +1055,13 @@ export class DeploymentManager {
       } catch (error) {
         console.error(`[DeploymentManager] Failed to finish restart for ${deploymentId}:`, error);
         this.broadcastError(deploymentId, error instanceof Error ? error.message : 'Restart failed');
+        const persistedDeployment = await storage.getDeploymentByExternalId(deploymentId);
+        if (persistedDeployment) {
+          await storage.updateDeployment(persistedDeployment.id, { status: 'failed' });
+        }
+        this.broadcastStatusChange(deploymentId, 'failed', 'deploying');
       }
-    }, 1500);
+    })();
   }
 
   async clearDeploymentLogs(deploymentId: string): Promise<void> {
@@ -900,6 +1096,11 @@ export class DeploymentManager {
 
     deployment.status = 'stopped';
     deployment.deploymentLog.push('🛑 Stopping deployment...');
+
+    // Tear down the live runtime before wiping the workspace dir.
+    await deploymentRuntime.stop(deploymentId).catch((err) => {
+      console.error(`[DeploymentManager] runtime.stop(${deploymentId}) failed:`, err);
+    });
 
     // Cleanup resources
     try {

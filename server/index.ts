@@ -677,6 +677,21 @@ httpServer.listen(port, "0.0.0.0", () => {
     throw error; // Crash fast — no API routes means the app is broken
   }
 
+  // Boot recovery: relaunch deployments that were `active` before the server
+  // restarted so their /d/<id> URLs keep serving traffic. Failures are logged
+  // and the row is flipped to `failed` so users get an honest signal.
+  (async () => {
+    try {
+      const { deploymentManager } = await import('./services/deployment-manager');
+      const { restored, failed } = await deploymentManager.restoreActiveDeployments();
+      if (restored > 0 || failed > 0) {
+        logger.info(`[Deployments] Boot recovery: ${restored} restored, ${failed} failed`);
+      }
+    } catch (err: any) {
+      logger.error(`[Deployments] Boot recovery error: ${err?.message || err}`);
+    }
+  })();
+
   // SECURITY: Validate origin configuration BEFORE initializing ANY WebSocket servers
   // This ensures all WebSocket servers have proper origin validation configured
   try {

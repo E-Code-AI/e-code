@@ -13,6 +13,7 @@ import userPrefsRouter from "./user-prefs.router";
 import { HealthRouter } from "./health.router";
 import collaborationRouter from "./collaboration";
 import deploymentRouter from "./deployment";
+import deploymentProxyRouter from "./deployment-proxy.router";
 import fileUploadRouter from "./file-upload";
 import notificationsRouter from "./notifications";
 import previewRouter from "./preview";
@@ -236,6 +237,10 @@ export class MainRouter {
         return next(error);
       }
     };
+
+    // Deployment proxy: /d/:deploymentId/* → live runtime upstream.
+    // Mounted before /api so deployment URLs resolve regardless of auth state.
+    app.use(deploymentProxyRouter);
 
     // Health check routes (no auth required)
     app.use('/api', this.healthRouter.getRouter());
