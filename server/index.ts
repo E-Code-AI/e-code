@@ -768,11 +768,19 @@ httpServer.listen(port, "0.0.0.0", () => {
     // Setup Collaboration WebSocket server for real-time collaborative editing (Yjs)
     const { CollaborationServer } = await import("./collaboration/collaboration-server");
     const collaborationServer = new CollaborationServer(httpServer);
-    
+
     // Make collaboration server available globally
     (global as any).collaborationServer = collaborationServer;
+
+    // Also register the /yjs path handler so the official y-websocket client
+    // (used by useCollabExtensions on the editor) connects directly to a
+    // protocol-compatible upstream. RealCollaborationService.setupWebSocket
+    // wires this into the central upgrade dispatcher.
+    const { realCollaborationService } = await import("./collaboration/real-collaboration");
+    realCollaborationService.setupWebSocket(httpServer);
+
     markServiceReady('collaboration');
-    logger.info('[Collaboration] Yjs document sync server initialized at /collaboration');
+    logger.info('[Collaboration] Yjs document sync server initialized at /collaboration and /yjs');
   } catch (error) {
     logger.error(`[WORKING SERVER] Failed to setup Collaboration WebSocket: ${error}`);
     markServiceFailed('collaboration', String(error));

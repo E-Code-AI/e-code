@@ -166,7 +166,11 @@ async function getYDoc(docName: string): Promise<DocData> {
 
 async function setupWSConnection(ws: WebSocket, req: any) {
   const url = new URL(req.url, 'http://localhost');
-  const docName = url.searchParams.get('room') || 'default';
+  // y-websocket clients connect to `${baseUrl}/${roomName}` — the room is
+  // the trailing path segment after the mount prefix, NOT a query param.
+  // Fall back to `?room=` for backward compat with older callers.
+  const pathSegments = url.pathname.split('/').filter(Boolean);
+  const docName = pathSegments[pathSegments.length - 1] || url.searchParams.get('room') || 'default';
   const docData = await getYDoc(docName);
   const { doc, awareness, conns } = docData;
   
