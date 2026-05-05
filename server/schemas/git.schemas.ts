@@ -87,10 +87,13 @@ export const MergeSchema = z.object({
   message: z.string().max(10_000).optional(),
 }) satisfies z.ZodType<GitMergeRequest & { message?: string }>;
 
-export const AddRemoteSchema = z.object({
+// `name` is optional in the *input* (gets defaulted to 'origin') but always
+// present in the parsed *output*, which is what `GitAddRemoteRequest` expects.
+// Express the asymmetry via the third ZodType param.
+export const AddRemoteSchema: z.ZodType<GitAddRemoteRequest, z.ZodTypeDef, { url: string; name?: string }> = z.object({
   name: safeRemoteName.default('origin'),
   url: z.string().url('Remote URL must be a valid URL'),
-}) satisfies z.ZodType<GitAddRemoteRequest>;
+});
 
 export const CloneSchema = z.object({
   url: z.string().min(1, 'Repository URL is required'),

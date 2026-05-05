@@ -569,6 +569,7 @@ export interface IStorage {
   updateDeploymentStatus(id: number, updates: { status: string; lastDeployedAt?: Date }): Promise<void>;
   getProjectDeployments(projectId: string | number): Promise<Deployment[]>;
   getRecentDeployments(userId: string | number): Promise<Deployment[]>;
+  countActiveDeploymentsByOwner(userId: string | number): Promise<number>;
 
   // Audit log operations
   getAuditLogs(filters: { userId: string | number; action?: string; dateRange?: string }): Promise<any[]>;
@@ -2226,6 +2227,20 @@ export class DatabaseStorage implements IStorage {
       .where(sql`${deployments.projectId} = ANY(${projectIds})`)
       .orderBy(desc(deployments.createdAt))
       .limit(10);
+  }
+
+  async countActiveDeploymentsByOwner(userId: string | number): Promise<number> {
+    const userProjects = await this.getProjectsByUser(userId);
+    const projectIds = userProjects.map(p => p.id);
+    if (projectIds.length === 0) return 0;
+
+    const rows = await this.db
+      .select({ id: deployments.id })
+      .from(deployments)
+      .where(
+        sql`${deployments.projectId} = ANY(${projectIds}) AND ${deployments.status} IN ('pending','building','deploying','active')`
+      );
+    return rows.length;
   }
 
   // Audit log operations

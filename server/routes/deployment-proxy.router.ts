@@ -16,13 +16,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { deploymentRuntime } from '../deployment/deployment-runtime';
+import { deploymentManager } from '../services/deployment-manager';
 
 const router = express.Router();
 
 const PREFIX_RE = /^\/d\/[A-Za-z0-9_\-]+/;
 
-router.use('/d/:deploymentId', (req: Request, res: Response, next: NextFunction) => {
+router.use('/d/:deploymentId', async (req: Request, res: Response, next: NextFunction) => {
   const { deploymentId } = req.params;
+
+  // Wake-on-access: if the deployment was auto-slept, relaunch it before
+  // serving. Returns a normal 503 if the row is missing/non-wakeable.
+  if (!deploymentRuntime.getHandle(deploymentId)) {
+    try {
+      await deploymentManager.wakeIfSleeping(deploymentId);
+    } catch (err: any) {
+      return res.status(503).json({
+        error: 'Deployment not running',
+        code: 'DEPLOYMENT_NOT_RUNNING',
+        hint: err?.message || 'Could not wake deployment',
+      });
+    }
+  }
+
   const target = deploymentRuntime.getProxyTarget(deploymentId);
 
   if (!target) {
@@ -32,6 +48,9 @@ router.use('/d/:deploymentId', (req: Request, res: Response, next: NextFunction)
       hint: 'The deployment may be stopped, building, or has not finished provisioning.',
     });
   }
+
+  // Idle-sleep accounting: every served request pushes the sleep deadline out.
+  deploymentRuntime.touch(deploymentId);
 
   // Express strips the matched mount path from req.url, so the upstream sees
   // the right path; but we still rebuild from originalUrl to be defensive

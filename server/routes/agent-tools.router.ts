@@ -1160,7 +1160,7 @@ export default function createAgentToolsRouter(): Router {
 
       // Attempt image generation via the AI provider manager
       const { aiProviderManager } = await import('../ai/ai-provider-manager');
-      const provider = aiProviderManager.getProviderByName('openai') || aiProviderManager.getDefaultProvider();
+      const provider = aiProviderManager.getProvider('openai') || aiProviderManager.getDefaultProvider();
 
       if (!hasImageGeneration(provider)) {
         return res.status(501).json({

@@ -181,6 +181,8 @@ export class StorageService {
   private async getGcsStorage() {
     const { Storage } = await import('@google-cloud/storage');
     return new Storage({
+      // External-account credentials shape lives in google-auth-library; the
+      // GCS Storage typings don't re-export it, so we cast through `any`.
       credentials: {
         audience: 'replit',
         subject_token_type: 'access_token',
@@ -191,7 +193,7 @@ export class StorageService {
           format: { type: 'json', subject_token_field_name: 'access_token' },
         },
         universe_domain: 'googleapis.com',
-      } as Parameters<typeof Storage>[0]['credentials'],
+      } as any,
       projectId: '',
     });
   }

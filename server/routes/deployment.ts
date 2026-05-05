@@ -318,6 +318,16 @@ router.post('/projects/:projectId/deploy', async (req, res) => {
 
   } catch (error) {
     console.error('[REAL DEPLOYMENT] Deployment creation error:', error);
+    if (error instanceof Error && error.name === 'DeploymentQuotaExceededError') {
+      return res.status(429).json({
+        success: false,
+        code: 'DEPLOYMENT_QUOTA_EXCEEDED',
+        message: error.message,
+        tier: (error as any).tier,
+        limit: (error as any).limit,
+        current: (error as any).current,
+      });
+    }
     res.status(400).json({
       success: false,
       message: error instanceof Error ? error.message : 'Failed to create deployment',

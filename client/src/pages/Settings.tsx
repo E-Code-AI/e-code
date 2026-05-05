@@ -762,13 +762,13 @@ export default function Settings() {
                       )}
                     </div>
                     {!twoFAStatus?.enabled ? (
-                      <Button onClick={() => setup2FAMutation.mutate()} disabled={setup2FAMutation.isPending} data-testid="button-enable-2fa">
+                      <Button onClick={() => setup2FAMutation.mutate(undefined)} disabled={setup2FAMutation.isPending} data-testid="button-enable-2fa">
                         {setup2FAMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         Enable 2FA
                       </Button>
                     ) : (
                       <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => regenBackupMutation.mutate()} disabled={regenBackupMutation.isPending} data-testid="button-regen-backup">
+                        <Button variant="outline" onClick={() => regenBackupMutation.mutate(undefined)} disabled={regenBackupMutation.isPending} data-testid="button-regen-backup">
                           {regenBackupMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                           Regenerate Backup Codes
                         </Button>
@@ -1284,7 +1284,7 @@ export default function Settings() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => revokeAllSessionsMutation.mutate()} disabled={revokeAllSessionsMutation.isPending}>
+                    <AlertDialogAction onClick={() => revokeAllSessionsMutation.mutate(undefined)} disabled={revokeAllSessionsMutation.isPending}>
                       Sign out others
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -1442,7 +1442,7 @@ export default function Settings() {
                 </div>
                 <Button
                   variant="destructive"
-                  onClick={() => deleteAccountMutation.mutate()}
+                  onClick={() => deleteAccountMutation.mutate(undefined)}
                   disabled={deleteAccountMutation.isPending || deleteConfirmText !== me?.username}
                   data-testid="button-delete-account"
                 >

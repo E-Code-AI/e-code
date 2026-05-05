@@ -28,6 +28,7 @@ export interface RuntimeProcessHandle {
   port: number;
   child: ChildProcess;
   startedAt: Date;
+  lastAccessedAt: Date;
   workdir: string;
 }
 
@@ -36,6 +37,7 @@ export interface RuntimeStaticHandle {
   deploymentId: string;
   rootPath: string;
   startedAt: Date;
+  lastAccessedAt: Date;
 }
 
 export type RuntimeHandle = RuntimeProcessHandle | RuntimeStaticHandle;
@@ -99,6 +101,7 @@ class DeploymentRuntime {
       port,
       child,
       startedAt: new Date(),
+      lastAccessedAt: new Date(),
       workdir: opts.projectPath,
     };
     this.handles.set(opts.deploymentId, handle);
@@ -144,9 +147,22 @@ class DeploymentRuntime {
       deploymentId: opts.deploymentId,
       rootPath: path.resolve(opts.rootPath),
       startedAt: new Date(),
+      lastAccessedAt: new Date(),
     };
     this.handles.set(opts.deploymentId, handle);
     return handle;
+  }
+
+  /** Mark a deployment as just-accessed; used for idle-sleep accounting. */
+  touch(deploymentId: string): void {
+    const handle = this.handles.get(deploymentId);
+    if (handle) handle.lastAccessedAt = new Date();
+  }
+
+  /** Return deployments idle longer than `idleMs` (caller decides what to do). */
+  getIdleHandles(idleMs: number): RuntimeHandle[] {
+    const cutoff = Date.now() - idleMs;
+    return Array.from(this.handles.values()).filter((h) => h.lastAccessedAt.getTime() < cutoff);
   }
 
   /** Best-effort process termination. Idempotent. */

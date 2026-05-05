@@ -22,6 +22,23 @@ function buildProxyUrl(deploymentId: string): string {
   return `${APP_BASE_URL}/d/${deploymentId}/`;
 }
 
+// Per-tier quota on concurrent (non-stopped) deployments. The free tier is
+// intentionally tight to keep port + memory pressure bounded; enterprise has
+// no cap. Override per-environment via DEPLOYMENT_QUOTA_<TIER>.
+const DEPLOYMENT_QUOTA: Record<string, number> = {
+  free: Number(process.env.DEPLOYMENT_QUOTA_FREE) || 1,
+  core: Number(process.env.DEPLOYMENT_QUOTA_CORE) || 5,
+  teams: Number(process.env.DEPLOYMENT_QUOTA_TEAMS) || 25,
+  enterprise: Number(process.env.DEPLOYMENT_QUOTA_ENTERPRISE) || Number.POSITIVE_INFINITY,
+};
+
+export class DeploymentQuotaExceededError extends Error {
+  constructor(public readonly tier: string, public readonly limit: number, public readonly current: number) {
+    super(`Deployment quota exceeded for tier "${tier}": ${current}/${limit} active deployments. Stop one before launching another.`);
+    this.name = 'DeploymentQuotaExceededError';
+  }
+}
+
 export interface DeploymentConfig {
   id: string;
   projectId: string | number; // Support both UUID strings and numeric IDs
@@ -82,13 +99,105 @@ export interface DeploymentStatus {
   lastDeployedAt?: Date;
 }
 
+// Idle sweep: stop runtimes whose URL hasn't been hit in this many ms. The
+// deployment row stays `active` and gets `metadata.auto_slept = true` so we
+// can wake it on the next request without losing the user's state.
+const IDLE_SLEEP_MS = Number(process.env.DEPLOYMENT_IDLE_SLEEP_MS) || 30 * 60 * 1000;
+const IDLE_SWEEP_INTERVAL_MS = Number(process.env.DEPLOYMENT_IDLE_SWEEP_MS) || 60 * 1000;
+
 export class DeploymentManager {
   private deployments = new Map<string, DeploymentStatus>();
   private buildQueue: string[] = [];
   private readonly baseDeploymentPath = '/tmp/deployments';
+  private idleSweepTimer: NodeJS.Timeout | null = null;
+  // De-duplicate concurrent wakes so two simultaneous requests don't both
+  // try to spawn the same deployment.
+  private wakingDeployments = new Map<string, Promise<void>>();
 
   constructor() {
     this.ensureDeploymentDirectory();
+    this.startIdleSweep();
+  }
+
+  private startIdleSweep(): void {
+    if (this.idleSweepTimer || IDLE_SLEEP_MS <= 0) return;
+    this.idleSweepTimer = setInterval(() => {
+      this.sweepIdleDeployments().catch((err) =>
+        console.error('[DeploymentManager] idle sweep failed:', err)
+      );
+    }, IDLE_SWEEP_INTERVAL_MS);
+    // Allow the process to exit even if this timer is the last live handle.
+    if (typeof this.idleSweepTimer.unref === 'function') this.idleSweepTimer.unref();
+  }
+
+  private async sweepIdleDeployments(): Promise<void> {
+    const idle = deploymentRuntime.getIdleHandles(IDLE_SLEEP_MS);
+    for (const handle of idle) {
+      try {
+        await deploymentRuntime.stop(handle.deploymentId);
+        const dbRow = await storage.getDeploymentByExternalId(handle.deploymentId);
+        if (dbRow) {
+          await storage.updateDeployment(dbRow.id, {
+            metadata: {
+              ...((dbRow.metadata as Record<string, unknown>) || {}),
+              auto_slept: true,
+              slept_at: new Date().toISOString(),
+            },
+          });
+        }
+        const inMem = this.deployments.get(handle.deploymentId);
+        if (inMem) inMem.deploymentLog.push('💤 Deployment auto-slept after idle period');
+        this.broadcastDeployLog(handle.deploymentId, '💤 Deployment auto-slept after idle period');
+      } catch (err) {
+        console.error(`[DeploymentManager] failed to sleep ${handle.deploymentId}:`, err);
+      }
+    }
+  }
+
+  /**
+   * Wake a sleeping deployment on demand. Idempotent: returns the same
+   * in-flight promise if multiple callers race.
+   */
+  async wakeIfSleeping(deploymentId: string): Promise<void> {
+    if (deploymentRuntime.getHandle(deploymentId)) return; // already running
+    const inflight = this.wakingDeployments.get(deploymentId);
+    if (inflight) return inflight;
+
+    const promise = (async () => {
+      const dbRow = await storage.getDeploymentByExternalId(deploymentId);
+      if (!dbRow) throw new Error(`No deployment row for ${deploymentId}`);
+      const meta = (dbRow.metadata as Record<string, unknown> | undefined) || {};
+      if (dbRow.status !== 'active' && !meta.auto_slept) {
+        throw new Error(`Deployment ${deploymentId} is not in a wakeable state (${dbRow.status})`);
+      }
+      const cfg: DeploymentConfig = {
+        id: deploymentId,
+        projectId: dbRow.projectId,
+        type: (dbRow.type as DeploymentConfig['type']) || 'autoscale',
+        environment: (dbRow.environment as DeploymentConfig['environment']) || 'production',
+        regions: (meta.regions as string[]) || ['us-east-1'],
+        sslEnabled: Boolean(meta.sslEnabled),
+        buildCommand: meta.buildCommand as string | undefined,
+        startCommand: meta.startCommand as string | undefined,
+        environmentVars: (meta.environmentVars as Record<string, string>) || {},
+      };
+
+      await ensureProjectDirectory(dbRow.projectId);
+      await this.launchRuntime(deploymentId, cfg, (line) =>
+        this.broadcastDeployLog(deploymentId, line)
+      );
+      // Clear the auto_slept flag now that we're back up.
+      await storage.updateDeployment(dbRow.id, {
+        metadata: { ...meta, auto_slept: false, woke_at: new Date().toISOString() },
+      });
+      this.broadcastDeployLog(deploymentId, '⏰ Deployment woke from sleep');
+    })();
+    this.wakingDeployments.set(deploymentId, promise);
+    try {
+      await promise;
+    } finally {
+      this.wakingDeployments.delete(deploymentId);
+    }
   }
 
   private async ensureDeploymentDirectory() {
@@ -203,6 +312,26 @@ export class DeploymentManager {
     const projectIdForLookup = typeof config.projectId === 'number' ? String(config.projectId) : config.projectId;
     const project = await storage.getProject(projectIdForLookup);
     if (project) {
+      // Per-user concurrent-deployment quota. Done after the DB row is
+      // created so the count itself sees-and-includes-this row, then we
+      // compare to the tier ceiling. Rolling back the row on quota breach
+      // keeps the user-visible count honest.
+      try {
+        const owner = await storage.getUser(String(project.ownerId));
+        const tier = (owner as any)?.subscriptionTier || 'free';
+        const limit = DEPLOYMENT_QUOTA[tier] ?? DEPLOYMENT_QUOTA.free;
+        if (Number.isFinite(limit)) {
+          const current = await storage.countActiveDeploymentsByOwner(project.ownerId);
+          if (current > limit) {
+            await storage.updateDeployment(dbDeployment.id, { status: 'failed' });
+            throw new DeploymentQuotaExceededError(tier, limit, current);
+          }
+        }
+      } catch (err) {
+        if (err instanceof DeploymentQuotaExceededError) throw err;
+        console.error('[DeploymentManager] quota check failed (allowing deployment):', err);
+      }
+
       await billingService.trackResourceUsage(
         project.ownerId,
         `deployment.${config.type}`,

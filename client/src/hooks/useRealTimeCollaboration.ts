@@ -57,6 +57,7 @@ export interface FileChangeNotification {
   username: string;
   file: string;
   action: 'create' | 'update' | 'delete';
+  projectId?: number | string;
 }
 
 interface UseRealTimeCollaborationOptions {
