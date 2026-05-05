@@ -344,6 +344,112 @@ spec:
 
     return status;
   }
+
+  /**
+   * Apply or update a HorizontalPodAutoscaler so Kubernetes drives the
+   * replica count between min/max based on CPU utilization. Uses the
+   * official @kubernetes/client-node so we don't shell out for the
+   * autoscaling control plane.
+   *
+   * Returns true if the HPA was created or replaced; false if the K8s
+   * client is unavailable (e.g. no kubeconfig in dev) — callers can fall
+   * back to fixed replicas.
+   */
+  async applyAutoscalePolicy(
+    deploymentId: string,
+    policy: { minReplicas: number; maxReplicas: number; targetCPUUtilization?: number }
+  ): Promise<boolean> {
+    const deployment = this.activeDeployments.get(deploymentId);
+    if (!deployment) throw new Error('Deployment not found');
+
+    let k8s: typeof import('@kubernetes/client-node');
+    try {
+      k8s = await import('@kubernetes/client-node');
+    } catch {
+      console.warn('[ContainerOrchestrator] @kubernetes/client-node not available; skipping HPA');
+      return false;
+    }
+
+    const namespace = 'e-code-apps';
+    const name = `${deployment.containerName}-hpa`;
+    const target = policy.targetCPUUtilization ?? 70;
+    const body = {
+      apiVersion: 'autoscaling/v2',
+      kind: 'HorizontalPodAutoscaler',
+      metadata: { name, namespace, labels: { 'e-code/deployment-id': deploymentId } },
+      spec: {
+        scaleTargetRef: {
+          apiVersion: 'apps/v1',
+          kind: 'Deployment',
+          name: deployment.containerName,
+        },
+        minReplicas: policy.minReplicas,
+        maxReplicas: policy.maxReplicas,
+        metrics: [
+          {
+            type: 'Resource',
+            resource: {
+              name: 'cpu',
+              target: { type: 'Utilization', averageUtilization: target },
+            },
+          },
+        ],
+      },
+    };
+
+    let applied = false;
+    for (const targetHost of deployment.targetHosts) {
+      try {
+        const kc = new k8s.KubeConfig();
+        kc.loadFromDefault();
+        if (targetHost.id) {
+          try { kc.setCurrentContext(targetHost.id); } catch { /* fall back to default ctx */ }
+        }
+        const client = kc.makeApiClient(k8s.AutoscalingV2Api);
+        try {
+          await client.replaceNamespacedHorizontalPodAutoscaler({ name, namespace, body } as any);
+        } catch (err: any) {
+          if (err?.code === 404 || err?.response?.statusCode === 404) {
+            await client.createNamespacedHorizontalPodAutoscaler({ namespace, body } as any);
+          } else {
+            throw err;
+          }
+        }
+        applied = true;
+      } catch (err: any) {
+        console.error(`[ContainerOrchestrator] HPA apply failed in ${targetHost.region}:`, err?.message || err);
+      }
+    }
+    return applied;
+  }
+
+  async deleteAutoscalePolicy(deploymentId: string): Promise<void> {
+    const deployment = this.activeDeployments.get(deploymentId);
+    if (!deployment) return;
+    let k8s: typeof import('@kubernetes/client-node');
+    try {
+      k8s = await import('@kubernetes/client-node');
+    } catch {
+      return;
+    }
+    const namespace = 'e-code-apps';
+    const name = `${deployment.containerName}-hpa`;
+    for (const targetHost of deployment.targetHosts) {
+      try {
+        const kc = new k8s.KubeConfig();
+        kc.loadFromDefault();
+        if (targetHost.id) {
+          try { kc.setCurrentContext(targetHost.id); } catch { /* ignore */ }
+        }
+        const client = kc.makeApiClient(k8s.AutoscalingV2Api);
+        await client.deleteNamespacedHorizontalPodAutoscaler({ name, namespace } as any);
+      } catch (err: any) {
+        if (err?.code !== 404 && err?.response?.statusCode !== 404) {
+          console.error(`[ContainerOrchestrator] HPA delete failed:`, err?.message || err);
+        }
+      }
+    }
+  }
 }
 
 export const containerOrchestrator = new ContainerOrchestrator();
