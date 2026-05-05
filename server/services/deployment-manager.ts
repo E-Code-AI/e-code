@@ -32,6 +32,34 @@ const DEPLOYMENT_QUOTA: Record<string, number> = {
   enterprise: Number(process.env.DEPLOYMENT_QUOTA_ENTERPRISE) || Number.POSITIVE_INFINITY,
 };
 
+// Per-tier process resource caps. Applied via `ulimit` and `nice` wrapping
+// the start command so we don't need Docker to enforce them. Memory in MB.
+interface TierResourceLimits {
+  memoryMb: number; // 0 = no limit
+  niceLevel: number; // 0 = default; positive = lower priority
+}
+const TIER_RESOURCE_LIMITS: Record<string, TierResourceLimits> = {
+  free: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_FREE) || 512, niceLevel: 10 },
+  core: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_CORE) || 2048, niceLevel: 5 },
+  teams: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_TEAMS) || 4096, niceLevel: 0 },
+  enterprise: { memoryMb: 0, niceLevel: 0 },
+};
+
+function applyResourceLimits(rawCommand: string, limits: TierResourceLimits | undefined): string {
+  if (!limits) return rawCommand;
+  const parts: string[] = [];
+  // ulimit -v sets RLIMIT_AS (max virtual memory) in KB. Best-effort:
+  // fall back to the unconstrained command if ulimit isn't available.
+  if (limits.memoryMb > 0) {
+    parts.push(`ulimit -v ${limits.memoryMb * 1024} 2>/dev/null || true`);
+  }
+  const niceWrap = limits.niceLevel > 0
+    ? `nice -n ${limits.niceLevel} sh -c ${JSON.stringify(rawCommand)}`
+    : rawCommand;
+  parts.push(`exec ${niceWrap}`);
+  return parts.join('; ');
+}
+
 export class DeploymentQuotaExceededError extends Error {
   constructor(public readonly tier: string, public readonly limit: number, public readonly current: number) {
     super(`Deployment quota exceeded for tier "${tier}": ${current}/${limit} active deployments. Stop one before launching another.`);
@@ -817,12 +845,23 @@ export class DeploymentManager {
       return;
     }
 
-    const startCommand = config.startCommand?.trim() || this.defaultStartCommand(config);
-    if (!startCommand) {
+    const rawStartCommand = config.startCommand?.trim() || this.defaultStartCommand(config);
+    if (!rawStartCommand) {
       throw new Error('startCommand is required for non-static deployments');
     }
 
-    pushAndBroadcast(`▶️  Launching runtime: ${startCommand}`);
+    // Resolve per-tier resource caps. Owner lookup happens via the project
+    // because the deployment row doesn't carry user_id directly.
+    const project = await storage.getProject(String(config.projectId));
+    const owner = project ? await storage.getUser(String(project.ownerId)) : null;
+    const tier = (owner as any)?.subscriptionTier || 'free';
+    const limits = TIER_RESOURCE_LIMITS[tier];
+    const startCommand = applyResourceLimits(rawStartCommand, limits);
+
+    if (limits && limits.memoryMb > 0) {
+      pushAndBroadcast(`🛡️  Resource caps: tier=${tier} memory=${limits.memoryMb}MB nice=+${limits.niceLevel}`);
+    }
+    pushAndBroadcast(`▶️  Launching runtime: ${rawStartCommand}`);
     const { port } = await deploymentRuntime.startProcess({
       deploymentId,
       projectPath,
