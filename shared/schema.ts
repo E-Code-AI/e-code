@@ -243,6 +243,39 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Webhook subscriptions — outbound HTTP notifications a user wires up from
+// settings. The dispatcher service pushes JSON payloads on event publishes
+// (deployment.succeeded, deployment.failed, project.shared, etc.).
+export const webhookSubscriptions = pgTable("webhook_subscriptions", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  url: varchar("url", { length: 2048 }).notNull(),
+  // Comma-separated event names; '*' means all events for this user.
+  events: text("events").notNull().default('*'),
+  secret: varchar("secret", { length: 128 }),
+  active: boolean("active").notNull().default(true),
+  lastDeliveryAt: timestamp("last_delivery_at"),
+  lastStatusCode: integer("last_status_code"),
+  failureCount: integer("failure_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("webhook_subscriptions_user_id_idx").on(table.userId),
+]);
+
+export const webhookDeliveries = pgTable("webhook_deliveries", {
+  id: varchar("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  subscriptionId: varchar("subscription_id").notNull().references(() => webhookSubscriptions.id, { onDelete: 'cascade' }),
+  event: varchar("event", { length: 100 }).notNull(),
+  payload: jsonb("payload").notNull(),
+  statusCode: integer("status_code"),
+  responseBody: text("response_body"),
+  attemptedAt: timestamp("attempted_at").defaultNow(),
+  succeeded: boolean("succeeded").notNull().default(false),
+}, (table) => [
+  index("webhook_deliveries_subscription_id_idx").on(table.subscriptionId),
+  index("webhook_deliveries_attempted_at_idx").on(table.attemptedAt),
+]);
+
 // Project Share Tokens — opaque unguessable tokens for unlisted-link sharing.
 // `permission` decides whether the token grants read-only or full collab access
 // to a project that is otherwise private.
@@ -2020,6 +2053,12 @@ export type InsertPasswordResetToken = z.infer<typeof insertPasswordResetTokenSc
 export type ProjectShareToken = typeof projectShareTokens.$inferSelect;
 export const insertProjectShareTokenSchema = createInsertSchema(projectShareTokens).omit({ id: true, createdAt: true, revokedAt: true });
 export type InsertProjectShareToken = z.infer<typeof insertProjectShareTokenSchema>;
+
+export type WebhookSubscription = typeof webhookSubscriptions.$inferSelect;
+export const insertWebhookSubscriptionSchema = createInsertSchema(webhookSubscriptions).omit({ id: true, createdAt: true, lastDeliveryAt: true, lastStatusCode: true, failureCount: true });
+export type InsertWebhookSubscription = z.infer<typeof insertWebhookSubscriptionSchema>;
+
+export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;

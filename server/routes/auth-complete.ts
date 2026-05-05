@@ -98,6 +98,17 @@ router.post('/register', async (req, res) => {
       },
     });
 
+    // Welcome email — fire-and-forget so a transient SendGrid hiccup doesn't
+    // block the registration response.
+    try {
+      const { realEmailService } = await import('../services/real-email-service');
+      realEmailService.sendWelcomeEmail(user.id).catch((err) =>
+        console.error('Welcome email failed:', err)
+      );
+    } catch (err) {
+      console.error('Welcome email lookup failed:', err);
+    }
+
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',
       userId: user.id

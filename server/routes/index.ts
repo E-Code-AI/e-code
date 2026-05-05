@@ -24,6 +24,8 @@ import marketplaceRouter from "./marketplace";
 import communityRouter from "./community.router";
 import adminRouter from "./admin";
 import aiRouter from "./ai.router";
+import aiInlineEditRouter from "./ai-inline-edit.router";
+import webhooksRouter from "./webhooks.router";
 import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
 import voiceTranscribeRouter from "./voice-transcribe.router";
@@ -451,6 +453,8 @@ export class MainRouter {
     // Dual-mount: /api and /api/ai for frontend compatibility (e.g. /api/ai/features)
     app.use('/api', tierRateLimiters.api, aiRouter);
     app.use('/api/ai', tierRateLimiters.api, aiRouter);
+    app.use('/api/ai', tierRateLimiters.streaming, aiInlineEditRouter);
+    app.use('/api/webhooks', tierRateLimiters.api, webhooksRouter);
 
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
     app.use('/api/usage', tierRateLimiters.api, aiUsageRouter);

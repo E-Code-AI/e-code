@@ -9,6 +9,7 @@ import { deploymentRollbackService } from './deployment-rollback';
 import { DeploymentStatusType,deploymentWebSocketService } from './deployment-websocket-service';
 import { sslRenewalService } from './ssl-renewal.service';
 import { deploymentRuntime } from '../deployment/deployment-runtime';
+import { webhookDispatcher } from './webhook-dispatcher.service';
 
 // Public base URL of this server. The deployment proxy mounts at /d/:id, so
 // the URL we hand back to users is `${APP_BASE_URL}/d/${deploymentId}/`.
@@ -616,6 +617,38 @@ export class DeploymentManager {
       this.broadcastStatusChange(deploymentId, 'active', 'deploying', deployment.url || deployment.customUrl);
       this.broadcastDeployLog(deploymentId, liveLog);
 
+      // Notify the owner's webhook subscribers that the deploy is live, and
+      // send the templated success email.
+      try {
+        const projectIdForLookup = typeof config.projectId === 'number' ? String(config.projectId) : config.projectId;
+        const project = await storage.getProject(projectIdForLookup);
+        if (project) {
+          await webhookDispatcher.publish(project.ownerId, 'deployment.succeeded', {
+            deploymentId,
+            projectId: config.projectId,
+            url: deployment.url || deployment.customUrl,
+            type: config.type,
+            environment: config.environment,
+          });
+          try {
+            const { realEmailService } = await import('./real-email-service');
+            realEmailService
+              .sendDeploymentNotification(
+                project.ownerId,
+                project.name,
+                deploymentId,
+                deployment.url || deployment.customUrl || '',
+                (config.regions && config.regions[0]) || 'us-east-1'
+              )
+              .catch((err: any) => console.error('deployment success email failed:', err));
+          } catch (emailErr) {
+            console.error('deployment email lookup failed:', emailErr);
+          }
+        }
+      } catch (whErr) {
+        console.error(`[DeploymentManager] webhook publish failed for ${deploymentId}:`, whErr);
+      }
+
       try {
         const projectPath = getProjectWorkspacePath(config.projectId);
         await deploymentRollbackService.createSnapshot(
@@ -667,6 +700,22 @@ export class DeploymentManager {
         }
       } catch (dbError) {
         console.error(`[DeploymentManager] Failed to persist failed status for ${deploymentId}:`, dbError);
+      }
+
+      try {
+        const projectIdForLookup = typeof config.projectId === 'number' ? String(config.projectId) : config.projectId;
+        const project = await storage.getProject(projectIdForLookup);
+        if (project) {
+          await webhookDispatcher.publish(project.ownerId, 'deployment.failed', {
+            deploymentId,
+            projectId: config.projectId,
+            error: error.message || String(error),
+            type: config.type,
+            environment: config.environment,
+          });
+        }
+      } catch (whErr) {
+        console.error(`[DeploymentManager] webhook publish failed for ${deploymentId}:`, whErr);
       }
     }
   }

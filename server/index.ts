@@ -7,6 +7,19 @@ import './env';
 import { errorTracking } from './services/error-tracking';
 errorTracking.initialize();
 
+// ✅ OpenTelemetry: must be initialized before any HTTP/Express imports get
+// instrumented at require-time. Disabled in test (handled inside the call).
+// Skipped when DISABLE_OTEL=1 so dev runs that don't need the export ports
+// can stay light.
+if (process.env.DISABLE_OTEL !== '1') {
+  try {
+    const { initializeOpenTelemetry } = require('./observability/opentelemetry');
+    initializeOpenTelemetry();
+  } catch (err: any) {
+    console.error('[OTEL] init failed (continuing without):', err?.message || err);
+  }
+}
+
 import { initializeRuntimes } from './execution/runtime-warmup';
 import { validateProductionEnvironment } from './utils/production-validation';
 import { validateRequiredSecrets } from './utils/secrets-manager';

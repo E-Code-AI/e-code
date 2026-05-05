@@ -908,6 +908,16 @@ export class ProjectsRouter {
           expiresAt,
         });
 
+        // Notify the user's webhook subscribers — fire-and-forget.
+        try {
+          const { webhookDispatcher } = await import('../services/webhook-dispatcher.service');
+          webhookDispatcher.publish(userId, 'share_link.created', {
+            projectId: project.id,
+            permission,
+            expiresAt,
+          }).catch(() => {});
+        } catch { /* dispatcher unavailable — non-fatal */ }
+
         res.json({
           id: row.id,
           token: row.token,

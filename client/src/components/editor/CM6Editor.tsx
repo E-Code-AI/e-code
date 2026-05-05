@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { EditorView } from '@codemirror/view';
-import { EditorState, Compartment } from '@codemirror/state';
+import { EditorState, Compartment, type Extension } from '@codemirror/state';
 import { placeholder as placeholderExtension } from '@codemirror/view';
 import { getTheme } from '@/lib/cm6/theme';
 import { getBaseExtensions, getReadOnlyExtensions } from '@/lib/cm6/extensions';
@@ -20,6 +20,12 @@ export interface CM6EditorProps {
   lineWrapping?: boolean;
   placeholder?: string;
   autoFocus?: boolean;
+  // When provided, these extensions are appended last so the caller can wire
+  // collab (yCollab from collaboration-adapter), linting, custom keymaps, etc.
+  // If `collabMode` is 'authoritative', the editor skips the local
+  // doc-vs-value sync — the collab Y.Doc is the source of truth.
+  extraExtensions?: Extension[];
+  collabMode?: 'off' | 'authoritative';
 }
 
 export function CM6Editor({
@@ -35,6 +41,8 @@ export function CM6Editor({
   lineWrapping = false,
   placeholder,
   autoFocus = false,
+  extraExtensions,
+  collabMode = 'off',
 }: CM6EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -78,7 +86,7 @@ export function CM6Editor({
         }
       });
 
-      const extensions = [
+      const extensions: Extension[] = [
         ...(readOnly ? getReadOnlyExtensions() : getBaseExtensions()),
         themeCompartment.current.of(getTheme(theme === 'dark')),
         languageCompartment.current.of(languageSupport ? [languageSupport] : []),
@@ -89,10 +97,14 @@ export function CM6Editor({
         lineWrappingCompartment.current.of(lineWrapping ? EditorView.lineWrapping : []),
         placeholderCompartment.current.of(placeholder ? placeholderExtension(placeholder) : []),
         updateListener,
+        ...(extraExtensions ?? []),
       ];
 
+      // When yCollab is authoritative the Y.Doc seeds the document; passing
+      // `value` here would race with the initial sync from the WS provider.
+      const initialDoc = collabMode === 'authoritative' ? '' : value;
       const state = EditorState.create({
-        doc: value,
+        doc: initialDoc,
         extensions,
       });
 
@@ -125,6 +137,9 @@ export function CM6Editor({
   useEffect(() => {
     const view = viewRef.current;
     if (!view || isLoading) return;
+    // In authoritative-collab mode the Y.Doc is the source of truth; pushing
+    // `value` here would create a tug-of-war with remote edits.
+    if (collabMode === 'authoritative') return;
 
     const currentValue = view.state.doc.toString();
     if (value !== currentValue) {
@@ -138,7 +153,7 @@ export function CM6Editor({
       });
       isExternalUpdate.current = false;
     }
-  }, [value, isLoading]);
+  }, [value, isLoading, collabMode]);
 
   useEffect(() => {
     const view = viewRef.current;
