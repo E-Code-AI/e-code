@@ -35,31 +35,15 @@ const DEPLOYMENT_QUOTA: Record<string, number> = {
 
 // Per-tier process resource caps. Applied via `ulimit` and `nice` wrapping
 // the start command so we don't need Docker to enforce them. Memory in MB.
-interface TierResourceLimits {
-  memoryMb: number; // 0 = no limit
-  niceLevel: number; // 0 = default; positive = lower priority
-}
+import { applyResourceLimits, type TierResourceLimits } from './deployment-resource-limits';
+export { applyResourceLimits, type TierResourceLimits };
+
 const TIER_RESOURCE_LIMITS: Record<string, TierResourceLimits> = {
   free: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_FREE) || 512, niceLevel: 10 },
   core: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_CORE) || 2048, niceLevel: 5 },
   teams: { memoryMb: Number(process.env.DEPLOYMENT_MEM_MB_TEAMS) || 4096, niceLevel: 0 },
   enterprise: { memoryMb: 0, niceLevel: 0 },
 };
-
-function applyResourceLimits(rawCommand: string, limits: TierResourceLimits | undefined): string {
-  if (!limits) return rawCommand;
-  const parts: string[] = [];
-  // ulimit -v sets RLIMIT_AS (max virtual memory) in KB. Best-effort:
-  // fall back to the unconstrained command if ulimit isn't available.
-  if (limits.memoryMb > 0) {
-    parts.push(`ulimit -v ${limits.memoryMb * 1024} 2>/dev/null || true`);
-  }
-  const niceWrap = limits.niceLevel > 0
-    ? `nice -n ${limits.niceLevel} sh -c ${JSON.stringify(rawCommand)}`
-    : rawCommand;
-  parts.push(`exec ${niceWrap}`);
-  return parts.join('; ');
-}
 
 export class DeploymentQuotaExceededError extends Error {
   constructor(public readonly tier: string, public readonly limit: number, public readonly current: number) {

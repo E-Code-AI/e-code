@@ -11,11 +11,11 @@
  * This is a fire-and-forget API: callers never block on delivery.
  */
 
-import * as crypto from 'crypto';
 import { db } from '../db';
 import { webhookSubscriptions, webhookDeliveries } from '@shared/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { createLogger } from '../utils/logger';
+import { signWebhookBody } from './webhook-signing';
 
 const logger = createLogger('webhook-dispatcher');
 
@@ -74,7 +74,7 @@ class WebhookDispatcher {
     payload: Record<string, unknown>
   ): Promise<void> {
     const body = JSON.stringify({ event, payload, timestamp: new Date().toISOString() });
-    const signature = sub.secret ? this.sign(body, sub.secret) : null;
+    const signature = sub.secret ? signWebhookBody(body, sub.secret) : null;
 
     let statusCode: number | null = null;
     let responseBody = '';
@@ -135,9 +135,6 @@ class WebhookDispatcher {
     }
   }
 
-  private sign(body: string, secret: string): string {
-    return 'sha256=' + crypto.createHmac('sha256', secret).update(body).digest('hex');
-  }
 }
 
 export const webhookDispatcher = new WebhookDispatcher();

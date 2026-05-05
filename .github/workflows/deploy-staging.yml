@@ -1,0 +1,98 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to deploy (defaults to triggering ref)'
+        required: false
+        default: ''
+
+# Cancel an in-progress staging deploy when a newer one lands; staging is
+# always-tip-of-main, never a queue.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  deployments: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    name: Build, deploy, verify
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL || 'https://staging.e-code.ai' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm run test:unit -- --runInBand
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: staging
+
+      - name: Capture git SHA for build-info
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Replace this block with your actual staging deploy command.
+      # Replit Deploy, Render, Fly, Railway, etc. all expose a CLI/API.
+      - name: Deploy to staging target
+        if: ${{ vars.STAGING_DEPLOY_ENABLED == 'true' }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+          GIT_SHA: ${{ steps.sha.outputs.sha }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          echo "Deploying ${GIT_SHA} to staging..."
+          # Example: bash scripts/deploy-staging.sh "$GIT_SHA"
+          # Plug in your platform's deploy invocation here.
+
+      - name: Wait for staging to come up
+        if: ${{ vars.STAGING_DEPLOY_ENABLED == 'true' }}
+        env:
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: |
+          for i in {1..30}; do
+            if curl -fsS --max-time 10 "${STAGING_URL}/api/health/liveness" >/dev/null; then
+              echo "staging up after ${i} attempts"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "staging did not come up in 150s" >&2
+          exit 1
+
+      - name: Verify rollback contract (smoke + sha match)
+        if: ${{ vars.STAGING_DEPLOY_ENABLED == 'true' }}
+        env:
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: ./scripts/verify-rollback.sh "$STAGING_URL" "${{ steps.sha.outputs.sha }}"
