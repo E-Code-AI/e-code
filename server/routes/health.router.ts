@@ -402,6 +402,20 @@ export class HealthRouter {
       res.json({ status: "ok" });
     });
 
+    // Build info — exposes the git SHA / version of the deployed bundle so
+    // post-deploy verifiers (verify-rollback.sh, monitoring) can confirm the
+    // expected revision is running.
+    this.router.get("/health/build-info", (_req: Request, res: Response) => {
+      const sha = process.env.GIT_SHA || process.env.COMMIT_SHA || process.env.RENDER_GIT_COMMIT || '';
+      res.json({
+        sha,
+        shortSha: sha ? sha.slice(0, 7) : '',
+        version: process.env.npm_package_version || '0.0.0',
+        buildTime: process.env.BUILD_TIME || null,
+        environment: process.env.NODE_ENV || 'development',
+      });
+    });
+
     // Readiness probe (for Kubernetes/Docker)
     this.router.get("/readiness", async (req: Request, res: Response) => {
       try {

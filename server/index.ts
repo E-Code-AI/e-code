@@ -204,8 +204,15 @@ app.use((req, res, next) => {
 });
 
 // CSP violation report endpoint - registered BEFORE rate limiting to avoid Redis errors
-import { cspReportHandler } from './middleware/helmet-config';
+import { applySecurityHeaders, cspReportHandler } from './middleware/helmet-config';
 app.post('/api/security/csp-report', express.json({ type: ['application/json', 'application/csp-report'] }), cspReportHandler);
+
+// Apply Helmet + CSP + extra security headers to every response. The
+// `applySecurityHeaders()` factory returns a middleware list keyed off
+// NODE_ENV (dev relaxes CSP for HMR; prod is locked down).
+for (const mw of applySecurityHeaders()) {
+  app.use(mw);
+}
 
 // Apply global rate limiting for DDoS protection
 // Log all rate limit violations for security monitoring

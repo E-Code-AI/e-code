@@ -26,6 +26,7 @@ import adminRouter from "./admin";
 import aiRouter from "./ai.router";
 import aiInlineEditRouter from "./ai-inline-edit.router";
 import webhooksRouter from "./webhooks.router";
+import gpuRouter from "./gpu.router";
 import aiStreamingRouter from "../api/ai-streaming";
 import voiceVideoRouter from "./voice-video.router";
 import voiceTranscribeRouter from "./voice-transcribe.router";
@@ -455,6 +456,7 @@ export class MainRouter {
     app.use('/api/ai', tierRateLimiters.api, aiRouter);
     app.use('/api/ai', tierRateLimiters.streaming, aiInlineEditRouter);
     app.use('/api/webhooks', tierRateLimiters.api, webhooksRouter);
+    app.use('/api/gpu', tierRateLimiters.api, gpuRouter);
 
     // AI Usage Metering routes (Pay-As-You-Go billing endpoints)
     app.use('/api/usage', tierRateLimiters.api, aiUsageRouter);

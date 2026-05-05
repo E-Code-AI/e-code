@@ -759,10 +759,19 @@ export class ProjectsRouter {
         }
         
         await this.storage.deleteProject(projectId);
+
+        try {
+          const { webhookDispatcher } = await import('../services/webhook-dispatcher.service');
+          webhookDispatcher.publish((req.user as User).id, 'project.deleted', {
+            projectId: project.id,
+            name: project.name,
+          }).catch(() => {});
+        } catch { /* dispatcher unavailable — non-fatal */ }
+
         res.json({ message: "Project deleted successfully" });
       } catch (error) {
         projectLogger.error('Error deleting project:', redactErrorForLog(error));
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Failed to delete project",
           code: "DELETE_ERROR"
         });
@@ -975,6 +984,15 @@ export class ProjectsRouter {
 
         const ok = await this.storage.revokeProjectShareToken(req.params.tokenId);
         if (!ok) return res.status(404).json({ message: "Token not found", code: "TOKEN_NOT_FOUND" });
+
+        try {
+          const { webhookDispatcher } = await import('../services/webhook-dispatcher.service');
+          webhookDispatcher.publish(userId, 'share_link.revoked', {
+            projectId: project.id,
+            tokenId: req.params.tokenId,
+          }).catch(() => {});
+        } catch { /* dispatcher unavailable — non-fatal */ }
+
         res.json({ revoked: true });
       } catch (error) {
         projectLogger.error('[share-link DELETE] revoke failed:', redactErrorForLog(error));
