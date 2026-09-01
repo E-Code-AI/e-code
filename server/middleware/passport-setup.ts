@@ -50,11 +50,13 @@ export function setupPassportAuth(app: Application) {
   app.use(passport.initialize());
   app.use(passport.session());
   
-  // Setup local strategy for username/password authentication (using email as username field)
+  // Setup local strategy for username/password authentication.
+  // The login form is labelled "Username or Email", so support both identifiers.
   passport.use(
-    new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
+    new LocalStrategy({ usernameField: 'email' }, async (identifier, password, done) => {
       try {
-        const user = await storage.getUserByEmail(email);
+        const user = await storage.getUserByEmail(identifier) ||
+          await storage.getUserByUsername(identifier);
         if (!user) {
           return done(null, false, { message: "Incorrect email or password" });
         }
